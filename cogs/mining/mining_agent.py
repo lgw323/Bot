@@ -16,7 +16,8 @@ from discord import ui, app_commands
 logger = logging.getLogger(__name__)
 MINING_CHANNEL_ID = int(os.getenv("MINING_CHANNEL_ID", "0"))
 WEB_CLIENT_URL = os.getenv("WEB_CLIENT_URL") 
-DATA_FILE = "mining_data.json"
+# 데이터 파일 경로 수정
+DATA_FILE = "data/mining_data.json"
 BOT_EMBED_COLOR = 0xFFA500
 WAITING_COLOR = 0x99AAB5
 SUCCESS_COLOR = 0x00FF00
@@ -66,7 +67,7 @@ class MiningAgentCog(commands.Cog):
         self.active_rounds = {}
         self.control_panels = {}
         self.last_round_info = {}
-        self.success_messages = {} # ❗ 추가: 성공 메시지 저장을 위한 딕셔너리
+        self.success_messages = {}
         self.difficulty = {"prefix": MINING_DIFFICULTY_PREFIX, "reward": MINING_REWARD_AMOUNT}
 
     @commands.Cog.listener()
@@ -100,7 +101,6 @@ class MiningAgentCog(commands.Cog):
         channel = guild.get_channel(MINING_CHANNEL_ID)
         if not channel or not isinstance(channel, discord.TextChannel): return
 
-        # 기존 제어판 메시지 탐색
         async for message in channel.history(limit=100):
             if message.author == self.bot.user and message.embeds:
                 embed = message.embeds[0]
@@ -110,24 +110,20 @@ class MiningAgentCog(commands.Cog):
                     await self.update_control_panel(guild)
                     return
 
-        # 제어판이 없으면 새로 생성
         embed, view = self.create_panel_components(guild)
         message = await channel.send(embed=embed, view=view)
         self.control_panels[str(guild.id)] = message
         logger.info(f"[{guild.name}] 새로운 채굴 제어판 메시지를 생성했습니다.")
 
     def _create_dynamic_view(self, guild: discord.Guild) -> ui.View:
-        """현재 게임 상태에 맞는 동적 View를 생성합니다."""
         guild_id_str = str(guild.id)
         is_active = self.active_rounds.get(guild_id_str, {}).get("is_active", False)
         
         view = ui.View(timeout=None)
 
-        # 관리자용 채굴 시작 버튼
         start_button = ui.Button(label="💎 새 블록 채굴 시작", style=discord.ButtonStyle.success, custom_id=f"start_mining_{guild.id}")
         async def start_callback(interaction: discord.Interaction):
             if not interaction.user.guild_permissions.administrator:
-                # ❗ 오류 수정: `delete_after` 인수 제거
                 await interaction.response.send_message("관리자만 채굴을 시작할 수 있습니다.", ephemeral=True)
                 return
             await interaction.response.defer()
@@ -135,18 +131,15 @@ class MiningAgentCog(commands.Cog):
         start_button.callback = start_callback
         view.add_item(start_button)
 
-        # 채굴 진행 중일 때만 웹 클라이언트 링크 버튼 추가
         if is_active:
             round_info = self.active_rounds[guild_id_str]
             mining_url = f"{WEB_CLIENT_URL}?seed={round_info['seed']}&target={round_info['target_prefix']}"
             view.add_item(ui.Button(label="⛏️ 웹에서 채굴 시작", style=discord.ButtonStyle.link, url=mining_url))
 
-        # 리더보드 버튼
         leaderboard_button = ui.Button(label="🏆 리더보드", style=discord.ButtonStyle.blurple, custom_id=f"leaderboard_{guild.id}")
         leaderboard_button.callback = self.show_leaderboard
         view.add_item(leaderboard_button)
 
-        # 정답 제출 버튼
         submit_button = ui.Button(label="✅ 정답 제출", style=discord.ButtonStyle.primary, custom_id=f"submit_nonce_{guild.id}", disabled=not is_active)
         async def submit_callback(interaction: discord.Interaction):
             await interaction.response.send_modal(SubmitNonceModal(self))
@@ -156,7 +149,6 @@ class MiningAgentCog(commands.Cog):
         return view
 
     def create_panel_components(self, guild: discord.Guild) -> tuple[discord.Embed, ui.View]:
-        """현재 상태에 맞는 Embed와 View를 생성합니다."""
         guild_id_str = str(guild.id)
         round_info = self.active_rounds.get(guild_id_str)
 
@@ -171,7 +163,7 @@ class MiningAgentCog(commands.Cog):
             embed.add_field(name="경과 시간", value=elapsed_str, inline=True)
             embed.add_field(name="난이도", value=f"'{round_info['target_prefix']}'", inline=True)
 
-        else: # 대기 중 상태
+        else:
             embed = discord.Embed(title="⛏️ 채굴 대기 중", description="관리자가 새로운 블록 채굴을 시작할 때까지 대기해주세요.", color=WAITING_COLOR)
             last_info = self.last_round_info.get(guild_id_str)
             if last_info:
@@ -185,7 +177,6 @@ class MiningAgentCog(commands.Cog):
         return embed, view
 
     async def update_control_panel(self, guild: discord.Guild):
-        """지정된 서버의 제어판 메시지를 현재 상태에 맞게 업데이트합니다."""
         panel_message = self.control_panels.get(str(guild.id))
         if not panel_message: return
 
@@ -206,7 +197,6 @@ class MiningAgentCog(commands.Cog):
     async def start_new_round(self, interaction: discord.Interaction):
         guild_id_str = str(interaction.guild.id)
 
-        # ❗ 추가: 이전 라운드의 성공 메시지를 삭제합니다.
         if guild_id_str in self.success_messages:
             try:
                 await self.success_messages[guild_id_str].delete()
@@ -271,13 +261,11 @@ class MiningAgentCog(commands.Cog):
 
         logger.info(f"[{guild.name}] 채굴 성공! 승자: {winner.display_name}, 소요 시간: {elapsed.total_seconds():.2f}초")
 
-        # 마지막 라운드 정보 저장
         self.last_round_info[guild_id_str] = {
             "winner_id": winner.id,
             "elapsed_str": elapsed_str
         }
 
-        # 데이터베이스 업데이트
         data = await load_mining_data()
         guild_data = data.setdefault(guild_id_str, {"leaderboard": {}, "total_blocks_mined": 0})
         leaderboard = guild_data.setdefault("leaderboard", {})
@@ -286,7 +274,6 @@ class MiningAgentCog(commands.Cog):
         guild_data["total_blocks_mined"] = guild_data.get("total_blocks_mined", 0) + 1
         await save_mining_data(data)
 
-        # 성공 공지 메시지 전송
         channel = guild.get_channel(MINING_CHANNEL_ID)
         if channel:
             embed = discord.Embed(title="🎉 블록 채굴 성공!", description=f"**{winner.mention}** 님이 새로운 블록을 발견했습니다!", color=SUCCESS_COLOR)
@@ -296,10 +283,8 @@ class MiningAgentCog(commands.Cog):
             embed.add_field(name="성공 해시", value=f"`{final_hash}`", inline=False)
             embed.set_thumbnail(url=winner.display_avatar.url)
             success_msg = await channel.send(embed=embed)
-            # ❗ 추가: 성공 메시지를 딕셔너리에 저장합니다.
             self.success_messages[guild_id_str] = success_msg
         
-        # 제어판을 대기 상태로 업데이트
         await self.update_control_panel(guild)
     
     async def show_leaderboard(self, interaction: discord.Interaction):

@@ -8,20 +8,18 @@ import logging
 import discord
 import yt_dlp
 
-# --- 이 파일은 데이터 클래스, 상수, 유틸리티 함수만 모아놓은 곳입니다. ---
-
 logger = logging.getLogger("MusicCog")
 
 # --- 상수 설정 ---
 BOT_EMBED_COLOR = 0x2ECC71
-FAVORITES_FILE = "favorites.json"
+# 데이터 파일 경로 수정
+FAVORITES_FILE = "data/favorites.json"
 MUSIC_CHANNEL_ID = int(os.getenv("MUSIC_CHANNEL_ID", "0"))
 URL_REGEX = re.compile(r'https?://(?:www\.)?.+')
 
 # --- yt-dlp 및 FFmpeg 설정 ---
 YTDL_OPTIONS = {
     'format': 'bestaudio[ext=opus]/bestaudio/best',
-    # --- [수정] 재생목록 처리를 허용하고, 최대 50곡으로 제한 ---
     'noplaylist': False,
     'playlistend': 50,
     'quiet': True,

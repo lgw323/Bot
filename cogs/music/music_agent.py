@@ -17,13 +17,13 @@ except ImportError:
     GTTS_AVAILABLE = False
     logging.getLogger("MusicCog").warning("gTTS 라이브러리를 찾을 수 없습니다. 'pip install gTTS'로 설치해야 TTS 기능을 사용할 수 있습니다.")
 
-# --- 모듈화된 파일에서 클래스와 함수 임포트 ---
-from music_core import MusicState
-from music_utils import (
+# --- 모듈화된 파일에서 클래스와 함수 임포트 (경로 수정) ---
+from .music_core import MusicState
+from .music_utils import (
     Song, LoopMode, LOOP_MODE_DATA, ytdl, URL_REGEX, MUSIC_CHANNEL_ID,
     load_favorites, save_favorites, BOT_EMBED_COLOR
 )
-from music_ui import QueueManagementView, FavoritesView, SearchSelect
+from .music_ui import QueueManagementView, FavoritesView, SearchSelect
 
 logger = logging.getLogger("MusicCog")
 
@@ -44,7 +44,7 @@ class MusicAgentCog(commands.Cog):
             logger.info(f"'{guild.name}' 서버의 '{state.text_channel.name if state.text_channel else 'N/A'}' 채널에 상시 플레이어를 생성 또는 연결했습니다.")
 
     def after_tts(self, state: MusicState, interrupted_song: Optional[Song]):
-        state.is_tts_interrupting = False # TTS 인터럽트 상태 종료
+        state.is_tts_interrupting = False
         try:
             if os.path.exists("tts_temp.mp3"):
                 os.remove("tts_temp.mp3")
@@ -54,7 +54,6 @@ class MusicAgentCog(commands.Cog):
         if interrupted_song:
             state.queue.appendleft(interrupted_song)
 
-        # TTS가 끝나면 항상 재생 루프를 깨워 다음 곡(또는 첫 곡) 재생을 시도
         self.bot.loop.call_soon_threadsafe(state.play_next_song.set)
 
     async def play_tts(self, state: MusicState, text: str):
@@ -68,7 +67,7 @@ class MusicAgentCog(commands.Cog):
             try:
                 if (state.voice_client.is_playing() or state.voice_client.is_paused()) and state.current_song:
                     interrupted_song = state.current_song
-                    state.is_tts_interrupting = True # TTS 인터럽트 상태 시작
+                    state.is_tts_interrupting = True
                     state.voice_client.stop()
                     state.play_next_song.clear()
 

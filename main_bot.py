@@ -93,13 +93,13 @@ try:
     class MyBot(commands.Bot):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            # 'moderation_agent'를 리스트에서 제거했습니다.
+            # Cog 로드 경로를 새로운 디렉토리 구조에 맞게 수정
             self.initial_extensions = [
-                "summary_listeners",
-                "finance_agent",
-                "music_agent",
-                "application_commands",
-                "mining_agent"
+                "cogs.summary.summary_listeners",
+                "cogs.finance.finance_agent",
+                "cogs.music.music_agent",
+                "cogs.application_commands",
+                "cogs.mining.mining_agent"
             ]
 
         async def setup_hook(self):
@@ -115,11 +115,11 @@ try:
                     try:
                         await self.load_extension(extension)
                         logger.info(f"✅ '{extension}' 로드 성공.")
-                        progress.update(task, advance=1, description=f"[cyan]{extension:<20}")
+                        progress.update(task, advance=1, description=f"[cyan]{extension:<30}")
                         await asyncio.sleep(0.1)
                     except Exception:
                         logger.error(f"'{extension}' 로드 실패.", exc_info=True)
-                        progress.update(task, advance=1, description=f"[red]{extension:<20}")
+                        progress.update(task, advance=1, description=f"[red]{extension:<30}")
 
             logger.info("✅ 모든 기능(Cog)이 성공적으로 로드되었습니다.")
             try:

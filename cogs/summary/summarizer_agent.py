@@ -6,19 +6,13 @@ from datetime import datetime, timedelta, timezone
 import openai
 import tiktoken
 
-# .env 파일은 main_bot.py에서 가장 먼저 로드하므로, 여기서는 호출하지 않습니다.
-
 # --------- 상수 정의 (환경 변수에서 로드) ---------
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 TIMEZONE_OFFSET_HOURS = int(os.getenv("TIMEZONE_OFFSET_HOURS", 9))
-DEFAULT_MAX_REQUEST_TOKENS = int(os.getenv("DEFAULT_MAX_REQUEST_TOKENS", 32768)) # 높은 값 유지
+DEFAULT_MAX_REQUEST_TOKENS = int(os.getenv("DEFAULT_MAX_REQUEST_TOKENS", 32768))
 GPT_MAX_TOKENS_RESPONSE = int(os.getenv("GPT_MAX_TOKENS_RESPONSE", 2000))
 GPT_TEMPERATURE = float(os.getenv("GPT_TEMPERATURE", 0.5))
 
-# [수정] 모듈 로딩 시점에 로깅을 호출하지 않습니다. 로깅은 main_bot.py에서 관리합니다.
-
-
-# 프롬프트 템플릿
 SUMMARY_PROMPT_TEMPLATE = (
     "당신은 Discord 대화 로그를 분석하여, 논의된 모든 주제를 독립적으로 분리하고 심층 요약하는 AI 분석가입니다.\n"
     "당신의 응답은 정해진 토큰 제한이 있으므로, 반드시 주어진 형식과 지침에 따라 완결된 형태의 결과물을 생성해야 합니다.\n\n"
@@ -58,12 +52,10 @@ SUMMARY_PROMPT_TEMPLATE = (
     "{joined_messages}"
 )
 
-# OpenAI 클라이언트 및 Tiktoken 인코더 (전역 변수)
 openai_client = None
 tiktoken_encoding = None
 
 def initialize_openai_client(api_key: str):
-    """OpenAI 비동기 클라이언트를 초기화합니다."""
     global openai_client
     try:
         openai_client = openai.AsyncOpenAI(api_key=api_key)
@@ -72,7 +64,6 @@ def initialize_openai_client(api_key: str):
         raise
 
 def initialize_tiktoken_encoder():
-    """tiktoken 인코더를 초기화합니다."""
     global tiktoken_encoding
     try:
         tiktoken_encoding = tiktoken.encoding_for_model(OPENAI_MODEL)
@@ -83,7 +74,6 @@ def initialize_tiktoken_encoder():
         tiktoken_encoding = None
         logging.error(f"tiktoken 인코더 로드 실패: {e}. 토큰 수 계산 기능이 제한됩니다.", exc_info=True)
 
-# --------- 도우미 함수 ---------
 def to_local_time(utc_dt: datetime) -> datetime:
     return utc_dt.astimezone(timezone(timedelta(hours=TIMEZONE_OFFSET_HOURS)))
 

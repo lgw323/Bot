@@ -57,7 +57,6 @@ async def fetch_exchange_rates():
         logger.error(f"환율 정보 조회 실패: {e}")
         return None
 
-# [수정] 통화 정보 반환 및 변수 정리
 async def fetch_stock_data(ticker_symbol: str):
     """주식 정보와 통화를 함께 가져옵니다."""
     try:
@@ -79,12 +78,11 @@ async def fetch_stock_data(ticker_symbol: str):
         change_percent = (change_value / prev_close) * 100
         sign = "▲" if change_value > 0 else "▼" if change_value < 0 else ""
         
-        # [수정] 반환하는 딕셔너리에 'currency' 키를 추가합니다.
         return {
             "price": current_price,
-            "change": f"{sign} {abs(change_value):,.2f}", # 변수명 통일
+            "change": f"{sign} {abs(change_value):,.2f}",
             "change_percent": f"({change_percent:+.2f}%)",
-            "currency": currency # 누락되었던 통화 정보 추가!
+            "currency": currency
         }
     except Exception as e:
         logger.error(f"주식 정보 조회 실패 ({ticker_symbol}): {e}")
@@ -114,7 +112,7 @@ async def create_briefing_embed() -> discord.Embed:
     for name, data in stocks_data.items():
         if data:
             price = data['price']
-            currency_code = data.get('currency', 'USD') # data에 currency가 있는지 확인
+            currency_code = data.get('currency', 'USD')
             symbol = currency_symbols.get(currency_code, currency_code)
             price_format = "{:,.2f}" if currency_code == "USD" else "{:,.0f}"
             formatted_price = price_format.format(price)
@@ -129,7 +127,6 @@ async def create_briefing_embed() -> discord.Embed:
     embed.set_footer(text="데이터 출처: er-api, Yahoo Finance | 정보는 실제와 차이가 있을 수 있습니다.")
     return embed
 
-# --- 배경 작업을 위한 Cog 클래스 ---
 class FinanceAgentCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot

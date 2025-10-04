@@ -160,7 +160,8 @@ class FavoritesSelect(ui.Select):
 class FavoritesView(ui.View):
     def __init__(self, cog, interaction: discord.Interaction, favorites: List[dict]):
         super().__init__(timeout=300)
-        from music_utils import BOT_EMBED_COLOR
+        # 경로 수정
+        from .music_utils import BOT_EMBED_COLOR
         self.cog = cog
         self.original_interaction = interaction
         self.user_id = str(interaction.user.id)
@@ -188,7 +189,6 @@ class FavoritesView(ui.View):
                 lines.append(line)
             description = "\n".join(lines)
         
-        embed.description = description
         embed.set_footer(text=f"총 {len(self.favorites)}곡 | 선택됨: {len(self.selected_urls)}곡")
         return embed
 
@@ -282,7 +282,6 @@ class FavoritesView(ui.View):
 class EffectSelect(ui.Select):
     def __init__(self, cog, current_effect: str):
         self.cog = cog
-        # [수정] '스피드업' 모드를 새로 추가하고, '나이트코어'를 원래 기능으로 복원
         options = [
             discord.SelectOption(label="효과 없음", value="none", emoji="❌", default=current_effect == "none"),
             discord.SelectOption(label="베이스 부스트", value="bassboost", emoji="🔊", default=current_effect == "bassboost"),
@@ -299,7 +298,8 @@ class EffectSelect(ui.Select):
 class MusicPlayerView(ui.View):
     def __init__(self, cog, state):
         super().__init__(timeout=None)
-        from music_utils import LoopMode, LOOP_MODE_DATA
+        # 경로 수정
+        from .music_utils import LoopMode, LOOP_MODE_DATA
         self.cog, self.state = cog, state
         self.LoopMode = LoopMode
         self.LOOP_MODE_DATA = LOOP_MODE_DATA
@@ -310,7 +310,6 @@ class MusicPlayerView(ui.View):
         is_paused = self.state.voice_client and self.state.voice_client.is_paused()
         is_playing = self.state.current_song is not None
 
-        # --- 윗줄: 즉시 실행 (핵심 제어) ---
         play_pause_btn = ui.Button(label="재생" if is_paused else "일시정지", style=discord.ButtonStyle.secondary, emoji="▶️" if is_paused else "⏸️", disabled=not is_playing, row=0)
         play_pause_btn.callback = self.toggle_play_pause
         self.add_item(play_pause_btn)
@@ -327,7 +326,6 @@ class MusicPlayerView(ui.View):
         leave_btn.callback = self.leave
         self.add_item(leave_btn)
 
-        # --- 중간줄: 설정 및 관리 ---
         loop_mode = self.state.loop_mode
         loop_btn = ui.Button(label="반복", style=discord.ButtonStyle.success if loop_mode != self.LoopMode.NONE else discord.ButtonStyle.secondary, emoji=self.LOOP_MODE_DATA[loop_mode][1], row=1)
         loop_btn.callback = self.toggle_loop

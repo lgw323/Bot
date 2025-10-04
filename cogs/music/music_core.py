@@ -10,13 +10,13 @@ import discord
 from discord.ext import commands
 import yt_dlp
 
-# --- 모듈화된 파일에서 클래스와 함수 임포트 ---
-from music_utils import (
+# --- 모듈화된 파일에서 클래스와 함수 임포트 (경로 수정) ---
+from .music_utils import (
     Song, LoopMode, LOOP_MODE_DATA,
     BOT_EMBED_COLOR, YTDL_OPTIONS,
     ytdl
 )
-from music_ui import MusicPlayerView
+from .music_ui import MusicPlayerView
 
 logger = logging.getLogger("MusicCog")
 
@@ -52,14 +52,14 @@ class MusicState:
         self.playback_start_time: Optional[datetime] = None
         self.pause_start_time: Optional[datetime] = None
         self.total_paused_duration: timedelta = timedelta(seconds=0)
-        self.autoplay_history = deque(maxlen=20) # [수정] URL 대신 정규화된 제목을 저장합니다.
+        self.autoplay_history = deque(maxlen=20)
 
         self.autoplay_task: Optional[asyncio.Task] = None
         
         self.current_effect = "none"
         self.seek_time = 0
         self.consecutive_play_failures = 0
-        self.is_tts_interrupting = False # TTS 인터럽트 상태 플래그
+        self.is_tts_interrupting = False
 
         self.update_lock = asyncio.Lock()
         self.needs_update = asyncio.Event()
@@ -73,18 +73,13 @@ class MusicState:
         """노래 제목에서 버전 정보, 특수문자 등을 제거하여 정규화합니다."""
         if not title:
             return ""
-        # 소문자로 변환
         title = title.lower()
-        # 괄호와 그 안의 내용 제거 (e.g., (MV), (Official Audio))
         title = re.sub(r'\([^)]*\)', '', title)
         title = re.sub(r'\[[^]]*\]', '', title)
-        # 일반적인 버전 키워드 제거
         keywords = ['mv', 'music video', 'official', 'audio', 'live', 'cover', 'lyrics', '가사', '공식', '커버', '라이브']
         for keyword in keywords:
             title = title.replace(keyword, '')
-        # 알파벳, 숫자, 한글, 공백만 남김
         title = re.sub(r'[^a-z0-9\s\uac00-\ud7a3]', '', title)
-        # 양쪽 공백 제거 및 여러 공백을 하나로
         return " ".join(title.split())
 
     def get_current_playback_time(self) -> int:
@@ -130,7 +125,6 @@ class MusicState:
                 logger.warning(f"[{self.guild.name}] [Autoplay] 탐색 결과, 추천 곡을 찾지 못했습니다.")
                 return
 
-            # [수정] 최근 5곡의 정규화된 제목을 세트로 만듭니다.
             recent_titles = set(list(self.autoplay_history)[-5:])
 
             potential_songs = []
@@ -140,7 +134,6 @@ class MusicState:
                 entry_title = entry.get('title')
                 normalized_entry_title = self._normalize_title(entry_title)
                 
-                # 정규화된 제목이 비어있거나, 최근 재생 목록에 있거나, 길이가 부적합하면 제외
                 if not normalized_entry_title or normalized_entry_title in recent_titles:
                     continue
                 if not (60 < entry.get('duration', 0) < 900):
@@ -156,7 +149,6 @@ class MusicState:
                 new_song_obj = Song(new_song_data, bot_member)
                 self.queue.append(new_song_obj)
                 
-                # 기록에는 정규화된 제목을 추가합니다.
                 final_normalized_title = self._normalize_title(new_song_obj.title)
                 if final_normalized_title:
                     self.autoplay_history.append(final_normalized_title)
