@@ -4,19 +4,6 @@ from discord import ui
 
 # --- 이 파일은 UI 관련 클래스만 모아놓은 곳입니다. ---
 
-class VolumeModal(ui.Modal, title="🔊 볼륨 조절"):
-    volume_input = ui.TextInput(label="볼륨 (0 ~ 100)", placeholder="예: 75", required=True, min_length=1, max_length=3)
-    def __init__(self, cog, state):
-        super().__init__()
-        self.cog, self.state = cog, state
-    async def on_submit(self, interaction: discord.Interaction):
-        try:
-            new_volume = int(self.volume_input.value)
-            if not (0 <= new_volume <= 100): raise ValueError
-            await self.cog.handle_volume(interaction, new_volume / 100.0)
-        except ValueError:
-            await interaction.response.send_message("0에서 100 사이의 숫자만 입력해주세요.", ephemeral=True)
-
 class SearchSelect(ui.Select):
     def __init__(self, cog, search_results: List[dict]):
         self.cog = cog
@@ -160,7 +147,6 @@ class FavoritesSelect(ui.Select):
 class FavoritesView(ui.View):
     def __init__(self, cog, interaction: discord.Interaction, favorites: List[dict]):
         super().__init__(timeout=300)
-        # 경로 수정
         from .music_utils import BOT_EMBED_COLOR
         self.cog = cog
         self.original_interaction = interaction
@@ -176,19 +162,18 @@ class FavoritesView(ui.View):
         title = "❤️ 즐겨찾기 (삭제 모드)" if self.is_delete_mode else "❤️ 즐겨찾기 (추가 모드)"
         embed = discord.Embed(title=title, color=self.BOT_EMBED_COLOR)
         
-        lines = []
-        if not self.favorites:
-            description = "즐겨찾기 목록이 비어있습니다."
-        else:
+        description = "즐겨찾기 목록이 비어있습니다." # 기본 설명
+        if self.favorites:
+            lines = []
             for fav in self.favorites:
                 line = fav['title']
                 if fav['url'] in self.selected_urls:
                     line = f"**✅ {line}**"
-                else:
-                    line = f"**⬜ {line}**"
                 lines.append(line)
             description = "\n".join(lines)
         
+        # [수정] embed.description에 생성된 목록을 할당합니다.
+        embed.description = description
         embed.set_footer(text=f"총 {len(self.favorites)}곡 | 선택됨: {len(self.selected_urls)}곡")
         return embed
 
@@ -298,7 +283,6 @@ class EffectSelect(ui.Select):
 class MusicPlayerView(ui.View):
     def __init__(self, cog, state):
         super().__init__(timeout=None)
-        # 경로 수정
         from .music_utils import LoopMode, LOOP_MODE_DATA
         self.cog, self.state = cog, state
         self.LoopMode = LoopMode
@@ -342,10 +326,6 @@ class MusicPlayerView(ui.View):
         fav_list_btn = ui.Button(label="즐겨찾기", style=discord.ButtonStyle.blurple, emoji="❤️", row=1)
         fav_list_btn.callback = self.show_favorites
         self.add_item(fav_list_btn)
-
-        volume_btn = ui.Button(label="볼륨", style=discord.ButtonStyle.blurple, emoji="🔊", row=1)
-        volume_btn.callback = self.open_volume_modal
-        self.add_item(volume_btn)
         
         self.add_item(EffectSelect(self.cog, self.state.current_effect))
 
@@ -380,6 +360,3 @@ class MusicPlayerView(ui.View):
         await self.cog.handle_queue(i)
     async def show_favorites(self, i: discord.Interaction): 
         await self.cog.handle_view_favorites(i)
-    async def open_volume_modal(self, i: discord.Interaction):
-        state = await self.cog.get_music_state(i.guild.id)
-        await i.response.send_modal(VolumeModal(self.cog, state))

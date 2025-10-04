@@ -33,24 +33,6 @@ class MusicAgentCog(commands.Cog):
         self.music_states = {}
         self.tts_lock = asyncio.Lock()
 
-    async def _prefetch_song_url(self, song: Song):
-        """노래의 스트리밍 URL을 백그라운드에서 미리 가져옵니다."""
-        try:
-            # 이미 stream_url이 있다면 작업을 수행하지 않습니다.
-            if song.stream_url:
-                return
-
-            logger.debug(f"Prefetching URL for: {song.title}")
-            data = await self.bot.loop.run_in_executor(
-                None,
-                lambda: ytdl.extract_info(song.webpage_url, download=False)
-            )
-            song.stream_url = data.get('url')
-            if not song.stream_url:
-                logger.warning(f"Failed to prefetch URL for: {song.title}")
-        except Exception as e:
-            logger.error(f"Error prefetching URL for '{song.title}': {e}", exc_info=False)
-
     @commands.Cog.listener()
     async def on_ready(self):
         if MUSIC_CHANNEL_ID == 0:
@@ -170,7 +152,6 @@ class MusicAgentCog(commands.Cog):
         
         try:
             is_playlist_url = 'list=' in query and URL_REGEX.match(query)
-            # 검색 시에는 정보를 미리 가져와야 하므로 download=True로 설정하지 않음
             search_query = query if URL_REGEX.match(query) else f"ytsearch3:{query}"
 
             data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False))
@@ -187,8 +168,6 @@ class MusicAgentCog(commands.Cog):
                     if song_data:
                         song = Song(song_data, interaction.user)
                         state.queue.append(song)
-                        # 백그라운드에서 스트리밍 URL 미리 가져오기
-                        self.bot.loop.create_task(self._prefetch_song_url(song))
                         added_count += 1
                 
                 playlist_title = data.get('title', '이름 없는 재생목록')
@@ -208,8 +187,6 @@ class MusicAgentCog(commands.Cog):
             else:
                 song = Song(data, interaction.user)
                 state.queue.append(song)
-                # 백그라운드에서 스트리밍 URL 미리 가져오기
-                self.bot.loop.create_task(self._prefetch_song_url(song))
                 logger.info(f"[{interaction.guild.name}] 대기열 추가: '{song.title}' (요청자: {interaction.user.display_name})")
                 await interaction.followup.send(embed=song.to_embed("✅ 대기열 추가됨: "))
 
@@ -227,8 +204,6 @@ class MusicAgentCog(commands.Cog):
         state.cancel_autoplay_task()
         song = Song(song_data, interaction.user)
         state.queue.append(song)
-        # 백그라운드에서 스트리밍 URL 미리 가져오기
-        self.bot.loop.create_task(self._prefetch_song_url(song))
         logger.info(f"[{interaction.guild.name}] 대기열 추가 (검색): '{song.title}' (요청자: {interaction.user.display_name})")
         
         if state.voice_client and not (state.voice_client.is_playing() or state.voice_client.is_paused()):
@@ -273,29 +248,6 @@ class MusicAgentCog(commands.Cog):
         embed = self.create_queue_embed(state)
         view = QueueManagementView(self, state)
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
-
-    async def handle_volume(self, interaction: discord.Interaction, volume: float):
-        state = await self.get_music_state(interaction.guild.id)
-        state.volume = max(0.0, min(1.0, volume))
-        logger.info(f"[{interaction.guild.name}] 볼륨 변경: {int(state.volume * 100)}% (요청자: {interaction.user.display_name})")
-        
-        data = await load_favorites()
-        guild_id_str = str(interaction.guild.id)
-
-        if "_guild_settings" not in data:
-            data["_guild_settings"] = {}
-        if guild_id_str not in data["_guild_settings"]:
-            data["_guild_settings"][guild_id_str] = {}
-
-        data["_guild_settings"][guild_id_str]['volume'] = state.volume
-        await save_favorites(data)
-
-        if state.voice_client and state.voice_client.source:
-            if isinstance(state.voice_client.source, discord.PCMVolumeTransformer):
-                state.voice_client.source.volume = state.volume
-
-        await state.schedule_ui_update()
-        await interaction.response.send_message(f"🔊 볼륨을 {int(state.volume * 100)}%로 조절했습니다.", ephemeral=True)
 
     async def handle_play_pause(self, interaction: discord.Interaction):
         state = await self.get_music_state(interaction.guild.id)
@@ -381,12 +333,9 @@ class MusicAgentCog(commands.Cog):
         count = 0
         for url in urls:
             try:
-                # 여기서도 ytdl을 호출하여 기본 정보를 먼저 가져옵니다.
                 data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
                 song = Song(data, interaction.user)
                 state.queue.append(song)
-                # 백그라운드에서 스트리밍 URL 미리 가져오기
-                self.bot.loop.create_task(self._prefetch_song_url(song))
                 count += 1
             except Exception as e:
                 logger.warning(f"즐겨찾기 노래 추가 실패 ({url}): {e}")
