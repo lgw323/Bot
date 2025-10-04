@@ -5,6 +5,7 @@ import re
 from collections import deque
 from typing import Optional, List
 from datetime import datetime, timedelta
+import time # 추가: 마지막 업데이트 시간을 추적하기 위해 time 모듈을 임포트합니다.
 
 import discord
 from discord.ext import commands
@@ -62,11 +63,14 @@ class MusicState:
         self.is_tts_interrupting = False
 
         self.update_lock = asyncio.Lock()
-        self.needs_update = asyncio.Event()
+        
+        # --- 지능형 UI 업데이트를 위한 상태 변수 ---
+        self.UI_UPDATE_COOLDOWN = 2.0  # API 호출 후 최소 대기 시간 (초)
+        self.last_update_time: float = 0.0 # 마지막 업데이트 성공 시간
+        self.ui_update_task: Optional[asyncio.Task] = None # 예약된 업데이트 작업
 
         self.main_task = self.bot.loop.create_task(self.play_song_loop())
         self.progress_updater_task = self.bot.loop.create_task(self.update_progress_loop())
-        self.ui_updater_task = self.bot.loop.create_task(self.ui_updater_loop())
         logger.info(f"[{self.guild.name}] MusicState 생성됨 (초기 볼륨: {int(self.volume * 100)}%)")
 
     def _normalize_title(self, title: str) -> str:
@@ -208,7 +212,6 @@ class MusicState:
         self.cancel_autoplay_task()
         if self.main_task: self.main_task.cancel()
         if self.progress_updater_task: self.progress_updater_task.cancel()
-        if self.ui_updater_task: self.ui_updater_task.cancel()
         
         self.current_song = None
         self.queue.clear()
@@ -223,48 +226,66 @@ class MusicState:
                 self.voice_client = None
 
         if self.now_playing_message:
+            # cleanup 시에도 스케줄러를 통해 안전하게 UI 업데이트
+            await self.schedule_ui_update()
+    
+    async def schedule_ui_update(self):
+        """지능형 UI 업데이트 스케줄러. API 호출을 최소화합니다."""
+        current_time = time.time()
+        time_since_last_update = current_time - self.last_update_time
+
+        # 이미 예약된 업데이트가 있다면 취소 (최신 요청만 처리)
+        if self.ui_update_task and not self.ui_update_task.done():
+            self.ui_update_task.cancel()
+
+        if time_since_last_update >= self.UI_UPDATE_COOLDOWN:
+            # 쿨타임이 지났으면 즉시 업데이트 실행
+            self.bot.loop.create_task(self._execute_ui_update())
+        else:
+            # 쿨타임 중이면, 남은 시간만큼 기다렸다가 업데이트하도록 예약
+            delay = self.UI_UPDATE_COOLDOWN - time_since_last_update
+            self.ui_update_task = self.bot.loop.create_task(self._delayed_ui_update(delay))
+
+    async def _delayed_ui_update(self, delay: float):
+        """예약된 UI 업데이트를 실행하는 내부 함수."""
+        try:
+            await asyncio.sleep(delay)
+            await self._execute_ui_update()
+        except asyncio.CancelledError:
+            # 최신 요청에 의해 작업이 취소된 경우
+            pass
+        finally:
+            self.ui_update_task = None
+
+    async def _execute_ui_update(self):
+        """실제로 Discord API를 호출하여 메시지를 수정하는 함수."""
+        async with self.update_lock:
             try:
                 embed = self.create_now_playing_embed()
                 view = MusicPlayerView(self.cog, self)
-                await self.now_playing_message.edit(embed=embed, view=view)
-            except (discord.HTTPException, RuntimeError):
-                pass
-    
-    async def update_now_playing_message(self):
-        if not self.needs_update.is_set():
-            self.needs_update.set()
-
-    async def ui_updater_loop(self):
-        await self.bot.wait_until_ready()
-        while not self.bot.is_closed():
-            await self.needs_update.wait()
-            self.needs_update.clear()
-
-            async with self.update_lock:
-                try:
-                    embed = self.create_now_playing_embed()
-                    view = MusicPlayerView(self.cog, self)
-                    if self.now_playing_message:
-                        await self.now_playing_message.edit(embed=embed, view=view)
-                    elif self.text_channel:
-                        self.now_playing_message = await self.text_channel.send(embed=embed, view=view)
-                except discord.HTTPException as e:
-                    if e.status == 429:
-                        await asyncio.sleep(5)
-                        self.needs_update.set()
-                    else:
-                        logger.error(f"[{self.guild.name}] Now Playing 메시지 업데이트/전송 실패: {e}")
-                except Exception as e:
-                     logger.error(f"[{self.guild.name}] Now Playing 메시지 처리 중 예기치 않은 오류: {e}")
+                if self.now_playing_message:
+                    await self.now_playing_message.edit(embed=embed, view=view)
+                elif self.text_channel:
+                    self.now_playing_message = await self.text_channel.send(embed=embed, view=view)
                 
-                await asyncio.sleep(2)
+                # 성공적으로 API를 호출했으므로, 마지막 업데이트 시간 기록
+                self.last_update_time = time.time()
+            except discord.HTTPException as e:
+                if e.status == 429: # Rate Limit
+                    logger.warning(f"[{self.guild.name}] UI 업데이트 중 API 호출 제한에 걸렸습니다. 5초 후 재시도합니다.")
+                    await asyncio.sleep(5)
+                    self.bot.loop.create_task(self._execute_ui_update()) # 재시도
+                else:
+                    logger.error(f"[{self.guild.name}] Now Playing 메시지 업데이트/전송 실패: {e}")
+            except Exception as e:
+                 logger.error(f"[{self.guild.name}] Now Playing 메시지 처리 중 예기치 않은 오류: {e}")
 
     async def update_progress_loop(self):
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
             await asyncio.sleep(10)
             if self.voice_client and self.current_song and not self.voice_client.is_paused():
-                await self.update_now_playing_message()
+                await self.schedule_ui_update() # 기존 update_now_playing_message()를 스케줄러 호출로 변경
 
     async def play_song_loop(self):
         await self.bot.wait_until_ready()
@@ -287,11 +308,11 @@ class MusicState:
                     self.autoplay_task = self.bot.loop.create_task(self._prefetch_autoplay_song(previous_song))
 
                 if previous_song is not None:
-                    await self.update_now_playing_message()
+                    await self.schedule_ui_update() # 기존 update_now_playing_message()를 스케줄러 호출로 변경
                 continue
 
             if self.current_song != previous_song:
-                await self.update_now_playing_message()
+                await self.schedule_ui_update() # 기존 update_now_playing_message()를 스케줄러 호출로 변경
                 await self.cog.cleanup_channel_messages(self)
             
             try:

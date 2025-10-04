@@ -111,10 +111,10 @@ class MusicAgentCog(commands.Cog):
                                 state.now_playing_message = message
                                 break
                         if state.now_playing_message:
-                            await state.update_now_playing_message()
+                            await state.schedule_ui_update() # 기존 update_now_playing_message()를 스케줄러 호출로 변경
                         else:
                              await channel.purge(limit=100, check=lambda m: m.author == self.bot.user)
-                             await state.update_now_playing_message()
+                             await state.schedule_ui_update() # 기존 update_now_playing_message()를 스케줄러 호출로 변경
 
                     except discord.Forbidden:
                         logger.warning(f"[{guild.name}] '{channel.name}' 채널의 메시지를 읽거나 삭제할 권한이 없습니다.")
@@ -193,7 +193,7 @@ class MusicAgentCog(commands.Cog):
             if state.voice_client and not (state.voice_client.is_playing() or state.voice_client.is_paused()):
                 state.play_next_song.set()
 
-            await state.update_now_playing_message()
+            await state.schedule_ui_update() # 기존 update_now_playing_message()를 스케줄러 호출로 변경
 
         except Exception as e:
             logger.error(f"[{interaction.guild.name}] 노래 정보 처리 중 오류", exc_info=True)
@@ -208,7 +208,7 @@ class MusicAgentCog(commands.Cog):
         
         if state.voice_client and not (state.voice_client.is_playing() or state.voice_client.is_paused()):
             state.play_next_song.set()
-        await state.update_now_playing_message()
+        await state.schedule_ui_update() # 기존 update_now_playing_message()를 스케줄러 호출로 변경
 
     async def handle_skip(self, interaction: discord.Interaction):
         state = await self.get_music_state(interaction.guild.id)
@@ -269,7 +269,7 @@ class MusicAgentCog(commands.Cog):
             if isinstance(state.voice_client.source, discord.PCMVolumeTransformer):
                 state.voice_client.source.volume = state.volume
 
-        await state.update_now_playing_message()
+        await state.schedule_ui_update() # 기존 update_now_playing_message()를 스케줄러 호출로 변경
         await interaction.response.send_message(f"🔊 볼륨을 {int(state.volume * 100)}%로 조절했습니다.", ephemeral=True)
 
     async def handle_play_pause(self, interaction: discord.Interaction):
@@ -286,7 +286,7 @@ class MusicAgentCog(commands.Cog):
             elif state.voice_client.is_playing():
                 state.voice_client.pause()
                 state.pause_start_time = discord.utils.utcnow()
-            await state.update_now_playing_message()
+            await state.schedule_ui_update() # 기존 update_now_playing_message()를 스케줄러 호출로 변경
             await interaction.response.defer()
 
     async def handle_loop(self, interaction: discord.Interaction):
@@ -295,7 +295,7 @@ class MusicAgentCog(commands.Cog):
         next_mode_value = (current_mode_value + 1) % 3
         state.loop_mode = LoopMode(next_mode_value)
         logger.info(f"[{interaction.guild.name}] 반복 모드 변경: {state.loop_mode.name} (요청자: {interaction.user.display_name})")
-        await state.update_now_playing_message()
+        await state.schedule_ui_update() # 기존 update_now_playing_message()를 스케줄러 호출로 변경
         await interaction.response.defer()
 
     async def handle_toggle_auto_play(self, interaction: discord.Interaction):
@@ -307,7 +307,7 @@ class MusicAgentCog(commands.Cog):
         if not state.auto_play_enabled:
             state.cancel_autoplay_task()
 
-        await state.update_now_playing_message()
+        await state.schedule_ui_update() # 기존 update_now_playing_message()를 스케줄러 호출로 변경
         await interaction.response.send_message(f"🎶 자동 재생을 {status}했습니다.", ephemeral=True, delete_after=5)
 
     async def handle_add_favorite(self, interaction: discord.Interaction):
@@ -367,7 +367,7 @@ class MusicAgentCog(commands.Cog):
         if count > 0 and state.voice_client and not (state.voice_client.is_playing() or state.voice_client.is_paused()):
             state.play_next_song.set()
 
-        await state.update_now_playing_message()
+        await state.schedule_ui_update() # 기존 update_now_playing_message()를 스케줄러 호출로 변경
         
         return count, joined_vc
 
@@ -395,7 +395,7 @@ class MusicAgentCog(commands.Cog):
         random.shuffle(queue_list)
         state.queue = deque(queue_list)
         logger.info(f"[{interaction.guild.name}] 대기열 섞음 (요청자: {interaction.user.display_name})")
-        await state.update_now_playing_message()
+        await state.schedule_ui_update() # 기존 update_now_playing_message()를 스케줄러 호출로 변경
         await interaction.response.send_message("🔀 대기열을 섞었습니다!", ephemeral=True, delete_after=5)
 
     async def handle_clear_queue(self, interaction: discord.Interaction, original_interaction: discord.Interaction):
@@ -403,7 +403,7 @@ class MusicAgentCog(commands.Cog):
         state.cancel_autoplay_task()
         count = len(state.queue)
         state.queue.clear()
-        await state.update_now_playing_message()
+        await state.schedule_ui_update() # 기존 update_now_playing_message()를 스케줄러 호출로 변경
         logger.info(f"[{interaction.guild.name}] 대기열의 {count}곡 삭제 (요청자: {interaction.user.display_name})")
         await original_interaction.edit_original_response(content=f"🗑️ 대기열의 노래 {count}개를 모두 삭제했습니다.", view=None)
 
@@ -489,7 +489,7 @@ class MusicAgentCog(commands.Cog):
             await interaction.response.send_message(f"🎧 효과를 **{effect.capitalize()}**(으)로 즉시 변경합니다.", ephemeral=True, delete_after=5)
         else:
             state.current_effect = effect
-            await state.update_now_playing_message()
+            await state.schedule_ui_update() # 기존 update_now_playing_message()를 스케줄러 호출로 변경
             await interaction.response.send_message(f"🎧 다음 곡부터 **'{effect.capitalize()}'** 효과가 적용됩니다.", ephemeral=True)
 
 
