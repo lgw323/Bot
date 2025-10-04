@@ -13,6 +13,8 @@ logger = logging.getLogger("MusicCog")
 # --- 상수 설정 ---
 BOT_EMBED_COLOR = 0x2ECC71
 FAVORITES_FILE = "data/favorites.json"
+# [추가] 음악 봇 설정을 위한 별도 파일
+MUSIC_SETTINGS_FILE = "data/music_settings.json"
 MUSIC_CHANNEL_ID = int(os.getenv("MUSIC_CHANNEL_ID", "0"))
 # [수정] music.youtube.com을 포함하도록 정규 표현식 확장
 URL_REGEX = re.compile(r'https?://(?:www\.)?(?:music\.youtube\.com|youtube\.com|youtu\.be)/.+')
@@ -38,15 +40,20 @@ FFMPEG_OPTIONS = {
 }
 ytdl = yt_dlp.YoutubeDL(YTDL_OPTIONS)
 
-# --- 즐겨찾기 데이터 관리 ---
+# --- 데이터 관리 (분리) ---
 favorites_lock = asyncio.Lock()
+settings_lock = asyncio.Lock()
 
 async def load_favorites():
     async with favorites_lock:
         if not os.path.exists(FAVORITES_FILE): return {}
         try:
             with open(FAVORITES_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                data = json.load(f)
+                # [수정] 길드 설정 부분을 제거하여 순수 즐겨찾기 데이터만 관리
+                if "_guild_settings" in data:
+                    del data["_guild_settings"]
+                return data
         except (json.JSONDecodeError, IOError):
             return {}
 
@@ -54,6 +61,46 @@ async def save_favorites(data):
     async with favorites_lock:
         with open(FAVORITES_FILE, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
+
+# [추가] 음악 설정 파일 관리 함수
+async def load_music_settings():
+    async with settings_lock:
+        if not os.path.exists(MUSIC_SETTINGS_FILE):
+            return {}
+        try:
+            with open(MUSIC_SETTINGS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            return {}
+
+async def save_music_settings(data):
+    async with settings_lock:
+        os.makedirs(os.path.dirname(MUSIC_SETTINGS_FILE), exist_ok=True)
+        with open(MUSIC_SETTINGS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+
+# [추가] 평균 소요 시간 업데이트 함수
+async def update_timing_stat(guild_id: int, task_type: str, new_duration_ms: int):
+    """지수 이동 평균을 사용하여 작업 소요 시간을 업데이트합니다."""
+    guild_id_str = str(guild_id)
+    settings = await load_music_settings()
+    
+    guild_settings = settings.setdefault(guild_id_str, {})
+    timings = guild_settings.setdefault("timings_ms", {})
+    
+    current_avg = timings.get(task_type)
+    
+    # α (alpha) 값 설정 (0.2는 최근 데이터에 20%의 가중치를 둠)
+    alpha = 0.2
+    
+    if current_avg is None:
+        new_avg = new_duration_ms
+    else:
+        new_avg = int((1 - alpha) * current_avg + alpha * new_duration_ms)
+        
+    timings[task_type] = new_avg
+    await save_music_settings(settings)
+    logger.debug(f"[{guild_id_str}] Timing updated for '{task_type}': {current_avg}ms -> {new_avg}ms (new: {new_duration_ms}ms)")
 
 # --- 열거형 및 데이터 클래스 ---
 class LoopMode(Enum):

@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import random
+import time
 from collections import deque
 from typing import Optional
 
@@ -21,7 +22,8 @@ except ImportError:
 from .music_core import MusicState
 from .music_utils import (
     Song, LoopMode, LOOP_MODE_DATA, ytdl, URL_REGEX, MUSIC_CHANNEL_ID,
-    load_favorites, save_favorites, BOT_EMBED_COLOR
+    load_favorites, save_favorites, BOT_EMBED_COLOR,
+    load_music_settings, save_music_settings, update_timing_stat
 )
 from .music_ui import QueueManagementView, FavoritesView, SearchSelect
 
@@ -104,8 +106,9 @@ class MusicAgentCog(commands.Cog):
             if not guild:
                 raise RuntimeError(f"Guild with ID {guild_id} not found.")
 
-            data = await load_favorites()
-            guild_settings = data.get("_guild_settings", {}).get(str(guild_id), {})
+            # [수정] guild_settings를 music_settings.json에서 로드
+            settings = await load_music_settings()
+            guild_settings = settings.get(str(guild_id), {})
             initial_volume = guild_settings.get("volume", 0.5)
 
             state = MusicState(self.bot, self, guild, initial_volume=initial_volume)
@@ -143,16 +146,29 @@ class MusicAgentCog(commands.Cog):
             logger.debug(f"[{state.guild.name}] 채팅 정리 중 오류: {e}")
 
     async def handle_play(self, interaction: discord.Interaction, query: str):
-        await interaction.response.defer(ephemeral=True, thinking=True)
+        await interaction.response.defer(ephemeral=True)
         
         music_channel = self.bot.get_channel(MUSIC_CHANNEL_ID)
         if interaction.channel_id != MUSIC_CHANNEL_ID:
-            return await interaction.followup.send(f"노래 명령어는 {music_channel.mention} 채널에서만 사용할 수 있습니다.")
+            await interaction.edit_original_response(content=f"노래 명령어는 {music_channel.mention} 채널에서만 사용할 수 있습니다.")
+            return
 
         state = await self.get_music_state(interaction.guild.id)
 
+        # [추가] 예상 소요 시간 안내
+        settings = await load_music_settings()
+        is_url = URL_REGEX.match(query)
+        task_type = 'url' if is_url else 'search'
+        avg_time_ms = settings.get(str(interaction.guild.id), {}).get("timings_ms", {}).get(task_type)
+        
+        preliminary_message_content = "🔎 노래 정보를 처리하고 있습니다..."
+        if avg_time_ms:
+            preliminary_message_content += f" (예상 시간: 약 {avg_time_ms / 1000:.1f}초)"
+        await interaction.edit_original_response(content=preliminary_message_content)
+
         if not interaction.user.voice or not interaction.user.voice.channel:
-            return await interaction.followup.send("음성 채널에 먼저 참여해주세요.", ephemeral=True)
+            await interaction.edit_original_response(content="음성 채널에 먼저 참여해주세요.")
+            return
         
         if not state.voice_client or not state.voice_client.is_connected():
             state.voice_client = await interaction.user.voice.channel.connect(timeout=20.0, self_deaf=True)
@@ -160,16 +176,23 @@ class MusicAgentCog(commands.Cog):
             await state.voice_client.move_to(interaction.user.voice.channel)
         
         try:
-            is_playlist_url = 'list=' in query and URL_REGEX.match(query)
-            search_query = query if URL_REGEX.match(query) else f"ytsearch3:{query}"
+            # [추가] 시간 측정 시작
+            start_time = time.monotonic()
+            
+            is_playlist_url = 'list=' in query and is_url
+            search_query = query if is_url else f"ytsearch3:{query}"
 
             data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False))
+
+            # [추가] 시간 측정 종료 및 업데이트
+            duration_ms = int((time.monotonic() - start_time) * 1000)
+            await update_timing_stat(interaction.guild.id, task_type, duration_ms)
 
             if is_playlist_url and 'entries' in data:
                 state.cancel_autoplay_task()
                 entries = data.get('entries', [])
                 if not entries:
-                    await interaction.followup.send("재생목록을 처리할 수 없거나 비어있습니다.")
+                    await interaction.edit_original_response(content="재생목록을 처리할 수 없거나 비어있습니다.")
                     return
 
                 added_count = 0
@@ -181,23 +204,23 @@ class MusicAgentCog(commands.Cog):
                 
                 playlist_title = data.get('title', '이름 없는 재생목록')
                 logger.info(f"[{interaction.guild.name}] 재생목록 추가: '{playlist_title}'에서 {added_count}곡 (요청자: {interaction.user.display_name})")
-                await interaction.followup.send(f"✅ 재생목록에서 **{added_count}**개의 노래를 대기열에 추가했습니다.")
+                await interaction.edit_original_response(content=f"✅ 재생목록에서 **{added_count}**개의 노래를 대기열에 추가했습니다.")
 
             elif 'entries' in data:
                 entries = data.get('entries', [])
                 if not entries:
-                    await interaction.followup.send("노래 정보를 찾을 수 없습니다.")
+                    await interaction.edit_original_response(content="노래 정보를 찾을 수 없습니다.")
                     return
                 view = ui.View(timeout=180)
                 view.add_item(SearchSelect(self, entries))
-                await interaction.followup.send(content="**🔎 검색 결과:**", view=view, ephemeral=True)
+                await interaction.edit_original_response(content="**🔎 검색 결과:**", view=view)
                 return
 
             else:
                 song = Song(data, interaction.user)
                 state.queue.append(song)
                 logger.info(f"[{interaction.guild.name}] 대기열 추가: '{song.title}' (요청자: {interaction.user.display_name})")
-                await interaction.followup.send(embed=song.to_embed("✅ 대기열 추가됨: "))
+                await interaction.edit_original_response(content=None, embed=song.to_embed("✅ 대기열 추가됨: "))
 
             if state.voice_client and not (state.voice_client.is_playing() or state.voice_client.is_paused()):
                 state.play_next_song.set()
@@ -206,7 +229,7 @@ class MusicAgentCog(commands.Cog):
 
         except Exception as e:
             logger.error(f"[{interaction.guild.name}] 노래 정보 처리 중 오류", exc_info=True)
-            await interaction.followup.send("노래 정보를 가져오는 중 오류가 발생했습니다.")
+            await interaction.edit_original_response(content="노래 정보를 가져오는 중 오류가 발생했습니다.")
 
     async def queue_song(self, interaction: discord.Interaction, song_data: dict):
         state = await self.get_music_state(interaction.guild.id)
@@ -342,7 +365,13 @@ class MusicAgentCog(commands.Cog):
         count = 0
         for url in urls:
             try:
+                # [추가] 시간 측정 시작
+                start_time = time.monotonic()
                 data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
+                # [추가] 시간 측정 종료 및 업데이트
+                duration_ms = int((time.monotonic() - start_time) * 1000)
+                await update_timing_stat(interaction.guild.id, 'favorites', duration_ms)
+                
                 song = Song(data, interaction.user)
                 state.queue.append(song)
                 count += 1
