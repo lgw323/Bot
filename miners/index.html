@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSC-MINER v2.1</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="scanline"></div>
+
+    <div class="container" id="main-container">
+        <header>
+            <h1 class="glitch" data-text="DSC-MINER_v2.1">DSC-MINER_v2.1</h1>
+        </header>
+
+        <div class="grid-container">
+            <!-- Panel 1: Target Info -->
+            <div class="grid-item terminal-box">
+                <h2>> TARGET_INFO</h2>
+                <p><strong>SEED:</strong> <code id="seed-value">...</code></p>
+                <p><strong>TARGET:</strong> <code id="target-value">...</code></p>
+            </div>
+
+            <!-- Panel 2: Mining Status -->
+            <div class="grid-item terminal-box">
+                <h2>> MINING_STATUS</h2>
+                <p><strong>STATUS:</strong> <span id="status-message">STANDBY</span></p>
+                <p><strong>ELAPSED:</strong> <span id="timer">00:00:00</span></p>
+                <p><strong>SPEED:</strong> <span id="hash-rate">0 H/s</span></p>
+                <p><strong>NONCE:</strong> <span id="nonce-value">0</span></p>
+                <div class="progress-bar-container">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+            </div>
+
+            <!-- Panel 3: Controls -->
+            <div class="grid-item terminal-box" id="controls">
+                <h2>> CONTROLS</h2>
+                <button id="start-btn" class="terminal-button">INITIATE_MINING</button>
+                <button id="stop-btn" class="terminal-button secondary" disabled>TERMINATE</button>
+            </div>
+            
+            <!-- Panel 4: Result -->
+            <div class="grid-item terminal-box" id="result-panel" style="display: none;">
+                <h2>> RESULT</h2>
+                <p class="success-message" id="result-message">TARGET_ACQUIRED</p>
+                <p><strong>NONCE:</strong> <code id="result-nonce"></code></p>
+                <p><strong>HASH:</strong> <code id="result-hash"></code></p>
+                <button id="copy-nonce-btn" class="terminal-button">COPY_NONCE</button>
+            </div>
+
+            <!-- Panel 5: Practice Quiz -->
+            <div class="grid-item terminal-box practice-quiz-panel">
+                <h2>> CALCULATION_MODULE</h2>
+                <p id="practice-status">IDLE...</p>
+                <div id="practice-quiz-container">
+                    <p id="practice-question" class="terminal-text"></p>
+                    <input type="number" id="practice-answer" placeholder="> 정답 입력..." autocomplete="off">
+                    <button id="practice-submit-btn" class="terminal-button">SUBMIT</button>
+                </div>
+                <p>SOLVED: <span id="solved-counter">0</span></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="miner.js"></script>
+</body>
+</html>
