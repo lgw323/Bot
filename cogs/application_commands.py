@@ -7,7 +7,7 @@ from discord.ext import commands
 from discord import app_commands
 
 # --- 다른 파일에서 기능 로직 임포트 ---
-from cogs.finance.finance_agent import create_briefing_embed
+from finance_agent import create_briefing_embed
 
 # --- 로거 및 상수 ---
 logger = logging.getLogger(__name__)
