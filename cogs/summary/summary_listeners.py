@@ -7,7 +7,8 @@ import discord
 from discord.ext import commands, tasks
 from discord import ui
 
-from summarizer_agent import (
+# 동일 디렉토리 내의 summarizer_agent 모듈을 명시적으로 참조하도록 변경
+from .summarizer_agent import (
     initialize_openai_client,
     initialize_tiktoken_encoder,
     gpt_summarize,
@@ -149,7 +150,6 @@ class SummaryListenersCog(commands.Cog):
         if pruned_count > 0:
             logger.info(f"오래된 메시지 {pruned_count}개 삭제됨. (현재 보유 {len(self.message_log)}개)")
         
-    # [수정] execute_summary를 Cog의 온전한 메서드로 통합
     async def execute_summary(self, interaction: discord.Interaction, hours: float, **kwargs):
         target_channel = self.bot.get_channel(SUMMARY_CHANNEL_ID)
         if not target_channel:
@@ -161,16 +161,23 @@ class SummaryListenersCog(commands.Cog):
             threshold_time = now_utc - timedelta(hours=hours)
             guild_id = interaction.guild.id
             
-            logs_to_process = list(self.message_log)
-            # ... (필터링 로직은 기존과 동일) ...
-            
-            logs_to_summarize = [log for log in logs_to_process if log[0] >= threshold_time and log[1] == guild_id]
+            # 필터링 로직 추가 (kwargs에서 키워드와 사용자 필터링)
+            keywords = [k.strip().lower() for k in kwargs.get('keywords', '').split(',') if k.strip()] if kwargs.get('keywords') else []
+            users = [u.strip().lower() for u in kwargs.get('users', '').split(',') if u.strip()] if kwargs.get('users') else []
 
-            if not logs_to_summarize:
+            logs_to_process = [log for log in self.message_log if log[0] >= threshold_time and log[1] == guild_id]
+
+            if keywords:
+                logs_to_process = [log for log in logs_to_process if any(kw in log[4].lower() for kw in keywords)]
+            
+            if users:
+                logs_to_process = [log for log in logs_to_process if log[3].lower() in users]
+
+            if not logs_to_process:
                 await interaction.followup.send(f"지난 {hours}시간 동안 #{target_channel.name} 채널에서 요약할 메시지가 없습니다.", ephemeral=True)
                 return
 
-            summary_text, input_tokens = await gpt_summarize(logs_to_summarize, **kwargs)
+            summary_text, input_tokens = await gpt_summarize(logs_to_process, **kwargs)
             structured_summary = parse_summary_to_structured_data(summary_text)
 
             if not structured_summary or not structured_summary.get('topics'):
