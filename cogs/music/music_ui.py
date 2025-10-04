@@ -162,17 +162,20 @@ class FavoritesView(ui.View):
         title = "❤️ 즐겨찾기 (삭제 모드)" if self.is_delete_mode else "❤️ 즐겨찾기 (추가 모드)"
         embed = discord.Embed(title=title, color=self.BOT_EMBED_COLOR)
         
-        description = "즐겨찾기 목록이 비어있습니다." # 기본 설명
-        if self.favorites:
-            lines = []
+        lines = []
+        if not self.favorites:
+            description = "즐겨찾기 목록이 비어있습니다."
+        else:
             for fav in self.favorites:
                 line = fav['title']
+                # [수정] 선택 여부에 따라 아이콘을 다르게 표시
                 if fav['url'] in self.selected_urls:
                     line = f"**✅ {line}**"
+                else:
+                    line = f"⬜ {line}"
                 lines.append(line)
             description = "\n".join(lines)
         
-        # [수정] embed.description에 생성된 목록을 할당합니다.
         embed.description = description
         embed.set_footer(text=f"총 {len(self.favorites)}곡 | 선택됨: {len(self.selected_urls)}곡")
         return embed

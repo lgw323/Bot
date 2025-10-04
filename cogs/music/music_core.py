@@ -5,13 +5,12 @@ import re
 from collections import deque
 from typing import Optional, List
 from datetime import datetime, timedelta
-import time 
+import time
 
 import discord
 from discord.ext import commands
 import yt_dlp
 
-# --- 모듈화된 파일에서 클래스와 함수 임포트 (경로 수정) ---
 from .music_utils import (
     Song, LoopMode, LOOP_MODE_DATA,
     BOT_EMBED_COLOR, YTDL_OPTIONS,
@@ -21,7 +20,6 @@ from .music_ui import MusicPlayerView
 
 logger = logging.getLogger("MusicCog")
 
-# --- 오디오 이펙트 FFmpeg 필터 정의 ---
 AUDIO_EFFECTS = {
     "none": "",
     "bassboost": "bass=g=15",
@@ -36,7 +34,6 @@ EFFECT_SPEED_FACTORS = {
     "vaporwave": 0.8,
 }
 
-# --- 상태 관리 클래스 ---
 class MusicState:
     def __init__(self, bot: commands.Bot, cog, guild: discord.Guild, initial_volume: float = 0.5):
         self.bot, self.cog, self.guild = bot, cog, guild
@@ -73,15 +70,17 @@ class MusicState:
         logger.info(f"[{self.guild.name}] MusicState 생성됨 (초기 볼륨: {int(self.volume * 100)}%)")
 
     def _normalize_title(self, title: str) -> str:
-        """노래 제목에서 버전 정보, 특수문자 등을 제거하여 정규화합니다."""
         if not title:
             return ""
         title = title.lower()
         title = re.sub(r'\([^)]*\)', '', title)
         title = re.sub(r'\[[^]]*\]', '', title)
-        keywords = ['mv', 'music video', 'official', 'audio', 'live', 'cover', 'lyrics', '가사', '공식', '커버', '라이브']
+        keywords = ['mv', 'music video', 'official', 'audio', 'live', 'cover', 'lyrics', '가사', '공식', '커버', '라이브', 'lyric video']
         for keyword in keywords:
             title = title.replace(keyword, '')
+        title = re.sub(r'\s*-\s*', ' ', title)
+        title = re.sub(r'\s*–\s*', ' ', title) # en-dash
+        title = re.sub(r'\s*—\s*', ' ', title) # em-dash
         title = re.sub(r'[^a-z0-9\s\uac00-\ud7a3]', '', title)
         return " ".join(title.split())
 
@@ -108,38 +107,45 @@ class MusicState:
             self.autoplay_task = None
 
     async def _prefetch_autoplay_song(self, last_played_song: Song):
+        """[수정] 다양성 확보를 위해 확률적 검색 방식을 도입한 자동재생 로직"""
         try:
             if not last_played_song: return
             
-            normalized_title = self._normalize_title(last_played_song.title)
-            if normalized_title:
-                self.autoplay_history.append(normalized_title)
+            last_title_normalized = self._normalize_title(last_played_song.title)
+            if last_title_normalized:
+                self.autoplay_history.append(last_title_normalized)
 
-            logger.info(f"[{self.guild.name}] [Autoplay] '{last_played_song.title}' 기반으로 다음 곡 탐색 시작.")
+            # [수정] 검색 전략을 확률적으로 선택
+            strategies = ['artist_only', 'title_only', 'hybrid']
+            # 아티스트만(40%), 제목만(40%), 둘 다(20%)
+            chosen_strategy = random.choices(strategies, weights=[40, 40, 20], k=1)[0] 
+
+            if chosen_strategy == 'artist_only':
+                search_query = f"ytsearch5:{last_played_song.uploader}"
+            elif chosen_strategy == 'title_only':
+                search_query = f"ytsearch5:{last_title_normalized}"
+            else: # hybrid
+                search_query = f"ytsearch5:{last_played_song.uploader} {last_title_normalized}"
+
+            logger.info(f"[{self.guild.name}] [Autoplay] 다음 곡 탐색 시작 (전략: {chosen_strategy}, 검색어: '{search_query}')")
             
-            ytdl_opts = YTDL_OPTIONS.copy()
-            ytdl_opts.update({'playliststart': 2, 'playlistend': 20, 'noplaylist': False})
-
-            with yt_dlp.YoutubeDL(ytdl_opts) as ydl_prefetch:
-                future = self.bot.loop.run_in_executor(None, lambda: ydl_prefetch.extract_info(last_played_song.webpage_url, download=False))
-                data = await asyncio.wait_for(future, timeout=30.0)
+            data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False, process=True))
 
             if not data or not data.get('entries'):
                 logger.warning(f"[{self.guild.name}] [Autoplay] 탐색 결과, 추천 곡을 찾지 못했습니다.")
                 return
 
-            recent_titles = set(list(self.autoplay_history)[-5:])
-
             potential_songs = []
             for entry in data.get('entries', []):
                 if not entry: continue
                 
-                entry_title = entry.get('title')
-                normalized_entry_title = self._normalize_title(entry_title)
+                entry_title_normalized = self._normalize_title(entry.get('title'))
                 
-                if not normalized_entry_title or normalized_entry_title in recent_titles:
+                if not entry_title_normalized or entry_title_normalized in self.autoplay_history:
                     continue
-                if not (60 < entry.get('duration', 0) < 900):
+                
+                duration = entry.get('duration', 0)
+                if not (60 < duration < 900):
                     continue
                 
                 potential_songs.append(entry)
@@ -152,9 +158,6 @@ class MusicState:
                 new_song_obj = Song(new_song_data, bot_member)
                 self.queue.append(new_song_obj)
                 
-                # 자동재생으로 추가된 곡도 스트리밍 URL을 미리 가져옵니다.
-                self.bot.loop.create_task(self.cog._prefetch_song_url(new_song_obj))
-
                 final_normalized_title = self._normalize_title(new_song_obj.title)
                 if final_normalized_title:
                     self.autoplay_history.append(final_normalized_title)
@@ -164,7 +167,7 @@ class MusicState:
                 if self.voice_client and not (self.voice_client.is_playing() or self.voice_client.is_paused()):
                     self.play_next_song.set()
             else:
-                logger.info(f"[{self.guild.name}] [Autoplay] 재생 기록 필터링 후 남은 후보 곡이 없습니다.")
+                logger.info(f"[{self.guild.name}] [Autoplay] 중복 및 길이 필터링 후 남은 후보 곡이 없습니다.")
 
         except asyncio.TimeoutError:
             logger.warning(f"[{self.guild.name}] [Autoplay] 다음 곡 검색 작업 시간 초과.")
@@ -174,6 +177,7 @@ class MusicState:
             logger.error(f"[{self.guild.name}] [Autoplay] Prefetch 작업 중 오류 발생", exc_info=True)
         finally:
             self.autoplay_task = None
+
 
     def create_now_playing_embed(self) -> discord.Embed:
         if self.current_song:
@@ -299,6 +303,7 @@ class MusicState:
             if not self.current_song:
                 if self.auto_play_enabled and previous_song and not self.autoplay_task:
                     self.autoplay_task = self.bot.loop.create_task(self._prefetch_autoplay_song(previous_song))
+
                 if previous_song is not None:
                     await self.schedule_ui_update()
                 continue
@@ -308,17 +313,11 @@ class MusicState:
                 await self.cog.cleanup_channel_messages(self)
             
             try:
-                stream_url = self.current_song.stream_url
-                
-                # Prefetch된 URL이 없거나 만료되었을 경우를 대비한 Fallback
-                if not stream_url:
-                    logger.warning(f"[{self.guild.name}] Stream URL for '{self.current_song.title}' not prefetched. Fetching now.")
-                    data = await self.bot.loop.run_in_executor(
-                        None, 
-                        lambda: ytdl.extract_info(self.current_song.webpage_url, download=False)
-                    )
-                    stream_url = data.get('url')
-                    self.current_song.stream_url = stream_url
+                data = await self.bot.loop.run_in_executor(
+                    None, 
+                    lambda: ytdl.extract_info(self.current_song.webpage_url, download=False)
+                )
+                stream_url = data.get('url')
 
                 if not stream_url:
                     logger.error(f"[{self.guild.name}] '{self.current_song.title}'의 스트림 URL을 얻지 못했습니다.")
@@ -326,6 +325,8 @@ class MusicState:
                         await self.text_channel.send(f"❌ '{self.current_song.title}'을(를) 재생할 수 없습니다 (스트림 주소 오류).", delete_after=20)
                     self.handle_after_play(ValueError("스트림 URL을 찾을 수 없음"))
                     continue
+                
+                self.current_song.stream_url = stream_url
                 
                 ffmpeg_options = {'before_options': f'-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -nostdin -ss {self.seek_time}', 'options': '-vn'}
                 effect_filter = AUDIO_EFFECTS.get(self.current_effect)

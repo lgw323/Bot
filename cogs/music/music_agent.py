@@ -33,6 +33,15 @@ class MusicAgentCog(commands.Cog):
         self.music_states = {}
         self.tts_lock = asyncio.Lock()
 
+    async def cog_unload(self):
+        """[추가] Cog가 언로드될 때 모든 MusicState를 정리하여 안전하게 종료합니다."""
+        logger.info("MusicAgentCog 언로드 시작... 모든 활성 MusicState를 정리합니다.")
+        cleanup_tasks = [
+            state.cleanup(leave=True) for state in self.music_states.values()
+        ]
+        await asyncio.gather(*cleanup_tasks)
+        logger.info("모든 MusicState 정리 완료.")
+
     @commands.Cog.listener()
     async def on_ready(self):
         if MUSIC_CHANNEL_ID == 0:

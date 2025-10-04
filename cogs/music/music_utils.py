@@ -12,10 +12,11 @@ logger = logging.getLogger("MusicCog")
 
 # --- 상수 설정 ---
 BOT_EMBED_COLOR = 0x2ECC71
-# 데이터 파일 경로 수정
 FAVORITES_FILE = "data/favorites.json"
 MUSIC_CHANNEL_ID = int(os.getenv("MUSIC_CHANNEL_ID", "0"))
-URL_REGEX = re.compile(r'https?://(?:www\.)?.+')
+# [수정] music.youtube.com을 포함하도록 정규 표현식 확장
+URL_REGEX = re.compile(r'https?://(?:www\.)?(?:music\.youtube\.com|youtube\.com|youtu\.be)/.+')
+
 
 # --- yt-dlp 및 FFmpeg 설정 ---
 YTDL_OPTIONS = {
