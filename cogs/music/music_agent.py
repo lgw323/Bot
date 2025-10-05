@@ -6,6 +6,13 @@ import time
 from collections import deque
 from typing import Optional
 
+# --- [추가] TTS 캐싱 기능에 필요한 라이브러리 ---
+import hashlib
+import subprocess
+import time as time_lib
+from pathlib import Path
+from datetime import timedelta
+
 import discord
 from discord.ext import commands
 from discord import ui
@@ -35,6 +42,11 @@ class MusicAgentCog(commands.Cog):
         self.music_states = {}
         self.tts_lock = asyncio.Lock()
 
+        # --- [추가] TTS 캐시 설정 ---
+        self.tts_cache_dir = Path("data/tts_cache")
+        self.tts_cache_dir.mkdir(parents=True, exist_ok=True)
+        self.initial_setup_done = False  # 시작 작업이 한 번만 실행되도록 보장
+
     async def cog_unload(self):
         """[추가] Cog가 언로드될 때 모든 MusicState를 정리하여 안전하게 종료합니다."""
         logger.info("MusicAgentCog 언로드 시작... 모든 활성 MusicState를 정리합니다.")
@@ -46,6 +58,15 @@ class MusicAgentCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        # --- [수정] 봇 시작 시 캐시 정리 및 사전 캐싱 작업 실행 ---
+        if not self.initial_setup_done:
+            logger.info("[TTS Cache] 초기 설정을 시작합니다...")
+            await self.cleanup_tts_cache()
+            await self.precache_tts()
+            self.initial_setup_done = True
+            logger.info("[TTS Cache] 초기 설정을 완료했습니다.")
+
+        # --- 기존 on_ready 로직 ---
         if MUSIC_CHANNEL_ID == 0:
             logger.warning("MUSIC_CHANNEL_ID가 설정되지 않아 상시 플레이어 기능이 비활성화됩니다.")
             return
@@ -54,25 +75,121 @@ class MusicAgentCog(commands.Cog):
             state = await self.get_music_state(guild.id)
             logger.info(f"'{guild.name}' 서버의 '{state.text_channel.name if state.text_channel else 'N/A'}' 채널에 상시 플레이어를 생성 또는 연결했습니다.")
 
+    # --- [신규] TTS 캐싱 관련 헬퍼 함수들 ---
+    def _get_tts_filepath(self, text: str) -> Path:
+        """주어진 텍스트에 대해 해시 기반 파일 경로를 생성합니다."""
+        hashed_name = hashlib.sha256(text.encode('utf-8')).hexdigest()
+        return self.tts_cache_dir / f"{hashed_name}.opus"
+
+    async def _create_tts_file_if_not_exists(self, text: str):
+        """TTS 파일이 존재하지 않을 경우에만 생성합니다."""
+        filepath = self._get_tts_filepath(text)
+        if filepath.exists():
+            return True
+
+        logger.info(f"[TTS Cache] 신규 캐시 파일 생성: '{text}'")
+        # 동시 파일 생성을 방지하기 위해 임시 파일명에 랜덤 문자열 추가
+        temp_mp3_path = self.tts_cache_dir / f"temp_{os.urandom(8).hex()}.mp3"
+
+        try:
+            # 1. gTTS를 사용하여 MP3 파일 생성 (I/O 작업이므로 스레드에서 실행)
+            tts_obj = gTTS(text=text, lang='ko', slow=False)
+            await asyncio.to_thread(tts_obj.save, str(temp_mp3_path))
+
+            # 2. FFmpeg을 사용하여 MP3를 Opus로 변환 (CPU 집약적이므로 스레드에서 실행)
+            def convert():
+                command = [
+                    'ffmpeg', '-i', str(temp_mp3_path),
+                    '-c:a', 'libopus', '-b:a', '32k',  # 음성에 적합한 저용량 Opus 코덱 설정
+                    '-hide_banner', '-loglevel', 'error', # 불필요한 로그 숨김
+                    str(filepath)
+                ]
+                result = subprocess.run(command, capture_output=True, text=True)
+                if result.returncode != 0:
+                    logger.error(f"FFmpeg 변환 실패 '{text}'. 오류: {result.stderr}")
+                    raise RuntimeError(f"FFmpeg failed: {result.stderr}")
+            
+            await asyncio.to_thread(convert)
+            return True
+        except Exception:
+            logger.error(f"[TTS Cache] TTS 파일 생성 실패: '{text}'", exc_info=True)
+            return False
+        finally:
+            # 3. 임시 MP3 파일 정리
+            if temp_mp3_path.exists():
+                temp_mp3_path.unlink()
+
+    async def cleanup_tts_cache(self):
+        """3일 이상 사용되지 않은 오래된 TTS 캐시 파일을 삭제합니다."""
+        logger.info("[TTS Cache] 3일 이상된 캐시 파일 정리를 시작합니다...")
+        pruned_count = 0
+        expiration_time = time_lib.time() - timedelta(days=3).total_seconds()
+
+        for file in self.tts_cache_dir.glob('*.opus'):
+            try:
+                # 최종 사용 시각(atime)을 기준으로 판단
+                if file.stat().st_atime < expiration_time:
+                    file.unlink()
+                    pruned_count += 1
+            except OSError as e:
+                logger.warning(f"[TTS Cache] 파일 삭제 실패 {file}: {e}")
+        
+        logger.info(f"[TTS Cache] 정리 완료. {pruned_count}개의 오래된 파일을 삭제했습니다.")
+
+    async def precache_tts(self):
+        """봇 시작 시 모든 서버 멤버와 봇 입장 음성을 미리 캐싱합니다."""
+        logger.info("[TTS Cache] 멤버 입장 음성 사전 캐싱을 시작합니다...")
+        tasks = []
+
+        # 봇 입장 메시지 캐싱
+        bot_entrance_text = "노래봇이 입장했습니다."
+        tasks.append(self._create_tts_file_if_not_exists(bot_entrance_text))
+        
+        # 멤버 입장 메시지 캐싱
+        for guild in self.bot.guilds:
+            for member in guild.members:
+                if member.bot: continue
+
+                MAX_NICKNAME_LENGTH = 10
+                user_name = member.display_name
+                truncated_name = user_name[:MAX_NICKNAME_LENGTH] + "..." if len(user_name) > MAX_NICKNAME_LENGTH else user_name
+                
+                text = f"{truncated_name}님이 입장하셨습니다."
+                tasks.append(self._create_tts_file_if_not_exists(text))
+
+        await asyncio.gather(*tasks)
+        logger.info(f"[TTS Cache] 사전 캐싱 완료. {len(tasks)}개의 음성을 확인/생성했습니다.")
+
+    # --- [수정] after_tts: 파일 삭제 로직 제거 ---
     def after_tts(self, state: MusicState, interrupted_song: Optional[Song]):
         state.is_tts_interrupting = False
-        try:
-            if os.path.exists("tts_temp.mp3"):
-                os.remove("tts_temp.mp3")
-        except OSError as e:
-            logger.error(f"TTS 임시 파일 삭제 실패: {e}")
+        # 파일 삭제 코드(os.remove)가 제거되어 캐시가 유지됩니다.
 
         if interrupted_song:
             state.queue.appendleft(interrupted_song)
 
         self.bot.loop.call_soon_threadsafe(state.play_next_song.set)
 
+    # --- [수정] play_tts: 캐싱 시스템을 사용하도록 로직 변경 ---
     async def play_tts(self, state: MusicState, text: str):
-        if not GTTS_AVAILABLE:
-            return
-        if not state.voice_client or not state.voice_client.is_connected():
+        if not GTTS_AVAILABLE or not state.voice_client or not state.voice_client.is_connected():
             return
 
+        # 1. 파일이 없으면 생성
+        await self._create_tts_file_if_not_exists(text)
+        
+        tts_filepath = self._get_tts_filepath(text)
+        if not tts_filepath.exists():
+            logger.error(f"TTS 파일 재생 실패: '{text}' 파일이 생성되지 않았습니다.")
+            return
+
+        # 2. 파일 사용 시각 갱신
+        try:
+            await asyncio.to_thread(os.utime, tts_filepath, None)
+        except OSError as e:
+            logger.warning(f"파일 접근 시간 갱신 실패 {tts_filepath}: {e}")
+
+        # 3. 재생 로직
         async with self.tts_lock:
             interrupted_song: Optional[Song] = None
             try:
@@ -82,17 +199,14 @@ class MusicAgentCog(commands.Cog):
                     state.voice_client.stop()
                     state.play_next_song.clear()
 
-                loop = self.bot.loop
-                tts_obj = gTTS(text=text, lang='ko', slow=False)
-                await loop.run_in_executor(None, tts_obj.save, "tts_temp.mp3")
-                
-                tts_source = discord.FFmpegPCMAudio("tts_temp.mp3")
+                tts_source = discord.FFmpegPCMAudio(str(tts_filepath))
                 tts_volume_source = discord.PCMVolumeTransformer(tts_source, volume=2.0)
                 
                 state.voice_client.play(
                     tts_volume_source, 
                     after=lambda e: self.after_tts(state, interrupted_song)
                 )
+                logger.info(f"[TTS Cache] 캐시된 파일 재생: '{text}'")
 
             except Exception:
                 logger.error(f"[{state.guild.name}] TTS 재생 중 오류 발생", exc_info=True)
@@ -100,13 +214,16 @@ class MusicAgentCog(commands.Cog):
                     state.queue.appendleft(interrupted_song)
                 self.bot.loop.call_soon_threadsafe(state.play_next_song.set)
 
+    # ---------------------------------------------------------------------------------
+    # 아래의 기존 음악봇 코드는 변경되지 않았습니다.
+    # ---------------------------------------------------------------------------------
+
     async def get_music_state(self, guild_id: int) -> MusicState:
         if guild_id not in self.music_states:
             guild = self.bot.get_guild(guild_id)
             if not guild:
                 raise RuntimeError(f"Guild with ID {guild_id} not found.")
 
-            # [수정] guild_settings를 music_settings.json에서 로드
             settings = await load_music_settings()
             guild_settings = settings.get(str(guild_id), {})
             initial_volume = guild_settings.get("volume", 0.5)
@@ -155,7 +272,6 @@ class MusicAgentCog(commands.Cog):
 
         state = await self.get_music_state(interaction.guild.id)
 
-        # [추가] 예상 소요 시간 안내
         settings = await load_music_settings()
         is_url = URL_REGEX.match(query)
         task_type = 'url' if is_url else 'search'
@@ -176,7 +292,6 @@ class MusicAgentCog(commands.Cog):
             await state.voice_client.move_to(interaction.user.voice.channel)
         
         try:
-            # [추가] 시간 측정 시작
             start_time = time.monotonic()
             
             is_playlist_url = 'list=' in query and is_url
@@ -184,7 +299,6 @@ class MusicAgentCog(commands.Cog):
 
             data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False))
 
-            # [추가] 시간 측정 종료 및 업데이트
             duration_ms = int((time.monotonic() - start_time) * 1000)
             await update_timing_stat(interaction.guild.id, task_type, duration_ms)
 
@@ -365,10 +479,8 @@ class MusicAgentCog(commands.Cog):
         count = 0
         for url in urls:
             try:
-                # [추가] 시간 측정 시작
                 start_time = time.monotonic()
                 data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
-                # [추가] 시간 측정 종료 및 업데이트
                 duration_ms = int((time.monotonic() - start_time) * 1000)
                 await update_timing_stat(interaction.guild.id, 'favorites', duration_ms)
                 

@@ -5,7 +5,7 @@ __pycache__/
 *.pyd
 .Python
 env/
-venv/
+venv/cl
 
 # IDE/Editor
 .vscode/
@@ -13,3 +13,6 @@ venv/
 
 # Secrets
 .env
+
+# data
+tts_cache/
