@@ -1,5 +1,5 @@
 import os
-import logging
+import logging # 이 줄은 삭제해도 되지만, 다른 파일과의 일관성을 위해 유지합니다.
 from datetime import datetime
 
 import discord
@@ -10,7 +10,7 @@ from discord import app_commands
 from .finance.finance_agent import create_briefing_embed
 
 # --- 로거 및 상수 ---
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__) # 이 줄을 삭제합니다.
 BOT_EMBED_COLOR = 0x5865F2
 DEFAULT_SUMMARY_HOURS = float(os.getenv("DEFAULT_SUMMARY_HOURS", 6.0))
 
@@ -22,7 +22,8 @@ class CommandsCog(commands.Cog):
     # --- Cog 전역 에러 핸들러 추가 ---
     async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         """이 Cog에 포함된 모든 명령어에서 처리되지 않은 오류를 잡아냅니다."""
-        logger.error(f"명령어 '{interaction.command.name}' 실행 중 처리되지 않은 오류 발생: {error}", exc_info=True)
+        # self.bot.log를 사용하여 에러를 기록합니다.
+        self.bot.log.error(f"명령어 '{interaction.command.name}' 실행 중 처리되지 않은 오류 발생: {error}", exc_info=True)
         
         # 상호작용에 이미 응답했는지 확인합니다.
         if not interaction.response.is_done():
@@ -45,21 +46,22 @@ class CommandsCog(commands.Cog):
     # --- 경제 브리핑 명령어 (상세 로깅 추가) ---
     @app_commands.command(name="경제브리핑", description="현재 환율과 주요 주식 정보를 확인합니다.")
     async def get_briefing_command(self, interaction: discord.Interaction):
-        logger.info(f"'/경제브리핑' 명령어 수신 (사용자: {interaction.user.name})")
+        # logger.info 대신 self.bot.log.info를 사용합니다.
+        self.bot.log.info(f"'/경제브리핑' 명령어 수신 (사용자: {interaction.user.name})")
         try:
-            logger.info("응답을 지연시키기 위해 defer()를 호출합니다.")
+            self.bot.log.info("응답을 지연시키기 위해 defer()를 호출합니다.")
             await interaction.response.defer(thinking=True)
-            logger.info("defer() 호출 완료. create_briefing_embed()를 호출합니다.")
+            self.bot.log.info("defer() 호출 완료. create_briefing_embed()를 호출합니다.")
             
             embed = await create_briefing_embed()
-            logger.info("Embed 생성 완료. followup.send()로 최종 응답을 보냅니다.")
+            self.bot.log.info("Embed 생성 완료. followup.send()로 최종 응답을 보냅니다.")
             
             await interaction.followup.send(embed=embed)
-            logger.info("'/경제브리핑' 명령어 처리가 성공적으로 완료되었습니다.")
+            self.bot.log.info("'/경제브리핑' 명령어 처리가 성공적으로 완료되었습니다.")
         except discord.errors.InteractionResponded:
-            logger.warning("'/경제브리핑' 처리 중 'InteractionResponded' 오류 발생. 이미 응답이 처리된 것으로 보입니다.")
+            self.bot.log.warning("'/경제브리핑' 처리 중 'InteractionResponded' 오류 발생. 이미 응답이 처리된 것으로 보입니다.")
         except Exception as e:
-            logger.error(f"'/경제브리핑' 명령어 처리 중 예외 발생: {e}", exc_info=True)
+            self.bot.log.error(f"'/경제브리핑' 명령어 처리 중 예외 발생: {e}", exc_info=True)
 
     # --- 노래 명령어 (단일화) ---
     @app_commands.command(name="재생", description="유튜브 링크나 검색어로 노래를 재생하고, 봇을 음성 채널로 자동 초대합니다.")

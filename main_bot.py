@@ -2,79 +2,26 @@ import os
 import sys
 import logging
 import asyncio
-import traceback
 from dotenv import load_dotenv
 
-from rich.logging import RichHandler
+# Rich 관련 임포트는 UI 표시에 필요하므로 유지합니다.
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
+from rich.progress import Progress, TextColumn, BarColumn, MofNCompleteColumn, TimeRemainingColumn
+
 
 # --- .env 파일 로드 ---
 load_dotenv()
 
-# --- 새로운 로깅 시스템 설정 ---
-LOG_LEVEL = logging.INFO
-console = Console()
-
-# 에러 발생 시 출력될 패널을 생성하는 함수
-def create_error_panel(record: logging.LogRecord) -> Panel:
-    """로그 레코드를 받아 에러 패널을 생성합니다."""
-    error_type = ""
-    error_message = str(record.msg)
-    
-    if record.exc_info:
-        exc_type, exc_value, _ = record.exc_info
-        error_type = exc_type.__name__
-        error_message = str(exc_value)
-
-    error_text = Text()
-    error_text.append(f"모듈: {record.name}\n", style="bold white")
-    error_text.append(f"위치: {record.filename}:{record.lineno}\n", style="white")
-    if error_type:
-        error_text.append(f"종류: {error_type}\n", style="bold magenta")
-    error_text.append(f"내용: {error_message}", style="magenta")
-
-    return Panel(
-        error_text,
-        title=f"[bold red]❌ 에러 발생 ({record.levelname})",
-        border_style="red",
-        expand=False
-    )
-
-class CustomRichHandler(RichHandler):
-    def emit(self, record: logging.LogRecord) -> None:
-        if record.levelno >= logging.ERROR:
-            if not record.exc_info:
-                exc_type, exc_value, tb = sys.exc_info()
-                if exc_type and tb:
-                    last_frame = traceback.extract_tb(tb)[-1]
-                    record.filename = os.path.basename(last_frame.filename)
-                    record.lineno = last_frame.lineno
-                    record.exc_info = (exc_type, exc_value, tb)
-            
-            self.console.print(create_error_panel(record))
-        else:
-            super().emit(record)
-
-# 로거 설정
-logging.basicConfig(
-    level=LOG_LEVEL,
-    format="[%(name)-12s] %(message)s",
-    handlers=[CustomRichHandler(show_path=False, console=console)]
-)
-
-# 불필요한 라이브러리 로그 줄이기
-logging.getLogger("discord").setLevel(logging.WARNING)
-logging.getLogger("websockets").setLevel(logging.WARNING)
-
+# --- 로거 가져오기 ---
+# 이제 설정은 LogAgent가 담당하므로, 여기서는 로거 객체만 가져옵니다.
 logger = logging.getLogger("MyBot")
 
 # --- 나머지 모듈 임포트 ---
 try:
     import discord
     from discord.ext import commands
-    from rich.progress import Progress, TextColumn, BarColumn, MofNCompleteColumn, TimeRemainingColumn
 except ImportError as e:
     logger.critical(f"필수 라이브러리 임포트 실패: {e}", exc_info=True)
     sys.exit("라이브러리 로드 실패")
@@ -89,18 +36,20 @@ try:
     intents.message_content = True
     intents.members = True
 
-
     class MyBot(commands.Bot):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            # Cog 로드 경로를 새로운 디렉토리 구조에 맞게 수정
+            # Cog 로드 경로 (LogAgent가 가장 먼저 오도록 유지)
             self.initial_extensions = [
+                "cogs.logging.log_agent",
                 "cogs.summary.summary_listeners",
                 "cogs.finance.finance_agent",
                 "cogs.music.music_agent",
                 "cogs.application_commands",
                 "cogs.mining.mining_agent"
             ]
+            # UI에 사용할 Rich Console 객체를 봇 인스턴스에 저장
+            self.console = Console()
 
         async def setup_hook(self):
             with Progress(
@@ -108,43 +57,49 @@ try:
                 TextColumn("[progress.description]{task.description}"),
                 BarColumn(bar_width=None), MofNCompleteColumn(),
                 TextColumn("•"), TimeRemainingColumn(),
-                console=console
+                console=self.console  # self.console 사용
             ) as progress:
                 task = progress.add_task("[green]기능 로드 중...", total=len(self.initial_extensions))
                 for extension in self.initial_extensions:
                     try:
                         await self.load_extension(extension)
-                        logger.info(f"✅ '{extension}' 로드 성공.")
+                        # LogAgent가 로드되면서 로깅 설정이 적용됩니다.
+                        logging.info(f"✅ '{extension}' 로드 성공.")
                         progress.update(task, advance=1, description=f"[cyan]{extension:<30}")
                         await asyncio.sleep(0.1)
-                    except Exception:
-                        logger.error(f"'{extension}' 로드 실패.", exc_info=True)
+                    except Exception as e:
+                        logging.error(f"'{extension}' 로드 실패.", exc_info=True)
                         progress.update(task, advance=1, description=f"[red]{extension:<30}")
 
-            logger.info("✅ 모든 기능(Cog)이 성공적으로 로드되었습니다.")
+            logging.info("✅ 모든 기능(Cog)이 성공적으로 로드되었습니다.")
             try:
-                logger.info("슬래시 커맨드 동기화를 시작합니다...")
+                logging.info("슬래시 커맨드 동기화를 시작합니다...")
                 synced = await self.tree.sync()
-                logger.info(f"✅ {len(synced)}개의 슬래시 커맨드 동기화 완료.")
+                logging.info(f"✅ {len(synced)}개의 슬래시 커맨드 동기화 완료.")
             except Exception as e:
-                logger.error("슬래시 커맨드 동기화 중 오류 발생:", exc_info=True)
+                logging.error("슬래시 커맨드 동기화 중 오류 발생:", exc_info=True)
 
     bot = MyBot(command_prefix="!", intents=intents)
 
     @bot.event
     async def on_ready():
+        # on_ready UI 패널은 그대로 유지합니다.
         panel = Panel(
             Text(f"{bot.user.name} (ID: {bot.user.id})\n모든 기능 정상 작동 중", justify="center"),
             title="[bold green]✅ 봇 온라인",
             border_style="green"
         )
-        console.print(panel)
+        bot.console.print(panel) # bot.console 사용
+
         game = discord.Game("모든 기능 정상 작동 중")
         await bot.change_presence(status=discord.Status.online, activity=game)
 
+    # 이 파일의 최상단에서 로거를 가져왔으므로, bot.run 전에도 사용 가능합니다.
     logger.info("Discord 봇 실행 준비 중...")
     bot.run(DISCORD_TOKEN)
 
 except Exception:
-    logger.critical("봇 초기화 중 심각한 오류가 발생하여 프로그램을 종료합니다.", exc_info=True)
+    # 이 부분은 LogAgent가 로드되기 전에 발생할 수 있으므로,
+    # traceback이 포함된 기본 로깅으로 출력됩니다.
+    logging.critical("봇 초기화 중 심각한 오류가 발생하여 프로그램을 종료합니다.", exc_info=True)
     sys.exit("초기화 실패")
