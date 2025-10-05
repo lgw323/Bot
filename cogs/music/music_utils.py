@@ -4,6 +4,8 @@ import os
 import re
 from enum import Enum
 import logging
+import statistics
+from collections import deque
 
 import discord
 import yt_dlp
@@ -13,12 +15,10 @@ logger = logging.getLogger("MusicCog")
 # --- 상수 설정 ---
 BOT_EMBED_COLOR = 0x2ECC71
 FAVORITES_FILE = "data/favorites.json"
-# [추가] 음악 봇 설정을 위한 별도 파일
 MUSIC_SETTINGS_FILE = "data/music_settings.json"
 MUSIC_CHANNEL_ID = int(os.getenv("MUSIC_CHANNEL_ID", "0"))
-# [수정] music.youtube.com을 포함하도록 정규 표현식 확장
 URL_REGEX = re.compile(r'https?://(?:www\.)?(?:music\.youtube\.com|youtube\.com|youtu\.be)/.+')
-
+TIMING_HISTORY_LIMIT = 10
 
 # --- yt-dlp 및 FFmpeg 설정 ---
 YTDL_OPTIONS = {
@@ -40,7 +40,7 @@ FFMPEG_OPTIONS = {
 }
 ytdl = yt_dlp.YoutubeDL(YTDL_OPTIONS)
 
-# --- 데이터 관리 (분리) ---
+# --- 데이터 관리 ---
 favorites_lock = asyncio.Lock()
 settings_lock = asyncio.Lock()
 
@@ -50,7 +50,6 @@ async def load_favorites():
         try:
             with open(FAVORITES_FILE, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                # [수정] 길드 설정 부분을 제거하여 순수 즐겨찾기 데이터만 관리
                 if "_guild_settings" in data:
                     del data["_guild_settings"]
                 return data
@@ -62,7 +61,6 @@ async def save_favorites(data):
         with open(FAVORITES_FILE, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
 
-# [추가] 음악 설정 파일 관리 함수
 async def load_music_settings():
     async with settings_lock:
         if not os.path.exists(MUSIC_SETTINGS_FILE):
@@ -79,28 +77,44 @@ async def save_music_settings(data):
         with open(MUSIC_SETTINGS_FILE, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
 
-# [추가] 평균 소요 시간 업데이트 함수
-async def update_timing_stat(guild_id: int, task_type: str, new_duration_ms: int):
-    """지수 이동 평균을 사용하여 작업 소요 시간을 업데이트합니다."""
+async def update_request_timing(guild_id: int, task_type: str, new_duration_ms: int):
     guild_id_str = str(guild_id)
     settings = await load_music_settings()
     
     guild_settings = settings.setdefault(guild_id_str, {})
-    timings = guild_settings.setdefault("timings_ms", {})
+    timings_data = guild_settings.setdefault("request_timings", {})
     
-    current_avg = timings.get(task_type)
+    history = deque(timings_data.get(task_type, []), maxlen=TIMING_HISTORY_LIMIT)
+    history.append(new_duration_ms)
     
-    # α (alpha) 값 설정 (0.2는 최근 데이터에 20%의 가중치를 둠)
-    alpha = 0.2
-    
-    if current_avg is None:
-        new_avg = new_duration_ms
-    else:
-        new_avg = int((1 - alpha) * current_avg + alpha * new_duration_ms)
-        
-    timings[task_type] = new_avg
+    timings_data[task_type] = list(history)
     await save_music_settings(settings)
-    logger.debug(f"[{guild_id_str}] Timing updated for '{task_type}': {current_avg}ms -> {new_avg}ms (new: {new_duration_ms}ms)")
+    logger.debug(f"[{guild_id_str}] Timing updated for '{task_type}': new duration {new_duration_ms}ms added.")
+
+# [수정] get_network_stats 함수
+def get_network_stats(settings: dict, guild_id: int) -> tuple[float | None, float | None]:
+    """저장된 기록을 바탕으로 평균과 표준편차(변동폭)를 계산합니다."""
+    guild_settings = settings.get(str(guild_id), {})
+    timings_data = guild_settings.get("request_timings", {})
+    
+    # 'search', 'favorites', 'url' 기록을 모두 합쳐서 전체적인 네트워크 상태 평가
+    all_timings = (
+        timings_data.get("search", []) + 
+        timings_data.get("favorites", []) + 
+        timings_data.get("url", [])
+    )
+    
+    # [수정] 통계 계산을 위해 최소 2개의 데이터가 필요
+    if len(all_timings) < 2:
+        return None, None 
+
+    try:
+        average = statistics.mean(all_timings)
+        stdev = statistics.stdev(all_timings)
+        return average, stdev
+    except statistics.StatisticsError:
+        # 데이터가 1개뿐일 경우 stdev 계산 시 오류가 발생할 수 있음
+        return statistics.mean(all_timings), 0.0
 
 # --- 열거형 및 데이터 클래스 ---
 class LoopMode(Enum):

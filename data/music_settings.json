@@ -1,9 +1,14 @@
 {
     "860135576224792617": {
         "volume": 1.0,
-        "timings_ms": {
-            "favorites": 7095,
-            "search": 7931
+        "request_timings": {
+            "favorites": [
+                3077,
+                2485,
+                3188,
+                2311,
+                3313
+            ]
         }
     }
 }
