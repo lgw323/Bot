@@ -43,7 +43,6 @@ try:
             self.initial_extensions = [
                 "cogs.logging.log_agent",
                 "cogs.summary.summary_listeners",
-                "cogs.finance.finance_agent",
                 "cogs.music.music_agent",
                 "cogs.application_commands",
                 "cogs.mining.mining_agent"

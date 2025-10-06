@@ -6,9 +6,6 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-# --- 다른 파일에서 기능 로직 임포트 (경로 수정) ---
-from .finance.finance_agent import create_briefing_embed
-
 # --- 로거 및 상수 ---
 # logger = logging.getLogger(__name__) # 이 줄을 삭제합니다.
 BOT_EMBED_COLOR = 0x5865F2
@@ -42,26 +39,6 @@ class CommandsCog(commands.Cog):
         
         await interaction.response.defer(thinking=True, ephemeral=False)
         await summary_cog.execute_summary(interaction, hours)
-
-    # --- 경제 브리핑 명령어 (상세 로깅 추가) ---
-    @app_commands.command(name="경제브리핑", description="현재 환율과 주요 주식 정보를 확인합니다.")
-    async def get_briefing_command(self, interaction: discord.Interaction):
-        # logger.info 대신 self.bot.log.info를 사용합니다.
-        self.bot.log.info(f"'/경제브리핑' 명령어 수신 (사용자: {interaction.user.name})")
-        try:
-            self.bot.log.info("응답을 지연시키기 위해 defer()를 호출합니다.")
-            await interaction.response.defer(thinking=True)
-            self.bot.log.info("defer() 호출 완료. create_briefing_embed()를 호출합니다.")
-            
-            embed = await create_briefing_embed()
-            self.bot.log.info("Embed 생성 완료. followup.send()로 최종 응답을 보냅니다.")
-            
-            await interaction.followup.send(embed=embed)
-            self.bot.log.info("'/경제브리핑' 명령어 처리가 성공적으로 완료되었습니다.")
-        except discord.errors.InteractionResponded:
-            self.bot.log.warning("'/경제브리핑' 처리 중 'InteractionResponded' 오류 발생. 이미 응답이 처리된 것으로 보입니다.")
-        except Exception as e:
-            self.bot.log.error(f"'/경제브리핑' 명령어 처리 중 예외 발생: {e}", exc_info=True)
 
     # --- 노래 명령어 (단일화) ---
     @app_commands.command(name="재생", description="유튜브 링크나 검색어로 노래를 재생하고, 봇을 음성 채널로 자동 초대합니다.")
