@@ -61,6 +61,7 @@ class MusicState:
         self.update_lock = asyncio.Lock()
         self.UI_UPDATE_COOLDOWN = 2.0
         self.last_update_time: float = 0.0
+        # [1단계] UI 업데이트 작업을 추적하기 위한 변수 추가
         self.ui_update_task: Optional[asyncio.Task] = None
         self.current_task: Optional[str] = None
         self.main_task = self.bot.loop.create_task(self.play_song_loop())
@@ -239,43 +240,46 @@ class MusicState:
                 self.voice_client = None
         if self.now_playing_message: await self.schedule_ui_update()
     
+    # [2단계] 디바운싱 로직이 적용된 새로운 UI 업데이트 함수들
     async def schedule_ui_update(self):
         """
-        잦은 UI 업데이트로 인한 API 제한을 피하기 위해 업데이트 요청을 스케줄링합니다.
-        일정 시간(UI_UPDATE_COOLDOWN) 내에 여러 요청이 들어오면 마지막 요청만 처리합니다.
+        UI 업데이트를 스케줄링합니다. (디바운싱 적용)
+        이전 업데이트 작업이 있다면 취소하고, 새로운 2초 대기 작업을 시작합니다.
         """
-        current_time = time.time()
-        if self.ui_update_task and not self.ui_update_task.done(): self.ui_update_task.cancel()
-        if current_time - self.last_update_time >= self.UI_UPDATE_COOLDOWN:
-            self.bot.loop.create_task(self._execute_ui_update())
-        else:
-            delay = self.UI_UPDATE_COOLDOWN - (current_time - self.last_update_time)
-            self.ui_update_task = self.bot.loop.create_task(self._delayed_ui_update(delay))
+        if self.ui_update_task and not self.ui_update_task.done():
+            self.ui_update_task.cancel()
 
-    async def _delayed_ui_update(self, delay: float):
-        """지연된 UI 업데이트를 실행합니다."""
+        self.ui_update_task = self.bot.loop.create_task(self._delayed_ui_update())
+
+    async def _delayed_ui_update(self):
+        """
+        정해진 시간(UI_UPDATE_COOLDOWN)만큼 기다린 후, 실제 업데이트를 실행합니다.
+        """
         try:
-            await asyncio.sleep(delay)
-            await self._execute_ui_update()
-        except asyncio.CancelledError: pass
-        finally: self.ui_update_task = None
+            await asyncio.sleep(self.UI_UPDATE_COOLDOWN)
+            async with self.update_lock:
+                await self._execute_ui_update()
+        except asyncio.CancelledError:
+            pass # 새로운 요청에 의해 작업이 취소된 것은 정상적인 동작입니다.
+        finally:
+            self.ui_update_task = None
 
     async def _execute_ui_update(self):
         """실제로 플레이어 Embed 메시지를 수정(edit)하는 함수입니다."""
-        async with self.update_lock:
-            try:
-                embed = await self.create_now_playing_embed()
-                view = MusicPlayerView(self.cog, self)
-                if self.now_playing_message: await self.now_playing_message.edit(embed=embed, view=view)
-                elif self.text_channel: self.now_playing_message = await self.text_channel.send(embed=embed, view=view)
-                self.last_update_time = time.time()
-            except discord.HTTPException as e:
-                if e.status == 429: # API rate limit
-                    logger.warning(f"[{self.guild.name}] UI 업데이트 중 API 호출 제한 발생. 5초 후 재시도.")
-                    await asyncio.sleep(5)
-                    self.bot.loop.create_task(self._execute_ui_update())
-                else: logger.error(f"[{self.guild.name}] Now Playing 메시지 업데이트/전송 실패: {e}")
-            except Exception as e: logger.error(f"[{self.guild.name}] Now Playing 메시지 처리 중 예기치 않은 오류: {e}")
+        try:
+            embed = await self.create_now_playing_embed()
+            view = MusicPlayerView(self.cog, self)
+            if self.now_playing_message:
+                await self.now_playing_message.edit(embed=embed, view=view)
+            elif self.text_channel:
+                self.now_playing_message = await self.text_channel.send(embed=embed, view=view)
+            self.last_update_time = time.time()
+        except discord.HTTPException as e:
+            if e.status != 429:
+                logger.error(f"[{self.guild.name}] Now Playing 메시지 업데이트/전송 실패: {e}")
+        except Exception as e:
+            logger.error(f"[{self.guild.name}] Now Playing 메시지 처리 중 예기치 않은 오류: {e}", exc_info=True)
+
 
     async def update_progress_loop(self):
         """10초마다 현재 재생 진행률 바를 업데이트하기 위한 루프입니다."""
@@ -283,7 +287,10 @@ class MusicState:
         while not self.bot.is_closed():
             await asyncio.sleep(10)
             if self.voice_client and self.current_song and not self.voice_client.is_paused():
-                await self.schedule_ui_update()
+                # 여기서는 디바운싱 없이 바로 업데이트를 시도해도 좋습니다.
+                # 10초 간격은 API 제한에 충분히 안전하기 때문입니다.
+                async with self.update_lock:
+                    await self._execute_ui_update()
 
     async def play_song_loop(self):
         """
