@@ -82,10 +82,8 @@ class MusicAgentCog(commands.Cog):
 
             def convert():
                 command = ['ffmpeg', '-i', '-', '-c:a', 'libopus', '-b:a', '32k', '-hide_banner', '-loglevel', 'error', str(filepath)]
-                # [수정] text=True 옵션을 제거하여 bytes 입력을 올바르게 처리합니다.
                 result = subprocess.run(command, input=mp3_bytes, capture_output=True, check=False)
                 if result.returncode != 0:
-                    # stderr가 bytes이므로 utf-8로 디코딩하여 에러 메시지를 확인합니다.
                     error_message = result.stderr.decode('utf-8')
                     raise RuntimeError(f"FFmpeg failed: {error_message}")
             
@@ -114,8 +112,10 @@ class MusicAgentCog(commands.Cog):
         logger.info(f"[TTS Cache] 사전 캐싱 완료. {len(tasks)}개의 음성을 확인/생성했습니다.")
 
     def after_tts(self, state: MusicState, interrupted_song: Optional[Song]):
+        # [수정] 이 콜백은 단순히 상태를 복원하고 다음 곡 재생을 알리는 역할만 합니다.
         state.is_tts_interrupting = False
-        if interrupted_song: state.queue.appendleft(interrupted_song)
+        if interrupted_song:
+            state.queue.appendleft(interrupted_song)
         self.bot.loop.call_soon_threadsafe(state.play_next_song.set)
 
     async def play_tts(self, state: MusicState, text: str):
@@ -135,6 +135,8 @@ class MusicAgentCog(commands.Cog):
             try:
                 if (state.voice_client.is_playing() or state.voice_client.is_paused()) and state.current_song:
                     interrupted_song = state.current_song
+                    # [수정] 중단된 시점을 기록하여 나중에 복원할 수 있도록 합니다.
+                    state.seek_time = state.get_current_playback_time()
                     state.is_tts_interrupting = True
                     state.voice_client.stop()
                     state.play_next_song.clear()
@@ -144,8 +146,10 @@ class MusicAgentCog(commands.Cog):
                 state.voice_client.play(tts_volume_source, after=lambda e: self.after_tts(state, interrupted_song))
                 logger.info(f"[TTS Cache] 캐시된 파일 재생: '{text}'")
             except Exception:
+                # [수정] try...except 블록을 사용하여 TTS 재생이 실패하더라도 중단된 곡을 복구하도록 보장합니다.
                 logger.error(f"[{state.guild.name}] TTS 재생 중 오류 발생", exc_info=True)
-                if interrupted_song: state.queue.appendleft(interrupted_song)
+                if interrupted_song:
+                    state.queue.appendleft(interrupted_song)
                 self.bot.loop.call_soon_threadsafe(state.play_next_song.set)
     
     async def get_music_state(self, guild_id: int) -> MusicState:
@@ -233,11 +237,16 @@ class MusicAgentCog(commands.Cog):
                     return
 
                 added_count = 0
-                for song_data in entries:
+                total_songs = len(entries)
+                for i, song_data in enumerate(entries):
                     if song_data:
                         song = Song(song_data, interaction.user)
                         state.queue.append(song)
                         added_count += 1
+                        
+                        # [수정] 5곡마다 또는 마지막 곡에서 점진적 UI 피드백을 제공합니다.
+                        if (i + 1) % 5 == 0 or (i + 1) == total_songs:
+                            await state.set_task(f"🎶 재생목록 추가 중... ({added_count}/{total_songs})")
                 
                 logger.info(f"[{interaction.guild.name}] 재생목록 추가: {added_count}곡 (요청자: {interaction.user.display_name})")
                 await interaction.followup.send(f"✅ 재생목록에서 **{added_count}**개의 노래를 대기열에 추가했습니다.", ephemeral=True)
@@ -373,11 +382,16 @@ class MusicAgentCog(commands.Cog):
             await state.voice_client.move_to(interaction.user.voice.channel)
             joined_vc = True
         
-        await state.set_task(f"❤️ 즐겨찾기에서 `{len(urls)}`곡을 추가하는 중...")
         count = 0
+        total_urls = len(urls)
+        await state.set_task(f"❤️ 즐겨찾기에서 `{total_urls}`곡을 추가하는 중...")
         try:
-            for url in urls:
+            for i, url in enumerate(urls):
                 try:
+                    # [수정] 5곡마다 진행 상황을 업데이트합니다.
+                    if (i + 1) % 5 == 0 or (i + 1) == total_urls:
+                        await state.set_task(f"❤️ 즐겨찾기 추가 중... ({i + 1}/{total_urls})")
+
                     start_time = time.monotonic()
                     data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
                     duration_ms = int((time.monotonic() - start_time) * 1000)
