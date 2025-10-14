@@ -281,7 +281,7 @@ class MusicState:
         """10초마다 현재 재생 진행률 바를 업데이트하기 위한 루프입니다."""
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
-            await asyncio.sleep(5)
+            await asyncio.sleep(10)
             if self.voice_client and self.current_song and not self.voice_client.is_paused():
                 # [수정] 모든 UI 업데이트는 schedule_ui_update()를 통하도록 변경하여 Rate Limit 방지
                 await self.schedule_ui_update()

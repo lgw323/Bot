@@ -90,7 +90,7 @@ try:
         )
         bot.console.print(panel) # bot.console 사용
 
-        game = discord.Game("모든 기능 정상 작동 중")
+        game = discord.Game("펜타곤 침입")
         await bot.change_presence(status=discord.Status.online, activity=game)
 
     # 이 파일의 최상단에서 로거를 가져왔으므로, bot.run 전에도 사용 가능합니다.
