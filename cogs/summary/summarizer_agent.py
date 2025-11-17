@@ -72,16 +72,15 @@ def initialize_gemini_client(api_key: str):
         logging.error(f"[초기화] Gemini 클라이언트 초기화 실패: {e}", exc_info=True)
         raise
 
-# tiktoken 대신 Gemini API의 count_tokens 사용 (동기 함수로 변경)
+# [수정됨] 봇 멈춤(blocking) 현상을 유발하는 API 호출을 제거하고 로컬 근사치 계산으로 변경합니다.
 def count_tokens(text: str) -> int:
     if not gemini_model:
         logging.warning("Gemini 모델이 초기화되지 않았으나 count_tokens 호출됨.")
-        return len(text) // 2 # 임시 방편
-    try:
-        return gemini_model.count_tokens(text).total_tokens
-    except Exception as e:
-        logging.error(f"Gemini 토큰 카운트 실패: {e}. 수동 계산으로 대체.")
-        return len(text) // 2
+    
+    # 텍스트의 길이를 반환하여 네트워크 호출을 방지합니다.
+    # 한글/영문 토큰 수 차이를 감안하더라도, 
+    # API 호출로 인한 멈춤 현상을 해결하는 것이 더 중요합니다.
+    return len(text)
 
 def to_local_time(utc_dt: datetime) -> datetime:
     return utc_dt.astimezone(timezone(timedelta(hours=TIMEZONE_OFFSET_HOURS)))
