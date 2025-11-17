@@ -3,15 +3,16 @@ import logging
 import re
 from datetime import datetime, timedelta, timezone
 
-import openai
-import tiktoken
+# OpenAI 및 tiktoken 대신 google.generativeai 임포트
+import google.generativeai as genai
+from google.api_core import exceptions as google_exceptions
 
 # --------- 상수 정의 (환경 변수에서 로드) ---------
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-preview-09-2025")
 TIMEZONE_OFFSET_HOURS = int(os.getenv("TIMEZONE_OFFSET_HOURS", 9))
-DEFAULT_MAX_REQUEST_TOKENS = int(os.getenv("DEFAULT_MAX_REQUEST_TOKENS", 32768))
-GPT_MAX_TOKENS_RESPONSE = int(os.getenv("GPT_MAX_TOKENS_RESPONSE", 2000))
-GPT_TEMPERATURE = float(os.getenv("GPT_TEMPERATURE", 0.5))
+DEFAULT_MAX_REQUEST_TOKENS = int(os.getenv("DEFAULT_MAX_REQUEST_TOKENS", 12000))
+MAX_RESPONSE_TOKENS = int(os.getenv("MAX_RESPONSE_TOKENS", 2000))
+TEMPERATURE = float(os.getenv("TEMPERATURE", 0.5))
 
 SUMMARY_PROMPT_TEMPLATE = (
     "당신은 Discord 대화 로그를 분석하여, 논의된 모든 주제를 독립적으로 분리하고 심층 요약하는 AI 분석가입니다.\n"
@@ -52,27 +53,35 @@ SUMMARY_PROMPT_TEMPLATE = (
     "{joined_messages}"
 )
 
-openai_client = None
-tiktoken_encoding = None
+# OpenAI 클라이언트 대신 Gemini 모델 객체
+gemini_model = None
 
-def initialize_openai_client(api_key: str):
-    global openai_client
+def initialize_gemini_client(api_key: str):
+    global gemini_model
     try:
-        openai_client = openai.AsyncOpenAI(api_key=api_key)
+        genai.configure(api_key=api_key)
+        safety_settings = [
+            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+        ]
+        gemini_model = genai.GenerativeModel(GEMINI_MODEL, safety_settings=safety_settings)
+        logging.info(f"[초기화] Gemini 클라이언트 초기화 성공. 모델: {GEMINI_MODEL}")
     except Exception as e:
-        logging.error(f"[초기화] OpenAI 클라이언트 초기화 실패: {e}", exc_info=True)
+        logging.error(f"[초기화] Gemini 클라이언트 초기화 실패: {e}", exc_info=True)
         raise
 
-def initialize_tiktoken_encoder():
-    global tiktoken_encoding
+# tiktoken 대신 Gemini API의 count_tokens 사용 (동기 함수로 변경)
+def count_tokens(text: str) -> int:
+    if not gemini_model:
+        logging.warning("Gemini 모델이 초기화되지 않았으나 count_tokens 호출됨.")
+        return len(text) // 2 # 임시 방편
     try:
-        tiktoken_encoding = tiktoken.encoding_for_model(OPENAI_MODEL)
-    except KeyError:
-        logging.warning(f"모델 '{OPENAI_MODEL}'에 대한 tiktoken 인코더를 찾을 수 없어 'cl100k_base'를 사용합니다.")
-        tiktoken_encoding = tiktoken.get_encoding("cl100k_base")
+        return gemini_model.count_tokens(text).total_tokens
     except Exception as e:
-        tiktoken_encoding = None
-        logging.error(f"tiktoken 인코더 로드 실패: {e}. 토큰 수 계산 기능이 제한됩니다.", exc_info=True)
+        logging.error(f"Gemini 토큰 카운트 실패: {e}. 수동 계산으로 대체.")
+        return len(text) // 2
 
 def to_local_time(utc_dt: datetime) -> datetime:
     return utc_dt.astimezone(timezone(timedelta(hours=TIMEZONE_OFFSET_HOURS)))
@@ -81,14 +90,6 @@ def format_message(log_tuple: tuple) -> str:
     dt, _, _, author, content = log_tuple
     dt_str = to_local_time(dt).strftime('%Y-%m-%d %H:%M:%S')
     return f"[{dt_str}][{author}]: {content}"
-
-async def count_tokens(text: str) -> int:
-    if not tiktoken_encoding:
-        return len(text) // 2
-    try:
-        return len(tiktoken_encoding.encode(text))
-    except Exception:
-        return len(text) // 2
 
 def parse_summary_to_structured_data(summary_text: str) -> dict:
     data = {'topics': [], 'overall_summary': ''}
@@ -127,45 +128,70 @@ def _build_summary_prompt(joined_messages: str, extra_prompt: str | None = None)
     extra_prompt_section = f"\n[추가 요청사항]\n{extra_prompt}\n" if extra_prompt else ""
     return SUMMARY_PROMPT_TEMPLATE.format(joined_messages=joined_messages, extra_prompt_section=extra_prompt_section)
 
-async def gpt_summarize(messages: list[tuple], **kwargs) -> tuple[str, int | None]:
-    if not openai_client:
-        return "OpenAI 클라이언트가 초기화되지 않았습니다.", 0
+# gpt_summarize -> gemini_summarize로 변경
+async def gemini_summarize(messages: list[tuple], **kwargs) -> tuple[str, int | None]:
+    if not gemini_model:
+        return "Gemini 클라이언트가 초기화되지 않았습니다.", 0
+    
     extra_prompt = kwargs.get('extra_prompt')
+    
+    # count_tokens가 동기 함수가 되었으므로 await 제거
     base_prompt_for_token_calc = _build_summary_prompt("", extra_prompt)
-    base_prompt_tokens = await count_tokens(base_prompt_for_token_calc)
-    allowed_message_content_tokens = DEFAULT_MAX_REQUEST_TOKENS - base_prompt_tokens - GPT_MAX_TOKENS_RESPONSE - 100
+    base_prompt_tokens = count_tokens(base_prompt_for_token_calc)
+    
+    allowed_message_content_tokens = DEFAULT_MAX_REQUEST_TOKENS - base_prompt_tokens - MAX_RESPONSE_TOKENS - 100
     logging.info(f"요청 토큰 제한: {DEFAULT_MAX_REQUEST_TOKENS}, 프롬프트/답변 예약 후 메시지용 토큰: {allowed_message_content_tokens}")
+    
     final_formatted_messages = []
     current_tokens = 0
     for msg_tuple in reversed(messages):
         formatted_msg = format_message(msg_tuple)
-        msg_tokens = await count_tokens(formatted_msg)
+        msg_tokens = count_tokens(formatted_msg) # await 제거
         if current_tokens + msg_tokens > allowed_message_content_tokens:
             logging.warning(f"메시지 토큰 제한 도달. 총 {len(final_formatted_messages)}개의 메시지만 요약에 포함됩니다.")
             break
         final_formatted_messages.insert(0, formatted_msg)
         current_tokens += msg_tokens
+        
     if not final_formatted_messages:
         logging.warning("요약할 메시지가 없습니다 (토큰 제한으로 인해 포함할 수 없거나, 원본 메시지가 없음).")
         return "요약할 메시지가 없거나 너무 짧습니다.", 0
+        
     joined_final_messages = "\n".join(final_formatted_messages)
     final_prompt = _build_summary_prompt(joined_final_messages, extra_prompt)
-    input_tokens = await count_tokens(final_prompt)
-    logging.info(f"최종 GPT 요약 요청 토큰 수: {input_tokens} / {DEFAULT_MAX_REQUEST_TOKENS}")
+    input_tokens = count_tokens(final_prompt) # await 제거
+    
+    logging.info(f"최종 Gemini 요약 요청 토큰 수: {input_tokens} / {DEFAULT_MAX_REQUEST_TOKENS}")
+    
     try:
-        response = await openai_client.chat.completions.create(model=OPENAI_MODEL, messages=[{"role": "user", "content": final_prompt}], max_tokens=GPT_MAX_TOKENS_RESPONSE, temperature=GPT_TEMPERATURE)
-        summary_content = response.choices[0].message.content.strip()
-        logging.info("GPT 요약 요청 성공.")
+        # Gemini API 호출 로직으로 변경
+        generation_config = genai.GenerationConfig(
+            max_output_tokens=MAX_RESPONSE_TOKENS,
+            temperature=TEMPERATURE
+        )
+        
+        response = await gemini_model.generate_content_async(
+            final_prompt,
+            generation_config=generation_config
+        )
+        
+        # .text 속성으로 결과물 접근
+        summary_content = response.text.strip()
+        logging.info("Gemini 요약 요청 성공.")
         return summary_content, input_tokens
-    except openai.APIConnectionError as e:
-        logging.error(f"GPT API 연결 오류: {e}")
-        return "GPT API 서버에 연결할 수 없습니다. 네트워크 상태를 확인해주세요.", input_tokens
-    except openai.RateLimitError as e:
-        logging.error(f"GPT API 호출 제한 초과: {e}")
-        return "GPT API 호출 한도를 초과했습니다. 잠시 후 다시 시도해주세요.", input_tokens
-    except openai.APIStatusError as e:
-        logging.error(f"GPT API 상태 오류 (HTTP {e.status_code}): {e.response}")
-        return f"GPT API 오류가 발생했습니다 (코드: {e.status_code}). 모델 이름({OPENAI_MODEL})이 올바른지 확인해주세요.", input_tokens
+
+    # Gemini (google-api-core) 예외 처리
+    except google_exceptions.ResourceExhausted as e:
+        logging.error(f"Gemini API 호출 제한 초과: {e}")
+        return "Gemini API 호출 한도를 초과했습니다. 잠시 후 다시 시도해주세요.", input_tokens
+    except google_exceptions.GoogleAPICallError as e:
+        logging.error(f"Gemini API 호출 오류: {e}")
+        return f"Gemini API 오류가 발생했습니다: {e}", input_tokens
     except Exception as e:
-        logging.error(f"GPT 요약 생성 중 예기치 않은 오류: {e}", exc_info=True)
-        return "GPT 요약 생성 중 알 수 없는 오류가 발생했습니다.", input_tokens
+        # response.prompt_feedback 등으로 인한 차단 처리
+        if 'response' in locals() and hasattr(response, 'prompt_feedback'):
+             logging.error(f"Gemini 요청이 차단되었습니다. 사유: {response.prompt_feedback}")
+             return f"Gemini 요청이 차단되었습니다. 사유: {response.prompt_feedback}", input_tokens
+        
+        logging.error(f"Gemini 요약 생성 중 예기치 않은 오류: {e}", exc_info=True)
+        return "Gemini 요약 생성 중 알 수 없는 오류가 발생했습니다.", input_tokens

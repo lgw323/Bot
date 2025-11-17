@@ -8,10 +8,10 @@ from discord.ext import commands, tasks
 from discord import ui
 
 # 동일 디렉토리 내의 summarizer_agent 모듈을 명시적으로 참조하도록 변경
+# OpenAI 관련 임포트 변경
 from .summarizer_agent import (
-    initialize_openai_client,
-    initialize_tiktoken_encoder,
-    gpt_summarize,
+    initialize_gemini_client,  # 변경
+    gemini_summarize,          # 변경
     parse_summary_to_structured_data
 )
 
@@ -88,14 +88,15 @@ class SummaryListenersCog(commands.Cog):
         self.bot = bot
         self.message_log = deque(maxlen=MAX_LOG_COUNT)
         
-        OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-        if OPENAI_API_KEY and SUMMARY_CHANNEL_ID != 0:
-            initialize_openai_client(OPENAI_API_KEY)
-            initialize_tiktoken_encoder()
+        # OPENAI_API_KEY -> GOOGLE_API_KEY로 변경
+        GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+        if GOOGLE_API_KEY and SUMMARY_CHANNEL_ID != 0:
+            initialize_gemini_client(GOOGLE_API_KEY) # 변경
+            # initialize_tiktoken_encoder() 제거
             self.prune_old_messages.start()
             self.initial_load_done = False
         else:
-            logger.warning("[Summary] API 키 또는 채널 ID가 설정되지 않아 요약 기능이 비활성화됩니다.")
+            logger.warning("[Summary] GOOGLE_API_KEY 또는 채널 ID가 설정되지 않아 요약 기능이 비활성화됩니다.")
             self.initial_load_done = True
 
     async def cog_load(self):
@@ -177,7 +178,8 @@ class SummaryListenersCog(commands.Cog):
                 await interaction.followup.send(f"지난 {hours}시간 동안 #{target_channel.name} 채널에서 요약할 메시지가 없습니다.", ephemeral=True)
                 return
 
-            summary_text, input_tokens = await gpt_summarize(logs_to_process, **kwargs)
+            # gpt_summarize -> gemini_summarize로 변경
+            summary_text, input_tokens = await gemini_summarize(logs_to_process, **kwargs)
             structured_summary = parse_summary_to_structured_data(summary_text)
 
             if not structured_summary or not structured_summary.get('topics'):
