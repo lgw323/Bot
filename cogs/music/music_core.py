@@ -30,8 +30,19 @@ from .music_ui import MusicPlayerView
 logger = logging.getLogger("MusicCog")
 
 # 오디오 효과와 그에 따른 재생 속도 배율 정의
-AUDIO_EFFECTS = { "none": "", "bassboost": "bass=g=15", "speedup": "rubberband=tempo=1.25", "nightcore": "atempo=1.2,asetrate=48000*1.2", "vaporwave": "atempo=0.8,asetrate=48000*0.85" }
-EFFECT_SPEED_FACTORS = { "speedup": 1.25, "nightcore": 1.2, "vaporwave": 0.8 }
+AUDIO_EFFECTS = {
+    "none": "",
+    "bassboost": "bass=g=15",
+    "speedup": "rubberband=tempo=1.25",
+    "nightcore": "atempo=1.2,asetrate=48000*1.2",
+    "karaoke": "stereotools=melv=0.015625",
+    "slowreverb": "atempo=0.85,aecho=0.8:0.9:1000:0.3"
+}
+EFFECT_SPEED_FACTORS = {
+    "speedup": 1.25,
+    "nightcore": 1.2,
+    "slowreverb": 0.85
+}
 
 class MusicState:
     """
@@ -107,73 +118,93 @@ class MusicState:
 
     async def _prefetch_autoplay_song(self, last_played_song: Song):
         """
-        [수정된 자동 재생 로직]
-        대기열이 비었을 때, 이전 곡을 기반으로 다음 곡을 자동으로 탐색하고 큐에 추가합니다.
-        속도 개선을 위해 검색량을 줄이고 검색 로직을 단순화했습니다.
+        [개선된 알고리즘]
+        제목 뒤에 수식어를 붙이는 것을 지양하고, '아티스트'와 '피처링' 정보를 기반으로
+        넓은 범위(Graph)를 탐색하여 다양성을 확보합니다.
         """
         try:
             if not last_played_song: return
             
-            # 1. 시드 곡 정보 준비
-            last_title_normalized = self._normalize_title(last_played_song.title)
-            if last_title_normalized: 
-                self.autoplay_history.append({"title": last_title_normalized, "uploader": last_played_song.uploader})
+            last_title = self._normalize_title(last_played_song.title)
+            last_uploader = last_played_song.uploader
             
-            # 단조로움을 피하기 위해 가끔 이전 곡들 중에서 시드를 선택
-            seed_song_info = random.choice(list(self.autoplay_history)[-5:]) if len(self.autoplay_history) > 1 and random.random() < 0.2 else {"title": last_title_normalized, "uploader": last_played_song.uploader}
+            # 히스토리 업데이트 (중복 방지용)
+            self.autoplay_history.append(last_title)
+
+            # --- 전략 수립 ---
+            search_query = ""
+            strategy = "artist_digging" # 기본 전략
             
-            # 2. 검색어 단순화 및 검색량 조절 (핵심 최적화)
-            # - 기존: 10개 검색, 아티스트/유사곡 전략 분리
-            # - 변경: 5개만 검색하여 속도 향상, 아티스트+제목 통합 검색으로 일관성 확보
-            search_query = f"ytsearch5:{seed_song_info['uploader']} {seed_song_info['title']}"
-            logger.info(f"[{self.guild.name}] [Autoplay] 다음 곡 탐색 (검색어: '{search_query}')")
+            # 1. 피처링 아티스트 추출 시도 (Feat. Hopping)
+            # 괄호 안이나 밖에서 Feat, ft, with 뒤의 단어를 찾습니다.
+            feat_match = re.search(r'(?i)(?:feat|ft|with)\.?\s+([^\(\)\[\]\-]+)', last_played_song.title)
             
-            # 3. 유튜브에서 정보 가져오기
+            if feat_match and random.random() < 0.3: # 30% 확률로 피처링 가수로 파도타기
+                featured_artist = feat_match.group(1).strip()
+                search_query = f"ytsearch10:{featured_artist}"
+                strategy = f"feat_hop ({featured_artist})"
+            else:
+                # 2. 아티스트 디깅 (기본)
+                # 제목 없이 아티스트 이름만으로 검색하여 인기곡 목록을 가져옵니다.
+                search_query = f"ytsearch15:{last_uploader}"
+                strategy = "artist_digging"
+
+            logger.info(f"[{self.guild.name}] [Autoplay] 전략: {strategy} / 검색어: '{search_query}'")
+            
+            # --- 검색 및 필터링 ---
+            # 다운로드 없이 정보만 가져옵니다 (process=True로 빠른 처리)
             data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False, process=True))
-            if not data or not data.get('entries'):
-                logger.warning(f"[{self.guild.name}] [Autoplay] 탐색 결과 없음.")
+            
+            if not data or 'entries' not in data:
+                logger.warning(f"[{self.guild.name}] [Autoplay] 검색 결과 없음.")
                 return
 
-            # 4. 후보곡 필터링 (품질 유지를 위해 기존 로직 유지)
-            potential_songs = []
-            recent_titles = [s["title"] for s in self.autoplay_history]
-            positive_keywords = ['official audio', 'lyrics', 'lyric video', '음원']
-            negative_keywords = ['reaction', '해석', '드라마', '애니', '장면', '코멘터리', 'commentary', 'live', 'cover']
-
-            for entry in data.get('entries', []):
+            candidates = []
+            # [중요] 현재 노래와 '제목'이 비슷한 곡은 무조건 제외합니다. (Same Song Cycle 방지)
+            for entry in data['entries']:
                 if not entry: continue
-                entry_title_normalized = self._normalize_title(entry.get('title', ''))
-                if not entry_title_normalized: continue
                 
-                is_too_similar = any(fuzz.ratio(entry_title_normalized, rt) > 85 for rt in recent_titles) if RAPIDFUZZ_AVAILABLE else entry_title_normalized in recent_titles
-                if is_too_similar or not (90 < entry.get('duration', 0) < 600): 
+                title = entry.get('title', '')
+                normalized_title = self._normalize_title(title)
+                
+                # 1. 히스토리 중복 체크 (최근 재생한 곡 제외)
+                if normalized_title in self.autoplay_history:
                     continue
                 
-                score = sum([2 for kw in positive_keywords if kw in entry.get('title', '').lower()]) - sum([5 for kw in negative_keywords if kw in entry.get('title', '').lower()])
-                if entry.get('uploader') == seed_song_info["uploader"]: 
-                    score += 1
+                # 2. 현재 곡과의 유사도 체크 (rapidfuzz 사용 시)
+                # 제목이 70% 이상 비슷하면 '같은 노래의 다른 버전'으로 간주하고 버립니다.
+                if RAPIDFUZZ_AVAILABLE:
+                    similarity = fuzz.ratio(normalized_title, last_title)
+                    if similarity > 70: 
+                        continue
+                else:
+                    # 라이브러리 없으면 단순 포함 여부로 체크
+                    if last_title in normalized_title or normalized_title in last_title:
+                        continue
                 
-                if score >= 0:
-                    entry['score'] = score
-                    potential_songs.append(entry)
-            logger.info(f"[{self.guild.name}] [Autoplay] 필터링 후 {len(potential_songs)}개의 후보 곡 발견.")
+                # 3. 길이 체크 (너무 짧거나 긴 영상 제외)
+                if not (90 < entry.get('duration', 0) < 600):
+                    continue
 
-            # 5. 최종 곡 선정 및 대기열 추가
-            if potential_songs:
-                new_song_data = random.choices(potential_songs, weights=[s['score'] + 1 for s in potential_songs], k=1)[0]
-                new_song_obj = Song(new_song_data, self.guild.get_member(self.bot.user.id) or self.bot.user)
-                self.queue.append(new_song_obj)
-                logger.info(f"[{self.guild.name}] [Autoplay] 다음 곡 선택: '{new_song_obj.title}' (점수: {new_song_data['score']})")
+                candidates.append(entry)
+
+            # --- 최종 선택 ---
+            if candidates:
+                # 랜덤하게 하나 선택 (상위권일수록 가중치를 줄 수도 있지만, 다양성을 위해 완전 랜덤 추천)
+                selected_data = random.choice(candidates)
+                new_song = Song(selected_data, self.guild.get_member(self.bot.user.id) or self.bot.user)
                 
-                # 즉시 재생이 필요하면 재생 루프를 깨웁니다.
+                self.queue.append(new_song)
+                logger.info(f"[{self.guild.name}] [Autoplay] 다음 곡 결정: '{new_song.title}' (전략: {strategy})")
+                
                 if self.voice_client and not (self.voice_client.is_playing() or self.voice_client.is_paused()):
                     self.play_next_song.set()
+            else:
+                logger.info(f"[{self.guild.name}] [Autoplay] 적절한 후보 곡을 찾지 못했습니다. (모두 필터링됨)")
 
-        except asyncio.CancelledError: 
-            pass # 작업 취소는 정상적인 종료이므로 로그를 남기지 않음
-        except Exception: 
-            logger.error(f"[{self.guild.name}] [Autoplay] Prefetch 작업 중 오류 발생", exc_info=True)
-        finally: 
+        except Exception:
+            logger.error(f"[{self.guild.name}] [Autoplay] 오류 발생", exc_info=True)
+        finally:
             self.autoplay_task = None
 
     async def create_now_playing_embed(self) -> discord.Embed:

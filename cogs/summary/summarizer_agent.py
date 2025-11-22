@@ -72,15 +72,25 @@ def initialize_gemini_client(api_key: str):
         logging.error(f"[초기화] Gemini 클라이언트 초기화 실패: {e}", exc_info=True)
         raise
 
-# [수정됨] 봇 멈춤(blocking) 현상을 유발하는 API 호출을 제거하고 로컬 근사치 계산으로 변경합니다.
 def count_tokens(text: str) -> int:
-    if not gemini_model:
-        logging.warning("Gemini 모델이 초기화되지 않았으나 count_tokens 호출됨.")
+    """
+    API 호출 없이 로컬에서 근사치 토큰을 계산합니다.
+    한글/특수문자 등은 2.5 토큰, 영문/숫자/공백은 0.5 토큰으로 가중치를 둡니다.
+    (Gemini 토크나이저 특성 반영)
+    """
+    if not text:
+        return 0
     
-    # 텍스트의 길이를 반환하여 네트워크 호출을 방지합니다.
-    # 한글/영문 토큰 수 차이를 감안하더라도, 
-    # API 호출로 인한 멈춤 현상을 해결하는 것이 더 중요합니다.
-    return len(text)
+    token_count = 0.0
+    for char in text:
+        # 아스키 문자(영문, 숫자, 기본 기호)는 적은 토큰
+        if ord(char) < 128:
+            token_count += 0.5
+        # 한글 및 기타 유니코드 문자는 많은 토큰
+        else:
+            token_count += 2.5
+            
+    return int(token_count) + 5  # 안전 마진 +5
 
 def to_local_time(utc_dt: datetime) -> datetime:
     return utc_dt.astimezone(timezone(timedelta(hours=TIMEZONE_OFFSET_HOURS)))

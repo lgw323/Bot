@@ -275,7 +275,8 @@ class EffectSelect(ui.Select):
             discord.SelectOption(label="베이스 부스트", value="bassboost", emoji="🔊", default=current_effect == "bassboost"),
             discord.SelectOption(label="스피드업", value="speedup", emoji="⏩", default=current_effect == "speedup"),
             discord.SelectOption(label="나이트코어", value="nightcore", emoji="🚀", default=current_effect == "nightcore"),
-            discord.SelectOption(label="몽환파", value="vaporwave", emoji="🌊", default=current_effect == "vaporwave"),
+            discord.SelectOption(label="노래방", value="karaoke", emoji="🎤", default=current_effect == "karaoke"),
+            discord.SelectOption(label="슬로우&리버브", value="slowreverb", emoji="🐌", default=current_effect == "slowreverb"),
         ]
         super().__init__(placeholder="🎧 오디오 효과를 선택하세요...", min_values=1, max_values=1, options=options, row=2)
 
