@@ -12,13 +12,12 @@ import discord
 from discord.ext import commands
 import yt_dlp
 
-# rapidfuzz 라이브러리가 있으면 제목 유사도 비교에 사용합니다. (성능 향상)
 try:
     from rapidfuzz import fuzz
     RAPIDFUZZ_AVAILABLE = True
 except ImportError:
     RAPIDFUZZ_AVAILABLE = False
-    logging.getLogger("MusicCog").warning("rapidfuzz 라이브러리를 찾을 수 없습니다. 'pip install rapidfuzz'로 설치해야 제목 유사도 비교 기능이 활성화됩니다.")
+    logging.getLogger("MusicCog").warning("rapidfuzz 라이브러리를 찾을 수 없습니다.")
 
 from .music_utils import (
     Song, LoopMode, LOOP_MODE_DATA,
@@ -29,26 +28,7 @@ from .music_ui import MusicPlayerView
 
 logger = logging.getLogger("MusicCog")
 
-# 오디오 효과와 그에 따른 재생 속도 배율 정의
-AUDIO_EFFECTS = {
-    "none": "",
-    "bassboost": "bass=g=15",
-    "speedup": "rubberband=tempo=1.25",
-    "nightcore": "atempo=1.2,asetrate=48000*1.2",
-    "karaoke": "stereotools=melv=0.015625",
-    "slowreverb": "atempo=0.85,aecho=0.8:0.9:1000:0.3"
-}
-EFFECT_SPEED_FACTORS = {
-    "speedup": 1.25,
-    "nightcore": 1.2,
-    "slowreverb": 0.85
-}
-
 class MusicState:
-    """
-    서버(Guild)별 음악 재생 상태를 관리하는 클래스입니다.
-    큐, 볼륨, 현재 곡, 루프 모드 등 모든 상태 정보를 담고 있습니다.
-    """
     def __init__(self, bot: commands.Bot, cog, guild: discord.Guild, initial_volume: float = 0.5):
         self.bot, self.cog, self.guild = bot, cog, guild
         self.queue = deque()
@@ -65,32 +45,26 @@ class MusicState:
         self.total_paused_duration: timedelta = timedelta(seconds=0)
         self.autoplay_history = deque(maxlen=20)
         self.autoplay_task: Optional[asyncio.Task] = None
-        self.current_effect = "none"
         self.seek_time = 0
         self.consecutive_play_failures = 0
         self.is_tts_interrupting = False
         self.update_lock = asyncio.Lock()
-        self.UI_UPDATE_COOLDOWN = 2.0
+        self.UI_UPDATE_COOLDOWN = 1.0 
         self.last_update_time: float = 0.0
-        # UI 업데이트 작업을 추적하기 위한 변수
         self.ui_update_task: Optional[asyncio.Task] = None
         self.current_task: Optional[str] = None
         self.main_task = self.bot.loop.create_task(self.play_song_loop())
-        self.progress_updater_task = self.bot.loop.create_task(self.update_progress_loop())
-        logger.info(f"[{self.guild.name}] MusicState 생성됨 (초기 볼륨: {int(self.volume * 100)}%)")
+        logger.info(f"[{self.guild.name}] MusicState 생성됨")
 
     async def set_task(self, description: str):
-        """플레이어 UI에 현재 작업 상태를 표시합니다."""
         self.current_task = description
         await self.schedule_ui_update()
 
     async def clear_task(self):
-        """플레이어 UI의 작업 상태 표시를 지웁니다."""
         self.current_task = None
         await self.schedule_ui_update()
 
     def _normalize_title(self, title: str) -> str:
-        """노래 제목에서 (MV), [Official Audio] 등 불필요한 부분을 제거하여 비교하기 쉽게 만듭니다."""
         if not title: return ""
         title = title.lower()
         title = re.sub(r'\([^)]*\)|\[[^]]*\]', '', title)
@@ -101,106 +75,79 @@ class MusicState:
         return " ".join(title.split())
 
     def get_current_playback_time(self) -> int:
-        """현재 곡의 재생 시간을 초 단위로 계산하여 반환합니다."""
         if not self.playback_start_time or not self.current_song: return 0
         base_elapsed = (discord.utils.utcnow() - self.playback_start_time).total_seconds()
         paused_duration = self.total_paused_duration.total_seconds()
         current_pause = (discord.utils.utcnow() - self.pause_start_time).total_seconds() if self.voice_client and self.voice_client.is_paused() and self.pause_start_time else 0
         actual_elapsed = base_elapsed - paused_duration - current_pause
-        effective_elapsed = actual_elapsed * EFFECT_SPEED_FACTORS.get(self.current_effect, 1.0)
-        return int(max(0, min(effective_elapsed, self.current_song.duration)))
+        return int(max(0, min(actual_elapsed, self.current_song.duration)))
         
     def cancel_autoplay_task(self):
-        """진행 중인 자동 재생 작업을 취소합니다."""
         if self.autoplay_task and not self.autoplay_task.done():
             self.autoplay_task.cancel()
             self.autoplay_task = None
 
     async def _prefetch_autoplay_song(self, last_played_song: Song):
-        """
-        [개선된 알고리즘]
-        제목 뒤에 수식어를 붙이는 것을 지양하고, '아티스트'와 '피처링' 정보를 기반으로
-        넓은 범위(Graph)를 탐색하여 다양성을 확보합니다.
-        """
         try:
             if not last_played_song: return
             
             last_title = self._normalize_title(last_played_song.title)
             last_uploader = last_played_song.uploader
             
-            # 히스토리 업데이트 (중복 방지용)
             self.autoplay_history.append(last_title)
 
-            # --- 전략 수립 ---
             search_query = ""
-            strategy = "artist_digging" # 기본 전략
+            strategy = "artist_digging"
             
-            # 1. 피처링 아티스트 추출 시도 (Feat. Hopping)
-            # 괄호 안이나 밖에서 Feat, ft, with 뒤의 단어를 찾습니다.
             feat_match = re.search(r'(?i)(?:feat|ft|with)\.?\s+([^\(\)\[\]\-]+)', last_played_song.title)
             
-            if feat_match and random.random() < 0.3: # 30% 확률로 피처링 가수로 파도타기
+            if feat_match and random.random() < 0.3:
                 featured_artist = feat_match.group(1).strip()
                 search_query = f"ytsearch10:{featured_artist}"
                 strategy = f"feat_hop ({featured_artist})"
             else:
-                # 2. 아티스트 디깅 (기본)
-                # 제목 없이 아티스트 이름만으로 검색하여 인기곡 목록을 가져옵니다.
                 search_query = f"ytsearch15:{last_uploader}"
                 strategy = "artist_digging"
 
             logger.info(f"[{self.guild.name}] [Autoplay] 전략: {strategy} / 검색어: '{search_query}'")
             
-            # --- 검색 및 필터링 ---
-            # 다운로드 없이 정보만 가져옵니다 (process=True로 빠른 처리)
             data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False, process=True))
             
             if not data or 'entries' not in data:
-                logger.warning(f"[{self.guild.name}] [Autoplay] 검색 결과 없음.")
                 return
 
             candidates = []
-            # [중요] 현재 노래와 '제목'이 비슷한 곡은 무조건 제외합니다. (Same Song Cycle 방지)
             for entry in data['entries']:
                 if not entry: continue
                 
                 title = entry.get('title', '')
                 normalized_title = self._normalize_title(title)
                 
-                # 1. 히스토리 중복 체크 (최근 재생한 곡 제외)
                 if normalized_title in self.autoplay_history:
                     continue
                 
-                # 2. 현재 곡과의 유사도 체크 (rapidfuzz 사용 시)
-                # 제목이 70% 이상 비슷하면 '같은 노래의 다른 버전'으로 간주하고 버립니다.
                 if RAPIDFUZZ_AVAILABLE:
                     similarity = fuzz.ratio(normalized_title, last_title)
                     if similarity > 70: 
                         continue
                 else:
-                    # 라이브러리 없으면 단순 포함 여부로 체크
                     if last_title in normalized_title or normalized_title in last_title:
                         continue
                 
-                # 3. 길이 체크 (너무 짧거나 긴 영상 제외)
                 if not (90 < entry.get('duration', 0) < 600):
                     continue
 
                 candidates.append(entry)
 
-            # --- 최종 선택 ---
             if candidates:
-                # 랜덤하게 하나 선택 (상위권일수록 가중치를 줄 수도 있지만, 다양성을 위해 완전 랜덤 추천)
                 selected_data = random.choice(candidates)
                 new_song = Song(selected_data, self.guild.get_member(self.bot.user.id) or self.bot.user)
                 
                 self.queue.append(new_song)
-                logger.info(f"[{self.guild.name}] [Autoplay] 다음 곡 결정: '{new_song.title}' (전략: {strategy})")
+                logger.info(f"[{self.guild.name}] [Autoplay] 다음 곡 결정: '{new_song.title}'")
                 
                 if self.voice_client and not (self.voice_client.is_playing() or self.voice_client.is_paused()):
                     self.play_next_song.set()
-            else:
-                logger.info(f"[{self.guild.name}] [Autoplay] 적절한 후보 곡을 찾지 못했습니다. (모두 필터링됨)")
 
         except Exception:
             logger.error(f"[{self.guild.name}] [Autoplay] 오류 발생", exc_info=True)
@@ -208,16 +155,16 @@ class MusicState:
             self.autoplay_task = None
 
     async def create_now_playing_embed(self) -> discord.Embed:
-        """현재 음악 상태를 기반으로 플레이어 Embed 메시지를 생성합니다."""
         if not self.current_song and self.current_task:
-            embed = discord.Embed(title="⚙️ 작업 처리 중...", description=self.current_task, color=0x36393F)
+            embed = discord.Embed(title="⚙️ [시스템 처리 중...]", description=f"```\n{self.current_task}\n```", color=0x36393F)
             if self.bot.user and self.bot.user.avatar:
                 embed.set_thumbnail(url=self.bot.user.avatar.url)
             return embed
 
         if self.current_song:
             song = self.current_song
-            embed = discord.Embed(title=song.title, color=BOT_EMBED_COLOR, url=song.webpage_url)
+            # SF 테마 색상 (Cyan)
+            embed = discord.Embed(title=f"**[ 💽 오디오_데이터_로드_완료 ]**", color=0x00FFFF, url=song.webpage_url)
             if song.thumbnail: embed.set_thumbnail(url=song.thumbnail)
             
             total_m, total_s = divmod(song.duration, 60)
@@ -225,42 +172,81 @@ class MusicState:
             elapsed_m, elapsed_s_display = divmod(elapsed_s, 60)
             
             progress = elapsed_s / song.duration if song.duration > 0 else 0
-            bar = '▬' * int(15 * progress) + '🔘' + '▬' * (15 - int(15 * progress))
-            status = "일시정지됨" if self.voice_client and self.voice_client.is_paused() else f"**`{song.uploader}`**"
+            bar_length = 12
+            filled_length = int(bar_length * progress)
+            # SF 스타일 진행 바: [████▒▒▒▒▒▒]
+            bar = '█' * filled_length + '▒' * (bar_length - filled_length)
             
-            embed.description = f"{status}\n\n`{elapsed_m}:{elapsed_s_display:02d}` {bar} `{total_m}:{total_s:02d}`\n\n**요청**: {song.requester.mention}"
+            status_emoji = "▶"
+            status_text = "출력 중..."
+            time_flow_text = ""
+
+            if self.voice_client and not self.voice_client.is_paused() and self.playback_start_time:
+                adjusted_start_dt = self.playback_start_time + self.total_paused_duration
+                adjusted_ts = int(adjusted_start_dt.timestamp())
+                time_flow_text = f"<t:{adjusted_ts}:R>" 
+            elif self.voice_client and self.voice_client.is_paused():
+                status_emoji = "⏸"
+                status_text = "일시 중단됨"
+            elif not self.playback_start_time:
+                status_emoji = "⏳"
+                status_text = "준비 중..."
+
+            # yaml 포맷을 사용하여 터미널 느낌 구현
+            description = (
+                f"```yaml\n"
+                f"제  목 : {song.title[:25]}{'...' if len(song.title) > 25 else ''}\n"
+                f"아티스트 : {song.uploader[:20]}{'...' if len(song.uploader) > 20 else ''}\n"
+                f"상  태 : {status_emoji} {status_text}\n"
+                f"버  퍼 : [{bar}] {int(progress * 100)}%\n"
+                f"시  간 : {elapsed_m:02d}:{elapsed_s_display:02d} / {total_m:02d}:{total_s:02d}\n"
+                f"```"
+            )
+            
+            if time_flow_text:
+                description += f"⏱️ **경과 시간**: {time_flow_text}\n"
+            
+            description += f"\n`📡 데이터_소스`: **YouTube 스트림**\n`👤 승인자`: {song.requester.mention}"
+
+            embed.description = description
         else:
-            embed = discord.Embed(title="재생 중인 음악 없음", color=0x36393F)
-            embed.description = f"`/재생` 또는 `즐겨찾기` 버튼으로 노래를 추가해주세요."
+            embed = discord.Embed(title="**[ 💤 시스템 대기 모드 ]**", color=0x36393F)
+            embed.description = f"```\n대기열이 비어있습니다.\n/재생 또는 [즐겨찾기]로 오디오 캡슐을 투입하세요.\n```"
             if self.bot.user and self.bot.user.avatar:
                 embed.set_thumbnail(url=self.bot.user.avatar.url)
         
-        # Footer 생성 (볼륨, 반복모드, 자동재생, 네트워크 상태 등)
-        footer_parts = [ f"🔉 {int(self.volume * 100)}%", f"{LOOP_MODE_DATA[self.loop_mode][1]} {LOOP_MODE_DATA[self.loop_mode][0]}", "🎶 자동재생 ON" if self.auto_play_enabled else "🎶 자동재생 OFF" ]
-        effect_text = f"🎧 효과: {self.current_effect.capitalize()}" if self.current_effect != "none" else "🎧 효과: 없음"
-        next_song_info = (f"{self.queue[0].title[:30]}..." if len(self.queue[0].title) > 30 else self.queue[0].title) if self.queue else "없음"
+        # Footer 정보 구성
+        footer_parts = [ f"🔉 볼륨: {int(self.volume * 100)}%" ]
+        
+        loop_text = "➡️ 반복 없음"
+        if self.loop_mode == LoopMode.SONG: loop_text = "🔂 한 곡 반복"
+        elif self.loop_mode == LoopMode.QUEUE: loop_text = "🔁 전체 반복"
+        footer_parts.append(loop_text)
+        
+        footer_parts.append("🤖 자동재생 ON" if self.auto_play_enabled else "🤖 자동재생 OFF")
+        
+        next_song_info = (f"{self.queue[0].title[:20]}..." if len(self.queue[0].title) > 20 else self.queue[0].title) if self.queue else "없음"
         
         settings = await load_music_settings()
         avg, stdev = get_network_stats(settings, self.guild.id)
         if avg is not None and stdev is not None:
-            color_emoji = "🟢" if stdev < 400 else "🟡" if stdev < 1000 else "🔴"
-            network_stats = f"{color_emoji} 응답속도: {avg/1000:.1f}s (±{stdev/1000:.1f}s)"
+            # 네트워크 상태를 SF 느낌으로 표현
+            ping_color = "🟢" if stdev < 400 else "🟡" if stdev < 1000 else "🔴"
+            network_stats = f"{ping_color} 레이턴시: {avg/1000:.1f}s (±{stdev/1000:.1f}s)"
         else:
-            network_stats = "🌐 응답속도: 측정 중..."
+            network_stats = "🌐 네트워크: 측정 중..."
 
-        footer_text = f"{' • '.join(footer_parts)}\n{effect_text}\n다음 곡: {next_song_info}\n{network_stats}"
+        footer_text = f"{' | '.join(footer_parts)}\n다음 트랙: {next_song_info}\n{network_stats}"
         
         if self.current_song and self.current_task:
-            footer_text += f"\n\n⚙️ {self.current_task}"
+            footer_text += f"\n\n⚙️ [백그라운드 작업]: {self.current_task}"
 
         embed.set_footer(text=footer_text)
         return embed
 
     async def cleanup(self, leave=False):
-        """음악 상태를 초기화하고 모든 작업을 정리합니다."""
         self.cancel_autoplay_task()
         if self.main_task: self.main_task.cancel()
-        if self.progress_updater_task: self.progress_updater_task.cancel()
         self.current_song = None
         self.queue.clear()
         if self.voice_client:
@@ -272,28 +258,20 @@ class MusicState:
         if self.now_playing_message: await self.schedule_ui_update()
     
     async def schedule_ui_update(self):
-        """
-        UI 업데이트를 스케줄링합니다. (디바운싱 적용)
-        이전 업데이트 작업이 있다면 취소하고, 새로운 2초 대기 작업을 시작합니다.
-        """
         if self.ui_update_task and not self.ui_update_task.done():
             self.ui_update_task.cancel()
 
         self.ui_update_task = self.bot.loop.create_task(self._delayed_ui_update())
 
     async def _delayed_ui_update(self):
-        """
-        정해진 시간(UI_UPDATE_COOLDOWN)만큼 기다린 후, 실제 업데이트를 실행합니다.
-        """
         try:
             await asyncio.sleep(self.UI_UPDATE_COOLDOWN)
             async with self.update_lock:
                 await self._execute_ui_update()
         except asyncio.CancelledError:
-            pass # 새로운 요청에 의해 작업이 취소된 것은 정상적인 동작입니다.
+            pass
 
     async def _execute_ui_update(self):
-        """실제로 플레이어 Embed 메시지를 수정(edit)하는 함수입니다."""
         try:
             embed = await self.create_now_playing_embed()
             view = MusicPlayerView(self.cog, self)
@@ -308,20 +286,7 @@ class MusicState:
         except Exception as e:
             logger.error(f"[{self.guild.name}] Now Playing 메시지 처리 중 예기치 않은 오류: {e}", exc_info=True)
 
-    async def update_progress_loop(self):
-        """10초마다 현재 재생 진행률 바를 업데이트하기 위한 루프입니다."""
-        await self.bot.wait_until_ready()
-        while not self.bot.is_closed():
-            await asyncio.sleep(10)
-            if self.voice_client and self.current_song and not self.voice_client.is_paused():
-                # [수정] 모든 UI 업데이트는 schedule_ui_update()를 통하도록 변경하여 Rate Limit 방지
-                await self.schedule_ui_update()
-
     async def play_song_loop(self):
-        """
-        음악 재생의 핵심 로직을 담고 있는 메인 루프입니다.
-        play_next_song 이벤트가 설정될 때까지 기다렸다가 다음 곡을 재생합니다.
-        """
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
             await self.play_next_song.wait()
@@ -329,12 +294,10 @@ class MusicState:
             
             previous_song = self.current_song
             
-            # 다음 곡 결정 (한 곡 반복, 큐, 일반 순서 등)
             next_song = self.current_song if self.loop_mode == LoopMode.SONG and self.current_song else self.queue.popleft() if self.queue else None
             self.current_song = next_song
 
             if not self.current_song:
-                # 큐가 비었고 자동 재생이 켜져 있으면 다음 곡 탐색 시작
                 if self.auto_play_enabled and previous_song and not self.autoplay_task:
                     self.autoplay_task = self.bot.loop.create_task(self._prefetch_autoplay_song(previous_song))
                 if previous_song is not None: await self.schedule_ui_update()
@@ -345,35 +308,31 @@ class MusicState:
                 await self.cog.cleanup_channel_messages(self)
             
             try:
-                # yt-dlp로 스트리밍 가능한 URL을 가져옵니다.
                 data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(self.current_song.webpage_url, download=False))
                 stream_url = data.get('url')
                 if not stream_url:
-                    if self.text_channel: await self.text_channel.send(f"❌ '{self.current_song.title}'을(를) 재생할 수 없습니다 (스트림 주소 오류).", delete_after=20)
+                    if self.text_channel: await self.text_channel.send(f"❌ '{self.current_song.title}'을(를) 재생할 수 없습니다.", delete_after=20)
                     self.handle_after_play(ValueError("스트림 URL을 찾을 수 없음"))
                     continue
                 
                 self.current_song.stream_url = stream_url
                 
-                # FFmpeg 옵션 설정 (오디오 효과, 탐색 시간 등)
                 ffmpeg_options = {'before_options': f'-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -nostdin -ss {self.seek_time}', 'options': '-vn'}
-                effect_filter = AUDIO_EFFECTS.get(self.current_effect)
-                if effect_filter: ffmpeg_options['options'] += f' -af "{effect_filter}"'
                 
-                # 오디오 소스를 생성하여 음성 클라이언트로 재생
                 source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(stream_url, **ffmpeg_options), volume=self.volume)
                 self.voice_client.play(source, after=lambda e: self.handle_after_play(e))
                 
-                # 재생 관련 상태 변수 초기화
                 self.consecutive_play_failures = 0
-                self.playback_start_time = discord.utils.utcnow() - timedelta(seconds=self.seek_time / EFFECT_SPEED_FACTORS.get(self.current_effect, 1.0))
+                self.playback_start_time = discord.utils.utcnow() - timedelta(seconds=self.seek_time)
                 self.pause_start_time = None
                 self.total_paused_duration = timedelta(seconds=0)
                 self.seek_time = 0
+                
+                await self.schedule_ui_update()
 
             except Exception as e:
                 self.consecutive_play_failures += 1
-                logger.error(f"'{self.current_song.title}' 재생 중 오류 발생 (연속 실패: {self.consecutive_play_failures}회)", exc_info=True)
+                logger.error(f"'{self.current_song.title}' 재생 중 오류 발생", exc_info=True)
                 if self.consecutive_play_failures >= 3:
                     if self.text_channel: await self.text_channel.send(f"🚨 **재생 오류**: '{self.current_song.title}' 곡을 재생하는 데 반복적으로 실패하여 대기열을 초기화합니다.", delete_after=30)
                     self.queue.clear()
@@ -381,13 +340,10 @@ class MusicState:
                 self.handle_after_play(e)
                 continue
             
-            # 전체 반복 모드일 경우, 현재 곡을 다시 큐의 맨 뒤에 추가
             if self.loop_mode == LoopMode.QUEUE and self.current_song:
                 self.queue.append(self.current_song)
 
     def handle_after_play(self, error):
-        """노래 재생이 끝나거나 오류로 중단되었을 때 호출되는 콜백 함수입니다."""
-        if self.is_tts_interrupting: return # TTS가 재생 중일 때는 아무것도 하지 않음
+        if self.is_tts_interrupting: return
         if error: logger.error(f"재생 후 콜백 오류: {error}")
-        # 다음 곡 재생을 위해 메인 루프를 깨웁니다.
         self.bot.loop.call_soon_threadsafe(self.play_next_song.set)

@@ -22,7 +22,7 @@ try:
     GTTS_AVAILABLE = True
 except ImportError:
     GTTS_AVAILABLE = False
-    logging.getLogger("MusicCog").warning("gTTS 라이브러리를 찾을 수 없습니다. 'pip install gTTS'로 설치해야 TTS 기능을 사용할 수 있습니다.")
+    logging.getLogger("MusicCog").warning("gTTS 라이브러리를 찾을 수 없습니다.")
 
 from .music_core import MusicState
 from .music_utils import (
@@ -33,6 +33,7 @@ from .music_utils import (
 from .music_ui import QueueManagementView, FavoritesView, SearchSelect
 
 logger = logging.getLogger("MusicCog")
+command_logger = logging.getLogger("Commands") # 커맨드 로거 추가
 
 class MusicAgentCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -44,25 +45,19 @@ class MusicAgentCog(commands.Cog):
         self.initial_setup_done = False
 
     async def cog_unload(self):
-        logger.info("MusicAgentCog 언로드 시작... 모든 활성 MusicState를 정리합니다.")
         cleanup_tasks = [state.cleanup(leave=True) for state in self.music_states.values()]
         await asyncio.gather(*cleanup_tasks)
-        logger.info("모든 MusicState 정리 완료.")
 
     @commands.Cog.listener()
     async def on_ready(self):
         if not self.initial_setup_done:
-            logger.info("[TTS Cache] 초기 설정을 시작합니다...")
             await self.cleanup_tts_cache()
             await self.precache_tts()
             self.initial_setup_done = True
-            logger.info("[TTS Cache] 초기 설정을 완료했습니다.")
         if MUSIC_CHANNEL_ID == 0:
-            logger.warning("MUSIC_CHANNEL_ID가 설정되지 않아 상시 플레이어 기능이 비활성화됩니다.")
             return
         for guild in self.bot.guilds:
-            state = await self.get_music_state(guild.id)
-            logger.info(f"'{guild.name}' 서버의 '{state.text_channel.name if state.text_channel else 'N/A'}' 채널에 상시 플레이어를 생성 또는 연결했습니다.")
+            await self.get_music_state(guild.id)
 
     def _get_tts_filepath(self, text: str) -> Path:
         hashed_name = hashlib.sha256(text.encode('utf-8')).hexdigest()
@@ -72,7 +67,6 @@ class MusicAgentCog(commands.Cog):
         filepath = self._get_tts_filepath(text)
         if filepath.exists(): return True
         
-        logger.info(f"[TTS Cache] 신규 캐시 파일 생성 (인메모리 방식): '{text}'")
         try:
             mp3_fp = io.BytesIO()
             tts_obj = gTTS(text=text, lang='ko', slow=False)
@@ -90,29 +84,21 @@ class MusicAgentCog(commands.Cog):
             await asyncio.to_thread(convert)
             return True
         except Exception:
-            logger.error(f"[TTS Cache] TTS 파일 생성 실패: '{text}'", exc_info=True)
             return False
 
     async def cleanup_tts_cache(self):
-        logger.info("[TTS Cache] 3일 이상된 캐시 파일 정리를 시작합니다...")
-        pruned_count = 0
         expiration_time = time_lib.time() - timedelta(days=3).total_seconds()
         for file in self.tts_cache_dir.glob('*.opus'):
             try:
                 if file.stat().st_atime < expiration_time:
                     file.unlink()
-                    pruned_count += 1
-            except OSError as e: logger.warning(f"[TTS Cache] 파일 삭제 실패 {file}: {e}")
-        logger.info(f"[TTS Cache] 정리 완료. {pruned_count}개의 오래된 파일을 삭제했습니다.")
+            except OSError as e: pass
 
     async def precache_tts(self):
-        logger.info("[TTS Cache] 자주 사용하는 고정 음성 사전 캐싱을 시작합니다...")
         tasks = [self._create_tts_file_if_not_exists("노래봇이 입장했습니다.")]
         await asyncio.gather(*tasks)
-        logger.info(f"[TTS Cache] 사전 캐싱 완료. {len(tasks)}개의 음성을 확인/생성했습니다.")
 
     def after_tts(self, state: MusicState, interrupted_song: Optional[Song]):
-        # [수정] 이 콜백은 단순히 상태를 복원하고 다음 곡 재생을 알리는 역할만 합니다.
         state.is_tts_interrupting = False
         if interrupted_song:
             state.queue.appendleft(interrupted_song)
@@ -124,18 +110,16 @@ class MusicAgentCog(commands.Cog):
         await self._create_tts_file_if_not_exists(text)
         tts_filepath = self._get_tts_filepath(text)
         if not tts_filepath.exists():
-            logger.error(f"TTS 파일 재생 실패: '{text}' 파일이 생성되지 않았습니다.")
             return
 
         try: await asyncio.to_thread(os.utime, tts_filepath, None)
-        except OSError as e: logger.warning(f"파일 접근 시간 갱신 실패 {tts_filepath}: {e}")
+        except OSError as e: pass
         
         async with self.tts_lock:
             interrupted_song: Optional[Song] = None
             try:
                 if (state.voice_client.is_playing() or state.voice_client.is_paused()) and state.current_song:
                     interrupted_song = state.current_song
-                    # [수정] 중단된 시점을 기록하여 나중에 복원할 수 있도록 합니다.
                     state.seek_time = state.get_current_playback_time()
                     state.is_tts_interrupting = True
                     state.voice_client.stop()
@@ -144,10 +128,7 @@ class MusicAgentCog(commands.Cog):
                 tts_source = discord.FFmpegPCMAudio(str(tts_filepath))
                 tts_volume_source = discord.PCMVolumeTransformer(tts_source, volume=2.0)
                 state.voice_client.play(tts_volume_source, after=lambda e: self.after_tts(state, interrupted_song))
-                logger.info(f"[TTS Cache] 캐시된 파일 재생: '{text}'")
             except Exception:
-                # [수정] try...except 블록을 사용하여 TTS 재생이 실패하더라도 중단된 곡을 복구하도록 보장합니다.
-                logger.error(f"[{state.guild.name}] TTS 재생 중 오류 발생", exc_info=True)
                 if interrupted_song:
                     state.queue.appendleft(interrupted_song)
                 self.bot.loop.call_soon_threadsafe(state.play_next_song.set)
@@ -175,8 +156,8 @@ class MusicAgentCog(commands.Cog):
                         else:
                              await channel.purge(limit=100, check=lambda m: m.author == self.bot.user)
                              await state.schedule_ui_update()
-                    except discord.Forbidden: logger.warning(f"[{guild.name}] '{channel.name}' 채널의 메시지를 읽거나 삭제할 권한이 없습니다.")
-                    except discord.HTTPException: logger.warning(f"[{guild.name}] 플레이어 메시지를 찾는 중 HTTP 오류 발생.")
+                    except discord.Forbidden: pass
+                    except discord.HTTPException: pass
             
             self.music_states[guild_id] = state
         return self.music_states[guild_id]
@@ -186,8 +167,7 @@ class MusicAgentCog(commands.Cog):
         if not state.text_channel.permissions_for(state.guild.me).manage_messages: return
         try: 
             await state.text_channel.purge(limit=100, check=lambda msg: msg.id != state.now_playing_message.id and not msg.pinned)
-        except discord.HTTPException as e: 
-            logger.debug(f"[{state.guild.name}] 채팅 정리 중 오류: {e}")
+        except discord.HTTPException as e: pass
 
     async def handle_play(self, interaction: discord.Interaction, query: str):
         await interaction.response.defer(ephemeral=True)
@@ -244,11 +224,12 @@ class MusicAgentCog(commands.Cog):
                         state.queue.append(song)
                         added_count += 1
                         
-                        # [수정] 5곡마다 또는 마지막 곡에서 점진적 UI 피드백을 제공합니다.
                         if (i + 1) % 5 == 0 or (i + 1) == total_songs:
                             await state.set_task(f"🎶 재생목록 추가 중... ({added_count}/{total_songs})")
                 
-                logger.info(f"[{interaction.guild.name}] 재생목록 추가: {added_count}곡 (요청자: {interaction.user.display_name})")
+                logger.info(f"[{interaction.guild.name}] 재생목록 추가: {added_count}곡")
+                # [로그 추가] 재생목록 추가
+                command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{interaction.channel.name}' 채널에서 재생목록을 추가했습니다. (곡 수: {added_count}, URL: {query})")
                 await interaction.followup.send(f"✅ 재생목록에서 **{added_count}**개의 노래를 대기열에 추가했습니다.", ephemeral=True)
 
             elif 'entries' in data:
@@ -264,7 +245,9 @@ class MusicAgentCog(commands.Cog):
             else:
                 song = Song(data, interaction.user)
                 state.queue.append(song)
-                logger.info(f"[{interaction.guild.name}] 대기열 추가: '{song.title}' (요청자: {interaction.user.display_name})")
+                logger.info(f"[{interaction.guild.name}] 대기열 추가: '{song.title}'")
+                # [로그 추가] 단일 곡 추가
+                command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{interaction.channel.name}' 채널에서 노래를 추가했습니다. (제목: '{song.title}', URL: {query})")
                 await interaction.followup.send(f"✅ 대기열에 **'{song.title}'** 을(를) 추가했습니다.", ephemeral=True)
 
 
@@ -282,17 +265,19 @@ class MusicAgentCog(commands.Cog):
         state.cancel_autoplay_task()
         song = Song(song_data, interaction.user)
         state.queue.append(song)
-        logger.info(f"[{interaction.guild.name}] 대기열 추가 (검색): '{song.title}' (요청자: {interaction.user.display_name})")
         if state.voice_client and not (state.voice_client.is_playing() or state.voice_client.is_paused()):
             state.play_next_song.set()
         await state.schedule_ui_update()
+        # [로그 추가] 검색 선택으로 추가
+        command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{interaction.channel.name}' 채널에서 검색 결과로 노래를 추가했습니다. (제목: '{song.title}')")
 
     async def handle_skip(self, interaction: discord.Interaction):
         state = await self.get_music_state(interaction.guild.id)
         if state.current_song and state.voice_client:
-            logger.info(f"[{interaction.guild.name}] 스킵: '{state.current_song.title}' (요청자: {interaction.user.display_name})")
             state.voice_client.stop()
             await interaction.response.send_message("⏭️ 현재 노래를 건너뛰었습니다.", ephemeral=True, delete_after=5)
+            # [로그 추가] 스킵
+            command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{interaction.channel.name}' 채널에서 노래를 스킵했습니다.")
         else: await interaction.response.send_message("건너뛸 노래가 없습니다.", ephemeral=True)
 
     def create_queue_embed(self, state: MusicState, selected_index: int = None):
@@ -309,7 +294,6 @@ class MusicAgentCog(commands.Cog):
 
     async def handle_queue(self, interaction: discord.Interaction):
         state = await self.get_music_state(interaction.guild.id)
-        logger.info(f"[{interaction.guild.name}] 대기열 확인 (요청자: {interaction.user.display_name})")
         embed = self.create_queue_embed(state)
         view = QueueManagementView(self, state)
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
@@ -317,34 +301,34 @@ class MusicAgentCog(commands.Cog):
     async def handle_play_pause(self, interaction: discord.Interaction):
         state = await self.get_music_state(interaction.guild.id)
         if state.voice_client and state.current_song:
-            action = "재생" if state.voice_client.is_paused() else "일시정지"
-            logger.info(f"[{interaction.guild.name}] {action} (요청자: {interaction.user.display_name})")
             if state.voice_client.is_paused():
                 state.voice_client.resume()
                 if state.pause_start_time:
                     state.total_paused_duration += discord.utils.utcnow() - state.pause_start_time
                     state.pause_start_time = None
+                command_logger.info(f"사용자 '{interaction.user.display_name}'가 노래를 재개했습니다.")
             elif state.voice_client.is_playing():
                 state.voice_client.pause()
                 state.pause_start_time = discord.utils.utcnow()
+                command_logger.info(f"사용자 '{interaction.user.display_name}'가 노래를 일시정지했습니다.")
             await state.schedule_ui_update()
             await interaction.response.defer()
 
     async def handle_loop(self, interaction: discord.Interaction):
         state = await self.get_music_state(interaction.guild.id)
         state.loop_mode = LoopMode((state.loop_mode.value + 1) % 3)
-        logger.info(f"[{interaction.guild.name}] 반복 모드 변경: {state.loop_mode.name} (요청자: {interaction.user.display_name})")
         await state.schedule_ui_update()
         await interaction.response.defer()
+        command_logger.info(f"사용자 '{interaction.user.display_name}'가 반복 모드를 '{state.loop_mode.name}'(으)로 변경했습니다.")
 
     async def handle_toggle_auto_play(self, interaction: discord.Interaction):
         state = await self.get_music_state(interaction.guild.id)
         state.auto_play_enabled = not state.auto_play_enabled
         status = "활성화" if state.auto_play_enabled else "비활성화"
-        logger.info(f"[{interaction.guild.name}] 자동 재생 모드 변경: {status} (요청자: {interaction.user.display_name})")
         if not state.auto_play_enabled: state.cancel_autoplay_task()
         await state.schedule_ui_update()
         await interaction.response.send_message(f"🎶 자동 재생을 {status}했습니다.", ephemeral=True, delete_after=5)
+        command_logger.info(f"사용자 '{interaction.user.display_name}'가 자동 재생을 {status}했습니다.")
 
     async def handle_add_favorite(self, interaction: discord.Interaction):
         state = await self.get_music_state(interaction.guild.id)
@@ -356,11 +340,10 @@ class MusicAgentCog(commands.Cog):
         if any(fav['url'] == song.webpage_url for fav in user_favorites): return await interaction.response.send_message("이미 즐겨찾기에 추가된 노래입니다.", ephemeral=True)
         user_favorites.append({"title": song.title, "url": song.webpage_url})
         await save_favorites(favorites)
-        logger.info(f"[{interaction.guild.name}] 즐겨찾기 추가: '{song.title}' (사용자: {interaction.user.display_name})")
         await interaction.response.send_message(f"⭐ '{song.title}'을(를) 즐겨찾기에 추가했습니다!", ephemeral=True)
+        command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{song.title}'을(를) 즐겨찾기에 추가했습니다.")
 
     async def handle_view_favorites(self, interaction: discord.Interaction):
-        logger.info(f"[{interaction.guild.name}] 즐겨찾기 목록 확인 (요청자: {interaction.user.display_name})")
         user_id = str(interaction.user.id)
         favorites = await load_favorites()
         user_favorites = favorites.get(user_id, [])
@@ -388,7 +371,6 @@ class MusicAgentCog(commands.Cog):
         try:
             for i, url in enumerate(urls):
                 try:
-                    # [수정] 5곡마다 진행 상황을 업데이트합니다.
                     if (i + 1) % 5 == 0 or (i + 1) == total_urls:
                         await state.set_task(f"❤️ 즐겨찾기 추가 중... ({i + 1}/{total_urls})")
 
@@ -402,9 +384,11 @@ class MusicAgentCog(commands.Cog):
         finally:
             await state.clear_task()
 
-        logger.info(f"[{interaction.guild.name}] 즐겨찾기에서 {count}곡 추가 (요청자: {interaction.user.display_name})")
         if count > 0 and state.voice_client and not (state.voice_client.is_playing() or state.voice_client.is_paused()):
             state.play_next_song.set()
+        
+        # [로그 추가] 즐겨찾기에서 추가 로그
+        command_logger.info(f"사용자 '{interaction.user.display_name}'가 즐겨찾기에서 {count}곡을 대기열에 추가했습니다.")
         
         return count, joined_vc
 
@@ -419,7 +403,10 @@ class MusicAgentCog(commands.Cog):
         else: favorites[user_id] = user_favorites
         await save_favorites(favorites)
         deleted_count = initial_count - len(user_favorites)
-        logger.info(f"즐겨찾기에서 {deleted_count}곡 삭제 (사용자 ID: {user_id})")
+        
+        # [로그 추가] 즐겨찾기 삭제 로그 (user_id만 있으므로 로거 사용 시 주의 필요하나, 문맥상 가능)
+        command_logger.info(f"사용자 ID '{user_id}'가 즐겨찾기에서 {deleted_count}곡을 삭제했습니다.")
+        
         return deleted_count
 
     async def handle_shuffle(self, interaction: discord.Interaction):
@@ -431,9 +418,9 @@ class MusicAgentCog(commands.Cog):
         queue_list = list(state.queue)
         random.shuffle(queue_list)
         state.queue = deque(queue_list)
-        logger.info(f"[{interaction.guild.name}] 대기열 섞음 (요청자: {interaction.user.display_name})")
         await state.schedule_ui_update()
         await interaction.response.send_message("🔀 대기열을 섞었습니다!", ephemeral=True, delete_after=5)
+        command_logger.info(f"사용자 '{interaction.user.display_name}'가 대기열을 섞었습니다.")
 
     async def handle_clear_queue(self, interaction: discord.Interaction, original_interaction: discord.Interaction):
         state = await self.get_music_state(interaction.guild.id)
@@ -441,19 +428,18 @@ class MusicAgentCog(commands.Cog):
         count = len(state.queue)
         state.queue.clear()
         await state.schedule_ui_update()
-        logger.info(f"[{interaction.guild.name}] 대기열의 {count}곡 삭제 (요청자: {interaction.user.display_name})")
         await original_interaction.edit_original_response(content=f"🗑️ 대기열의 노래 {count}개를 모두 삭제했습니다.", view=None)
+        command_logger.info(f"사용자 '{interaction.user.display_name}'가 대기열을 비웠습니다. ({count}곡 삭제)")
 
     async def leave_logic(self, guild_id: int):
         state = self.music_states.pop(guild_id, None)
         if not state: return
         await state.cleanup(leave=True)
-        logger.info(f"[{state.guild.name}] 음성 채널 퇴장 및 리소스 정리 완료.")
 
     async def handle_leave(self, interaction: discord.Interaction):
-        logger.info(f"[{interaction.guild.name}] 퇴장 명령 (요청자: {interaction.user.display_name})")
         await self.leave_logic(interaction.guild.id)
         await interaction.response.send_message("🚪 음성 채널에서 퇴장했습니다.", ephemeral=True)
+        command_logger.info(f"사용자 '{interaction.user.display_name}'가 봇을 퇴장시켰습니다.")
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
@@ -481,23 +467,7 @@ class MusicAgentCog(commands.Cog):
             if current_state and current_state.voice_client and current_state.voice_client.is_connected():
                 if len(current_state.voice_client.channel.members) == 1: await self.leave_logic(member.guild.id)
 
-    async def handle_effect_change(self, interaction: discord.Interaction, effect: str):
-        state = await self.get_music_state(interaction.guild.id)
-        logger.info(f"[{interaction.guild.name}] 오디오 효과 변경: '{state.current_effect}' -> '{effect}' (요청자: {interaction.user.display_name})")
-        if state.current_song and state.voice_client and interaction.user.voice and interaction.user.voice.channel == state.voice_client.channel:
-            if state.current_effect == effect: return await interaction.response.defer()
-            state.seek_time = state.get_current_playback_time()
-            state.current_effect = effect
-            state.queue.appendleft(state.current_song)
-            state.voice_client.stop()
-            await interaction.response.send_message(f"🎧 효과를 **{effect.capitalize()}**(으)로 즉시 변경합니다.", ephemeral=True, delete_after=5)
-        else:
-            state.current_effect = effect
-            await state.schedule_ui_update()
-            await interaction.response.send_message(f"🎧 다음 곡부터 **'{effect.capitalize()}'** 효과가 적용됩니다.", ephemeral=True)
-
 async def setup(bot: commands.Bot):
     if MUSIC_CHANNEL_ID == 0:
-        logger.error("환경변수에 MUSIC_CHANNEL_ID가 설정되지 않았습니다! music_agent를 로드하지 않습니다.")
         return
     await bot.add_cog(MusicAgentCog(bot))

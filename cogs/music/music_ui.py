@@ -2,8 +2,6 @@ from typing import List
 import discord
 from discord import ui
 
-# --- 이 파일은 UI 관련 클래스만 모아놓은 곳입니다. ---
-
 class SearchSelect(ui.Select):
     def __init__(self, cog, search_results: List[dict]):
         self.cog = cog
@@ -168,7 +166,6 @@ class FavoritesView(ui.View):
         else:
             for fav in self.favorites:
                 line = fav['title']
-                # [수정] 선택 여부에 따라 아이콘을 다르게 표시
                 if fav['url'] in self.selected_urls:
                     line = f"**✅ {line}**"
                 else:
@@ -267,23 +264,6 @@ class FavoritesView(ui.View):
             await self.original_interaction.edit_original_response(content="시간이 초과되었습니다.", view=None)
         except discord.HTTPException: pass
 
-class EffectSelect(ui.Select):
-    def __init__(self, cog, current_effect: str):
-        self.cog = cog
-        options = [
-            discord.SelectOption(label="효과 없음", value="none", emoji="❌", default=current_effect == "none"),
-            discord.SelectOption(label="베이스 부스트", value="bassboost", emoji="🔊", default=current_effect == "bassboost"),
-            discord.SelectOption(label="스피드업", value="speedup", emoji="⏩", default=current_effect == "speedup"),
-            discord.SelectOption(label="나이트코어", value="nightcore", emoji="🚀", default=current_effect == "nightcore"),
-            discord.SelectOption(label="노래방", value="karaoke", emoji="🎤", default=current_effect == "karaoke"),
-            discord.SelectOption(label="슬로우&리버브", value="slowreverb", emoji="🐌", default=current_effect == "slowreverb"),
-        ]
-        super().__init__(placeholder="🎧 오디오 효과를 선택하세요...", min_values=1, max_values=1, options=options, row=2)
-
-    async def callback(self, interaction: discord.Interaction):
-        await self.cog.handle_effect_change(interaction, self.values[0])
-
-
 class MusicPlayerView(ui.View):
     def __init__(self, cog, state):
         super().__init__(timeout=None)
@@ -298,40 +278,45 @@ class MusicPlayerView(ui.View):
         is_paused = self.state.voice_client and self.state.voice_client.is_paused()
         is_playing = self.state.current_song is not None
 
-        play_pause_btn = ui.Button(label="재생" if is_paused else "일시정지", style=discord.ButtonStyle.secondary, emoji="▶️" if is_paused else "⏸️", disabled=not is_playing, row=0)
+        # Row 1: 핵심 재생 컨트롤
+        play_pause_btn = ui.Button(label="재생/일시정지", style=discord.ButtonStyle.secondary, emoji="▶️" if is_paused else "⏸️", disabled=not is_playing, row=0)
         play_pause_btn.callback = self.toggle_play_pause
         self.add_item(play_pause_btn)
 
-        skip_btn = ui.Button(label="스킵", style=discord.ButtonStyle.secondary, emoji="⏭️", disabled=not is_playing, row=0)
+        skip_btn = ui.Button(label="건너뛰기", style=discord.ButtonStyle.secondary, emoji="⏭️", disabled=not is_playing, row=0)
         skip_btn.callback = self.skip
         self.add_item(skip_btn)
 
-        fav_btn = ui.Button(label="즐찾 추가", style=discord.ButtonStyle.secondary, emoji="⭐", disabled=not is_playing, row=0)
-        fav_btn.callback = self.add_to_favorites
-        self.add_item(fav_btn)
-
-        leave_btn = ui.Button(label="퇴장", style=discord.ButtonStyle.danger, emoji="🚪", disabled=not self.state.voice_client, row=0)
+        leave_btn = ui.Button(label="종료", style=discord.ButtonStyle.danger, emoji="⏹️", disabled=not self.state.voice_client, row=0)
         leave_btn.callback = self.leave
         self.add_item(leave_btn)
 
+        fav_btn = ui.Button(label="즐겨찾기", style=discord.ButtonStyle.secondary, emoji="⭐", disabled=not is_playing, row=0)
+        fav_btn.callback = self.add_to_favorites
+        self.add_item(fav_btn)
+
+        # Row 2: 부가 기능
         loop_mode = self.state.loop_mode
-        loop_btn = ui.Button(label="반복", style=discord.ButtonStyle.success if loop_mode != self.LoopMode.NONE else discord.ButtonStyle.secondary, emoji=self.LOOP_MODE_DATA[loop_mode][1], row=1)
+        loop_label = "반복: 켜짐" if loop_mode != self.LoopMode.NONE else "반복: 꺼짐"
+        loop_emoji = self.LOOP_MODE_DATA[loop_mode][1]
+        if loop_mode == self.LoopMode.NONE: loop_emoji = "➡️" # 반복 없음 명확히
+        
+        loop_btn = ui.Button(label=loop_label, style=discord.ButtonStyle.secondary, emoji=loop_emoji, row=1)
         loop_btn.callback = self.toggle_loop
         self.add_item(loop_btn)
 
-        auto_play_btn = ui.Button(label="자동재생", style=discord.ButtonStyle.success if self.state.auto_play_enabled else discord.ButtonStyle.secondary, emoji="🎶", row=1)
+        auto_play_label = "자동재생: ON" if self.state.auto_play_enabled else "자동재생: OFF"
+        auto_play_btn = ui.Button(label=auto_play_label, style=discord.ButtonStyle.secondary, emoji="🤖", row=1)
         auto_play_btn.callback = self.toggle_auto_play
         self.add_item(auto_play_btn)
 
-        queue_btn = ui.Button(label="대기열", style=discord.ButtonStyle.blurple, emoji="📜", row=1)
+        queue_btn = ui.Button(label="대기열", style=discord.ButtonStyle.secondary, emoji="📜", row=1)
         queue_btn.callback = self.show_queue
         self.add_item(queue_btn)
 
-        fav_list_btn = ui.Button(label="즐겨찾기", style=discord.ButtonStyle.blurple, emoji="❤️", row=1)
+        fav_list_btn = ui.Button(label="목록 확인", style=discord.ButtonStyle.secondary, emoji="❤️", row=1)
         fav_list_btn.callback = self.show_favorites
         self.add_item(fav_list_btn)
-        
-        self.add_item(EffectSelect(self.cog, self.state.current_effect))
 
     async def interaction_check_bot_connected(self, interaction: discord.Interaction) -> bool:
         if not interaction.user.voice or not interaction.user.voice.channel:
