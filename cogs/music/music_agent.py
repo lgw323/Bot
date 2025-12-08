@@ -14,7 +14,7 @@ from pathlib import Path
 from datetime import timedelta
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord import ui
 
 try:
@@ -33,7 +33,7 @@ from .music_utils import (
 from .music_ui import QueueManagementView, FavoritesView, SearchSelect
 
 logger = logging.getLogger("MusicCog")
-command_logger = logging.getLogger("Commands") # 커맨드 로거 추가
+command_logger = logging.getLogger("Commands")
 
 class MusicAgentCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -44,9 +44,19 @@ class MusicAgentCog(commands.Cog):
         self.tts_cache_dir.mkdir(parents=True, exist_ok=True)
         self.initial_setup_done = False
 
+    async def cog_load(self):
+        self.update_progress_loop.start()
+
     async def cog_unload(self):
+        self.update_progress_loop.cancel()
         cleanup_tasks = [state.cleanup(leave=True) for state in self.music_states.values()]
         await asyncio.gather(*cleanup_tasks)
+
+    @tasks.loop(seconds=10)
+    async def update_progress_loop(self):
+        for state in self.music_states.values():
+            if state.voice_client and state.voice_client.is_connected() and state.voice_client.is_playing():
+                await state.schedule_ui_update()
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -228,7 +238,6 @@ class MusicAgentCog(commands.Cog):
                             await state.set_task(f"🎶 재생목록 추가 중... ({added_count}/{total_songs})")
                 
                 logger.info(f"[{interaction.guild.name}] 재생목록 추가: {added_count}곡")
-                # [로그 추가] 재생목록 추가
                 command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{interaction.channel.name}' 채널에서 재생목록을 추가했습니다. (곡 수: {added_count}, URL: {query})")
                 await interaction.followup.send(f"✅ 재생목록에서 **{added_count}**개의 노래를 대기열에 추가했습니다.", ephemeral=True)
 
@@ -246,7 +255,6 @@ class MusicAgentCog(commands.Cog):
                 song = Song(data, interaction.user)
                 state.queue.append(song)
                 logger.info(f"[{interaction.guild.name}] 대기열 추가: '{song.title}'")
-                # [로그 추가] 단일 곡 추가
                 command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{interaction.channel.name}' 채널에서 노래를 추가했습니다. (제목: '{song.title}', URL: {query})")
                 await interaction.followup.send(f"✅ 대기열에 **'{song.title}'** 을(를) 추가했습니다.", ephemeral=True)
 
@@ -268,7 +276,6 @@ class MusicAgentCog(commands.Cog):
         if state.voice_client and not (state.voice_client.is_playing() or state.voice_client.is_paused()):
             state.play_next_song.set()
         await state.schedule_ui_update()
-        # [로그 추가] 검색 선택으로 추가
         command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{interaction.channel.name}' 채널에서 검색 결과로 노래를 추가했습니다. (제목: '{song.title}')")
 
     async def handle_skip(self, interaction: discord.Interaction):
@@ -276,7 +283,6 @@ class MusicAgentCog(commands.Cog):
         if state.current_song and state.voice_client:
             state.voice_client.stop()
             await interaction.response.send_message("⏭️ 현재 노래를 건너뛰었습니다.", ephemeral=True, delete_after=5)
-            # [로그 추가] 스킵
             command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{interaction.channel.name}' 채널에서 노래를 스킵했습니다.")
         else: await interaction.response.send_message("건너뛸 노래가 없습니다.", ephemeral=True)
 
@@ -387,7 +393,6 @@ class MusicAgentCog(commands.Cog):
         if count > 0 and state.voice_client and not (state.voice_client.is_playing() or state.voice_client.is_paused()):
             state.play_next_song.set()
         
-        # [로그 추가] 즐겨찾기에서 추가 로그
         command_logger.info(f"사용자 '{interaction.user.display_name}'가 즐겨찾기에서 {count}곡을 대기열에 추가했습니다.")
         
         return count, joined_vc
@@ -404,7 +409,6 @@ class MusicAgentCog(commands.Cog):
         await save_favorites(favorites)
         deleted_count = initial_count - len(user_favorites)
         
-        # [로그 추가] 즐겨찾기 삭제 로그 (user_id만 있으므로 로거 사용 시 주의 필요하나, 문맥상 가능)
         command_logger.info(f"사용자 ID '{user_id}'가 즐겨찾기에서 {deleted_count}곡을 삭제했습니다.")
         
         return deleted_count

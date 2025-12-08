@@ -106,7 +106,7 @@ class MusicState:
                 search_query = f"ytsearch10:{featured_artist}"
                 strategy = f"feat_hop ({featured_artist})"
             else:
-                search_query = f"ytsearch15:{last_uploader}"
+                search_query = f"ytsearch10:{last_uploader}"
                 strategy = "artist_digging"
 
             logger.info(f"[{self.guild.name}] [Autoplay] 전략: {strategy} / 검색어: '{search_query}'")

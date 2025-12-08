@@ -1,0 +1,187 @@
+# -*- coding: utf-8 -*-
+import json
+import os
+import asyncio
+import google.generativeai as genai
+import sys
+import time
+
+sys.path.append("..")
+import config
+from modules import reporter
+
+INPUT_FILE = config.PROCESSED_DATA_DIR / "clean_data.json"
+
+# --- 1. [1차 분석] 조각 분석 프롬프트 (Raw Data -> Feature Extraction) ---
+# 데이터 조각에서 구체적인 '단서'를 찾아내는 단계입니다.
+PARTIAL_ANALYSIS_PROMPT = """
+당신은 데이터 심리학자이자 정치 사회학 프로파일러입니다.
+아래 텍스트는 특정 디스코드 유저의 대화 내용 중 일부입니다.
+이 텍스트에서 드러나는 유저의 **성향적 단서(Cues)**를 찾아 간결하게 메모하세요.
+
+[중점 탐색 항목]
+1. **정치/사회적 성향 단서**:
+   - 권위/규범에 대한 태도 (순응 vs 저항 vs 조롱)
+   - 경제/사회 이슈에 대한 관점 (능력주의, 평등주의, 자유지상주의 등)
+   - 특정 정치적 밈(Meme) 사용 여부 및 맥락 (단순 유희인지 신념인지 구분)
+
+2. **문화/게임 소비 패턴**:
+   - 선호 장르와 플레이 스타일에서 드러나는 욕구 (경쟁, 협동, 수집, 건설 등)
+   - 서브컬처(애니, 버튜버 등) 몰입도
+
+3. **화법 및 성격**:
+   - 논리적/분석적 vs 감정적/직관적
+   - 공격성 수준 및 유머 코드
+
+[대화 데이터 조각]
+{chunk_text}
+
+[출력 형식]
+- 발견된 핵심 특징만 불조(Bullet point)로 나열할 것.
+"""
+
+# --- 2. [2차 분석] 종합 리포트 프롬프트 (Synthesis -> Report) ---
+# 수집된 단서들을 조립하여 하나의 완결된 보고서를 만드는 단계입니다.
+# 출력 형식을 엄격하게 통제하여 일관성을 유지합니다.
+FINAL_SYNTHESIS_PROMPT = """
+당신은 엘리트 프로파일러입니다. 아래 내용은 한 유저의 3년 치 대화 데이터를 분석한 '관찰 노트'들입니다.
+이 내용을 종합하여, 해당 유저의 정체성을 꿰뚫는 **[심층 프로파일링 보고서]**를 작성하세요.
+
+[관찰 노트 모음]
+{summaries}
+
+---
+
+[보고서 작성 가이드라인 (엄수)]
+
+### 1. 🏛️ 사회/정치적 성향 및 가치관 (Political & Social Compass)
+*단순한 보수/진보 구분을 넘어, 사회를 바라보는 근본적인 프레임을 분석하세요.*
+- **이념적 스펙트럼**: (예: 자유지상주의적 우파, 냉소적 허무주의, 실용주의적 중도 등)
+- **예상 지지 사회 시스템**: 이 유저가 이상적이라고 생각하거나, 무의식적으로 지향하는 체제는 무엇입니까?
+    - *보기: 기술관료제(Technocracy), 능력주의(Meritocracy), 무정부 자본주의, 사회민주주의, 권위주의적 질서 등*
+- **현실 인식 태도**: 사회 이슈나 권위에 대해 어떤 반응(분노, 조롱, 무관심, 분석)을 보입니까?
+
+### 2. 🎮 문화적 DNA 및 게임 취향 (Cultural Archetype)
+- **Core Game Genre**: 선호하는 게임들의 공통된 메커니즘은 무엇입니까? (예: 극한의 효율 추구, 서사 몰입, 피지컬 경쟁)
+- **서브컬처 수용도**: 소위 '오타쿠 문화'에 대한 심도와 태도.
+
+### 3. 💬 성격 및 커뮤니케이션 매트릭스 (Personality Matrix)
+- **화법 분석**: 텍스트 뒤에 숨겨진 감정 상태와 지적 수준.
+- **대인 관계**: 집단 내에서 어떤 역할(리더, 추종자, 광대, 관찰자)을 수행합니까?
+- **추정 MBTI**: (가장 유력한 유형 1개와 그 논리적 근거)
+
+### 4. 🔑 프로파일링 요약 (Executive Summary)
+- 이 사람을 정의하는 **핵심 키워드 3가지** (형용사+명사 조합 권장)
+- **한 줄 총평**: 이 유저는 어떤 사람입니까?
+
+---
+
+[작성 톤앤매너]
+- **냉철하고 분석적인 전문가의 어조**를 유지하세요.
+- 추상적인 표현보다는 **"~라는 발언에서 ~한 성향이 드러남"**과 같이 구체적인 근거를 제시하세요.
+- **형식을 절대적으로 준수**하여, 누가 봐도 동일한 포맷의 보고서가 되도록 하세요.
+"""
+
+# 토큰 제한 고려 (Flash 무료 티어: 분당 15회 / 25만 토큰 -> 청크당 3만 자)
+CHUNK_SIZE = 30000 
+
+async def analyze_chunk(model, text_chunk, index, total):
+    """데이터 조각 1차 분석"""
+    print(f"     🧩 데이터 조각 심층 분석 중... ({index}/{total})")
+    try:
+        response = await asyncio.to_thread(
+            model.generate_content,
+            PARTIAL_ANALYSIS_PROMPT.format(chunk_text=text_chunk)
+        )
+        return response.text
+    except Exception as e:
+        print(f"     ⚠️ 조각 {index} 분석 실패 (건너뜀): {e}")
+        return ""
+
+async def analyze_user(username, user_data):
+    full_text = user_data['full_text']
+    msg_count = user_data['msg_count']
+    
+    print(f"   ▶ [{username}] 프로파일링 시작... (Data: {msg_count:,} msgs)")
+
+    model = genai.GenerativeModel(config.GEMINI_MODEL)
+    
+    # 1. 텍스트 분할 (Chunking)
+    chunks = [full_text[i:i+CHUNK_SIZE] for i in range(0, len(full_text), CHUNK_SIZE)]
+    total_chunks = len(chunks)
+    
+    partial_results = []
+    
+    if total_chunks > 1:
+        print(f"     📦 대용량 데이터 감지: {total_chunks}개 구획으로 나누어 정밀 분석합니다.")
+        for i, chunk in enumerate(chunks):
+            result = await analyze_chunk(model, chunk, i+1, total_chunks)
+            partial_results.append(result)
+            # Rate Limit 방지 쿨타임
+            if i < total_chunks - 1:
+                await asyncio.sleep(4)
+    else:
+        # 짧은 경우 바로 1차 분석
+        result = await analyze_chunk(model, full_text, 1, 1)
+        partial_results.append(result)
+
+    # 2. 종합 분석 (Synthesis)
+    print(f"     🔄 분석 데이터 종합 및 최종 리포트 작성 중...")
+    combined_notes = "\n\n".join(partial_results)
+    
+    # 종합 노트가 너무 길 경우 (드문 케이스) 앞부분만 사용
+    if len(combined_notes) > 200000:
+         combined_notes = combined_notes[:200000]
+
+    final_prompt = FINAL_SYNTHESIS_PROMPT.format(summaries=combined_notes)
+    
+    try:
+        final_response = await asyncio.to_thread(
+            model.generate_content,
+            final_prompt
+        )
+        print(f"     ✅ [{username}] 프로파일링 완료!")
+        return final_response.text
+    except Exception as e:
+        print(f"     ❌ 최종 리포트 생성 실패: {e}")
+        return f"분석 중 치명적 오류 발생: {e}\n\n[중간 분석 데이터]\n{combined_notes}"
+
+async def run_analysis(target_user=None):
+    if not config.GOOGLE_API_KEY:
+        print("❌ 설정 오류: GOOGLE_API_KEY가 없습니다.")
+        return
+
+    genai.configure(api_key=config.GOOGLE_API_KEY)
+
+    if not os.path.exists(INPUT_FILE):
+        print(f"❌ 데이터 오류: 전처리된 파일이 없습니다 ({INPUT_FILE})")
+        return
+
+    with open(INPUT_FILE, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    targets = {}
+    if target_user and target_user != "ALL":
+        if target_user in data:
+            targets[target_user] = data[target_user]
+        else:
+            print(f"❌ 사용자 '{target_user}'를 찾을 수 없습니다.")
+            return
+    else:
+        targets = data
+
+    print(f"🧠 AI 프로파일러 가동 (대상: {len(targets)}명)")
+    print(f"   - 분석 모델: {config.GEMINI_MODEL}")
+    print(f"   - 분석 깊이: 사회/정치적 이데올로기 포함 심층 분석")
+    
+    for i, (user, user_data) in enumerate(targets.items()):
+        print(f"\n[{i+1}/{len(targets)}] ========================================")
+        
+        analysis_result = await analyze_user(user, user_data)
+        reporter.save_report(user, analysis_result)
+        
+        if i < len(targets) - 1:
+            print("     💤 API 쿨타임 (5초)...")
+            await asyncio.sleep(5)
+
+    print("\n✨ 모든 프로파일링 작업이 완료되었습니다.")
