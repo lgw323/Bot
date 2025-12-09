@@ -17,3 +17,7 @@ venv/cl
 # data
 tts_cache/
 assets/
+
+#profile
+profiler/
+data/profiling/
