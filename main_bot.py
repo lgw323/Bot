@@ -44,8 +44,7 @@ try:
                 "cogs.logging.log_agent",
                 "cogs.summary.summary_listeners",
                 "cogs.music.music_agent",
-                "cogs.application_commands",
-                "cogs.mining.mining_agent"
+                "cogs.application_commands"
             ]
             # UI에 사용할 Rich Console 객체를 봇 인스턴스에 저장
             self.console = Console()
