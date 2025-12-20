@@ -3,7 +3,7 @@
 # ==========================================
 # 설정 영역
 # ==========================================
-BOT_DIR="/home/op/bot"
+BOT_DIR="/home/os/bot"
 LOG_FILE="$BOT_DIR/data/logs/update.log"
 DATA_DIR="$BOT_DIR/data"
 BACKUP_DIR="$BOT_DIR/backups"

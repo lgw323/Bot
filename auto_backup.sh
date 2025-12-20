@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 설정
-BOT_DIR="/home/op/bot"
+BOT_DIR="/home/os/bot"
 DATA_DIR="$BOT_DIR/data"
 LOG_FILE="$BOT_DIR/data/logs/backup.log"
 
