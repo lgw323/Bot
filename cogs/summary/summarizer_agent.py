@@ -8,10 +8,10 @@ import google.generativeai as genai
 from google.api_core import exceptions as google_exceptions
 
 # --------- 상수 정의 (환경 변수에서 로드) ---------
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-preview-09-2025")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
 TIMEZONE_OFFSET_HOURS = int(os.getenv("TIMEZONE_OFFSET_HOURS", 9))
-DEFAULT_MAX_REQUEST_TOKENS = int(os.getenv("DEFAULT_MAX_REQUEST_TOKENS", 12000))
-MAX_RESPONSE_TOKENS = int(os.getenv("MAX_RESPONSE_TOKENS", 2000))
+DEFAULT_MAX_REQUEST_TOKENS = int(os.getenv("DEFAULT_MAX_REQUEST_TOKENS", 150000))
+MAX_RESPONSE_TOKENS = int(os.getenv("MAX_RESPONSE_TOKENS", 25000))
 TEMPERATURE = float(os.getenv("TEMPERATURE", 0.5))
 
 SUMMARY_PROMPT_TEMPLATE = (
