@@ -22,7 +22,8 @@ except ImportError:
 from .music_utils import (
     Song, LoopMode, LOOP_MODE_DATA,
     BOT_EMBED_COLOR, YTDL_OPTIONS,
-    ytdl, load_music_settings, get_network_stats
+    ytdl, load_music_settings
+    # get_network_stats 제거됨
 )
 from .music_ui import MusicPlayerView
 
@@ -227,16 +228,8 @@ class MusicState:
         
         next_song_info = (f"{self.queue[0].title[:20]}..." if len(self.queue[0].title) > 20 else self.queue[0].title) if self.queue else "없음"
         
-        settings = await load_music_settings()
-        avg, stdev = get_network_stats(settings, self.guild.id)
-        if avg is not None and stdev is not None:
-            # 네트워크 상태를 SF 느낌으로 표현
-            ping_color = "🟢" if stdev < 400 else "🟡" if stdev < 1000 else "🔴"
-            network_stats = f"{ping_color} 레이턴시: {avg/1000:.1f}s (±{stdev/1000:.1f}s)"
-        else:
-            network_stats = "🌐 네트워크: 측정 중..."
-
-        footer_text = f"{' | '.join(footer_parts)}\n다음 트랙: {next_song_info}\n{network_stats}"
+        # [수정] 네트워크 레이턴시 표시 부분 제거
+        footer_text = f"{' | '.join(footer_parts)}\n다음 트랙: {next_song_info}"
         
         if self.current_song and self.current_task:
             footer_text += f"\n\n⚙️ [백그라운드 작업]: {self.current_task}"

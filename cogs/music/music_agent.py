@@ -3,7 +3,6 @@ import logging
 import os
 import random
 import time
-import statistics
 from collections import deque
 from typing import Optional
 import io
@@ -12,6 +11,7 @@ import subprocess
 import time as time_lib
 from pathlib import Path
 from datetime import timedelta
+import tempfile # 임시 폴더 사용을 위해 추가
 
 import discord
 from discord.ext import commands, tasks
@@ -28,7 +28,8 @@ from .music_core import MusicState
 from .music_utils import (
     Song, LoopMode, LOOP_MODE_DATA, ytdl, URL_REGEX, MUSIC_CHANNEL_ID,
     load_favorites, save_favorites, BOT_EMBED_COLOR,
-    load_music_settings, save_music_settings, update_request_timing
+    load_music_settings, save_music_settings
+    # update_request_timing 제거됨
 )
 from .music_ui import QueueManagementView, FavoritesView, SearchSelect
 
@@ -40,7 +41,9 @@ class MusicAgentCog(commands.Cog):
         self.bot = bot
         self.music_states = {}
         self.tts_lock = asyncio.Lock()
-        self.tts_cache_dir = Path("data/tts_cache")
+        
+        # [최적화] SD카드 수명 보호를 위해 시스템 임시 폴더(/tmp) 사용
+        self.tts_cache_dir = Path(tempfile.gettempdir()) / "bot_tts_cache"
         self.tts_cache_dir.mkdir(parents=True, exist_ok=True)
         self.initial_setup_done = False
 
@@ -85,7 +88,7 @@ class MusicAgentCog(commands.Cog):
             mp3_bytes = mp3_fp.read()
 
             def convert():
-                command = ['ffmpeg', '-i', '-', '-c:a', 'libopus', '-b:a', '32k', '-hide_banner', '-loglevel', 'error', str(filepath)]
+                command = ['ffmpeg', '-i', '-', '-c:a', 'libopus', '-b:a', '32k', '-hide_banner', '-loglevel', 'error', '-y', str(filepath)]
                 result = subprocess.run(command, input=mp3_bytes, capture_output=True, check=False)
                 if result.returncode != 0:
                     error_message = result.stderr.decode('utf-8')
@@ -97,7 +100,8 @@ class MusicAgentCog(commands.Cog):
             return False
 
     async def cleanup_tts_cache(self):
-        expiration_time = time_lib.time() - timedelta(days=3).total_seconds()
+        # 임시 폴더는 재부팅시 자동 삭제되지만, 봇 실행 중 관리 차원에서 유지
+        expiration_time = time_lib.time() - timedelta(days=1).total_seconds()
         for file in self.tts_cache_dir.glob('*.opus'):
             try:
                 if file.stat().st_atime < expiration_time:
@@ -193,14 +197,8 @@ class MusicAgentCog(commands.Cog):
             await interaction.followup.send("음성 채널에 먼저 참여해주세요.", ephemeral=True)
             return
         
-        settings = await load_music_settings()
         is_url = URL_REGEX.match(query)
-        task_type = 'url' if is_url else 'search'
-        
-        timings_history = settings.get(str(interaction.guild.id), {}).get("request_timings", {}).get(task_type, [])
-        avg_time_ms = statistics.mean(timings_history) if len(timings_history) > 1 else 2000
-
-        task_description = f"`'{query}'`(을)를 처리하는 중...\n_(예상 시간: 약 {avg_time_ms / 1000:.1f}초)_"
+        task_description = f"`'{query}'`(을)를 처리하는 중..."
         await state.set_task(task_description)
 
         try:
@@ -209,15 +207,14 @@ class MusicAgentCog(commands.Cog):
             elif state.voice_client.channel != interaction.user.voice.channel:
                 await state.voice_client.move_to(interaction.user.voice.channel)
             
-            start_time = time.monotonic()
+            # [삭제됨] 시간 측정 로직 제거
             
             is_playlist_url = 'list=' in query and is_url
             search_query = query if is_url else f"ytsearch3:{query}"
 
             data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False))
 
-            duration_ms = int((time.monotonic() - start_time) * 1000)
-            await update_request_timing(interaction.guild.id, task_type, duration_ms)
+            # [삭제됨] update_request_timing 호출 제거
 
             if is_playlist_url and 'entries' in data:
                 state.cancel_autoplay_task()
@@ -380,10 +377,9 @@ class MusicAgentCog(commands.Cog):
                     if (i + 1) % 5 == 0 or (i + 1) == total_urls:
                         await state.set_task(f"❤️ 즐겨찾기 추가 중... ({i + 1}/{total_urls})")
 
-                    start_time = time.monotonic()
+                    # [삭제됨] 시간 측정 로직 제거
                     data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
-                    duration_ms = int((time.monotonic() - start_time) * 1000)
-                    await update_request_timing(interaction.guild.id, 'favorites', duration_ms)
+                    # [삭제됨] update_request_timing 호출 제거
                     state.queue.append(Song(data, interaction.user))
                     count += 1
                 except Exception as e: logger.warning(f"즐겨찾기 노래 추가 실패 ({url}): {e}")

@@ -1,121 +1,145 @@
-# -*- coding: utf-8 -*-
 import os
 import sys
 import logging
 import traceback
-from dotenv import load_dotenv
-
+from logging.handlers import TimedRotatingFileHandler
 import discord
 from discord.ext import commands
-from discord import app_commands
-from rich.console import Console
-from rich.logging import RichHandler
-from rich.panel import Panel
-from rich.text import Text
+from dotenv import load_dotenv
 
-# .env 파일에서 환경 변수 로드
+# .env 파일 로드
 load_dotenv()
 
-# --- Rich 라이브러리를 사용한 고급 로깅 핸들러 ---
-console = Console()
-command_logger = logging.getLogger("Commands")
+# --- 설정값 ---
+# 로그를 저장할 로컬 디렉토리 (data 폴더 내부에 logs 폴더 생성)
+LOG_DIR = "data/logs"
+# 디스코드 로그 채널 ID (로그 전용 서버의 채널 ID)
+LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID", "0"))
 
-def create_error_panel(record: logging.LogRecord) -> Panel:
-    """로그 레코드를 받아 에러 패널을 생성합니다."""
-    error_type = ""
-    error_message = str(record.msg)
+class DiscordLogHandler(logging.Handler):
+    """
+    [커스텀 핸들러]
+    ERROR 레벨 이상의 로그를 감지하면, 지정된 디스코드 채널로 비동기 전송합니다.
+    """
+    def __init__(self, bot):
+        super().__init__()
+        self.bot = bot
+        self.target_channel = None
 
-    if record.exc_info:
-        exc_type, exc_value, _ = record.exc_info
-        error_type = exc_type.__name__
-        error_message = str(exc_value)
+    def emit(self, record):
+        """
+        로깅 이벤트가 발생했을 때 호출되는 함수입니다.
+        """
+        # 1. 봇이 준비되지 않았거나, 로그 채널 ID가 설정되지 않았다면 무시
+        if LOG_CHANNEL_ID == 0 or not self.bot.is_ready():
+            return
 
-    error_text = Text()
-    error_text.append(f"모듈: {record.name}\n", style="bold white")
-    error_text.append(f"위치: {record.filename}:{record.lineno}\n", style="white")
-    if error_type:
-        error_text.append(f"종류: {error_type}\n", style="bold magenta")
-    error_text.append(f"내용: {error_message}", style="magenta")
-
-    return Panel(
-        error_text,
-        title=f"[bold red]❌ 에러 발생 ({record.levelname})",
-        border_style="red",
-        expand=False
-    )
-
-class CustomRichHandler(RichHandler):
-    """에러 발생 시 traceback 정보를 포함한 패널을 출력하는 커스텀 핸들러."""
-    def emit(self, record: logging.LogRecord) -> None:
+        # 2. ERROR 이상의 심각한 문제만 필터링 (INFO, DEBUG는 무시)
         if record.levelno >= logging.ERROR:
-            if not record.exc_info:
-                exc_type, exc_value, tb = sys.exc_info()
-                if exc_type and tb:
-                    last_frame = traceback.extract_tb(tb)[-1]
-                    record.filename = os.path.basename(last_frame.filename)
-                    record.lineno = last_frame.lineno
-                    record.exc_info = (exc_type, exc_value, tb)
+            # logging 모듈은 동기(sync) 방식이지만, discord.py는 비동기(async)입니다.
+            # 따라서 bot.loop.create_task를 통해 비동기 작업을 스케줄링합니다.
+            self.bot.loop.create_task(self._async_emit(record))
+
+    async def _async_emit(self, record):
+        """
+        실제로 디스코드 메시지를 전송하는 비동기 함수입니다.
+        """
+        try:
+            # 채널 객체 캐싱 (최초 1회만 가져옴)
+            if not self.target_channel:
+                self.target_channel = self.bot.get_channel(LOG_CHANNEL_ID)
             
-            self.console.print(create_error_panel(record))
-        else:
-            super().emit(record)
+            if self.target_channel:
+                # 로그 메시지 포맷팅
+                msg = self.format(record)
+                
+                # 디스코드 메시지 길이 제한(2000자) 처리
+                if len(msg) > 1900:
+                    msg = msg[:1900] + "...(내용이 너무 길어 생략됨)"
+                
+                # 가독성을 위한 Embed 생성
+                embed = discord.Embed(
+                    title="🚨 시스템 오류 발생 (System Error)", 
+                    description=f"```log\n{msg}\n```",
+                    color=0xFF0000  # 빨간색
+                )
+                
+                # 발생 위치 정보 (모듈명, 라인 번호)
+                footer_text = f"Module: {record.module} | Line: {record.lineno}"
+                embed.set_footer(text=footer_text)
+                
+                await self.target_channel.send(embed=embed)
+
+        except Exception:
+            # 로깅 전송 중 에러가 발생하면 콘솔에만 출력하고 멈춤 (무한 루프 방지)
+            print("[DiscordLogHandler] 로그 전송 실패", file=sys.stderr)
 
 class LogAgentCog(commands.Cog, name="LogAgent"):
-    """봇의 모든 로깅 설정과 명령어 사용 기록을 담당합니다."""
+    """
+    봇의 전역 로깅 시스템을 초기화하고 관리하는 Cog입니다.
+    """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self._setup_logging()
-        # [신규] 봇 객체에 중앙 로거를 추가합니다.
-        # 이제 다른 Cog에서는 self.bot.log 로 접근할 수 있습니다.
+        # 다른 Cog에서 self.bot.log.info(...) 형태로 사용할 수 있도록 주입
         self.bot.log = logging.getLogger("MyBot")
 
-
     def _setup_logging(self):
-        """봇의 전역 로깅 시스템을 설정합니다."""
-        is_debug_mode = os.getenv('DEBUG_MODE', 'False').upper() == 'TRUE'
-        log_level = logging.DEBUG if is_debug_mode else logging.INFO
+        """
+        Python의 logging 모듈을 설정합니다.
+        """
+        # 1. 로그 디렉토리 생성
+        if not os.path.exists(LOG_DIR):
+            os.makedirs(LOG_DIR)
 
-        # force=True를 사용하여 기존 핸들러를 제거하고 새로 설정합니다.
-        logging.basicConfig(
-            level=log_level,
-            format="[%(name)-12s] %(message)s",
-            handlers=[CustomRichHandler(show_path=False, console=console)],
-            force=True
+        # 2. 루트 로거 가져오기 및 초기화
+        logger = logging.getLogger()
+        logger.setLevel(logging.WARNING) # 기본적으로 INFO 레벨 이상을 모두 포착
+        
+        # 기존 핸들러가 있다면 제거 (중복 출력 방지)
+        if logger.hasHandlers():
+            logger.handlers.clear()
+
+        # 3. 포매터 정의 (로그의 모양 결정)
+        # 예: [2025-12-20 14:00:00] [ERROR] [music.py:50] 연결 실패
+        standard_formatter = logging.Formatter(
+            '[%(asctime)s] [%(levelname)-8s] [%(filename)s:%(lineno)d] %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
         )
 
-        logging.getLogger("discord").setLevel(logging.WARNING)
-        logging.getLogger("websockets").setLevel(logging.WARNING)
+        # 4. [파일 핸들러] 설정
+        # TimedRotatingFileHandler: 정해진 시간마다 파일을 교체함 (midnight = 자정)
+        file_handler = TimedRotatingFileHandler(
+            filename=f"{LOG_DIR}/system.log",
+            when="midnight",
+            interval=1,
+            backupCount=30, # 30일치 로그 보관
+            encoding="utf-8"
+        )
+        file_handler.setFormatter(standard_formatter)
+        file_handler.setLevel(logging.INFO) # 파일에는 모든 정보 기록
+        logger.addHandler(file_handler)
 
-        logger = logging.getLogger("LogAgent")
-        if is_debug_mode:
-            logger.warning("🐛 디버그 모드가 활성화되었습니다. 상세 로그가 출력됩니다.")
-        else:
-            logger.info("✅ 중앙화된 로깅 시스템이 활성화되었습니다. (일반 모드)")
+        # 5. [콘솔 핸들러] 설정 (터미널 출력용)
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(standard_formatter)
+        console_handler.setLevel(logging.INFO)
+        logger.addHandler(console_handler)
+
+        logging.info("✅ 로깅 시스템 초기화 완료 (File + Console)")
 
     @commands.Cog.listener()
-    async def on_app_command_completion(self, interaction: discord.Interaction, command: app_commands.Command):
-        """슬래시 명령어가 성공적으로 실행되었을 때 호출됩니다."""
-        # interaction.data에서 사용자가 입력한 옵션(인자)을 가져옵니다.
-        options = interaction.data.get('options', [])
+    async def on_ready(self):
+        """
+        봇이 준비되면 디스코드 핸들러를 연결합니다.
+        """
+        # 6. [디스코드 핸들러] 연결
+        discord_handler = DiscordLogHandler(self.bot)
+        # 디스코드 알림은 메시지 본문만 깔끔하게 전달 (Embed 내부에서 처리)
+        discord_handler.setFormatter(logging.Formatter('%(message)s'))
+        logging.getLogger().addHandler(discord_handler)
         
-        args_str = ""
-        if options:
-            # 옵션들을 "이름: '값'" 형태의 문자열로 예쁘게 만듭니다.
-            args_list = [f"{opt['name']}: '{opt['value']}'" for opt in options]
-            args_str = f" (인자: {', '.join(args_list)})"
-            
-        # 채널이 DM이거나 스레드인 경우를 대비하여 안전하게 채널 이름을 가져옵니다.
-        channel_name = interaction.channel.name if hasattr(interaction.channel, 'name') else 'DM'
-
-        log_message = (
-            f"사용자 '{interaction.user.display_name}'가 "
-            f"'#{channel_name}' 채널에서 '/{command.name}' 명령어를 사용했습니다.{args_str}"
-        )
-        
-        # 위에서 만든 'Commands' 로거를 사용하여 로그를 남깁니다.
-        command_logger.info(log_message)
-
+        logging.info(f"✅ 원격 로그 모니터링 활성화 (Target Channel ID: {LOG_CHANNEL_ID})")
 
 async def setup(bot: commands.Bot):
-    """봇에 LogAgentCog를 추가하기 위한 설정 함수입니다."""
     await bot.add_cog(LogAgentCog(bot))
