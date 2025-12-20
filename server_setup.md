@@ -1,6 +1,6 @@
 # 🛠️ Raspberry Pi 5 Server Configuration Reference
 
-이 문서는 라즈베리파이 서버의 자동화 설정(Crontab)과 서비스 데몬(Systemd) 설정값을 기록한 백업 파일입니다.dd
+이 문서는 라즈베리파이 서버의 자동화 설정(Crontab)과 서비스 데몬(Systemd) 설정값을 기록한 백업 파일입니다.
 
 ## 1. 스케줄러 설정 (Crontab)
 
