@@ -1,1 +1,13 @@
 [2025-12-20 13:45:11] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: 462b66c29e777585e66872069d75365c).
+[2025-12-20 13:55:53] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2025-12-20 13:55:53] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2025-12-20 13:55:53] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: c-nrt07-bf655c17.discord.media:2087
+[2025-12-20 13:55:53] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2025-12-20 13:55:56] [INFO    ] [player.py:233] ffmpeg process 3002 successfully terminated with return code of 0.
+[2025-12-20 14:00:17] [INFO    ] [player.py:233] ffmpeg process 3015 successfully terminated with return code of 0.
+[2025-12-20 14:05:25] [INFO    ] [player.py:233] ffmpeg process 3033 successfully terminated with return code of 0.
+[2025-12-20 14:05:38] [INFO    ] [player.py:233] ffmpeg process 3061 successfully terminated with return code of 0.
+[2025-12-20 14:08:58] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: 4892f0126679326321ebde5fb571d683).
+[2025-12-20 14:55:11] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: ba2507c86a2b6887f8f0195e91c222ed).
+[2025-12-20 15:00:10] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: 3c7fdcde32060f16e0e28901317d29a1).
+[2025-12-20 17:48:50] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 3c7fdcde32060f16e0e28901317d29a1.
