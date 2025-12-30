@@ -1,13 +1,52 @@
-[2025-12-20 13:45:11] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: 462b66c29e777585e66872069d75365c).
-[2025-12-20 13:55:53] [INFO    ] [voice_state.py:427] Connecting to voice...
-[2025-12-20 13:55:53] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
-[2025-12-20 13:55:53] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: c-nrt07-bf655c17.discord.media:2087
-[2025-12-20 13:55:53] [INFO    ] [voice_state.py:433] Voice connection complete.
-[2025-12-20 13:55:56] [INFO    ] [player.py:233] ffmpeg process 3002 successfully terminated with return code of 0.
-[2025-12-20 14:00:17] [INFO    ] [player.py:233] ffmpeg process 3015 successfully terminated with return code of 0.
-[2025-12-20 14:05:25] [INFO    ] [player.py:233] ffmpeg process 3033 successfully terminated with return code of 0.
-[2025-12-20 14:05:38] [INFO    ] [player.py:233] ffmpeg process 3061 successfully terminated with return code of 0.
-[2025-12-20 14:08:58] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: 4892f0126679326321ebde5fb571d683).
-[2025-12-20 14:55:11] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: ba2507c86a2b6887f8f0195e91c222ed).
-[2025-12-20 15:00:10] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: 3c7fdcde32060f16e0e28901317d29a1).
-[2025-12-20 17:48:50] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 3c7fdcde32060f16e0e28901317d29a1.
+[2025-12-30 03:15:17] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 25bb9cdf5407a437625e18bd44b07dd1.
+[2025-12-30 06:13:16] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 25bb9cdf5407a437625e18bd44b07dd1.
+[2025-12-30 09:39:14] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 25bb9cdf5407a437625e18bd44b07dd1.
+[2025-12-30 11:28:26] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 25bb9cdf5407a437625e18bd44b07dd1.
+[2025-12-30 11:58:20] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 25bb9cdf5407a437625e18bd44b07dd1.
+[2025-12-30 15:15:52] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 25bb9cdf5407a437625e18bd44b07dd1.
+[2025-12-30 18:24:21] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2025-12-30 18:24:21] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2025-12-30 18:24:22] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: c-nrt10-9ddfe2a5.discord.media:2053
+[2025-12-30 18:24:22] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2025-12-30 18:24:25] [INFO    ] [player.py:233] ffmpeg process 11606 successfully terminated with return code of 0.
+[2025-12-30 18:33:41] [INFO    ] [player.py:233] ffmpeg process 11619 successfully terminated with return code of 0.
+[2025-12-30 18:35:01] [INFO    ] [player.py:233] ffmpeg process 11673 successfully terminated with return code of 0.
+[2025-12-30 18:42:19] [INFO    ] [player.py:233] ffmpeg process 11702 successfully terminated with return code of 0.
+[2025-12-30 18:56:09] [INFO    ] [player.py:233] ffmpeg process 11772 successfully terminated with return code of 0.
+[2025-12-30 18:58:48] [INFO    ] [player.py:233] ffmpeg process 11799 successfully terminated with return code of 0.
+[2025-12-30 19:01:25] [INFO    ] [player.py:233] ffmpeg process 11813 successfully terminated with return code of 0.
+[2025-12-30 19:03:46] [INFO    ] [player.py:233] ffmpeg process 11847 successfully terminated with return code of 0.
+[2025-12-30 19:06:36] [INFO    ] [player.py:233] ffmpeg process 11862 successfully terminated with return code of 0.
+[2025-12-30 19:09:00] [INFO    ] [player.py:233] ffmpeg process 11889 successfully terminated with return code of 0.
+[2025-12-30 19:11:44] [INFO    ] [player.py:233] ffmpeg process 11903 successfully terminated with return code of 0.
+[2025-12-30 19:12:08] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 25bb9cdf5407a437625e18bd44b07dd1.
+[2025-12-30 19:14:21] [INFO    ] [player.py:233] ffmpeg process 11931 successfully terminated with return code of 0.
+[2025-12-30 19:16:45] [INFO    ] [player.py:233] ffmpeg process 11945 successfully terminated with return code of 0.
+[2025-12-30 19:19:31] [INFO    ] [player.py:233] ffmpeg process 11973 successfully terminated with return code of 0.
+[2025-12-30 19:22:34] [INFO    ] [player.py:233] ffmpeg process 11989 successfully terminated with return code of 0.
+[2025-12-30 19:25:44] [INFO    ] [player.py:233] ffmpeg process 12019 successfully terminated with return code of 0.
+[2025-12-30 19:28:05] [INFO    ] [player.py:233] ffmpeg process 12046 successfully terminated with return code of 0.
+[2025-12-30 19:30:44] [INFO    ] [player.py:233] ffmpeg process 12059 successfully terminated with return code of 0.
+[2025-12-30 19:33:46] [INFO    ] [player.py:233] ffmpeg process 12094 successfully terminated with return code of 0.
+[2025-12-30 19:37:06] [INFO    ] [player.py:229] ffmpeg process 12107 has not terminated. Waiting to terminate...
+[2025-12-30 19:37:06] [INFO    ] [player.py:231] ffmpeg process 12107 should have terminated with a return code of -9.
+[2025-12-30 19:37:09] [INFO    ] [player.py:233] ffmpeg process 12145 successfully terminated with return code of 0.
+[2025-12-30 19:37:29] [INFO    ] [player.py:233] ffmpeg process 12156 successfully terminated with return code of 0.
+[2025-12-30 19:38:59] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 25bb9cdf5407a437625e18bd44b07dd1.
+[2025-12-30 19:39:33] [INFO    ] [player.py:233] ffmpeg process 12168 successfully terminated with return code of 0.
+[2025-12-30 19:43:03] [INFO    ] [player.py:233] ffmpeg process 12180 successfully terminated with return code of 0.
+[2025-12-30 19:44:28] [INFO    ] [player.py:229] ffmpeg process 12210 has not terminated. Waiting to terminate...
+[2025-12-30 19:44:28] [INFO    ] [player.py:231] ffmpeg process 12210 should have terminated with a return code of -9.
+[2025-12-30 19:44:33] [INFO    ] [player.py:233] ffmpeg process 12232 successfully terminated with return code of 0.
+[2025-12-30 19:45:48] [INFO    ] [player.py:233] ffmpeg process 12243 successfully terminated with return code of 0.
+[2025-12-30 19:45:55] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2025-12-30 19:45:55] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2025-12-30 19:45:55] [INFO    ] [player.py:229] ffmpeg process 12270 has not terminated. Waiting to terminate...
+[2025-12-30 19:45:55] [INFO    ] [player.py:231] ffmpeg process 12270 should have terminated with a return code of -9.
+[2025-12-30 19:55:33] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 25bb9cdf5407a437625e18bd44b07dd1.
+[2025-12-30 21:11:17] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2025-12-30 21:11:17] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2025-12-30 21:11:18] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: c-nrt10-9ddfe2a5.discord.media:2053
+[2025-12-30 21:11:18] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2025-12-30 21:11:21] [INFO    ] [player.py:233] ffmpeg process 12632 successfully terminated with return code of 0.
+[2025-12-30 21:15:52] [INFO    ] [player.py:233] ffmpeg process 12643 successfully terminated with return code of 0.

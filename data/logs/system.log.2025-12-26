@@ -1,0 +1,15 @@
+[2025-12-26 00:42:28] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session c21449925e6b61c65939f272dcd4aafa.
+[2025-12-26 02:23:23] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session c21449925e6b61c65939f272dcd4aafa.
+[2025-12-26 04:36:54] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session c21449925e6b61c65939f272dcd4aafa.
+[2025-12-26 05:32:20] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session c21449925e6b61c65939f272dcd4aafa.
+[2025-12-26 08:20:28] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session c21449925e6b61c65939f272dcd4aafa.
+[2025-12-26 11:51:05] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session c21449925e6b61c65939f272dcd4aafa.
+[2025-12-26 14:59:38] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session c21449925e6b61c65939f272dcd4aafa.
+[2025-12-26 18:02:09] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session c21449925e6b61c65939f272dcd4aafa.
+[2025-12-26 19:23:36] [ERROR   ] [bot.py:366] Ignoring exception in command None
+discord.ext.commands.errors.CommandNotFound: Command "!!!" is not found
+[2025-12-26 19:29:51] [ERROR   ] [bot.py:366] Ignoring exception in command None
+discord.ext.commands.errors.CommandNotFound: Command "!" is not found
+[2025-12-26 19:53:51] [ERROR   ] [bot.py:366] Ignoring exception in command None
+discord.ext.commands.errors.CommandNotFound: Command "!!!!!" is not found
+[2025-12-26 20:08:29] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session c21449925e6b61c65939f272dcd4aafa.

@@ -1,0 +1,48 @@
+[2025-12-20 13:45:11] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: 462b66c29e777585e66872069d75365c).
+[2025-12-20 13:55:53] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2025-12-20 13:55:53] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2025-12-20 13:55:53] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: c-nrt07-bf655c17.discord.media:2087
+[2025-12-20 13:55:53] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2025-12-20 13:55:56] [INFO    ] [player.py:233] ffmpeg process 3002 successfully terminated with return code of 0.
+[2025-12-20 14:00:17] [INFO    ] [player.py:233] ffmpeg process 3015 successfully terminated with return code of 0.
+[2025-12-20 14:05:25] [INFO    ] [player.py:233] ffmpeg process 3033 successfully terminated with return code of 0.
+[2025-12-20 14:05:38] [INFO    ] [player.py:233] ffmpeg process 3061 successfully terminated with return code of 0.
+[2025-12-20 14:08:58] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: 4892f0126679326321ebde5fb571d683).
+[2025-12-20 14:55:11] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: ba2507c86a2b6887f8f0195e91c222ed).
+[2025-12-20 15:00:10] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: 3c7fdcde32060f16e0e28901317d29a1).
+[2025-12-20 17:48:50] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 3c7fdcde32060f16e0e28901317d29a1.
+[2025-12-20 18:04:38] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2025-12-20 18:04:38] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2025-12-20 18:04:38] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: c-nrt13-53543bc5.discord.media:443
+[2025-12-20 18:04:39] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2025-12-20 18:04:42] [INFO    ] [player.py:233] ffmpeg process 4223 successfully terminated with return code of 0.
+[2025-12-20 18:07:15] [INFO    ] [player.py:233] ffmpeg process 4236 successfully terminated with return code of 0.
+[2025-12-20 18:09:09] [INFO    ] [player.py:233] ffmpeg process 4262 successfully terminated with return code of 0.
+[2025-12-20 18:15:10] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: 91326bd08fc53ecfd5db67edb9ad6097).
+[2025-12-20 18:15:30] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2025-12-20 18:15:30] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2025-12-20 18:15:31] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: c-nrt13-53543bc5.discord.media:443
+[2025-12-20 18:15:31] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2025-12-20 18:24:25] [INFO    ] [player.py:233] ffmpeg process 4421 successfully terminated with return code of 0.
+[2025-12-20 18:36:31] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.68 seconds.
+[2025-12-20 18:36:55] [INFO    ] [player.py:233] ffmpeg process 4602 successfully terminated with return code of 0.
+[2025-12-20 18:37:00] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.80 seconds.
+[2025-12-20 18:39:48] [INFO    ] [player.py:233] ffmpeg process 4613 successfully terminated with return code of 0.
+[2025-12-20 18:56:17] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 91326bd08fc53ecfd5db67edb9ad6097.
+[2025-12-20 20:14:27] [ERROR   ] [voice_state.py:671] Disconnected from voice... Reconnecting in 1.56s.
+Traceback (most recent call last):
+  File "/home/os/bot/bot_env/lib/python3.13/site-packages/discord/voice_state.py", line 601, in _poll_voice_ws
+    await self.ws.poll_event()
+  File "/home/os/bot/bot_env/lib/python3.13/site-packages/discord/gateway.py", line 1053, in poll_event
+    raise ConnectionClosed(self.ws, shard_id=None, code=self._close_code)
+discord.errors.ConnectionClosed: Shard ID None WebSocket closed with 1001
+[2025-12-20 20:14:29] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2025-12-20 20:14:29] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2025-12-20 20:14:29] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2025-12-20 20:14:29] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2025-12-20 20:14:49] [WARNING ] [voice_state.py:685] Could not connect to voice... Retrying...
+[2025-12-20 20:14:49] [INFO    ] [voice_state.py:615] Disconnecting from voice normally, close code 1000.
+[2025-12-20 20:14:49] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2025-12-20 21:30:04] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 91326bd08fc53ecfd5db67edb9ad6097.
+[2025-12-20 22:40:12] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 91326bd08fc53ecfd5db67edb9ad6097.
+[2025-12-20 23:18:04] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 91326bd08fc53ecfd5db67edb9ad6097.
