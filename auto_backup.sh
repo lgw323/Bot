@@ -10,34 +10,51 @@ LOG_FILE="$BOT_DIR/data/logs/backup.log"
 # ==========================================
 # 1. 환경 설정 및 이동
 # ==========================================
-# 로그 디렉토리가 없으면 생성
 mkdir -p "$(dirname "$LOG_FILE")"
 cd "$BOT_DIR" || exit
 
 # ==========================================
-# 2. 변경 사항 커밋 (Staging & Commit)
+# 2. 변경 사항 감지 및 분류
 # ==========================================
-# json 파일과 logs 폴더 전체를 스테이징
+# 모든 대상 파일을 스테이징 (JSON 데이터 + 로그 파일)
 git add "$DATA_DIR"/*.json "$DATA_DIR"/logs/*
 
-# 스테이징된 변경사항이 있다면 커밋
+# 스테이징된 변경사항이 있는지 확인
 if ! git diff --staged --quiet; then
+    
+    # 어떤 파일이 변경되었는지 목록 추출
+    STAGED_FILES=$(git diff --name-only --cached)
+    
+    # 플래그 설정
+    HAS_JSON=$(echo "$STAGED_FILES" | grep ".json")
+    HAS_LOGS=$(echo "$STAGED_FILES" | grep "logs/")
+    
+    # 상황별 커밋 메시지 생성
+    if [ -n "$HAS_JSON" ] && [ -n "$HAS_LOGS" ]; then
+        MSG_TYPE="User Data & System Logs"
+    elif [ -n "$HAS_JSON" ]; then
+        MSG_TYPE="User Data Update"
+    elif [ -n "$HAS_LOGS" ]; then
+        MSG_TYPE="System Logs Archived"
+    else
+        MSG_TYPE="Routine Backup"
+    fi
+
     TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
-    git commit -m "Auto-backup: User data update [$TIMESTAMP]"
-    echo "[$TIMESTAMP] 💾 로컬 저장소에 새로운 데이터 커밋 완료." >> "$LOG_FILE"
+    COMMIT_MSG="Auto-backup: $MSG_TYPE [$TIMESTAMP]"
+    
+    # 커밋 수행
+    git commit -m "$COMMIT_MSG"
+    echo "[$TIMESTAMP] 💾 커밋 완료: $MSG_TYPE" >> "$LOG_FILE"
 fi
 
 # ==========================================
 # 3. GitHub 동기화 (Push Check)
 # ==========================================
-# 원격 상태 최신화
 git fetch origin main
-
-# 로컬과 원격의 해시 비교
 LOCAL=$(git rev-parse HEAD)
 REMOTE=$(git rev-parse origin/main)
 
-# 로컬이 원격과 다르다면 (앞서 있다면) 업로드 수행
 if [ "$LOCAL" != "$REMOTE" ]; then
     TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
     
@@ -46,8 +63,8 @@ if [ "$LOCAL" != "$REMOTE" ]; then
     git push origin main
     
     if [ $? -eq 0 ]; then
-        echo "[$TIMESTAMP] ☁️ GitHub로 데이터 업로드(동기화) 완료." >> "$LOG_FILE"
+        echo "[$TIMESTAMP] ☁️ 업로드 완료." >> "$LOG_FILE"
     else
-        echo "[$TIMESTAMP] ❌ GitHub 업로드 실패. 네트워크나 인증을 확인하세요." >> "$LOG_FILE"
+        echo "[$TIMESTAMP] ❌ 업로드 실패." >> "$LOG_FILE"
     fi
 fi
