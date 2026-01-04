@@ -26,3 +26,21 @@
 [2026-01-04 13:58:10] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.81 seconds.
 [2026-01-04 13:59:33] [INFO    ] [player.py:233] ffmpeg process 46299 successfully terminated with return code of 0.
 [2026-01-04 14:09:17] [INFO    ] [player.py:233] ffmpeg process 46367 successfully terminated with return code of 0.
+[2026-01-04 16:29:38] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 25bb9cdf5407a437625e18bd44b07dd1.
+[2026-01-04 17:41:41] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-04 17:41:41] [INFO    ] [player.py:229] ffmpeg process 47164 has not terminated. Waiting to terminate...
+[2026-01-04 17:41:41] [INFO    ] [player.py:231] ffmpeg process 47164 should have terminated with a return code of -9.
+[2026-01-04 17:41:46] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-04 17:41:46] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-04 17:41:47] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: south-korea10152.discord.media:443
+[2026-01-04 17:41:47] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2026-01-04 17:41:50] [INFO    ] [player.py:233] ffmpeg process 47550 successfully terminated with return code of 0.
+[2026-01-04 17:41:53] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 1.74 seconds.
+[2026-01-04 17:41:59] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 1.57 seconds.
+[2026-01-04 17:45:17] [INFO    ] [player.py:233] ffmpeg process 47561 successfully terminated with return code of 0.
+[2026-01-04 17:49:49] [INFO    ] [player.py:233] ffmpeg process 47595 successfully terminated with return code of 0.
+[2026-01-04 17:52:06] [INFO    ] [player.py:233] ffmpeg process 47608 successfully terminated with return code of 0.
+[2026-01-04 17:54:36] [INFO    ] [player.py:233] ffmpeg process 47636 successfully terminated with return code of 0.
+[2026-01-04 17:56:46] [INFO    ] [player.py:233] ffmpeg process 47650 successfully terminated with return code of 0.
+[2026-01-04 17:59:26] [INFO    ] [player.py:233] ffmpeg process 47681 successfully terminated with return code of 0.
+[2026-01-04 18:01:52] [INFO    ] [player.py:233] ffmpeg process 47695 successfully terminated with return code of 0.
