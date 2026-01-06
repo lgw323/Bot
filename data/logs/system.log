@@ -27,3 +27,15 @@
 [2026-01-06 17:54:57] [INFO    ] [player.py:233] ffmpeg process 12634 successfully terminated with return code of 0.
 [2026-01-06 17:58:04] [INFO    ] [player.py:233] ffmpeg process 12654 successfully terminated with return code of 0.
 [2026-01-06 18:01:31] [INFO    ] [player.py:233] ffmpeg process 12686 successfully terminated with return code of 0.
+[2026-01-06 18:07:25] [INFO    ] [player.py:229] ffmpeg process 12723 has not terminated. Waiting to terminate...
+[2026-01-06 18:07:25] [INFO    ] [player.py:231] ffmpeg process 12723 should have terminated with a return code of -9.
+[2026-01-06 18:15:36] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-06 19:38:00] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session a4dacd5c86020012d80b04f307fab804.
+[2026-01-06 23:16:42] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-06 23:16:42] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-06 23:16:43] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: south-korea10193.discord.media:443
+[2026-01-06 23:16:43] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2026-01-06 23:16:46] [INFO    ] [player.py:233] ffmpeg process 14226 successfully terminated with return code of 0.
+[2026-01-06 23:20:07] [INFO    ] [player.py:233] ffmpeg process 14237 successfully terminated with return code of 0.
+[2026-01-06 23:23:50] [INFO    ] [player.py:233] ffmpeg process 14269 successfully terminated with return code of 0.
+[2026-01-06 23:28:30] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session a4dacd5c86020012d80b04f307fab804.
