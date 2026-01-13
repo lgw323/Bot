@@ -87,3 +87,12 @@
 [2026-01-13 17:44:09] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 2.30 seconds.
 [2026-01-13 17:47:20] [INFO    ] [player.py:233] ffmpeg process 13471 successfully terminated with return code of 0.
 [2026-01-13 17:53:13] [INFO    ] [player.py:233] ffmpeg process 13525 successfully terminated with return code of 0.
+[2026-01-13 18:21:54] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session c2e2241a133ae880716a072f40e82c9f.
+[2026-01-13 18:25:39] [INFO    ] [player.py:233] ffmpeg process 13708 successfully terminated with return code of 0.
+[2026-01-13 19:20:36] [INFO    ] [voice_state.py:628] Disconnected from voice by force... potentially reconnecting.
+[2026-01-13 19:20:36] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-13 19:20:36] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-13 19:20:36] [INFO    ] [voice_state.py:631] Reconnect was unsuccessful, disconnecting from voice normally...
+[2026-01-13 19:20:36] [INFO    ] [player.py:229] ffmpeg process 13943 has not terminated. Waiting to terminate...
+[2026-01-13 19:20:36] [INFO    ] [player.py:231] ffmpeg process 13943 should have terminated with a return code of -9.
+[2026-01-13 22:00:15] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session c2e2241a133ae880716a072f40e82c9f.
