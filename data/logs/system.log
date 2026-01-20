@@ -84,3 +84,14 @@ discord.errors.ClientException: Already playing audio.
 [2026-01-20 17:24:34] [INFO    ] [player.py:233] ffmpeg process 13125 successfully terminated with return code of 0.
 [2026-01-20 17:36:21] [INFO    ] [player.py:233] ffmpeg process 13192 successfully terminated with return code of 0.
 [2026-01-20 17:39:48] [INFO    ] [player.py:233] ffmpeg process 13226 successfully terminated with return code of 0.
+[2026-01-20 18:46:49] [INFO    ] [player.py:233] ffmpeg process 13559 successfully terminated with return code of 0.
+[2026-01-20 18:58:57] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
+[2026-01-20 19:11:25] [INFO    ] [player.py:233] ffmpeg process 13681 successfully terminated with return code of 0.
+[2026-01-20 19:29:05] [INFO    ] [player.py:229] ffmpeg process 13833 has not terminated. Waiting to terminate...
+[2026-01-20 19:29:05] [INFO    ] [player.py:231] ffmpeg process 13833 should have terminated with a return code of -9.
+[2026-01-20 19:29:08] [INFO    ] [player.py:233] ffmpeg process 13847 successfully terminated with return code of 0.
+[2026-01-20 19:29:32] [INFO    ] [player.py:233] ffmpeg process 13858 successfully terminated with return code of 0.
+[2026-01-20 19:32:45] [INFO    ] [player.py:233] ffmpeg process 13869 successfully terminated with return code of 0.
+[2026-01-20 19:45:41] [INFO    ] [player.py:233] ffmpeg process 13948 successfully terminated with return code of 0.
+[2026-01-20 19:57:11] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-20 20:49:01] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
