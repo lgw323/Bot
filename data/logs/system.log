@@ -2,3 +2,11 @@
 [2026-01-20 01:48:39] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
 [2026-01-20 02:54:12] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
 [2026-01-20 05:13:59] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
+[2026-01-20 09:05:52] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
+[2026-01-20 11:44:15] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
+[2026-01-20 11:56:40] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-20 11:56:40] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-20 11:56:40] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: c-nrt07-e8efbed0.discord.media:2083
+[2026-01-20 11:56:40] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2026-01-20 11:56:44] [INFO    ] [player.py:233] ffmpeg process 11257 successfully terminated with return code of 0.
+[2026-01-20 11:56:46] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 1.87 seconds.
