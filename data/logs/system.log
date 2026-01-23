@@ -132,3 +132,5 @@ discord.errors.ConnectionClosed: Shard ID None WebSocket closed with 1006
 [2026-01-23 17:30:04] [INFO    ] [player.py:233] ffmpeg process 34802 successfully terminated with return code of 0.
 [2026-01-23 17:30:10] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
 [2026-01-23 17:44:29] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
+[2026-01-23 18:53:29] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
+[2026-01-23 21:54:02] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
