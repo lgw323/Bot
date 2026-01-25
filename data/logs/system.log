@@ -1,14 +1,4 @@
-[2026-01-25 01:58:52] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
-[2026-01-25 03:29:39] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
-[2026-01-25 07:10:42] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
-[2026-01-25 07:31:17] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
-[2026-01-25 07:54:17] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
-[2026-01-25 09:59:37] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
-[2026-01-25 12:22:32] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
-[2026-01-25 14:26:47] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
-[2026-01-25 14:55:18] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
-[2026-01-25 17:10:11] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
-[2026-01-25 19:43:16] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
-[2026-01-25 21:49:24] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
-[2026-01-25 23:17:39] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
-[2026-01-25 23:43:05] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
+[2026-01-26 00:13:45] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
+[2026-01-26 03:32:05] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
+[2026-01-26 03:53:01] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0c3f2735015fa3073a4affc4ce90af3a.
+[2026-01-26 04:00:30] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: 6a50a8fe2137a460ed8afd8cabfd8347).
