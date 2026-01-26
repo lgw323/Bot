@@ -6,3 +6,30 @@
 [2026-01-26 07:52:03] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 6a50a8fe2137a460ed8afd8cabfd8347.
 [2026-01-26 09:27:01] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 6a50a8fe2137a460ed8afd8cabfd8347.
 [2026-01-26 10:58:30] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 6a50a8fe2137a460ed8afd8cabfd8347.
+[2026-01-26 13:25:48] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 6a50a8fe2137a460ed8afd8cabfd8347.
+[2026-01-26 15:45:13] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 6a50a8fe2137a460ed8afd8cabfd8347.
+[2026-01-26 16:58:28] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-26 16:58:28] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-26 16:58:29] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: south-korea12001.discord.media:443
+[2026-01-26 16:58:29] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2026-01-26 16:58:32] [INFO    ] [player.py:233] ffmpeg process 5330 successfully terminated with return code of 0.
+[2026-01-26 16:58:35] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.45 seconds.
+[2026-01-26 16:58:40] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 1.97 seconds.
+[2026-01-26 17:00:58] [INFO    ] [player.py:233] ffmpeg process 5343 successfully terminated with return code of 0.
+[2026-01-26 17:24:25] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 1.69 seconds.
+[2026-01-26 17:24:29] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 3.11 seconds.
+[2026-01-26 17:26:36] [INFO    ] [player.py:233] ffmpeg process 5521 successfully terminated with return code of 0.
+[2026-01-26 17:29:08] [INFO    ] [player.py:233] ffmpeg process 5552 successfully terminated with return code of 0.
+[2026-01-26 17:38:11] [INFO    ] [player.py:233] ffmpeg process 5613 successfully terminated with return code of 0.
+[2026-01-26 17:41:27] [INFO    ] [player.py:233] ffmpeg process 5625 successfully terminated with return code of 0.
+[2026-01-26 17:42:42] [INFO    ] [player.py:233] ffmpeg process 5655 successfully terminated with return code of 0.
+[2026-01-26 17:44:39] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.64 seconds.
+[2026-01-26 17:44:44] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 1.80 seconds.
+[2026-01-26 17:44:49] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 2.65 seconds.
+[2026-01-26 17:48:58] [INFO    ] [player.py:233] ffmpeg process 5667 successfully terminated with return code of 0.
+[2026-01-26 17:52:01] [INFO    ] [player.py:233] ffmpeg process 5700 successfully terminated with return code of 0.
+[2026-01-26 17:55:07] [INFO    ] [player.py:233] ffmpeg process 5730 successfully terminated with return code of 0.
+[2026-01-26 17:56:07] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.55 seconds.
+[2026-01-26 17:56:09] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 3.79 seconds.
+[2026-01-26 17:57:22] [INFO    ] [player.py:233] ffmpeg process 5761 successfully terminated with return code of 0.
+[2026-01-26 17:59:50] [INFO    ] [player.py:233] ffmpeg process 5775 successfully terminated with return code of 0.
