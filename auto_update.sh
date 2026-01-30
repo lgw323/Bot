@@ -44,7 +44,7 @@ if [ "$LOCAL" != "$REMOTE" ]; then
     git pull origin main
 
     # 의존성 패키지 최신화
-    "$VENV_PIP" install -r requirements.txt
+    "$VENV_PIP" install -U -r requirements.txt
 
     # 봇 서비스 재시작
     sudo systemctl restart discordbot
