@@ -1,0 +1,199 @@
+[2026-01-30 00:30:55] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-30 00:30:55] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-30 00:30:55] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: south-korea12090.discord.media:443
+[2026-01-30 00:30:55] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2026-01-30 00:30:59] [INFO    ] [player.py:233] ffmpeg process 29114 successfully terminated with return code of 0.
+[2026-01-30 00:31:00] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-30 00:31:00] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-30 02:08:43] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 6a50a8fe2137a460ed8afd8cabfd8347.
+[2026-01-30 03:49:01] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 6a50a8fe2137a460ed8afd8cabfd8347.
+[2026-01-30 05:34:48] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 6a50a8fe2137a460ed8afd8cabfd8347.
+[2026-01-30 06:58:41] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 6a50a8fe2137a460ed8afd8cabfd8347.
+[2026-01-30 08:51:09] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 6a50a8fe2137a460ed8afd8cabfd8347.
+[2026-01-30 09:11:28] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 6a50a8fe2137a460ed8afd8cabfd8347.
+[2026-01-30 10:02:18] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 6a50a8fe2137a460ed8afd8cabfd8347.
+[2026-01-30 11:38:57] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 6a50a8fe2137a460ed8afd8cabfd8347.
+[2026-01-30 13:19:47] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 6a50a8fe2137a460ed8afd8cabfd8347.
+[2026-01-30 14:23:07] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 6a50a8fe2137a460ed8afd8cabfd8347.
+[2026-01-30 16:36:57] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-30 16:36:57] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-30 16:36:57] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: south-korea12030.discord.media:443
+[2026-01-30 16:36:57] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2026-01-30 16:37:01] [INFO    ] [player.py:233] ffmpeg process 33788 successfully terminated with return code of 0.
+[2026-01-30 16:37:08] [INFO    ] [player.py:233] ffmpeg process 33799 successfully terminated with return code of 8.
+[2026-01-30 16:37:29] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-30 16:39:22] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-30 16:39:22] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-30 16:39:23] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: south-korea12044.discord.media:443
+[2026-01-30 16:39:23] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2026-01-30 16:39:26] [INFO    ] [player.py:233] ffmpeg process 33833 successfully terminated with return code of 0.
+[2026-01-30 16:39:28] [INFO    ] [player.py:233] ffmpeg process 33844 successfully terminated with return code of 8.
+[2026-01-30 16:39:29] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.84 seconds.
+[2026-01-30 16:40:01] [INFO    ] [player.py:233] ffmpeg process 33846 successfully terminated with return code of 8.
+[2026-01-30 16:40:14] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-30 16:51:17] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-30 16:51:17] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-30 16:51:17] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: south-korea12085.discord.media:443
+[2026-01-30 16:51:17] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2026-01-30 16:51:21] [INFO    ] [player.py:233] ffmpeg process 34057 successfully terminated with return code of 0.
+[2026-01-30 16:51:22] [INFO    ] [player.py:233] ffmpeg process 34068 successfully terminated with return code of 8.
+[2026-01-30 16:51:24] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 1.21 seconds.
+[2026-01-30 16:51:36] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-30 16:57:08] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: 9fa8af9b7a83bca5ac277318ed2b428e).
+[2026-01-30 16:57:24] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-30 16:57:24] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-30 16:57:24] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: south-korea12034.discord.media:443
+[2026-01-30 16:57:24] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2026-01-30 16:57:28] [INFO    ] [player.py:233] ffmpeg process 34132 successfully terminated with return code of 0.
+[2026-01-30 16:57:31] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.44 seconds.
+[2026-01-30 16:57:35] [INFO    ] [player.py:229] ffmpeg process 34144 has not terminated. Waiting to terminate...
+[2026-01-30 16:57:35] [INFO    ] [player.py:231] ffmpeg process 34144 should have terminated with a return code of -9.
+[2026-01-30 16:57:38] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.30 seconds.
+[2026-01-30 16:57:40] [INFO    ] [player.py:233] ffmpeg process 34165 successfully terminated with return code of 0.
+[2026-01-30 16:57:43] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.97 seconds.
+[2026-01-30 16:57:48] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 2.12 seconds.
+[2026-01-30 17:01:39] [INFO    ] [player.py:233] ffmpeg process 34176 successfully terminated with return code of 0.
+[2026-01-30 17:05:25] [INFO    ] [player.py:233] ffmpeg process 34213 successfully terminated with return code of 0.
+[2026-01-30 17:12:51] [INFO    ] [player.py:233] ffmpeg process 34257 successfully terminated with return code of 0.
+[2026-01-30 17:17:25] [INFO    ] [player.py:233] ffmpeg process 34313 successfully terminated with return code of 0.
+[2026-01-30 17:19:47] [INFO    ] [player.py:233] ffmpeg process 34386 successfully terminated with return code of 0.
+[2026-01-30 17:25:13] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: 73964df7fd15592ecce1abeaa7190a9e).
+[2026-01-30 17:34:35] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-30 17:34:35] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-30 17:34:35] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: south-korea12034.discord.media:443
+[2026-01-30 17:34:35] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2026-01-30 17:34:39] [INFO    ] [player.py:233] ffmpeg process 34565 successfully terminated with return code of 0.
+[2026-01-30 17:34:41] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 1.01 seconds.
+[2026-01-30 17:37:40] [INFO    ] [player.py:233] ffmpeg process 34577 successfully terminated with return code of 0.
+[2026-01-30 17:40:08] [INFO    ] [player.py:233] ffmpeg process 34624 successfully terminated with return code of 0.
+[2026-01-30 17:45:27] [INFO    ] [player.py:233] ffmpeg process 34637 successfully terminated with return code of 0.
+[2026-01-30 17:51:28] [INFO    ] [player.py:233] ffmpeg process 34669 successfully terminated with return code of 0.
+[2026-01-30 17:56:06] [INFO    ] [player.py:233] ffmpeg process 34701 successfully terminated with return code of 0.
+[2026-01-30 17:56:09] [ERROR   ] [music_core.py:328] 'My Way (2008 Remastered)' 재생 중 오류 발생
+Traceback (most recent call last):
+  File "/home/os/bot/cogs/music/music_core.py", line 316, in play_song_loop
+    self.voice_client.play(source, after=lambda e: self.handle_after_play(e))
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/os/bot/bot_env/lib/python3.13/site-packages/discord/voice_client.py", line 500, in play
+    raise ClientException('Already playing audio.')
+discord.errors.ClientException: Already playing audio.
+[2026-01-30 17:56:09] [ERROR   ] [music_core.py:341] 재생 후 콜백 오류: Already playing audio.
+[2026-01-30 17:56:10] [INFO    ] [player.py:229] ffmpeg process 34746 has not terminated. Waiting to terminate...
+[2026-01-30 17:56:10] [INFO    ] [player.py:231] ffmpeg process 34746 should have terminated with a return code of -9.
+[2026-01-30 17:56:10] [ERROR   ] [music_core.py:328] '[DJMAX] 앨리쓰 (트로트 뽕짝 Ver.)' 재생 중 오류 발생
+Traceback (most recent call last):
+  File "/home/os/bot/cogs/music/music_core.py", line 316, in play_song_loop
+    self.voice_client.play(source, after=lambda e: self.handle_after_play(e))
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/os/bot/bot_env/lib/python3.13/site-packages/discord/voice_client.py", line 500, in play
+    raise ClientException('Already playing audio.')
+discord.errors.ClientException: Already playing audio.
+[2026-01-30 17:56:10] [ERROR   ] [music_core.py:341] 재생 후 콜백 오류: Already playing audio.
+[2026-01-30 17:56:12] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 3.50 seconds.
+[2026-01-30 17:56:13] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 1.89 seconds.
+[2026-01-30 17:56:19] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-30 17:56:19] [INFO    ] [player.py:229] ffmpeg process 34735 has not terminated. Waiting to terminate...
+[2026-01-30 17:56:19] [INFO    ] [player.py:231] ffmpeg process 34735 should have terminated with a return code of -9.
+[2026-01-30 17:56:20] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.73 seconds.
+[2026-01-30 17:56:22] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-30 17:56:22] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-30 17:56:23] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: south-korea12034.discord.media:443
+[2026-01-30 17:56:23] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2026-01-30 17:56:23] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 3.66 seconds.
+[2026-01-30 17:56:26] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 1.34 seconds.
+[2026-01-30 17:56:26] [INFO    ] [player.py:233] ffmpeg process 34769 successfully terminated with return code of 0.
+[2026-01-30 17:56:29] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 4.00 seconds.
+[2026-01-30 17:59:17] [INFO    ] [player.py:233] ffmpeg process 34780 successfully terminated with return code of 0.
+[2026-01-30 18:02:32] [INFO    ] [player.py:233] ffmpeg process 34795 successfully terminated with return code of 0.
+[2026-01-30 18:07:20] [INFO    ] [player.py:233] ffmpeg process 34829 successfully terminated with return code of 0.
+[2026-01-30 18:14:21] [INFO    ] [player.py:233] ffmpeg process 34897 successfully terminated with return code of 0.
+[2026-01-30 18:20:12] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 73964df7fd15592ecce1abeaa7190a9e.
+[2026-01-30 18:37:44] [INFO    ] [player.py:233] ffmpeg process 35024 successfully terminated with return code of 0.
+[2026-01-30 19:07:16] [INFO    ] [player.py:233] ffmpeg process 35166 successfully terminated with return code of 0.
+[2026-01-30 19:10:32] [INFO    ] [player.py:233] ffmpeg process 35198 successfully terminated with return code of 0.
+[2026-01-30 19:11:03] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 1.43 seconds.
+[2026-01-30 19:14:14] [INFO    ] [player.py:233] ffmpeg process 35228 successfully terminated with return code of 0.
+[2026-01-30 19:17:29] [INFO    ] [player.py:233] ffmpeg process 35243 successfully terminated with return code of 0.
+[2026-01-30 19:20:43] [INFO    ] [player.py:233] ffmpeg process 35279 successfully terminated with return code of 0.
+[2026-01-30 19:23:58] [INFO    ] [player.py:233] ffmpeg process 35309 successfully terminated with return code of 0.
+[2026-01-30 19:27:13] [INFO    ] [player.py:233] ffmpeg process 35321 successfully terminated with return code of 0.
+[2026-01-30 19:49:18] [ERROR   ] [voice_state.py:671] Disconnected from voice... Reconnecting in 1.50s.
+Traceback (most recent call last):
+  File "/home/os/bot/bot_env/lib/python3.13/site-packages/discord/voice_state.py", line 601, in _poll_voice_ws
+    await self.ws.poll_event()
+  File "/home/os/bot/bot_env/lib/python3.13/site-packages/discord/gateway.py", line 1053, in poll_event
+    raise ConnectionClosed(self.ws, shard_id=None, code=self._close_code)
+discord.errors.ConnectionClosed: Shard ID None WebSocket closed with 1006
+[2026-01-30 19:49:19] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-30 19:49:19] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-30 19:49:19] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-30 19:49:19] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-30 19:49:19] [INFO    ] [player.py:229] ffmpeg process 35510 has not terminated. Waiting to terminate...
+[2026-01-30 19:49:19] [INFO    ] [player.py:231] ffmpeg process 35510 should have terminated with a return code of -9.
+[2026-01-30 19:49:39] [WARNING ] [voice_state.py:685] Could not connect to voice... Retrying...
+[2026-01-30 19:49:39] [INFO    ] [voice_state.py:615] Disconnecting from voice normally, close code 1000.
+[2026-01-30 19:49:39] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-30 19:49:49] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-30 19:49:49] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-30 19:49:49] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: south-korea12034.discord.media:443
+[2026-01-30 19:49:49] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2026-01-30 19:49:53] [INFO    ] [player.py:233] ffmpeg process 35525 successfully terminated with return code of 0.
+[2026-01-30 19:51:06] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 73964df7fd15592ecce1abeaa7190a9e.
+[2026-01-30 19:55:42] [INFO    ] [player.py:233] ffmpeg process 35536 successfully terminated with return code of 0.
+[2026-01-30 20:03:22] [INFO    ] [player.py:233] ffmpeg process 35589 successfully terminated with return code of 0.
+[2026-01-30 20:08:35] [INFO    ] [player.py:233] ffmpeg process 35627 successfully terminated with return code of 0.
+[2026-01-30 20:09:13] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.30 seconds.
+[2026-01-30 20:11:39] [INFO    ] [player.py:233] ffmpeg process 35661 successfully terminated with return code of 0.
+[2026-01-30 20:38:46] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 73964df7fd15592ecce1abeaa7190a9e.
+[2026-01-30 21:09:59] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 73964df7fd15592ecce1abeaa7190a9e.
+[2026-01-30 21:11:53] [INFO    ] [player.py:233] ffmpeg process 35941 successfully terminated with return code of 0.
+[2026-01-30 21:28:10] [INFO    ] [player.py:229] ffmpeg process 36041 has not terminated. Waiting to terminate...
+[2026-01-30 21:28:10] [INFO    ] [player.py:231] ffmpeg process 36041 should have terminated with a return code of -9.
+[2026-01-30 21:33:57] [INFO    ] [player.py:233] ffmpeg process 36053 successfully terminated with return code of 0.
+[2026-01-30 21:36:14] [ERROR   ] [voice_state.py:671] Disconnected from voice... Reconnecting in 1.27s.
+Traceback (most recent call last):
+  File "/home/os/bot/bot_env/lib/python3.13/site-packages/discord/voice_state.py", line 601, in _poll_voice_ws
+    await self.ws.poll_event()
+  File "/home/os/bot/bot_env/lib/python3.13/site-packages/discord/gateway.py", line 1053, in poll_event
+    raise ConnectionClosed(self.ws, shard_id=None, code=self._close_code)
+discord.errors.ConnectionClosed: Shard ID None WebSocket closed with 1006
+[2026-01-30 21:36:15] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-30 21:36:15] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-30 21:36:15] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-30 21:36:16] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-30 21:36:35] [WARNING ] [voice_state.py:685] Could not connect to voice... Retrying...
+[2026-01-30 21:36:35] [INFO    ] [voice_state.py:615] Disconnecting from voice normally, close code 1000.
+[2026-01-30 21:36:35] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-30 21:47:21] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 73964df7fd15592ecce1abeaa7190a9e.
+[2026-01-30 21:50:41] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-30 21:50:41] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-30 21:50:42] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: south-korea12034.discord.media:443
+[2026-01-30 21:50:42] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2026-01-30 21:50:45] [INFO    ] [player.py:233] ffmpeg process 36174 successfully terminated with return code of 0.
+[2026-01-30 21:50:53] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 1.33 seconds.
+[2026-01-30 21:55:58] [INFO    ] [player.py:233] ffmpeg process 36185 successfully terminated with return code of 0.
+[2026-01-30 21:56:06] [ERROR   ] [voice_state.py:671] Disconnected from voice... Reconnecting in 1.72s.
+Traceback (most recent call last):
+  File "/home/os/bot/bot_env/lib/python3.13/site-packages/discord/voice_state.py", line 601, in _poll_voice_ws
+    await self.ws.poll_event()
+  File "/home/os/bot/bot_env/lib/python3.13/site-packages/discord/gateway.py", line 1053, in poll_event
+    raise ConnectionClosed(self.ws, shard_id=None, code=self._close_code)
+discord.errors.ConnectionClosed: Shard ID None WebSocket closed with 1006
+[2026-01-30 21:56:07] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-30 21:56:07] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-30 21:56:07] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-30 21:56:08] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-30 21:56:27] [WARNING ] [voice_state.py:685] Could not connect to voice... Retrying...
+[2026-01-30 21:56:27] [INFO    ] [voice_state.py:615] Disconnecting from voice normally, close code 1000.
+[2026-01-30 21:56:27] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-30 21:57:21] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-30 21:57:21] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-30 21:57:21] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: south-korea12034.discord.media:443
+[2026-01-30 21:57:21] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2026-01-30 21:57:25] [INFO    ] [player.py:233] ffmpeg process 36221 successfully terminated with return code of 0.
+[2026-01-30 21:57:28] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.30 seconds.
+[2026-01-30 21:57:33] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.74 seconds.
+[2026-01-30 22:02:30] [INFO    ] [player.py:233] ffmpeg process 36232 successfully terminated with return code of 0.
+[2026-01-30 22:21:16] [INFO    ] [player.py:233] ffmpeg process 36335 successfully terminated with return code of 0.
+[2026-01-30 22:32:30] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-30 23:17:20] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 73964df7fd15592ecce1abeaa7190a9e.
