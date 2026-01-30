@@ -30,9 +30,18 @@ git fetch origin main
 LOCAL=$(git rev-parse HEAD)
 REMOTE=$(git rev-parse origin/main)
 
-if [ "$LOCAL" != "$REMOTE" ]; then
+# [수정된 부분] 깃허브가 다르거나($LOCAL != $REMOTE) 또는(--daily) 옵션이 있을 때 실행
+if [ "$LOCAL" != "$REMOTE" ] || [ "$1" == "--daily" ]; then
     TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
-    echo "[$TIMESTAMP] 🔄 변경 사항 감지. 업데이트 프로세스 시작." >> "$LOG_FILE"
+    
+    # 로그 메시지 구분 (업데이트 vs 정기점검)
+    if [ "$1" == "--daily" ]; then
+        REASON="일일 정기 점검 (강제 실행)"
+    else
+        REASON="깃허브 변경 사항 감지"
+    fi
+    
+    echo "[$TIMESTAMP] 🔄 $REASON. 업데이트 프로세스 시작." >> "$LOG_FILE"
 
     # [데이터 백업] favorites.json이 존재하면 backups 폴더로 복사
     if [ -f "$DATA_DIR/favorites.json" ]; then
@@ -40,16 +49,17 @@ if [ "$LOCAL" != "$REMOTE" ]; then
         echo "[$TIMESTAMP] 💾 로컬 데이터 백업 완료." >> "$LOG_FILE"
     fi
 
-    # 코드 동기화
+    # 코드 동기화 (이미 최신이면 메세지만 뜨고 넘어감)
     git pull origin main
 
-    # 의존성 패키지 최신화
+    # 의존성 패키지 강제 최신화 (-U 옵션 추가됨)
     "$VENV_PIP" install -U -r requirements.txt
+    "$VENV_PIP" install -U yt-dlp discord.py
 
     # 봇 서비스 재시작
     sudo systemctl restart discordbot
 
-    echo "[$TIMESTAMP] ✅ 업데이트 및 재시작 완료." >> "$LOG_FILE"
+    echo "[$TIMESTAMP] ✅ $REASON 완료." >> "$LOG_FILE"
     
     # [로그 관리] 로그가 너무 길어지면(1000줄) 정리
     if [ -f "$LOG_FILE" ] && [ $(wc -l < "$LOG_FILE") -gt 1000 ]; then
