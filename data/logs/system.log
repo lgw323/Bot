@@ -54,3 +54,54 @@
 [2026-01-30 16:57:48] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 2.12 seconds.
 [2026-01-30 17:01:39] [INFO    ] [player.py:233] ffmpeg process 34176 successfully terminated with return code of 0.
 [2026-01-30 17:05:25] [INFO    ] [player.py:233] ffmpeg process 34213 successfully terminated with return code of 0.
+[2026-01-30 17:12:51] [INFO    ] [player.py:233] ffmpeg process 34257 successfully terminated with return code of 0.
+[2026-01-30 17:17:25] [INFO    ] [player.py:233] ffmpeg process 34313 successfully terminated with return code of 0.
+[2026-01-30 17:19:47] [INFO    ] [player.py:233] ffmpeg process 34386 successfully terminated with return code of 0.
+[2026-01-30 17:25:13] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: 73964df7fd15592ecce1abeaa7190a9e).
+[2026-01-30 17:34:35] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-30 17:34:35] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-30 17:34:35] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: south-korea12034.discord.media:443
+[2026-01-30 17:34:35] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2026-01-30 17:34:39] [INFO    ] [player.py:233] ffmpeg process 34565 successfully terminated with return code of 0.
+[2026-01-30 17:34:41] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 1.01 seconds.
+[2026-01-30 17:37:40] [INFO    ] [player.py:233] ffmpeg process 34577 successfully terminated with return code of 0.
+[2026-01-30 17:40:08] [INFO    ] [player.py:233] ffmpeg process 34624 successfully terminated with return code of 0.
+[2026-01-30 17:45:27] [INFO    ] [player.py:233] ffmpeg process 34637 successfully terminated with return code of 0.
+[2026-01-30 17:51:28] [INFO    ] [player.py:233] ffmpeg process 34669 successfully terminated with return code of 0.
+[2026-01-30 17:56:06] [INFO    ] [player.py:233] ffmpeg process 34701 successfully terminated with return code of 0.
+[2026-01-30 17:56:09] [ERROR   ] [music_core.py:328] 'My Way (2008 Remastered)' 재생 중 오류 발생
+Traceback (most recent call last):
+  File "/home/os/bot/cogs/music/music_core.py", line 316, in play_song_loop
+    self.voice_client.play(source, after=lambda e: self.handle_after_play(e))
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/os/bot/bot_env/lib/python3.13/site-packages/discord/voice_client.py", line 500, in play
+    raise ClientException('Already playing audio.')
+discord.errors.ClientException: Already playing audio.
+[2026-01-30 17:56:09] [ERROR   ] [music_core.py:341] 재생 후 콜백 오류: Already playing audio.
+[2026-01-30 17:56:10] [INFO    ] [player.py:229] ffmpeg process 34746 has not terminated. Waiting to terminate...
+[2026-01-30 17:56:10] [INFO    ] [player.py:231] ffmpeg process 34746 should have terminated with a return code of -9.
+[2026-01-30 17:56:10] [ERROR   ] [music_core.py:328] '[DJMAX] 앨리쓰 (트로트 뽕짝 Ver.)' 재생 중 오류 발생
+Traceback (most recent call last):
+  File "/home/os/bot/cogs/music/music_core.py", line 316, in play_song_loop
+    self.voice_client.play(source, after=lambda e: self.handle_after_play(e))
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/os/bot/bot_env/lib/python3.13/site-packages/discord/voice_client.py", line 500, in play
+    raise ClientException('Already playing audio.')
+discord.errors.ClientException: Already playing audio.
+[2026-01-30 17:56:10] [ERROR   ] [music_core.py:341] 재생 후 콜백 오류: Already playing audio.
+[2026-01-30 17:56:12] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 3.50 seconds.
+[2026-01-30 17:56:13] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 1.89 seconds.
+[2026-01-30 17:56:19] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-01-30 17:56:19] [INFO    ] [player.py:229] ffmpeg process 34735 has not terminated. Waiting to terminate...
+[2026-01-30 17:56:19] [INFO    ] [player.py:231] ffmpeg process 34735 should have terminated with a return code of -9.
+[2026-01-30 17:56:20] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.73 seconds.
+[2026-01-30 17:56:22] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-01-30 17:56:22] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-01-30 17:56:23] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: south-korea12034.discord.media:443
+[2026-01-30 17:56:23] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2026-01-30 17:56:23] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 3.66 seconds.
+[2026-01-30 17:56:26] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 1.34 seconds.
+[2026-01-30 17:56:26] [INFO    ] [player.py:233] ffmpeg process 34769 successfully terminated with return code of 0.
+[2026-01-30 17:56:29] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 4.00 seconds.
+[2026-01-30 17:59:17] [INFO    ] [player.py:233] ffmpeg process 34780 successfully terminated with return code of 0.
+[2026-01-30 18:02:32] [INFO    ] [player.py:233] ffmpeg process 34795 successfully terminated with return code of 0.
