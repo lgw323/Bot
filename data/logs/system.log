@@ -3,3 +3,24 @@
 [2026-02-04 03:54:18] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 5a45dad20aa7c516f9de7dee8b0dba15.
 [2026-02-04 04:03:12] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: 4cc606332a001bacac2cdecb7e7c8eb3).
 [2026-02-04 05:47:22] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 4cc606332a001bacac2cdecb7e7c8eb3.
+[2026-02-04 07:47:27] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 4cc606332a001bacac2cdecb7e7c8eb3.
+[2026-02-04 10:17:06] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 4cc606332a001bacac2cdecb7e7c8eb3.
+[2026-02-04 11:18:54] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 4cc606332a001bacac2cdecb7e7c8eb3.
+[2026-02-04 11:22:51] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-02-04 11:22:51] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-02-04 11:22:51] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: south-korea12026.discord.media:443
+[2026-02-04 11:22:51] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2026-02-04 11:22:55] [INFO    ] [player.py:233] ffmpeg process 68746 successfully terminated with return code of 0.
+[2026-02-04 11:22:57] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.68 seconds.
+[2026-02-04 11:23:02] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 2.02 seconds.
+[2026-02-04 11:27:20] [INFO    ] [player.py:233] ffmpeg process 68758 successfully terminated with return code of 0.
+[2026-02-04 11:29:58] [INFO    ] [player.py:233] ffmpeg process 68792 successfully terminated with return code of 0.
+[2026-02-04 11:33:02] [INFO    ] [player.py:233] ffmpeg process 68818 successfully terminated with return code of 0.
+[2026-02-04 11:44:23] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 4cc606332a001bacac2cdecb7e7c8eb3.
+[2026-02-04 11:54:24] [INFO    ] [player.py:229] ffmpeg process 68838 has not terminated. Waiting to terminate...
+[2026-02-04 11:54:24] [INFO    ] [player.py:231] ffmpeg process 68838 should have terminated with a return code of -9.
+[2026-02-04 11:54:27] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 1.08 seconds.
+[2026-02-04 11:54:32] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 2.31 seconds.
+[2026-02-04 11:58:16] [INFO    ] [player.py:233] ffmpeg process 68936 successfully terminated with return code of 0.
+[2026-02-04 12:00:23] [INFO    ] [player.py:233] ffmpeg process 68967 successfully terminated with return code of 0.
+[2026-02-04 12:02:41] [INFO    ] [player.py:233] ffmpeg process 69002 successfully terminated with return code of 0.
