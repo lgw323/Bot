@@ -70,3 +70,5 @@
 [2026-02-04 17:11:29] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 4cc606332a001bacac2cdecb7e7c8eb3.
 [2026-02-04 17:27:22] [INFO    ] [player.py:233] ffmpeg process 70769 successfully terminated with return code of 0.
 [2026-02-04 18:00:51] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1211579229456834580 (Guild ID 860135576224792617)
+[2026-02-04 21:09:58] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 4cc606332a001bacac2cdecb7e7c8eb3.
+[2026-02-04 23:39:20] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 4cc606332a001bacac2cdecb7e7c8eb3.
