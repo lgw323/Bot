@@ -1,46 +1,5 @@
-[2026-02-06 01:08:17] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 7f646479ca829506d0a976501f8e22eb.
-[2026-02-06 02:54:44] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 7f646479ca829506d0a976501f8e22eb.
-[2026-02-06 03:58:10] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 7f646479ca829506d0a976501f8e22eb.
-[2026-02-06 04:03:13] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: fdea6723941a3e531ce9337dbb07731e).
-[2026-02-06 04:18:25] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
-[2026-02-06 05:04:58] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
-[2026-02-06 07:01:00] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
-[2026-02-06 08:32:41] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
-[2026-02-06 10:29:06] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
-[2026-02-06 11:01:55] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
-[2026-02-06 12:51:58] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
-[2026-02-06 12:59:05] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
-[2026-02-06 13:07:26] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
-[2026-02-06 16:08:18] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
-[2026-02-06 17:27:05] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
-[2026-02-06 18:12:56] [INFO    ] [voice_state.py:427] Connecting to voice...
-[2026-02-06 18:12:56] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
-[2026-02-06 18:12:57] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: south-korea12010.discord.media:443
-[2026-02-06 18:12:57] [INFO    ] [voice_state.py:433] Voice connection complete.
-[2026-02-06 18:13:00] [INFO    ] [player.py:233] ffmpeg process 85034 successfully terminated with return code of 0.
-[2026-02-06 18:13:03] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.56 seconds.
-[2026-02-06 18:13:44] [INFO    ] [player.py:233] ffmpeg process 85047 successfully terminated with return code of 0.
-[2026-02-06 18:35:45] [INFO    ] [player.py:233] ffmpeg process 85145 successfully terminated with return code of 0.
-[2026-02-06 18:36:13] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.30 seconds.
-[2026-02-06 18:40:05] [INFO    ] [player.py:233] ffmpeg process 85185 successfully terminated with return code of 0.
-[2026-02-06 19:01:12] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
-[2026-02-06 19:09:51] [INFO    ] [player.py:233] ffmpeg process 85281 successfully terminated with return code of 0.
-[2026-02-06 19:26:39] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
-[2026-02-06 19:37:27] [ERROR   ] [voice_state.py:671] Disconnected from voice... Reconnecting in 1.25s.
-Traceback (most recent call last):
-  File "/home/os/bot/bot_env/lib/python3.13/site-packages/discord/voice_state.py", line 601, in _poll_voice_ws
-    await self.ws.poll_event()
-  File "/home/os/bot/bot_env/lib/python3.13/site-packages/discord/gateway.py", line 1053, in poll_event
-    raise ConnectionClosed(self.ws, shard_id=None, code=self._close_code)
-discord.errors.ConnectionClosed: Shard ID None WebSocket closed with 1006
-[2026-02-06 19:37:28] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1213408649649852456 (Guild ID 860135576224792617)
-[2026-02-06 19:37:28] [INFO    ] [voice_state.py:427] Connecting to voice...
-[2026-02-06 19:37:28] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
-[2026-02-06 19:37:28] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1213408649649852456 (Guild ID 860135576224792617)
-[2026-02-06 19:37:48] [WARNING ] [voice_state.py:685] Could not connect to voice... Retrying...
-[2026-02-06 19:37:48] [INFO    ] [voice_state.py:615] Disconnecting from voice normally, close code 1000.
-[2026-02-06 19:37:48] [INFO    ] [voice_state.py:566] The voice handshake is being terminated for Channel ID 1213408649649852456 (Guild ID 860135576224792617)
-[2026-02-06 20:02:50] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
-[2026-02-06 20:23:38] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
-[2026-02-06 20:59:43] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
-[2026-02-06 21:37:44] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
+[2026-02-07 01:10:20] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
+[2026-02-07 01:31:05] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
+[2026-02-07 03:59:03] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session fdea6723941a3e531ce9337dbb07731e.
+[2026-02-07 04:03:12] [INFO    ] [gateway.py:570] Shard ID None has connected to Gateway (Session ID: 0b7b4c31039a7f19c04e92e9e3d6cc11).
+[2026-02-07 04:55:52] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 0b7b4c31039a7f19c04e92e9e3d6cc11.
