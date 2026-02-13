@@ -9,3 +9,16 @@
 [2026-02-13 09:27:23] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 7cb33fca71f67ce3bebcf7ce9aa38927.
 [2026-02-13 10:30:36] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 7cb33fca71f67ce3bebcf7ce9aa38927.
 [2026-02-13 11:18:03] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 7cb33fca71f67ce3bebcf7ce9aa38927.
+[2026-02-13 12:58:58] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 7cb33fca71f67ce3bebcf7ce9aa38927.
+[2026-02-13 13:53:48] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 7cb33fca71f67ce3bebcf7ce9aa38927.
+[2026-02-13 16:01:08] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 7cb33fca71f67ce3bebcf7ce9aa38927.
+[2026-02-13 16:08:02] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 7cb33fca71f67ce3bebcf7ce9aa38927.
+[2026-02-13 17:16:53] [INFO    ] [gateway.py:575] Shard ID None has successfully RESUMED session 7cb33fca71f67ce3bebcf7ce9aa38927.
+[2026-02-13 17:51:41] [INFO    ] [voice_state.py:427] Connecting to voice...
+[2026-02-13 17:51:41] [INFO    ] [voice_state.py:400] Starting voice handshake... (connection attempt 1)
+[2026-02-13 17:51:42] [INFO    ] [voice_state.py:409] Voice handshake complete. Endpoint found: south-korea12073.discord.media:443
+[2026-02-13 17:51:42] [INFO    ] [voice_state.py:433] Voice connection complete.
+[2026-02-13 17:51:45] [INFO    ] [player.py:233] ffmpeg process 134622 successfully terminated with return code of 0.
+[2026-02-13 17:51:48] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 0.30 seconds.
+[2026-02-13 17:51:52] [WARNING ] [http.py:735] We are being rate limited. PATCH https://discord.com/api/v10/channels/1408406064247865396/messages/1414552194077823028 responded with 429. Retrying in 3.14 seconds.
+[2026-02-13 17:55:04] [INFO    ] [player.py:233] ffmpeg process 134635 successfully terminated with return code of 0.
