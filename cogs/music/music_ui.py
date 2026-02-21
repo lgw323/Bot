@@ -225,7 +225,8 @@ class FavoritesView(ui.View):
         if not self.selected_urls:
             return await interaction.response.send_message("추가할 노래를 선택해주세요.", ephemeral=True)
         
-        if not interaction.user.voice:
+        from .music_utils import MASTER_USER_ID
+        if not interaction.user.voice and interaction.user.id != MASTER_USER_ID:
             return await interaction.response.send_message("음성 채널에 먼저 참여해주세요.", ephemeral=True)
 
         await interaction.response.defer(thinking=True, ephemeral=True)
@@ -319,6 +320,10 @@ class MusicPlayerView(ui.View):
         self.add_item(fav_list_btn)
 
     async def interaction_check_bot_connected(self, interaction: discord.Interaction) -> bool:
+        from .music_utils import MASTER_USER_ID
+        if interaction.user.id == MASTER_USER_ID:
+            return True
+
         if not interaction.user.voice or not interaction.user.voice.channel:
             await interaction.response.send_message("음성 채널에 먼저 참여해주세요.", ephemeral=True)
             return False

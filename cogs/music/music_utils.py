@@ -16,6 +16,7 @@ BOT_EMBED_COLOR = 0x2ECC71
 FAVORITES_FILE = "data/favorites.json"
 MUSIC_SETTINGS_FILE = "data/music_settings.json"
 MUSIC_CHANNEL_ID = int(os.getenv("MUSIC_CHANNEL_ID", "0"))
+MASTER_USER_ID = int(os.getenv("MASTER_USER_ID", "0"))
 URL_REGEX = re.compile(r'https?://(?:www\.)?(?:music\.youtube\.com|youtube\.com|youtu\.be)/.+')
 
 # --- yt-dlp 및 FFmpeg 설정 ---
