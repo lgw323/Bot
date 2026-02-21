@@ -77,7 +77,7 @@ try:
             except Exception as e:
                 logging.error("슬래시 커맨드 동기화 중 오류 발생:", exc_info=True)
 
-    bot = MyBot(command_prefix="!", intents=intents)
+    bot = MyBot(command_prefix=commands.when_mentioned, intents=intents)
 
     @bot.event
     async def on_ready():
