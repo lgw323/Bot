@@ -183,16 +183,23 @@ class MusicAgentCog(commands.Cog):
             await state.text_channel.purge(limit=100, check=lambda msg: msg.id != state.now_playing_message.id and not msg.pinned)
         except discord.HTTPException as e: pass
 
+    async def _ensure_voice_connection(self, user, state, send_message_func=None) -> bool:
+        if not user.voice or not user.voice.channel:
+            if user.id != MASTER_USER_ID:
+                if send_message_func:
+                    await send_message_func("음성 채널에 먼저 참여해주세요.", ephemeral=True, delete_after=None)
+                return False
+            if not state.voice_client or not state.voice_client.is_connected():
+                if send_message_func:
+                    await send_message_func("봇이 현재 음성 채널에 없습니다. 음성 채널에 먼저 참여하거나 봇을 호출해주세요.", ephemeral=True, delete_after=None)
+                return False
+        return True
+
     async def _process_play_request(self, guild, channel, user, query: str, send_message_func):
         state = await self.get_music_state(guild.id)
         
-        if not user.voice or not user.voice.channel:
-            if user.id != MASTER_USER_ID:
-                await send_message_func("음성 채널에 먼저 참여해주세요.", ephemeral=True, delete_after=None)
-                return
-            if not state.voice_client or not state.voice_client.is_connected():
-                await send_message_func("봇이 현재 음성 채널에 없습니다. 음성 채널에 먼저 참여하거나 봇을 호출해주세요.", ephemeral=True, delete_after=None)
-                return
+        if not await self._ensure_voice_connection(user, state, send_message_func):
+            return
 
         is_url = URL_REGEX.match(query)
         task_description = f"`'{query}'`(을)를 처리하는 중..."
@@ -393,12 +400,8 @@ class MusicAgentCog(commands.Cog):
         state.cancel_autoplay_task()
         joined_vc = False
         
-        if not interaction.user.voice or not interaction.user.voice.channel:
-            if interaction.user.id != MASTER_USER_ID:
-                return 0, False
-            elif not state.voice_client or not state.voice_client.is_connected():
-                # Cannot connect if bot is not already connected and user has no VC
-                return 0, False
+        if not await self._ensure_voice_connection(interaction.user, state, None):
+            return 0, False
                 
         if interaction.user.voice and interaction.user.voice.channel:
             if not state.voice_client or not state.voice_client.is_connected():
