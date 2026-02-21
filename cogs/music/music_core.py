@@ -134,6 +134,13 @@ class MusicState:
                 else:
                     if last_title in normalized_title or normalized_title in last_title:
                         continue
+                    # [개선] 문자열 매칭 시 단어 단위(regex) 교집합을 확인하여 유사도 판별 보강
+                    last_words = set(last_title.split())
+                    curr_words = set(normalized_title.split())
+                    if last_words and curr_words:
+                        overlap = len(last_words.intersection(curr_words))
+                        if overlap / max(len(last_words), len(curr_words)) > 0.5:
+                            continue
                 
                 if not (90 < entry.get('duration', 0) < 600):
                     continue
@@ -313,6 +320,11 @@ class MusicState:
                 ffmpeg_options = {'before_options': f'-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -nostdin -ss {self.seek_time}', 'options': '-vn'}
                 
                 source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(stream_url, **ffmpeg_options), volume=self.volume)
+                
+                # [오류 방지] 이미 재생 중인 경우 ClientException 발생 방지
+                if self.voice_client.is_playing():
+                    self.voice_client.stop()
+                    
                 self.voice_client.play(source, after=lambda e: self.handle_after_play(e))
                 
                 self.consecutive_play_failures = 0
