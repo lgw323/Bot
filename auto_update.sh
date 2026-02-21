@@ -49,8 +49,14 @@ if [ "$LOCAL" != "$REMOTE" ] || [ "$1" == "--daily" ]; then
         echo "[$TIMESTAMP] 💾 로컬 데이터 백업 완료." >> "$LOG_FILE"
     fi
 
+    # 데이터 충돌 방지를 위해 로컬 변경점 임시 저장 (stash)
+    git stash
+    
     # 코드 동기화 (이미 최신이면 메세지만 뜨고 넘어감)
     git pull origin main
+
+    # 임시 저장했던 데이터 복구
+    git stash pop
 
     # 의존성 패키지 강제 최신화 (-U 옵션 추가됨)
     "$VENV_PIP" install -U -r requirements.txt
