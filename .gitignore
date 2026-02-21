@@ -19,7 +19,3 @@ tts_cache/
 assets/
 data/logs/
 *.log
-
-#profile
-profiler/
-data/profiling/
