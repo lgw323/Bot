@@ -26,7 +26,7 @@ except ImportError:
 
 from .music_core import MusicState
 from .music_utils import (
-    Song, LoopMode, LOOP_MODE_DATA, ytdl, URL_REGEX, MUSIC_CHANNEL_ID,
+    Song, LoopMode, LOOP_MODE_DATA, ytdl, URL_REGEX, MUSIC_CHANNEL_ID, MASTER_USER_ID,
     load_favorites, save_favorites, BOT_EMBED_COLOR,
     load_music_settings, save_music_settings
     # update_request_timing 제거됨
@@ -183,6 +183,81 @@ class MusicAgentCog(commands.Cog):
             await state.text_channel.purge(limit=100, check=lambda msg: msg.id != state.now_playing_message.id and not msg.pinned)
         except discord.HTTPException as e: pass
 
+    async def _process_play_request(self, guild, channel, user, query: str, send_message_func):
+        state = await self.get_music_state(guild.id)
+        
+        if not user.voice or not user.voice.channel:
+            if user.id != MASTER_USER_ID:
+                await send_message_func("음성 채널에 먼저 참여해주세요.", ephemeral=True, delete_after=None)
+                return
+            if not state.voice_client or not state.voice_client.is_connected():
+                await send_message_func("봇이 현재 음성 채널에 없습니다. 음성 채널에 먼저 참여하거나 봇을 호출해주세요.", ephemeral=True, delete_after=None)
+                return
+
+        is_url = URL_REGEX.match(query)
+        task_description = f"`'{query}'`(을)를 처리하는 중..."
+        await state.set_task(task_description)
+
+        try:
+            if user.voice and user.voice.channel:
+                if not state.voice_client or not state.voice_client.is_connected():
+                    state.voice_client = await user.voice.channel.connect(timeout=20.0, self_deaf=True)
+                elif state.voice_client.channel != user.voice.channel:
+                    await state.voice_client.move_to(user.voice.channel)
+            
+            is_playlist_url = 'list=' in query and is_url
+            search_query = query if is_url else f"ytsearch3:{query}"
+
+            data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False))
+
+            if is_playlist_url and 'entries' in data:
+                state.cancel_autoplay_task()
+                entries = data.get('entries', [])
+                if not entries:
+                    await send_message_func("재생목록을 처리할 수 없거나 비어있습니다.", ephemeral=True, delete_after=5)
+                    return
+
+                added_count = 0
+                total_songs = len(entries)
+                for i, song_data in enumerate(entries):
+                    if song_data:
+                        song = Song(song_data, user)
+                        state.queue.append(song)
+                        added_count += 1
+                        
+                        if (i + 1) % 5 == 0 or (i + 1) == total_songs:
+                            await state.set_task(f"🎶 재생목록 추가 중... ({added_count}/{total_songs})")
+                
+                logger.info(f"[{guild.name}] 재생목록 추가: {added_count}곡")
+                command_logger.info(f"사용자 '{user.display_name}'가 '{channel.name}' 채널에서 재생목록을 추가했습니다. (곡 수: {added_count}, URL: {query})")
+                await send_message_func(f"✅ 재생목록에서 **{added_count}**개의 노래를 대기열에 추가했습니다.", ephemeral=True, delete_after=5)
+
+            elif 'entries' in data:
+                entries = data.get('entries', [])
+                if not entries:
+                    await send_message_func("노래 정보를 찾을 수 없습니다.", ephemeral=True, delete_after=5)
+                    return
+                view = ui.View(timeout=180)
+                view.add_item(SearchSelect(self, entries))
+                await send_message_func("**🔎 검색 결과:**", view=view, ephemeral=True, delete_after=None)
+                return
+
+            else:
+                song = Song(data, user)
+                state.queue.append(song)
+                logger.info(f"[{guild.name}] 대기열 추가: '{song.title}'")
+                command_logger.info(f"사용자 '{user.display_name}'가 '{channel.name}' 채널에서 노래를 추가했습니다. (제목: '{song.title}', URL: {query})")
+                await send_message_func(f"✅ 대기열에 **'{song.title}'** 을(를) 추가했습니다.", ephemeral=True, delete_after=5)
+
+            if state.voice_client and not (state.voice_client.is_playing() or state.voice_client.is_paused()):
+                state.play_next_song.set()
+
+        except Exception as e:
+            logger.error(f"[{guild.name}] 노래 정보 처리 중 오류", exc_info=True)
+            await send_message_func("노래 정보를 가져오는 중 오류가 발생했습니다.", ephemeral=True, delete_after=5)
+        finally:
+            await state.clear_task()
+
     async def handle_play(self, interaction: discord.Interaction, query: str):
         await interaction.response.defer(ephemeral=True)
         
@@ -191,79 +266,37 @@ class MusicAgentCog(commands.Cog):
             await interaction.followup.send(f"노래 명령어는 {music_channel.mention} 채널에서만 사용할 수 있습니다.", ephemeral=True)
             return
 
-        state = await self.get_music_state(interaction.guild.id)
-        
-        if not interaction.user.voice or not interaction.user.voice.channel:
-            await interaction.followup.send("음성 채널에 먼저 참여해주세요.", ephemeral=True)
+        async def send_msg(content, view=discord.utils.MISSING, ephemeral=True, delete_after=None):
+            await interaction.followup.send(content, view=view, ephemeral=ephemeral)
+
+        await self._process_play_request(interaction.guild, interaction.channel, interaction.user, query, send_msg)
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if message.author.bot or message.channel.id != MUSIC_CHANNEL_ID:
             return
+            
+        match = URL_REGEX.search(message.content)
+        if not match:
+            return
+            
+        url = match.group(0)
         
-        is_url = URL_REGEX.match(query)
-        task_description = f"`'{query}'`(을)를 처리하는 중..."
-        await state.set_task(task_description)
-
         try:
-            if not state.voice_client or not state.voice_client.is_connected():
-                state.voice_client = await interaction.user.voice.channel.connect(timeout=20.0, self_deaf=True)
-            elif state.voice_client.channel != interaction.user.voice.channel:
-                await state.voice_client.move_to(interaction.user.voice.channel)
-            
-            # [삭제됨] 시간 측정 로직 제거
-            
-            is_playlist_url = 'list=' in query and is_url
-            search_query = query if is_url else f"ytsearch3:{query}"
+            await message.delete()
+        except (discord.NotFound, discord.Forbidden):
+            pass
 
-            data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False))
+        async def send_msg(content, view=discord.utils.MISSING, ephemeral=False, delete_after=None):
+            try:
+                if view is not discord.utils.MISSING:
+                    await message.channel.send(content, view=view, delete_after=30)
+                else:
+                    await message.channel.send(content, delete_after=delete_after)
+            except discord.HTTPException:
+                pass
 
-            # [삭제됨] update_request_timing 호출 제거
-
-            if is_playlist_url and 'entries' in data:
-                state.cancel_autoplay_task()
-                entries = data.get('entries', [])
-                if not entries:
-                    await interaction.followup.send("재생목록을 처리할 수 없거나 비어있습니다.", ephemeral=True)
-                    return
-
-                added_count = 0
-                total_songs = len(entries)
-                for i, song_data in enumerate(entries):
-                    if song_data:
-                        song = Song(song_data, interaction.user)
-                        state.queue.append(song)
-                        added_count += 1
-                        
-                        if (i + 1) % 5 == 0 or (i + 1) == total_songs:
-                            await state.set_task(f"🎶 재생목록 추가 중... ({added_count}/{total_songs})")
-                
-                logger.info(f"[{interaction.guild.name}] 재생목록 추가: {added_count}곡")
-                command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{interaction.channel.name}' 채널에서 재생목록을 추가했습니다. (곡 수: {added_count}, URL: {query})")
-                await interaction.followup.send(f"✅ 재생목록에서 **{added_count}**개의 노래를 대기열에 추가했습니다.", ephemeral=True)
-
-            elif 'entries' in data:
-                entries = data.get('entries', [])
-                if not entries:
-                    await interaction.followup.send("노래 정보를 찾을 수 없습니다.", ephemeral=True)
-                    return
-                view = ui.View(timeout=180)
-                view.add_item(SearchSelect(self, entries))
-                await interaction.followup.send("**🔎 검색 결과:**", view=view, ephemeral=True)
-                return
-
-            else:
-                song = Song(data, interaction.user)
-                state.queue.append(song)
-                logger.info(f"[{interaction.guild.name}] 대기열 추가: '{song.title}'")
-                command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{interaction.channel.name}' 채널에서 노래를 추가했습니다. (제목: '{song.title}', URL: {query})")
-                await interaction.followup.send(f"✅ 대기열에 **'{song.title}'** 을(를) 추가했습니다.", ephemeral=True)
-
-
-            if state.voice_client and not (state.voice_client.is_playing() or state.voice_client.is_paused()):
-                state.play_next_song.set()
-
-        except Exception as e:
-            logger.error(f"[{interaction.guild.name}] 노래 정보 처리 중 오류", exc_info=True)
-            await interaction.followup.send("노래 정보를 가져오는 중 오류가 발생했습니다.", ephemeral=True)
-        finally:
-            await state.clear_task()
+        await self._process_play_request(message.guild, message.channel, message.author, url, send_msg)
 
     async def queue_song(self, interaction: discord.Interaction, song_data: dict):
         state = await self.get_music_state(interaction.guild.id)
@@ -359,14 +392,21 @@ class MusicAgentCog(commands.Cog):
         state = await self.get_music_state(interaction.guild.id)
         state.cancel_autoplay_task()
         joined_vc = False
-        if not interaction.user.voice or not interaction.user.voice.channel: return 0, False
-
-        if not state.voice_client or not state.voice_client.is_connected():
-            state.voice_client = await interaction.user.voice.channel.connect(timeout=20.0, self_deaf=True)
-            joined_vc = True
-        elif state.voice_client.channel != interaction.user.voice.channel:
-            await state.voice_client.move_to(interaction.user.voice.channel)
-            joined_vc = True
+        
+        if not interaction.user.voice or not interaction.user.voice.channel:
+            if interaction.user.id != MASTER_USER_ID:
+                return 0, False
+            elif not state.voice_client or not state.voice_client.is_connected():
+                # Cannot connect if bot is not already connected and user has no VC
+                return 0, False
+                
+        if interaction.user.voice and interaction.user.voice.channel:
+            if not state.voice_client or not state.voice_client.is_connected():
+                state.voice_client = await interaction.user.voice.channel.connect(timeout=20.0, self_deaf=True)
+                joined_vc = True
+            elif state.voice_client.channel != interaction.user.voice.channel:
+                await state.voice_client.move_to(interaction.user.voice.channel)
+                joined_vc = True
         
         count = 0
         total_urls = len(urls)
