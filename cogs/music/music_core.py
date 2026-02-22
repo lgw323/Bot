@@ -112,7 +112,7 @@ class MusicState:
 
             logger.info(f"[{self.guild.name}] [Autoplay] 전략: {strategy} / 검색어: '{search_query}'")
             
-            data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False, process=False))
+            data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False, process=True))
             
             if not data or 'entries' not in data:
                 return
