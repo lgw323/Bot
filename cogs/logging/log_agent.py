@@ -37,8 +37,9 @@ class DiscordLogHandler(logging.Handler):
         # 2. ERROR 이상의 심각한 문제만 필터링 (INFO, DEBUG는 무시)
         if record.levelno >= logging.ERROR:
             # logging 모듈은 동기(sync) 방식이지만, discord.py는 비동기(async)입니다.
-            # 따라서 bot.loop.create_task를 통해 비동기 작업을 스케줄링합니다.
-            self.bot.loop.create_task(self._async_emit(record))
+            # 다른 스레드에서 들어올 수 있으므로 run_coroutine_threadsafe를 사용합니다.
+            import asyncio
+            asyncio.run_coroutine_threadsafe(self._async_emit(record), self.bot.loop)
 
     async def _async_emit(self, record):
         """

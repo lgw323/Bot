@@ -6,13 +6,11 @@
 BOT_DIR="/home/os/bot"
 LOG_FILE="$BOT_DIR/data/logs/update.log"
 DATA_DIR="$BOT_DIR/data"
-BACKUP_DIR="$BOT_DIR/backups"
 VENV_PIP="$BOT_DIR/bot_env/bin/pip"
 
 # ==========================================
 # 1. 초기화 및 브랜치 확인
 # ==========================================
-mkdir -p "$BACKUP_DIR"
 mkdir -p "$(dirname "$LOG_FILE")"
 cd "$BOT_DIR" || exit
 
@@ -43,15 +41,6 @@ if [ "$LOCAL" != "$REMOTE" ] || [ "$1" == "--daily" ]; then
     
     echo "[$TIMESTAMP] 🔄 $REASON. 업데이트 프로세스 시작." >> "$LOG_FILE"
 
-    # [데이터 백업] favorites.json이 존재하면 backups 폴더로 복사
-    if [ -f "$DATA_DIR/favorites.json" ]; then
-        cp "$DATA_DIR/favorites.json" "$BACKUP_DIR/favorites.json.bak"
-        echo "[$TIMESTAMP] 💾 로컬 데이터 백업 완료." >> "$LOG_FILE"
-    fi
-
-    # 데이터 충돌 방지를 위해 로컬 변경점 임시 저장 (stash)
-    git stash
-    
     # 코드 동기화 (이미 최신이면 메세지만 뜨고 넘어감)
     git pull origin main
 
