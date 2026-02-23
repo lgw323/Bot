@@ -308,51 +308,80 @@ class MusicPlayerView(ui.View):
         is_paused = self.state.voice_client and self.state.voice_client.is_paused()
         is_playing = self.state.current_song is not None
 
-        # Row 1: 핵심 재생 컨트롤
-        play_pause_btn = ui.Button(label="재생/일시정지", style=discord.ButtonStyle.secondary, emoji="▶️" if is_paused else "⏸️", disabled=not is_playing, row=0)
+        # Row 1: 핵심 스트림 제어 (아이콘 전용)
+        play_pause_btn = ui.Button(label="", style=discord.ButtonStyle.secondary, emoji="▶️" if is_paused else "⏸️", disabled=not is_playing, row=0)
         play_pause_btn.callback = self.toggle_play_pause
         self.add_item(play_pause_btn)
 
-        skip_btn = ui.Button(label="건너뛰기", style=discord.ButtonStyle.secondary, emoji="⏭️", disabled=not is_playing, row=0)
+        skip_btn = ui.Button(label="", style=discord.ButtonStyle.secondary, emoji="⏭️", disabled=not is_playing, row=0)
         skip_btn.callback = self.skip
         self.add_item(skip_btn)
 
-        leave_btn = ui.Button(label="종료", style=discord.ButtonStyle.danger, emoji="⏹️", disabled=not self.state.voice_client, row=0)
+        leave_btn = ui.Button(label="", style=discord.ButtonStyle.danger, emoji="⏹️", disabled=not self.state.voice_client, row=0)
         leave_btn.callback = self.leave
         self.add_item(leave_btn)
 
-        fav_btn = ui.Button(label="즐겨찾기", style=discord.ButtonStyle.secondary, emoji="⭐", disabled=not is_playing, row=0)
+        fav_btn = ui.Button(label="", style=discord.ButtonStyle.secondary, emoji="⭐", disabled=not is_playing, row=0)
         fav_btn.callback = self.add_to_favorites
         self.add_item(fav_btn)
 
-        # Row 2: 부가 기능
+        # Row 2: 보조 시스템 제어
         loop_mode = self.state.loop_mode
-        loop_label = "반복: 켜짐" if loop_mode != self.LoopMode.NONE else "반복: 꺼짐"
+        loop_label = "한 곡 반복" if loop_mode == self.LoopMode.SONG else "전체 반복" if loop_mode == self.LoopMode.QUEUE else "반복 없음"
         loop_emoji = self.LOOP_MODE_DATA[loop_mode][1]
-        if loop_mode == self.LoopMode.NONE: loop_emoji = "➡️" # 반복 없음 명확히
+        if loop_mode == self.LoopMode.NONE: loop_emoji = "➡️"
         
         loop_btn = ui.Button(label=loop_label, style=discord.ButtonStyle.secondary, emoji=loop_emoji, row=1)
         loop_btn.callback = self.toggle_loop
         self.add_item(loop_btn)
 
-        auto_play_label = "자동재생: ON" if self.state.auto_play_enabled else "자동재생: OFF"
+        auto_play_label = "AI 추천재생: ON" if self.state.auto_play_enabled else "AI 추천재생: OFF"
         auto_play_btn = ui.Button(label=auto_play_label, style=discord.ButtonStyle.secondary, emoji="🤖", row=1)
         auto_play_btn.callback = self.toggle_auto_play
         self.add_item(auto_play_btn)
 
-        queue_btn = ui.Button(label="대기열", style=discord.ButtonStyle.secondary, emoji="📜", row=1)
+        queue_btn = ui.Button(label="대기열 확인", style=discord.ButtonStyle.secondary, emoji="📜", row=1)
         queue_btn.callback = self.show_queue
         self.add_item(queue_btn)
 
-        fav_list_btn = ui.Button(label="목록 확인", style=discord.ButtonStyle.secondary, emoji="❤️", row=1)
+        fav_list_btn = ui.Button(label="내 보관함 열기", style=discord.ButtonStyle.secondary, emoji="💾", row=1)
         fav_list_btn.callback = self.show_favorites
         self.add_item(fav_list_btn)
 
+        # Row 3 ~ Row 5: 하단 줄 (명예의 전당 Top 3)
         if self.top_songs:
-            for i, song in enumerate(self.top_songs[:5]):
-                # Distribute buttons across rows 2, 3, 4 (up to 3 buttons per row)
-                row = 2 + (i // 2)
-                self.add_item(TopSongButton(self.cog, song, row=row))
+            medals = ["🏆 1위", "🥈 2위", "🥉 3위"]
+            for i, song in enumerate(self.top_songs[:3]):
+                row = i + 2  # Row 2, 3, 4 (0-indexed logic maps this to lines 3, 4, 5 in Discord view)
+                
+                url = song["url"]
+                base_title = song["title"]
+                count = song["count"]
+                
+                medal = medals[i]
+                
+                # Length check to prevent Button label limit (max 80 chars total)
+                title_max_len = 65 - len(f"[{medal}]  ({count}회)")
+                truncated_title = base_title if len(base_title) <= title_max_len else base_title[:title_max_len] + "..."
+                
+                full_label = f"[{medal}] {truncated_title} ({count}회)"
+                
+                btn = ui.Button(style=discord.ButtonStyle.primary, label=full_label, row=row)
+                
+                # In order to capture the URL correctly in the local scope block
+                async def top_song_callback(interaction: discord.Interaction, target_url=url):
+                    await interaction.response.defer(thinking=True, ephemeral=True)
+                    c, joined = await self.cog.handle_add_multiple_from_favorites(interaction, [target_url])
+                    msg = "🔥 많이 듣는 곡을 대기열에 추가했습니다."
+                    st = await self.cog.get_music_state(interaction.guild.id)
+                    if st.voice_client and not st.voice_client.is_connected() and c > 0:
+                        msg += "\n음성 채널에 참여하시면 재생이 시작됩니다."
+                    elif joined:
+                        msg += "\n음성 채널에 자동으로 참가했습니다!"
+                    await interaction.followup.send(msg, ephemeral=True)
+                
+                btn.callback = top_song_callback
+                self.add_item(btn)
 
     async def interaction_check_bot_connected(self, interaction: discord.Interaction) -> bool:
         from .music_utils import MASTER_USER_ID
