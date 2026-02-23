@@ -1,5 +1,59 @@
 {
     "860135576224792617": {
-        "volume": 1.0
+        "volume": 1.0,
+        "play_counts": {
+            "https://www.youtube.com/watch?v=Nxb2nM7oz0c": {
+                "title": "골판지 전사 OP (더빙판)",
+                "count": 2
+            },
+            "https://www.youtube.com/watch?v=r3YNWOfRwIA": {
+                "title": "아쉬운상어페라리(MoeChakkaFerrari)",
+                "count": 3
+            },
+            "https://www.youtube.com/watch?v=zG7bjyIqQ1s": {
+                "title": "[Helldivers 2] 민주주의는 뽕짝으로 부터 (뽕짝 ver.)",
+                "count": 1
+            },
+            "https://www.youtube.com/watch?v=DPYCaIbUz7A": {
+                "title": "BEYOND THE TIME (Mobius No Sora Wo Koete) -2025 Version-",
+                "count": 3
+            },
+            "https://www.youtube.com/watch?v=Cb0JZhdmjtg": {
+                "title": "IRIS OUT",
+                "count": 1
+            },
+            "https://www.youtube.com/watch?v=107UoVP2fAA": {
+                "title": "Heroine",
+                "count": 1
+            },
+            "https://www.youtube.com/watch?v=R401j1QAvEg": {
+                "title": "スプリットダンス / 初音ミク・重音テト",
+                "count": 1
+            },
+            "https://www.youtube.com/watch?v=iU6mMLmaZhg": {
+                "title": "March Of The Defenders",
+                "count": 1
+            },
+            "https://www.youtube.com/watch?v=GJMCi3NMyCQ": {
+                "title": "Working Class",
+                "count": 1
+            },
+            "https://www.youtube.com/watch?v=BsLMyEFtqV8": {
+                "title": "Rescue Fire",
+                "count": 1
+            },
+            "https://www.youtube.com/watch?v=h1NrTdPDZ6s": {
+                "title": "긴급출동 레스큐 파이어 한국어 오프닝 (15화~29화) [TOMICA HERO RESCUE FIRE OPENING]",
+                "count": 1
+            },
+            "https://www.youtube.com/watch?v=fpdAbUH4l2s": {
+                "title": "BEYOND THE TIME",
+                "count": 1
+            },
+            "https://www.youtube.com/watch?v=YhX_Woa3kVA": {
+                "title": "F1",
+                "count": 1
+            }
+        }
     }
 }
