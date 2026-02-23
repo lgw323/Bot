@@ -76,6 +76,39 @@ async def save_music_settings(data):
         with open(MUSIC_SETTINGS_FILE, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
 
+async def increment_play_count(guild_id: int, url: str, title: str):
+    settings = await load_music_settings()
+    guild_id_str = str(guild_id)
+    if guild_id_str not in settings:
+        settings[guild_id_str] = {}
+    if "play_counts" not in settings[guild_id_str]:
+        settings[guild_id_str]["play_counts"] = {}
+    
+    counts = settings[guild_id_str]["play_counts"]
+    if url not in counts:
+        counts[url] = {"title": title, "count": 0}
+    
+    counts[url]["count"] += 1
+    # keep title updated just in case
+    counts[url]["title"] = title
+    
+    await save_music_settings(settings)
+
+async def get_top_played_songs(guild_id: int, limit: int = 5) -> list[dict]:
+    settings = await load_music_settings()
+    guild_id_str = str(guild_id)
+    if guild_id_str not in settings or "play_counts" not in settings[guild_id_str]:
+        return []
+    
+    counts = settings[guild_id_str]["play_counts"]
+    # Sort by count descending
+    sorted_songs = sorted(counts.items(), key=lambda x: x[1]["count"], reverse=True)
+    
+    result = []
+    for url, data in sorted_songs[:limit]:
+        result.append({"url": url, "title": data["title"], "count": data["count"]})
+    return result
+
 # --- 열거형 및 데이터 클래스 ---
 class LoopMode(Enum):
     NONE = 0

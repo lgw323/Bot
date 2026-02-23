@@ -22,7 +22,7 @@ except ImportError:
 from .music_utils import (
     Song, LoopMode, LOOP_MODE_DATA,
     BOT_EMBED_COLOR, YTDL_OPTIONS,
-    ytdl, load_music_settings
+    ytdl, load_music_settings, increment_play_count
     # get_network_stats 제거됨
 )
 from .music_ui import MusicPlayerView
@@ -273,8 +273,10 @@ class MusicState:
 
     async def _execute_ui_update(self):
         try:
+            from .music_utils import get_top_played_songs
             embed = await self.create_now_playing_embed()
-            view = MusicPlayerView(self.cog, self)
+            top_songs = await get_top_played_songs(self.guild.id, limit=5)
+            view = MusicPlayerView(self.cog, self, top_songs)
             if self.now_playing_message:
                 await self.now_playing_message.edit(embed=embed, view=view)
             elif self.text_channel:
@@ -326,6 +328,9 @@ class MusicState:
                     self.voice_client.stop()
                     
                 self.voice_client.play(source, after=lambda e: self.handle_after_play(e))
+                
+                if self.current_song.webpage_url:
+                    self.bot.loop.create_task(increment_play_count(self.guild.id, self.current_song.webpage_url, self.current_song.title))
                 
                 self.consecutive_play_failures = 0
                 self.playback_start_time = discord.utils.utcnow() - timedelta(seconds=self.seek_time)

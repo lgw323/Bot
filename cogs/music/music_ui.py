@@ -265,11 +265,42 @@ class FavoritesView(ui.View):
             await self.original_interaction.edit_original_response(content="시간이 초과되었습니다.", view=None)
         except discord.HTTPException: pass
 
+class TopSongsSelect(ui.Select):
+    def __init__(self, cog, songs: list[dict]):
+        self.cog = cog
+        options = []
+        for i, song in enumerate(songs):
+            title = song["title"][:90]
+            url = song["url"]
+            count = song["count"]
+            options.append(
+                discord.SelectOption(
+                    label=title,
+                    value=url,
+                    description=f"재생 횟수: {count}회",
+                    emoji="🔥"
+                )
+            )
+        super().__init__(placeholder="🔥 서버에서 가장 많이 듣는 곡 Top 5", min_values=1, max_values=1, options=options, row=2)
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking=True, ephemeral=True)
+        url = self.values[0]
+        count, joined = await self.cog.handle_add_multiple_from_favorites(interaction, [url])
+        message = f"🔥 많이 듣는 곡을 대기열에 추가했습니다."
+        state = await self.cog.get_music_state(interaction.guild.id)
+        if state.voice_client and not state.voice_client.is_connected() and count > 0:
+             message += "\n음성 채널에 참여하시면 재생이 시작됩니다."
+        elif joined:
+            message += "\n음성 채널에 자동으로 참가했습니다!"
+        await interaction.followup.send(message, ephemeral=True)
+
 class MusicPlayerView(ui.View):
-    def __init__(self, cog, state):
+    def __init__(self, cog, state, top_songs=None):
         super().__init__(timeout=None)
         from .music_utils import LoopMode, LOOP_MODE_DATA
         self.cog, self.state = cog, state
+        self.top_songs = top_songs or []
         self.LoopMode = LoopMode
         self.LOOP_MODE_DATA = LOOP_MODE_DATA
         self.create_buttons()
@@ -318,6 +349,9 @@ class MusicPlayerView(ui.View):
         fav_list_btn = ui.Button(label="목록 확인", style=discord.ButtonStyle.secondary, emoji="❤️", row=1)
         fav_list_btn.callback = self.show_favorites
         self.add_item(fav_list_btn)
+
+        if self.top_songs:
+            self.add_item(TopSongsSelect(self.cog, self.top_songs))
 
     async def interaction_check_bot_connected(self, interaction: discord.Interaction) -> bool:
         from .music_utils import MASTER_USER_ID
