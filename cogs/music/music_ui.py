@@ -265,28 +265,26 @@ class FavoritesView(ui.View):
             await self.original_interaction.edit_original_response(content="시간이 초과되었습니다.", view=None)
         except discord.HTTPException: pass
 
-class TopSongsSelect(ui.Select):
-    def __init__(self, cog, songs: list[dict]):
+class TopSongButton(ui.Button):
+    def __init__(self, cog, song: dict, row: int):
         self.cog = cog
-        options = []
-        for i, song in enumerate(songs):
-            title = song["title"][:90]
-            url = song["url"]
-            count = song["count"]
-            options.append(
-                discord.SelectOption(
-                    label=title,
-                    value=url,
-                    description=f"재생 횟수: {count}회",
-                    emoji="🔥"
-                )
-            )
-        super().__init__(placeholder="🔥 서버에서 가장 많이 듣는 곡 Top 5", min_values=1, max_values=1, options=options, row=2)
+        self.url = song["url"]
+        
+        title = song["title"]
+        # truncate title so it fits in the button
+        if len(title) > 75:
+            title = title[:75] + "..."
+            
+        super().__init__(
+            style=discord.ButtonStyle.primary,
+            label=title,
+            emoji="🔥",
+            row=row
+        )
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking=True, ephemeral=True)
-        url = self.values[0]
-        count, joined = await self.cog.handle_add_multiple_from_favorites(interaction, [url])
+        count, joined = await self.cog.handle_add_multiple_from_favorites(interaction, [self.url])
         message = f"🔥 많이 듣는 곡을 대기열에 추가했습니다."
         state = await self.cog.get_music_state(interaction.guild.id)
         if state.voice_client and not state.voice_client.is_connected() and count > 0:
@@ -351,7 +349,10 @@ class MusicPlayerView(ui.View):
         self.add_item(fav_list_btn)
 
         if self.top_songs:
-            self.add_item(TopSongsSelect(self.cog, self.top_songs))
+            for i, song in enumerate(self.top_songs[:5]):
+                # Distribute buttons across rows 2, 3, 4 (up to 3 buttons per row)
+                row = 2 + (i // 2)
+                self.add_item(TopSongButton(self.cog, song, row=row))
 
     async def interaction_check_bot_connected(self, interaction: discord.Interaction) -> bool:
         from .music_utils import MASTER_USER_ID
