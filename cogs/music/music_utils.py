@@ -92,6 +92,11 @@ async def increment_play_count(guild_id: int, url: str, title: str):
     # keep title updated just in case
     counts[url]["title"] = title
     
+    # 50곡까지만 유지 (조회수 기준 내림차순 정렬 후 상위 50개만 남김)
+    if len(counts) > 50:
+        sorted_counts = sorted(counts.items(), key=lambda x: x[1]["count"], reverse=True)
+        settings[guild_id_str]["play_counts"] = dict(sorted_counts[:50])
+    
     await save_music_settings(settings)
 
 async def get_top_played_songs(guild_id: int, limit: int = 5) -> list[dict]:
