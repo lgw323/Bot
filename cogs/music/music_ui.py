@@ -325,6 +325,10 @@ class MusicPlayerView(ui.View):
         fav_btn.callback = self.add_to_favorites
         self.add_item(fav_btn)
 
+        queue_btn = ui.Button(label="", style=discord.ButtonStyle.secondary, emoji="📜", row=0)
+        queue_btn.callback = self.show_queue
+        self.add_item(queue_btn)
+
         # Row 2: 보조 시스템 제어
         loop_mode = self.state.loop_mode
         loop_label = "한 곡 반복" if loop_mode == self.LoopMode.SONG else "전체 반복" if loop_mode == self.LoopMode.QUEUE else "반복 없음"
@@ -339,10 +343,6 @@ class MusicPlayerView(ui.View):
         auto_play_btn = ui.Button(label=auto_play_label, style=discord.ButtonStyle.secondary, emoji="🤖", row=1)
         auto_play_btn.callback = self.toggle_auto_play
         self.add_item(auto_play_btn)
-
-        queue_btn = ui.Button(label="대기열 확인", style=discord.ButtonStyle.secondary, emoji="📜", row=1)
-        queue_btn.callback = self.show_queue
-        self.add_item(queue_btn)
 
         fav_list_btn = ui.Button(label="내 보관함 열기", style=discord.ButtonStyle.secondary, emoji="💾", row=1)
         fav_list_btn.callback = self.show_favorites
