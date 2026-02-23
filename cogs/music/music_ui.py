@@ -268,7 +268,7 @@ class FavoritesView(ui.View):
 class TopSongButton(ui.Button):
     def __init__(self, cog, song: dict, row: int):
         self.cog = cog
-        self.url = song["url"]
+        self.song_url = song["url"]
         
         title = song["title"]
         # truncate title so it fits in the button
@@ -284,7 +284,7 @@ class TopSongButton(ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking=True, ephemeral=True)
-        count, joined = await self.cog.handle_add_multiple_from_favorites(interaction, [self.url])
+        count, joined = await self.cog.handle_add_multiple_from_favorites(interaction, [self.song_url])
         message = f"🔥 많이 듣는 곡을 대기열에 추가했습니다."
         state = await self.cog.get_music_state(interaction.guild.id)
         if state.voice_client and not state.voice_client.is_connected() and count > 0:
