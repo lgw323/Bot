@@ -12,13 +12,13 @@
 # ==========================================
 
 # 1. [실시간 감지] GitHub에 새로운 코드가 올라오면 즉시 업데이트하고 재시작 (5분 주기)
-*/5 * * * * /home/os/bot/auto_update.sh
+*/5 * * * * /home/os/bot/scripts/auto_update.sh
 
 # 2. [일일 정기 점검] 매일 강제로 라이브러리를 최신화, 봇 재시작 (매일 새벽 04:00)
-3 4 * * * /home/os/bot/auto_update.sh --daily
+3 4 * * * /home/os/bot/scripts/auto_update.sh --daily
 
 # 3. [데이터 백업] 6시간마다 사용자 데이터 GitHub로 업로드 (0, 6, 12, 18시) [업데이트와 시간이 겹치지 않게 하기 위해 3분]
-3 */6 * * * /home/os/bot/auto_backup.sh
+3 */6 * * * /home/os/bot/scripts/auto_backup.sh
 
 ```
 
