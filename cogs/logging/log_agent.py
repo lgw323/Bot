@@ -95,7 +95,7 @@ class LogAgentCog(commands.Cog, name="LogAgent"):
 
         # 2. 루트 로거 가져오기 및 초기화
         logger = logging.getLogger()
-        logger.setLevel(logging.INFO) # INFO 레벨 이상을 모두 포착 (WARNING에서 수정됨)
+        logger.setLevel(logging.WARNING) # SD카드 수명 및 메모리 절약을 위해 WARNING 레벨 이상만 포착
         
         # 기존 핸들러가 있다면 제거 (중복 출력 방지)
         if logger.hasHandlers():
