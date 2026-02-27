@@ -112,7 +112,11 @@ class MusicState:
 
             logger.info(f"[{self.guild.name}] [Autoplay] 전략: {strategy} / 검색어: '{search_query}'")
             
-            data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False, process=True))
+            try:
+                data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False, process=True))
+            except Exception as e:
+                logger.warning(f"[{self.guild.name}] [Autoplay] 검색 중 영상을 불러올 수 없습니다 (삭제/비공개 됨): {e}")
+                return
             
             if not data or 'entries' not in data:
                 return
