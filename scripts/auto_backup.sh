@@ -19,9 +19,22 @@ cd "$BOT_DIR" || exit
 # SQLite 이진파일(.db)을 봇이 실행중인 상태에서 덤프할 경우 DB is locked 에러 방지를 위해
 # 안전한 스냅샷(temp)을 하나 복사한 후, 그 temp에서 텍스트(.sql)를 추출합니다.
 if [ -f "$DATA_DIR/bot_database.db" ]; then
-    sqlite3 "$DATA_DIR/bot_database.db" ".backup '$DATA_DIR/temp_backup.db'"
-    sqlite3 "$DATA_DIR/temp_backup.db" .dump > "$DATA_DIR/database_backup.sql"
-    rm -f "$DATA_DIR/temp_backup.db"
+    # sqlite3 패키지가 라즈베리파이에 설치되어 있지 않을 경우를 대비하여
+    # 파이썬 내장 모듈을 통해 메모리에 스냅샷을 찍고 sql 텍스트로 덤프합니다. (Lock 방지 안전 백업)
+    python3 -c "
+import sqlite3, sys
+try:
+    src = sqlite3.connect('$DATA_DIR/bot_database.db')
+    dst = sqlite3.connect(':memory:')
+    src.backup(dst)
+    src.close()
+    with open('$DATA_DIR/database_backup.sql', 'w', encoding='utf-8') as f:
+        for line in dst.iterdump():
+            f.write(f'{line}\n')
+    dst.close()
+except Exception as e:
+    sys.exit(f'Backup Error: {e}')
+"
 fi
 
 # 모든 대상 파일을 스테이징 (순수 텍스트 백업본)
