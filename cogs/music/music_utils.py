@@ -40,79 +40,26 @@ FFMPEG_OPTIONS = {
 ytdl = yt_dlp.YoutubeDL(YTDL_OPTIONS)
 
 # --- 데이터 관리 ---
-favorites_lock = asyncio.Lock()
-settings_lock = asyncio.Lock()
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from database_manager import (
+    get_favorites as load_favorites,
+    add_favorite,
+    remove_favorites,
+    get_music_settings as load_music_settings,
+    update_music_volume,
+    increment_play_count_db as increment_play_count,
+    get_top_played_songs_db as get_top_played_songs
+)
 
-async def load_favorites():
-    async with favorites_lock:
-        if not os.path.exists(FAVORITES_FILE): return {}
-        try:
-            with open(FAVORITES_FILE, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                if "_guild_settings" in data:
-                    del data["_guild_settings"]
-                return data
-        except (json.JSONDecodeError, IOError):
-            return {}
-
+# 이전에 save_favorites, save_music_settings를 사용하던 코드는
+# DB 직접 쓰기 방식으로 전부 마이그레이션 해야 하므로 가짜 함수 혹은 에러 발생기로 남김
 async def save_favorites(data):
-    async with favorites_lock:
-        with open(FAVORITES_FILE, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
-
-async def load_music_settings():
-    async with settings_lock:
-        if not os.path.exists(MUSIC_SETTINGS_FILE):
-            return {}
-        try:
-            with open(MUSIC_SETTINGS_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError):
-            return {}
+    raise NotImplementedError("Use database_manager functions directly instead of save_favorites")
 
 async def save_music_settings(data):
-    async with settings_lock:
-        os.makedirs(os.path.dirname(MUSIC_SETTINGS_FILE), exist_ok=True)
-        with open(MUSIC_SETTINGS_FILE, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
+    raise NotImplementedError("Use database_manager functions directly instead of save_music_settings")
 
-async def increment_play_count(guild_id: int, url: str, title: str):
-    settings = await load_music_settings()
-    guild_id_str = str(guild_id)
-    if guild_id_str not in settings:
-        settings[guild_id_str] = {}
-    if "play_counts" not in settings[guild_id_str]:
-        settings[guild_id_str]["play_counts"] = {}
-    
-    counts = settings[guild_id_str]["play_counts"]
-    if url not in counts:
-        counts[url] = {"title": title, "count": 0}
-    
-    counts[url]["count"] += 1
-    # keep title updated just in case
-    counts[url]["title"] = title
-    
-    # 50곡까지만 유지 (조회수 기준 내림차순 정렬 후 상위 50개만 남김)
-    if len(counts) > 50:
-        sorted_counts = sorted(counts.items(), key=lambda x: x[1]["count"], reverse=True)
-        settings[guild_id_str]["play_counts"] = dict(sorted_counts[:50])
-    
-    await save_music_settings(settings)
-
-async def get_top_played_songs(guild_id: int, limit: int = 5) -> list[dict]:
-    settings = await load_music_settings()
-    guild_id_str = str(guild_id)
-    if guild_id_str not in settings or "play_counts" not in settings[guild_id_str]:
-        return []
-    
-    counts = settings[guild_id_str]["play_counts"]
-    # Sort by count descending
-    sorted_songs = sorted(counts.items(), key=lambda x: x[1]["count"], reverse=True)
-    
-    result = []
-    for url, data in sorted_songs[:limit]:
-        result.append({"url": url, "title": data["title"], "count": data["count"]})
-    return result
 
 # --- 열거형 및 데이터 클래스 ---
 class LoopMode(Enum):
