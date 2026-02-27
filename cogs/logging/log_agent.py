@@ -141,6 +141,44 @@ class LogAgentCog(commands.Cog, name="LogAgent"):
         logging.getLogger().addHandler(discord_handler)
         
         logging.info(f"✅ 원격 로그 모니터링 활성화 (Target Channel ID: {LOG_CHANNEL_ID})")
+        
+        # 7. 구동 사유 (Startup Reason) 파악 및 알림 전송
+        await self._send_startup_notification()
+
+    async def _send_startup_notification(self):
+        """봇이 부팅될 때 알림 채널에 구동 사유를 보냅니다."""
+        if LOG_CHANNEL_ID == 0:
+            return
+            
+        reason_file = "data/startup_reason.txt"
+        startup_reason = "수동 스크립트 실행 또는 시스템 크래시(Crash) 후 자동 복구"
+        color = 0x3498DB # 기본 파란색
+        title = "🟢 봇 시스템 구동 시작"
+        
+        # 파일이 존재하면 auto_update.sh가 남긴 사유를 읽음
+        if os.path.exists(reason_file):
+            try:
+                with open(reason_file, 'r', encoding='utf-8') as f:
+                    startup_reason = f.read().strip()
+                os.remove(reason_file) # 일회성이므로 읽은 후 바로 삭제
+                color = 0x2ECC71 # 자동 업데이트는 초록색
+                title = "🔄 자동 업데이트 및 재구동 완료"
+            except Exception as e:
+                logging.error(f"구동 사유 파일을 읽는 중 오류 발생: {e}")
+        
+        target_channel = self.bot.get_channel(LOG_CHANNEL_ID)
+        if target_channel:
+            embed = discord.Embed(
+                title=title,
+                description=f"**원인:** {startup_reason}",
+                color=color
+            )
+            import datetime
+            embed.timestamp = datetime.datetime.now(datetime.timezone.utc)
+            try:
+                await target_channel.send(embed=embed)
+            except Exception as e:
+                logging.error(f"구동 알림 전송 실패: {e}")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(LogAgentCog(bot))

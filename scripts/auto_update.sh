@@ -51,6 +51,9 @@ if [ "$LOCAL" != "$REMOTE" ] || [ "$1" == "--daily" ]; then
     "$VENV_PIP" install -U -r requirements.txt
     "$VENV_PIP" install -U yt-dlp discord.py
 
+    # 봇 서비스 재시작 사유 파일 생성
+    echo "$REASON 갱신 완료" > "$BOT_DIR/data/startup_reason.txt"
+
     # 봇 서비스 재시작
     sudo systemctl restart discordbot
 
