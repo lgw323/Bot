@@ -112,11 +112,15 @@ class MusicAgentCog(commands.Cog):
         tasks = [self._create_tts_file_if_not_exists("노래봇이 입장했습니다.")]
         await asyncio.gather(*tasks)
 
-    def after_tts(self, state: MusicState, interrupted_song: Optional[Song]):
+    def after_tts(self, state: MusicState, was_playing: bool, was_paused: bool):
         state.is_tts_interrupting = False
-        if interrupted_song:
-            state.queue.appendleft(interrupted_song)
-        self.bot.loop.call_soon_threadsafe(state.play_next_song.set)
+        if was_playing:
+            # TTS 재생 후 원래 노래를 다시 재생(resume)
+            if state.voice_client and state.voice_client.is_paused():
+                state.voice_client.resume()
+        elif not was_paused:
+            # 원래 일시정지 상태가 아니었으며 노래도 안 불렀을때 (이제 다음곡을 부르도록 유도)
+            self.bot.loop.call_soon_threadsafe(state.play_next_song.set)
 
     async def play_tts(self, state: MusicState, text: str):
         if not GTTS_AVAILABLE or not state.voice_client or not state.voice_client.is_connected(): return
@@ -130,22 +134,25 @@ class MusicAgentCog(commands.Cog):
         except OSError as e: pass
         
         async with self.tts_lock:
-            interrupted_song: Optional[Song] = None
+            was_playing = False
+            was_paused = False
             try:
-                if (state.voice_client.is_playing() or state.voice_client.is_paused()) and state.current_song:
-                    interrupted_song = state.current_song
-                    state.seek_time = state.get_current_playback_time()
+                if state.voice_client.is_playing() and state.current_song:
+                    was_playing = True
                     state.is_tts_interrupting = True
-                    state.voice_client.stop()
-                    state.play_next_song.clear()
+                    # 재생 중이던 곡을 멈추는게 아니라 pause 시켜서 큐가 엉키는 것을 방지
+                    state.voice_client.pause()
+                elif state.voice_client.is_paused():
+                    was_paused = True
                 
                 tts_source = discord.FFmpegPCMAudio(str(tts_filepath))
                 tts_volume_source = discord.PCMVolumeTransformer(tts_source, volume=2.0)
-                state.voice_client.play(tts_volume_source, after=lambda e: self.after_tts(state, interrupted_song))
+                state.voice_client.play(tts_volume_source, after=lambda e: self.after_tts(state, was_playing, was_paused))
             except Exception:
-                if interrupted_song:
-                    state.queue.appendleft(interrupted_song)
-                self.bot.loop.call_soon_threadsafe(state.play_next_song.set)
+                if was_playing and state.voice_client and state.voice_client.is_paused():
+                    state.voice_client.resume()
+                elif not was_paused:
+                    self.bot.loop.call_soon_threadsafe(state.play_next_song.set)
     
     async def get_music_state(self, guild_id: int) -> MusicState:
         if guild_id not in self.music_states:

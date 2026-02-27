@@ -5,6 +5,7 @@ import asyncio
 import sqlite3
 import math
 from typing import Optional, Dict
+from database_manager import db_lock
 
 import discord
 from discord.ext import commands
@@ -19,38 +20,41 @@ ROLE_PREFIXES = ["Lv.", "lv.", "LV."]
 
 # --- DB Helper Functions ---
 async def get_user_data(user_id: int):
-    def _get():
-        with sqlite3.connect(DB_PATH) as conn:
-            conn.row_factory = sqlite3.Row
-            c = conn.cursor()
-            c.execute("SELECT user_id, guild_id, xp, level, total_vc_seconds FROM users WHERE user_id = ?", (user_id,))
-            row = c.fetchone()
-            return dict(row) if row else None
-    return await asyncio.to_thread(_get)
+    async with db_lock:
+        def _get():
+            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
+                conn.row_factory = sqlite3.Row
+                c = conn.cursor()
+                c.execute("SELECT user_id, guild_id, xp, level, total_vc_seconds FROM users WHERE user_id = ?", (user_id,))
+                row = c.fetchone()
+                return dict(row) if row else None
+        return await asyncio.to_thread(_get)
 
 async def update_user_xp(user_id: int, guild_id: int, xp_added: int, vc_sec_added: int = 0, new_level: int = None):
-    def _update():
-        with sqlite3.connect(DB_PATH) as conn:
-            c = conn.cursor()
-            c.execute("INSERT OR IGNORE INTO users (user_id, guild_id) VALUES (?, ?)", (user_id, guild_id))
-            if new_level is not None:
-                c.execute("UPDATE users SET xp = xp + ?, total_vc_seconds = total_vc_seconds + ?, level = ? WHERE user_id = ?",
-                          (xp_added, vc_sec_added, new_level, user_id))
-            else:
-                c.execute("UPDATE users SET xp = xp + ?, total_vc_seconds = total_vc_seconds + ? WHERE user_id = ?",
-                          (xp_added, vc_sec_added, user_id))
-            conn.commit()
-    await asyncio.to_thread(_update)
+    async with db_lock:
+        def _update():
+            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
+                c = conn.cursor()
+                c.execute("INSERT OR IGNORE INTO users (user_id, guild_id) VALUES (?, ?)", (user_id, guild_id))
+                if new_level is not None:
+                    c.execute("UPDATE users SET xp = xp + ?, total_vc_seconds = total_vc_seconds + ?, level = ? WHERE user_id = ?",
+                              (xp_added, vc_sec_added, new_level, user_id))
+                else:
+                    c.execute("UPDATE users SET xp = xp + ?, total_vc_seconds = total_vc_seconds + ? WHERE user_id = ?",
+                              (xp_added, vc_sec_added, user_id))
+                conn.commit()
+        await asyncio.to_thread(_update)
 
 async def get_top_users(guild_id: int, limit: int = 10):
-    def _get():
-        with sqlite3.connect(DB_PATH) as conn:
-            conn.row_factory = sqlite3.Row
-            c = conn.cursor()
-            # In case the bot is in multiple guilds, we filter by guild_id
-            c.execute("SELECT user_id, xp, level FROM users WHERE guild_id = ? ORDER BY xp DESC LIMIT ?", (guild_id, limit))
-            return [dict(row) for row in c.fetchall()]
-    return await asyncio.to_thread(_get)
+    async with db_lock:
+        def _get():
+            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
+                conn.row_factory = sqlite3.Row
+                c = conn.cursor()
+                # In case the bot is in multiple guilds, we filter by guild_id
+                c.execute("SELECT user_id, xp, level FROM users WHERE guild_id = ? ORDER BY xp DESC LIMIT ?", (guild_id, limit))
+                return [dict(row) for row in c.fetchall()]
+        return await asyncio.to_thread(_get)
 
 def calculate_jamo_length(text: str) -> int:
     length = 0
@@ -135,22 +139,21 @@ class LevelingCog(commands.Cog):
         if message.author.bot:
             return
         
-        # 특정 채널(요약 채널)에서만 경험치 작동
-        if SUMMARY_CHANNEL_ID and message.channel.id == SUMMARY_CHANNEL_ID:
-            xp_to_add = calculate_jamo_length(message.content)
-            if xp_to_add > 0:
-                user_data = await get_user_data(message.author.id)
-                current_level = user_data["level"] if user_data else 1
-                current_xp = user_data["xp"] if user_data else 0
+        # 모든 채널에서 경험치 작동하도록 변경
+        xp_to_add = calculate_jamo_length(message.content)
+        if xp_to_add > 0:
+            user_data = await get_user_data(message.author.id)
+            current_level = user_data["level"] if user_data else 1
+            current_xp = user_data["xp"] if user_data else 0
                 
-                # 처음 채팅치는 유저(Lv.1 스타트)에게 Lv.1 관련 역할 부여
-                if not user_data:
-                    await self.assign_role_by_level(message.author, 1)
-                
-                total_xp = current_xp + xp_to_add
-                new_level = await self.check_level_up(message.author, current_level, total_xp)
-                
-                await update_user_xp(message.author.id, message.guild.id, xp_added=xp_to_add, new_level=new_level)
+            # 처음 채팅치는 유저(Lv.1 스타트)에게 Lv.1 관련 역할 부여
+            if not user_data:
+                await self.assign_role_by_level(message.author, 1)
+            
+            total_xp = current_xp + xp_to_add
+            new_level = await self.check_level_up(message.author, current_level, total_xp)
+            
+            await update_user_xp(message.author.id, message.guild.id, xp_added=xp_to_add, new_level=new_level)
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
@@ -167,8 +170,11 @@ class LevelingCog(commands.Cog):
                 join_time = self.voice_sessions.pop(member.id)
                 duration_sec = int(time.time() - join_time)
                 
-                # 1분에 0.1 XP (10분당 1 XP) 지급으로 대폭 하향 조정
-                # int형 변수이므로 10분 단위로 절사하여 지급합니다.
+                # 10분을 채우지 않으면 경험치 스킵 (악용 방지)
+                if duration_sec < 600:
+                    return
+
+                # 10분당 1 XP 지급
                 duration_10min = duration_sec // 600
                 xp_to_add = duration_10min * 1
                 
