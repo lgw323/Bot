@@ -27,8 +27,8 @@ except ImportError:
 from .music_core import MusicState
 from .music_utils import (
     Song, LoopMode, LOOP_MODE_DATA, ytdl, URL_REGEX, MUSIC_CHANNEL_ID, MASTER_USER_ID,
-    load_favorites, save_favorites, BOT_EMBED_COLOR,
-    load_music_settings, save_music_settings
+    load_favorites, add_favorite, remove_favorites, BOT_EMBED_COLOR,
+    load_music_settings, update_music_volume
     # update_request_timing 제거됨
 )
 from .music_ui import QueueManagementView, FavoritesView, SearchSelect
@@ -379,10 +379,9 @@ class MusicAgentCog(commands.Cog):
         song = state.current_song
         user_id = str(interaction.user.id)
         favorites = await load_favorites()
-        user_favorites = favorites.setdefault(user_id, [])
+        user_favorites = favorites.get(user_id, [])
         if any(fav['url'] == song.webpage_url for fav in user_favorites): return await interaction.response.send_message("이미 즐겨찾기에 추가된 노래입니다.", ephemeral=True)
-        user_favorites.append({"title": song.title, "url": song.webpage_url})
-        await save_favorites(favorites)
+        await add_favorite(interaction.user.id, song.webpage_url, song.title)
         await interaction.response.send_message(f"⭐ '{song.title}'을(를) 즐겨찾기에 추가했습니다!", ephemeral=True)
         command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{song.title}'을(를) 즐겨찾기에 추가했습니다.")
 
@@ -437,19 +436,8 @@ class MusicAgentCog(commands.Cog):
         return count, joined_vc
 
     async def handle_delete_from_favorites(self, user_id: str, urls_to_delete: list[str]) -> int:
-        favorites = await load_favorites()
-        user_favorites = favorites.get(user_id, [])
-        if not user_favorites: return 0
-        initial_count = len(user_favorites)
-        user_favorites = [fav for fav in user_favorites if fav['url'] not in urls_to_delete]
-        if not user_favorites:
-            if user_id in favorites: del favorites[user_id]
-        else: favorites[user_id] = user_favorites
-        await save_favorites(favorites)
-        deleted_count = initial_count - len(user_favorites)
-        
+        deleted_count = await remove_favorites(int(user_id), urls_to_delete)
         command_logger.info(f"사용자 ID '{user_id}'가 즐겨찾기에서 {deleted_count}곡을 삭제했습니다.")
-        
         return deleted_count
 
     async def handle_shuffle(self, interaction: discord.Interaction):
