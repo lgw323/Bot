@@ -189,7 +189,7 @@ class LevelingCog(commands.Cog):
     # --- Commands ---
     @app_commands.command(name="내정보", description="나의 현재 레벨과 경험치 진행도를 확인합니다.")
     async def profile(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=False)
+        await interaction.response.defer(ephemeral=True)
         user_data = await get_user_data(interaction.user.id)
         
         level = user_data["level"] if user_data else 1
