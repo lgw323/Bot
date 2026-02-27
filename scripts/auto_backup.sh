@@ -14,10 +14,16 @@ mkdir -p "$(dirname "$LOG_FILE")"
 cd "$BOT_DIR" || exit
 
 # ==========================================
-# 2. 변경 사항 감지 및 분류
+# 2. 데이터베이스 덤프 및 변경 사항 감지
 # ==========================================
-# 모든 대상 파일을 스테이징 (JSON 데이터 보존, 로그 파일 제외됨)
-git add "$DATA_DIR"/*.json
+# SQLite 이진파일(.db)을 GitHub에 올리면 충돌이 나서 고장나므로,
+# 텍스트 형태(.sql)로 변환해서 백업합니다.
+if [ -f "$DATA_DIR/bot_database.db" ]; then
+    sqlite3 "$DATA_DIR/bot_database.db" .dump > "$DATA_DIR/database_backup.sql"
+fi
+
+# 모든 대상 파일을 스테이징 (순수 텍스트 백업본)
+git add "$DATA_DIR"/*.sql
 
 # 스테이징된 변경사항이 있는지 확인
 if ! git diff --staged --quiet; then
@@ -25,11 +31,11 @@ if ! git diff --staged --quiet; then
     # 어떤 파일이 변경되었는지 목록 추출
     STAGED_FILES=$(git diff --name-only --cached)
     
-    # 플래그 설정
-    HAS_JSON=$(echo "$STAGED_FILES" | grep ".json")
+    # 플래그 설정 (.sql 덤프가 포함되었는지 확인)
+    HAS_DB=$(echo "$STAGED_FILES" | grep ".sql")
     
     # 상황별 커밋 메시지 생성
-    if [ -n "$HAS_JSON" ]; then
+    if [ -n "$HAS_DB" ]; then
         MSG_TYPE="User Data Update"
     else
         MSG_TYPE="Routine Backup"
