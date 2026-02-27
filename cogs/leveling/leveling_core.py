@@ -2,10 +2,9 @@ import os
 import time
 import logging
 import asyncio
-import sqlite3
 import math
 from typing import Optional, Dict
-from database_manager import db_lock
+from database_manager import db_lock, get_user_data, update_user_xp, get_top_users
 
 import discord
 from discord.ext import commands
@@ -18,43 +17,7 @@ SUMMARY_CHANNEL_ID = int(os.getenv("SUMMARY_CHANNEL_ID", "0"))
 # Role prefixes for automatic assignment
 ROLE_PREFIXES = ["Lv.", "lv.", "LV."]
 
-# --- DB Helper Functions ---
-async def get_user_data(user_id: int):
-    async with db_lock:
-        def _get():
-            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
-                conn.row_factory = sqlite3.Row
-                c = conn.cursor()
-                c.execute("SELECT user_id, guild_id, xp, level, total_vc_seconds FROM users WHERE user_id = ?", (user_id,))
-                row = c.fetchone()
-                return dict(row) if row else None
-        return await asyncio.to_thread(_get)
-
-async def update_user_xp(user_id: int, guild_id: int, xp_added: int, vc_sec_added: int = 0, new_level: int = None):
-    async with db_lock:
-        def _update():
-            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
-                c = conn.cursor()
-                c.execute("INSERT OR IGNORE INTO users (user_id, guild_id) VALUES (?, ?)", (user_id, guild_id))
-                if new_level is not None:
-                    c.execute("UPDATE users SET xp = xp + ?, total_vc_seconds = total_vc_seconds + ?, level = ? WHERE user_id = ?",
-                              (xp_added, vc_sec_added, new_level, user_id))
-                else:
-                    c.execute("UPDATE users SET xp = xp + ?, total_vc_seconds = total_vc_seconds + ? WHERE user_id = ?",
-                              (xp_added, vc_sec_added, user_id))
-                conn.commit()
-        await asyncio.to_thread(_update)
-
-async def get_top_users(guild_id: int, limit: int = 10):
-    async with db_lock:
-        def _get():
-            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
-                conn.row_factory = sqlite3.Row
-                c = conn.cursor()
-                # In case the bot is in multiple guilds, we filter by guild_id
-                c.execute("SELECT user_id, xp, level FROM users WHERE guild_id = ? ORDER BY xp DESC LIMIT ?", (guild_id, limit))
-                return [dict(row) for row in c.fetchall()]
-        return await asyncio.to_thread(_get)
+# --- DB Helper Functions are imported from database_manager.py ---
 
 def calculate_jamo_length(text: str) -> int:
     length = 0
@@ -78,6 +41,46 @@ class LevelingCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.voice_sessions: Dict[int, float] = {}  # user_id -> join_time_seconds
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        """봇 기동 시, 이미 음성 채널에 존재하는 유저들을 스캔하여 세션을 복구합니다."""
+        recovered = 0
+        for guild in self.bot.guilds:
+            for vc in guild.voice_channels:
+                for member in vc.members:
+                    if not member.bot and member.id not in self.voice_sessions:
+                        self.voice_sessions[member.id] = time.time()
+                        recovered += 1
+        if recovered > 0:
+            logger.info(f"[Leveling] 봇 재기동: {recovered}명의 음성 세션을 복구하여 추적을 시작합니다.")
+
+    async def cog_unload(self):
+        """봇 종료 또는 언로드 시, 남아있는 음성 세션을 일괄 정산하여 기동 중 증발을 방지합니다."""
+        logger.info("[Leveling] 봇 종료 감지: 남아있는 음성 세션을 DB에 강제 정산합니다.")
+        for member_id, join_time in list(self.voice_sessions.items()):
+            duration_sec = int(time.time() - join_time)
+            if duration_sec >= 600:
+                duration_10min = duration_sec // 600
+                xp_to_add = duration_10min * 1
+                
+                user_data = await get_user_data(member_id)
+                current_level = user_data["level"] if user_data else 1
+                current_xp = user_data["xp"] if user_data else 0
+                
+                total_xp = current_xp + xp_to_add
+                new_level = current_level
+                
+                # 레벨업 스케일 계산 (기동 중이므로 역할 부여는 생략, 레벨만 갱신)
+                while total_xp >= get_required_xp(new_level):
+                    new_level += 1
+                
+                final_new_level = new_level if new_level > current_level else None
+                await update_user_xp(member_id, 0, xp_added=xp_to_add, vc_sec_added=duration_sec, new_level=final_new_level)
+            
+            # 세션 삭제
+            self.voice_sessions.pop(member_id, None)
+        logger.info("[Leveling] 음성 세션 정산 및 안전 종료 완료.")
 
     async def check_level_up(self, member: discord.Member, current_level: int, total_xp: int) -> Optional[int]:
         """레벨업을 체크하고 관련된 역할 부여 처리를 수행합니다."""

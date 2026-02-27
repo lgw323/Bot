@@ -16,10 +16,12 @@ cd "$BOT_DIR" || exit
 # ==========================================
 # 2. 데이터베이스 덤프 및 변경 사항 감지
 # ==========================================
-# SQLite 이진파일(.db)을 GitHub에 올리면 충돌이 나서 고장나므로,
-# 텍스트 형태(.sql)로 변환해서 백업합니다.
+# SQLite 이진파일(.db)을 봇이 실행중인 상태에서 덤프할 경우 DB is locked 에러 방지를 위해
+# 안전한 스냅샷(temp)을 하나 복사한 후, 그 temp에서 텍스트(.sql)를 추출합니다.
 if [ -f "$DATA_DIR/bot_database.db" ]; then
-    sqlite3 "$DATA_DIR/bot_database.db" .dump > "$DATA_DIR/database_backup.sql"
+    sqlite3 "$DATA_DIR/bot_database.db" ".backup '$DATA_DIR/temp_backup.db'"
+    sqlite3 "$DATA_DIR/temp_backup.db" .dump > "$DATA_DIR/database_backup.sql"
+    rm -f "$DATA_DIR/temp_backup.db"
 fi
 
 # 모든 대상 파일을 스테이징 (순수 텍스트 백업본)

@@ -250,3 +250,45 @@ async def get_top_played_songs_db(guild_id: int, limit: int = 5):
                 c.execute("SELECT url, title, play_count as count FROM music_play_counts WHERE guild_id = ? ORDER BY play_count DESC LIMIT ?", (guild_id, limit))
                 return [dict(row) for row in c.fetchall()]
         return await asyncio.to_thread(_get)
+
+# ==========================================
+# 레벨링 영역 DB 함수 (Users 테이블)
+# ==========================================
+
+async def get_user_data(user_id: int):
+    async with db_lock:
+        def _get():
+            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
+                conn.row_factory = sqlite3.Row
+                c = conn.cursor()
+                c.execute("SELECT user_id, guild_id, xp, level, total_vc_seconds FROM users WHERE user_id = ?", (user_id,))
+                row = c.fetchone()
+                return dict(row) if row else None
+        return await asyncio.to_thread(_get)
+
+async def update_user_xp(user_id: int, guild_id: int, xp_added: int, vc_sec_added: int = 0, new_level: int = None):
+    async with db_lock:
+        def _update():
+            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
+                c = conn.cursor()
+                # 신규 유저는 접속한 서버 기준으로 생성
+                c.execute("INSERT OR IGNORE INTO users (user_id, guild_id) VALUES (?, ?)", (user_id, guild_id))
+                if new_level is not None:
+                    c.execute("UPDATE users SET xp = xp + ?, total_vc_seconds = total_vc_seconds + ?, level = ? WHERE user_id = ?",
+                              (xp_added, vc_sec_added, new_level, user_id))
+                else:
+                    c.execute("UPDATE users SET xp = xp + ?, total_vc_seconds = total_vc_seconds + ? WHERE user_id = ?",
+                              (xp_added, vc_sec_added, user_id))
+                conn.commit()
+        await asyncio.to_thread(_update)
+
+async def get_top_users(guild_id: int, limit: int = 10):
+    async with db_lock:
+        def _get():
+            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
+                conn.row_factory = sqlite3.Row
+                c = conn.cursor()
+                # 봇이 속한 서버(guild_id) 내의 유저 랭킹 반환
+                c.execute("SELECT user_id, xp, level FROM users WHERE guild_id = ? ORDER BY xp DESC LIMIT ?", (guild_id, limit))
+                return [dict(row) for row in c.fetchall()]
+        return await asyncio.to_thread(_get)
