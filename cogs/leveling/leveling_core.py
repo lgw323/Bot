@@ -167,11 +167,12 @@ class LevelingCog(commands.Cog):
                 join_time = self.voice_sessions.pop(member.id)
                 duration_sec = int(time.time() - join_time)
                 
-                # 분 단위로 5 XP씩 지급 (조율 가능)
-                duration_min = duration_sec // 60
-                xp_to_add = duration_min * 5
+                # 1분에 0.1 XP (10분당 1 XP) 지급으로 대폭 하향 조정
+                # int형 변수이므로 10분 단위로 절사하여 지급합니다.
+                duration_10min = duration_sec // 600
+                xp_to_add = duration_10min * 1
                 
-                if xp_to_add > 0 or duration_sec > 0:
+                if xp_to_add > 0:
                     user_data = await get_user_data(member.id)
                     current_level = user_data["level"] if user_data else 1
                     current_xp = user_data["xp"] if user_data else 0
