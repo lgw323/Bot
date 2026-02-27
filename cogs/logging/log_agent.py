@@ -171,10 +171,9 @@ class LogAgentCog(commands.Cog, name="LogAgent"):
             embed = discord.Embed(
                 title=title,
                 description=f"**원인:** {startup_reason}",
-                color=color
+                color=color,
+                timestamp=discord.utils.utcnow()
             )
-            import datetime
-            embed.timestamp = datetime.datetime.now(datetime.timezone.utc)
             try:
                 await target_channel.send(embed=embed)
             except Exception as e:
