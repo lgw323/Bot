@@ -44,9 +44,6 @@ After=network.target
 User=os
 WorkingDirectory=/home/os/bot
 
-# 봇 실행 전 핵심 라이브러리(yt-dlp) 강제 업데이트
-ExecStartPre=/home/os/bot/bot_env/bin/pip install -U yt-dlp
-
 # 봇 실행 명령어 (가상환경 경로 주의)
 ExecStart=/home/os/bot/bot_env/bin/python main_bot.py
 
