@@ -19,3 +19,9 @@ tts_cache/
 assets/
 data/logs/
 *.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3-journal
+*.bak

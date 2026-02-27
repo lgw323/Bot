@@ -15,6 +15,21 @@ db_lock = asyncio.Lock()
 
 def init_db():
     os.makedirs("data", exist_ok=True)
+    
+    # 0. 백업 기반 자동 복구 (Main DB가 없고 SQL 덤프가 있는 경우)
+    sql_backup_path = "data/database_backup.sql"
+    if not os.path.exists(DB_PATH) and os.path.exists(sql_backup_path):
+        logger.info(f"Main DB not found. Restoring from {sql_backup_path}...")
+        try:
+            with sqlite3.connect(DB_PATH) as conn:
+                with open(sql_backup_path, 'r', encoding='utf-8') as f:
+                    sql_script = f.read()
+                conn.executescript(sql_script)
+                conn.commit()
+            logger.info("Database restored successfully from SQL dump.")
+        except Exception as e:
+            logger.error(f"Failed to restore DB: {e}")
+
     with sqlite3.connect(DB_PATH) as conn:
         c = conn.cursor()
         
