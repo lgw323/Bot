@@ -93,18 +93,18 @@ class LevelingCog(commands.Cog):
             logger.warning("봇에 '역할 관리' 권한이 없습니다. 역할 부여 알림을 패스합니다.")
             return
 
-        # "Lv.10", "LV.20" 등 서버 내 역할을 스캔
+        # "Lv.10", "LV.20", "Lv 1" 등 서버 내 역할을 정규식으로 유연하게 스캔
+        import re
         level_roles = []
         for role in guild.roles:
-            for prefix in ROLE_PREFIXES:
-                if role.name.startswith(prefix):
-                    try:
-                        # 숫자 부분 추출
-                        role_lv = int(role.name[len(prefix):].split()[0])
-                        level_roles.append((role_lv, role))
-                    except ValueError:
-                        pass
-                    break
+            match = re.search(r'(?i)^lv\.?\s*(\d+)', role.name)
+            if match:
+                role_lv = int(match.group(1))
+                level_roles.append((role_lv, role))
+        
+        if not level_roles:
+            logger.warning(f"서버에 'Lv.숫자' 형태의 역할이 단 하나도 없습니다! (현재 스캔된 역할 수: {len(guild.roles)})")
+
 
         # 내 레벨 이하의 역할 중 가장 높은 레벨의 역할 찾기
         target_role = None
@@ -189,7 +189,7 @@ class LevelingCog(commands.Cog):
     # --- Commands ---
     @app_commands.command(name="내정보", description="나의 현재 레벨과 경험치 진행도를 확인합니다.")
     async def profile(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=False)
+        await interaction.response.defer(ephemeral=True)
         user_data = await get_user_data(interaction.user.id)
         
         level = user_data["level"] if user_data else 1
