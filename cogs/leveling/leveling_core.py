@@ -143,6 +143,10 @@ class LevelingCog(commands.Cog):
                 current_level = user_data["level"] if user_data else 1
                 current_xp = user_data["xp"] if user_data else 0
                 
+                # 처음 채팅치는 유저(Lv.1 스타트)에게 Lv.1 관련 역할 부여
+                if not user_data:
+                    await self.assign_role_by_level(message.author, 1)
+                
                 total_xp = current_xp + xp_to_add
                 new_level = await self.check_level_up(message.author, current_level, total_xp)
                 
@@ -163,14 +167,19 @@ class LevelingCog(commands.Cog):
                 join_time = self.voice_sessions.pop(member.id)
                 duration_sec = int(time.time() - join_time)
                 
-                # 분 단위로 5 XP씩 지급 (조율 가능)
-                duration_min = duration_sec // 60
-                xp_to_add = duration_min * 5
+                # 1분에 0.1 XP (10분당 1 XP) 지급으로 대폭 하향 조정
+                # int형 변수이므로 10분 단위로 절사하여 지급합니다.
+                duration_10min = duration_sec // 600
+                xp_to_add = duration_10min * 1
                 
-                if xp_to_add > 0 or duration_sec > 0:
+                if xp_to_add > 0:
                     user_data = await get_user_data(member.id)
                     current_level = user_data["level"] if user_data else 1
                     current_xp = user_data["xp"] if user_data else 0
+                    
+                    # 처음 VC 이용하는 유저에게 Lv.1 관련 역할 부여
+                    if not user_data:
+                        await self.assign_role_by_level(member, 1)
                     
                     total_xp = current_xp + xp_to_add
                     new_level = await self.check_level_up(member, current_level, total_xp)
@@ -186,6 +195,11 @@ class LevelingCog(commands.Cog):
         level = user_data["level"] if user_data else 1
         xp = user_data["xp"] if user_data else 0
         vc_seconds = user_data["total_vc_seconds"] if user_data else 0
+        
+        # 만약 이미 Lv.N인데 역할을 못 받은 상태라면 여기서 강제 동기화(복구) 처리
+        if isinstance(interaction.user, discord.Member):
+            await self.assign_role_by_level(interaction.user, level)
+
         
         curr_req_xp = get_required_xp(level - 1) if level > 1 else 0
         next_req_xp = get_required_xp(level)
