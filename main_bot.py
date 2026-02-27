@@ -3,6 +3,7 @@ import sys
 import logging
 import asyncio
 from dotenv import load_dotenv
+import database_manager
 
 # Rich 관련 임포트는 UI 표시에 필요하므로 유지합니다.
 from rich.console import Console
@@ -44,6 +45,7 @@ try:
                 "cogs.logging.log_agent",
                 "cogs.summary.summary_listeners",
                 "cogs.music.music_agent",
+                "cogs.leveling.leveling_core",
                 "cogs.application_commands"
             ]
             # UI에 사용할 Rich Console 객체를 봇 인스턴스에 저장
@@ -81,6 +83,10 @@ try:
 
     @bot.event
     async def on_ready():
+        # DB 초기화 및 데이터 마이그레이션 (동기 블로킹이 짧으므로 on_ready에서 실행)
+        database_manager.init_db()
+        database_manager.migrate_json_to_db()
+
         # on_ready UI 패널은 그대로 유지합니다.
         panel = Panel(
             Text(f"{bot.user.name} (ID: {bot.user.id})\n모든 기능 정상 작동 중", justify="center"),
