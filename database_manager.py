@@ -382,14 +382,19 @@ async def get_top_users(guild_id: int, limit: int = 10):
             with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
                 conn.row_factory = sqlite3.Row
                 c = conn.cursor()
-                c.execute("SELECT user_id, xp, level FROM users WHERE guild_id = ? ORDER BY xp DESC LIMIT ?", (guild_id, limit))
+                
+                # 메인 서버(guild_id)와 과거 기록 보관소(guild_id=0)의 데이터를 합치되,
+                # 동일 유저라면 경험치가 더 높은 쪽의 레벨과 경험치를 최종 랭킹 산정에 사용하도록 합니다.
+                # 이렇게 하면 아직 채팅을 안 쳐서 0번에 머물러있는 사람들도 랭킹에 합류할 수 있습니다.
+                c.execute('''
+                    SELECT user_id, MAX(xp) as xp, MAX(level) as level
+                    FROM users 
+                    WHERE guild_id = ? OR guild_id = 0
+                    GROUP BY user_id
+                    ORDER BY xp DESC
+                    LIMIT ?
+                ''', (guild_id, limit))
                 
                 rows = [dict(row) for row in c.fetchall()]
-                
-                # Fallback: 만약 결과가 한 명도 없다면, 아직 마이그레이션이 완전히 퍼지지 않은 상태일 수 있으므로 0번 길드 랭킹을 임시 반환
-                if not rows:
-                    c.execute("SELECT user_id, xp, level FROM users WHERE guild_id = 0 ORDER BY xp DESC LIMIT ?", (limit,))
-                    rows = [dict(row) for row in c.fetchall()]
-                    
                 return rows
         return await asyncio.to_thread(_get)
