@@ -64,7 +64,9 @@ class LevelingCog(commands.Cog):
                 duration_10min = duration_sec // 600
                 xp_to_add = duration_10min * 1
                 
-                user_data = await get_user_data(member_id)
+                # 봇 재기동 시 세션 복구된 유저는 원래 무슨 채널(서버)에 있었는지 알 수 없어 guild_id를 0으로 조회합니다.
+                # 이는 최신 방식에서는 부정확할 수 있으나, 임시 방편입니다.
+                user_data = await get_user_data(member_id, 0)
                 current_level = user_data["level"] if user_data else 1
                 current_xp = user_data["xp"] if user_data else 0
                 
@@ -145,7 +147,7 @@ class LevelingCog(commands.Cog):
         # 모든 채널에서 경험치 작동하도록 변경
         xp_to_add = calculate_jamo_length(message.content)
         if xp_to_add > 0:
-            user_data = await get_user_data(message.author.id)
+            user_data = await get_user_data(message.author.id, message.guild.id)
             current_level = user_data["level"] if user_data else 1
             current_xp = user_data["xp"] if user_data else 0
                 
@@ -182,7 +184,7 @@ class LevelingCog(commands.Cog):
                 xp_to_add = duration_10min * 1
                 
                 if xp_to_add > 0:
-                    user_data = await get_user_data(member.id)
+                    user_data = await get_user_data(member.id, member.guild.id)
                     current_level = user_data["level"] if user_data else 1
                     current_xp = user_data["xp"] if user_data else 0
                     
@@ -199,7 +201,7 @@ class LevelingCog(commands.Cog):
     @app_commands.command(name="내정보", description="나의 현재 레벨과 경험치 진행도를 확인합니다.")
     async def profile(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
-        user_data = await get_user_data(interaction.user.id)
+        user_data = await get_user_data(interaction.user.id, interaction.guild.id)
         
         level = user_data["level"] if user_data else 1
         xp = user_data["xp"] if user_data else 0
@@ -238,24 +240,23 @@ class LevelingCog(commands.Cog):
     async def leaderboard(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=False)
         top_users = await get_top_users(interaction.guild.id)
-        
-        if not top_users:
-            await interaction.followup.send("아직 랭킹 정보가 없습니다.")
-            return
             
         embed = discord.Embed(title=f"🏆 {interaction.guild.name} 랭킹 TOP 10", color=0xF1C40F)
         description = ""
         
-        for idx, row in enumerate(top_users):
-            member = interaction.guild.get_member(row["user_id"])
-            name = member.display_name if member else f"알 수 없는 유저 ({row['user_id']})"
-            
-            medal = "🏅"
-            if idx == 0: medal = "🥇"
-            elif idx == 1: medal = "🥈"
-            elif idx == 2: medal = "🥉"
-            
-            description += f"{medal} **{idx+1}위** | {name} - **Lv.{row['level']}** ({row['xp']:,} XP)\n\n"
+        if not top_users:
+            description = "이 서버에 경험치가 기록된 유저가 없습니다."
+        else:
+            for idx, row in enumerate(top_users):
+                member = interaction.guild.get_member(row["user_id"])
+                name = member.display_name if member else f"알 수 없는 유저 ({row['user_id']})"
+                
+                medal = "🏅"
+                if idx == 0: medal = "🥇"
+                elif idx == 1: medal = "🥈"
+                elif idx == 2: medal = "🥉"
+                
+                description += f"{medal} **{idx+1}위** | {name} - **Lv.{row['level']}** ({row['xp']:,} XP)\n\n"
         
         embed.description = description
         await interaction.followup.send(embed=embed)
