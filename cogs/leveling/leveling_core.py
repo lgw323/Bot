@@ -40,7 +40,7 @@ def get_required_xp(level: int) -> int:
 class LevelingCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.voice_sessions: Dict[int, float] = {}  # user_id -> join_time_seconds
+        self.voice_sessions: Dict[int, dict] = {}  # user_id -> {"time": join_time_seconds, "guild_id": guild_id}
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -50,7 +50,7 @@ class LevelingCog(commands.Cog):
             for vc in guild.voice_channels:
                 for member in vc.members:
                     if not member.bot and member.id not in self.voice_sessions:
-                        self.voice_sessions[member.id] = time.time()
+                        self.voice_sessions[member.id] = {"time": time.time(), "guild_id": guild.id}
                         recovered += 1
         if recovered > 0:
             logger.info(f"[Leveling] 봇 재기동: {recovered}명의 음성 세션을 복구하여 추적을 시작합니다.")
@@ -58,15 +58,15 @@ class LevelingCog(commands.Cog):
     async def cog_unload(self):
         """봇 종료 또는 언로드 시, 남아있는 음성 세션을 일괄 정산하여 기동 중 증발을 방지합니다."""
         logger.info("[Leveling] 봇 종료 감지: 남아있는 음성 세션을 DB에 강제 정산합니다.")
-        for member_id, join_time in list(self.voice_sessions.items()):
+        for member_id, session_data in list(self.voice_sessions.items()):
+            join_time = session_data["time"]
+            guild_id = session_data["guild_id"]
             duration_sec = int(time.time() - join_time)
             if duration_sec >= 600:
                 duration_10min = duration_sec // 600
                 xp_to_add = duration_10min * 1
                 
-                # 봇 재기동 시 세션 복구된 유저는 원래 무슨 채널(서버)에 있었는지 알 수 없어 guild_id를 0으로 조회합니다.
-                # 이는 최신 방식에서는 부정확할 수 있으나, 임시 방편입니다.
-                user_data = await get_user_data(member_id, 0)
+                user_data = await get_user_data(member_id, guild_id)
                 current_level = user_data["level"] if user_data else 1
                 current_xp = user_data["xp"] if user_data else 0
                 
@@ -78,7 +78,7 @@ class LevelingCog(commands.Cog):
                     new_level += 1
                 
                 final_new_level = new_level if new_level > current_level else None
-                await update_user_xp(member_id, 0, xp_added=xp_to_add, vc_sec_added=duration_sec, new_level=final_new_level)
+                await update_user_xp(member_id, guild_id, xp_added=xp_to_add, vc_sec_added=duration_sec, new_level=final_new_level)
             
             # 세션 삭제
             self.voice_sessions.pop(member_id, None)
@@ -167,12 +167,13 @@ class LevelingCog(commands.Cog):
 
         # 방에 들어옴
         if not before.channel and after.channel:
-            self.voice_sessions[member.id] = time.time()
+            self.voice_sessions[member.id] = {"time": time.time(), "guild_id": member.guild.id}
         
         # 방에서 나감
         elif before.channel and not after.channel:
             if member.id in self.voice_sessions:
-                join_time = self.voice_sessions.pop(member.id)
+                session_data = self.voice_sessions.pop(member.id)
+                join_time = session_data["time"]
                 duration_sec = int(time.time() - join_time)
                 
                 # 10분을 채우지 않으면 경험치 스킵 (악용 방지)
