@@ -73,8 +73,7 @@ def init_db():
                 user_id INTEGER,
                 url TEXT,
                 title TEXT,
-                PRIMARY KEY(user_id, url),
-                FOREIGN KEY(user_id) REFERENCES users(user_id)
+                PRIMARY KEY(user_id, url)
             )
         ''')
         
