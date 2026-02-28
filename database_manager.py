@@ -45,8 +45,8 @@ def init_db():
             )
         ''')
         
-        # [MIGRATION_HOOK]
-        migrate_users_schema(conn)
+        # [MIGRATION_HOOK] 
+        # (마이그레이션 완료되어 수동 삭제함)
         
         # 2. music_settings (guild 단위)
         c.execute('''
@@ -81,74 +81,7 @@ def init_db():
         conn.commit()
     logger.info("Database schemas initialized.")
 
-def migrate_users_schema(conn):
-    """
-    (1회성 마이그레이션) users 테이블의 PK를 (user_id, guild_id)로 변경합니다.
-    성공적으로 수행되면 이 함수를 호출하는 부분 구문([MIGRATION_HOOK]) 전체가 정규식을 통해 자동 삭제(수술용 녹는 실)됩니다.
-    """
-    c = conn.cursor()
-    # Check if migration is needed (if the PK is just user_id)
-    c.execute("PRAGMA table_info(users)")
-    columns = c.fetchall()
-    
-    # Pragma table_info returns: cid, name, type, notnull, dflt_value, pk
-    pk_count = sum(1 for col in columns if col[5] > 0)
-    
-    if pk_count > 1:
-        # Already migrated. Now let's perform self-deletion of the hook.
-        logger.info("Migration already applied. Cleaning up migration hook...")
-        _cleanup_migration_hook()
-        return
 
-    logger.warning("Starting users table schema migration to support multi-guild...")
-    try:
-        # Create new table
-        c.execute('''
-            CREATE TABLE users_new (
-                user_id INTEGER,
-                guild_id INTEGER,
-                xp INTEGER DEFAULT 0,
-                level INTEGER DEFAULT 1,
-                total_vc_seconds INTEGER DEFAULT 0,
-                PRIMARY KEY (user_id, guild_id)
-            )
-        ''')
-        
-        # Copy data, treating guild_id 0 as potentially needing to be isolated in one server, 
-        # but since we don't know which, we just copy it as is. Subsequent interactions will create new rows for other servers.
-        c.execute('INSERT INTO users_new SELECT * FROM users')
-        
-        # Drop old and rename
-        c.execute('DROP TABLE users')
-        c.execute('ALTER TABLE users_new RENAME TO users')
-        
-        conn.commit()
-        logger.warning("Users table successfully migrated to composite PK!")
-        
-        # Self-delete the hook
-        _cleanup_migration_hook()
-        
-    except Exception as e:
-        logger.error(f"Failed to migrate schema: {e}")
-        conn.rollback()
-
-def _cleanup_migration_hook():
-    """자신의 파이썬 파일을 읽어서 마이그레이션 훅 부분을 지우고 덮어씁니다."""
-    try:
-        file_path = os.path.abspath(__file__)
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-            
-        if "# [MIGRATION_HOOK]" in content:
-            import re
-            # [MIGRATION_HOOK] 라인과 바로 밑에 있는 migrate_users_schema(conn) 라인을 지움
-            new_content = re.sub(r'\s*#\s*\[MIGRATION_HOOK\]\s*migrate_users_schema\(conn\)', '', content)
-            
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(new_content)
-            logger.info("Self-deleting migration hook completed. The code has melted away.")
-    except Exception as e:
-        logger.error(f"Failed to self-delete migration hook: {e}")
 
 async def backup_database_to_sql():
     """안전하게 현재 SQLite DB를 SQL 덤프 파일로 백업합니다."""
@@ -336,10 +269,6 @@ async def get_user_data(user_id: int, guild_id: int):
                 c = conn.cursor()
                 c.execute("SELECT user_id, guild_id, xp, level, total_vc_seconds FROM users WHERE user_id = ? AND guild_id = ?", (user_id, guild_id))
                 row = c.fetchone()
-                # 기존 마이그레이션 유저(0번 길드) 폴백 매커니즘: 만약 현재 서버 기록은 없는데 0번 서버 기록이 있다면 그걸로 시작
-                if not row:
-                    c.execute("SELECT user_id, guild_id, xp, level, total_vc_seconds FROM users WHERE user_id = ? AND guild_id = ?", (user_id, 0))
-                    row = c.fetchone()
                 return dict(row) if row else None
         return await asyncio.to_thread(_get)
 
@@ -349,23 +278,8 @@ async def update_user_xp(user_id: int, guild_id: int, xp_added: int, vc_sec_adde
             with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
                 c = conn.cursor()
                 
-                # 먼저 데이터가 있는지 검사 (0번 길드 폴백 처리 포함)
-                c.execute("SELECT xp, level, total_vc_seconds FROM users WHERE user_id = ? AND guild_id = ?", (user_id, guild_id))
-                row = c.fetchone()
-                
-                if row is None:
-                    # 현재 길드에 데이터가 없으면 0번 길드에서 데이터를 끌어오는지 확인
-                    c.execute("SELECT xp, level, total_vc_seconds FROM users WHERE user_id = ? AND guild_id = ?", (user_id, 0))
-                    old_row = c.fetchone()
-                    if old_row:
-                        # 0번 길드 데이터를 현재 길드로 이전(복사 또는 이동). 여기서는 복사해서 새로 시작.
-                        base_xp, base_lvl, base_vc = old_row[0], old_row[1], old_row[2]
-                        # 사실상 0번 길드를 이 서버로 귀속시키기 위해 0번을 삭제하고 현재 길드로 UPDATE 하는 것이 깔끔합니다. 
-                        # 하지만 다른 서버에서도 쓸 수 있으므로 COPY 후 새로 더해줍니다.
-                        c.execute("INSERT OR IGNORE INTO users (user_id, guild_id, xp, level, total_vc_seconds) VALUES (?, ?, ?, ?, ?)",
-                                  (user_id, guild_id, base_xp, base_lvl, base_vc))
-                    else:
-                        c.execute("INSERT OR IGNORE INTO users (user_id, guild_id) VALUES (?, ?)", (user_id, guild_id))
+                # 먼저 데이터가 있는지 검사하고 없으면 기본값으로 생성
+                c.execute("INSERT OR IGNORE INTO users (user_id, guild_id) VALUES (?, ?)", (user_id, guild_id))
 
                 if new_level is not None:
                     c.execute("UPDATE users SET xp = xp + ?, total_vc_seconds = total_vc_seconds + ?, level = ? WHERE user_id = ? AND guild_id = ?",
@@ -383,14 +297,11 @@ async def get_top_users(guild_id: int, limit: int = 10):
                 conn.row_factory = sqlite3.Row
                 c = conn.cursor()
                 
-                # 메인 서버(guild_id)와 과거 기록 보관소(guild_id=0)의 데이터를 합치되,
-                # 동일 유저라면 경험치가 더 높은 쪽의 레벨과 경험치를 최종 랭킹 산정에 사용하도록 합니다.
-                # 이렇게 하면 아직 채팅을 안 쳐서 0번에 머물러있는 사람들도 랭킹에 합류할 수 있습니다.
+                # 순수하게 현재 서버(guild_id)의 데이터만 가져와 랭킹을 산정합니다.
                 c.execute('''
-                    SELECT user_id, MAX(xp) as xp, MAX(level) as level
+                    SELECT user_id, xp, level
                     FROM users 
-                    WHERE guild_id = ? OR guild_id = 0
-                    GROUP BY user_id
+                    WHERE guild_id = ?
                     ORDER BY xp DESC
                     LIMIT ?
                 ''', (guild_id, limit))
