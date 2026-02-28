@@ -257,7 +257,7 @@ class LevelingCog(commands.Cog):
                 elif idx == 1: medal = "🥈"
                 elif idx == 2: medal = "🥉"
                 
-                description += f"{medal} **{idx+1}위** | {name} - **Lv.{row['level']}** ({row['xp']:,} XP)\n\n"
+                description += f"{medal} **{idx+1}위** | {name} (`{row['user_id']}`) - **Lv.{row['level']}** ({row['xp']:,} XP)\n\n"
         
         embed.description = description
         await interaction.followup.send(embed=embed)
