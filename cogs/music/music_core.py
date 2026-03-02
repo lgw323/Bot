@@ -3,7 +3,7 @@ import logging
 import random
 import re
 from collections import deque
-from typing import Optional, List
+from typing import Optional, List, Any
 from datetime import datetime, timedelta
 import time
 import statistics
@@ -17,51 +17,52 @@ try:
     RAPIDFUZZ_AVAILABLE = True
 except ImportError:
     RAPIDFUZZ_AVAILABLE = False
-    logging.getLogger("MusicCog").warning("rapidfuzz 라이브러리를 찾을 수 없습니다.")
+    logging.getLogger(__name__).warning("rapidfuzz 라이브러리를 찾을 수 없습니다.")
 
 from .music_utils import (
     Song, LoopMode, LOOP_MODE_DATA,
     BOT_EMBED_COLOR, YTDL_OPTIONS,
     ytdl, load_music_settings, increment_play_count
-    # get_network_stats 제거됨
 )
 from .music_ui import MusicPlayerView
 
-logger = logging.getLogger("MusicCog")
+logger: logging.Logger = logging.getLogger(__name__)
 
 class MusicState:
-    def __init__(self, bot: commands.Bot, cog, guild: discord.Guild, initial_volume: float = 0.5):
-        self.bot, self.cog, self.guild = bot, cog, guild
-        self.queue = deque()
+    def __init__(self, bot: commands.Bot, cog: commands.Cog, guild: discord.Guild, initial_volume: float = 0.5) -> None:
+        self.bot: commands.Bot = bot
+        self.cog: commands.Cog = cog
+        self.guild: discord.Guild = guild
+        self.queue: deque = deque()
         self.voice_client: Optional[discord.VoiceClient] = None
         self.current_song: Optional[Song] = None
-        self.volume = initial_volume
-        self.loop_mode = LoopMode.NONE
-        self.auto_play_enabled = False
-        self.play_next_song = asyncio.Event()
+        self.volume: float = initial_volume
+        self.loop_mode: LoopMode = LoopMode.NONE
+        self.auto_play_enabled: bool = False
+        self.play_next_song: asyncio.Event = asyncio.Event()
         self.now_playing_message: Optional[discord.Message] = None
         self.text_channel: Optional[discord.TextChannel] = None
         self.playback_start_time: Optional[datetime] = None
         self.pause_start_time: Optional[datetime] = None
         self.total_paused_duration: timedelta = timedelta(seconds=0)
-        self.autoplay_history = deque(maxlen=20)
+        self.autoplay_history: deque = deque(maxlen=20)
         self.autoplay_task: Optional[asyncio.Task] = None
-        self.seek_time = 0
-        self.consecutive_play_failures = 0
-        self.is_tts_interrupting = False
-        self.update_lock = asyncio.Lock()
-        self.UI_UPDATE_COOLDOWN = 1.0 
+        self.seek_time: int = 0
+        self.consecutive_play_failures: int = 0
+        self.is_tts_interrupting: bool = False
+        self.update_lock: asyncio.Lock = asyncio.Lock()
+        self.UI_UPDATE_COOLDOWN: float = 1.0 
         self.last_update_time: float = 0.0
         self.ui_update_task: Optional[asyncio.Task] = None
         self.current_task: Optional[str] = None
-        self.main_task = self.bot.loop.create_task(self.play_song_loop())
+        self.main_task: asyncio.Task = self.bot.loop.create_task(self.play_song_loop())
         logger.info(f"[{self.guild.name}] MusicState 생성됨")
 
-    async def set_task(self, description: str):
+    async def set_task(self, description: str) -> None:
         self.current_task = description
         await self.schedule_ui_update()
 
-    async def clear_task(self):
+    async def clear_task(self) -> None:
         self.current_task = None
         await self.schedule_ui_update()
 
@@ -83,12 +84,12 @@ class MusicState:
         actual_elapsed = base_elapsed - paused_duration - current_pause
         return int(max(0, min(actual_elapsed, self.current_song.duration)))
         
-    def cancel_autoplay_task(self):
+    def cancel_autoplay_task(self) -> None:
         if self.autoplay_task and not self.autoplay_task.done():
             self.autoplay_task.cancel()
             self.autoplay_task = None
 
-    async def _prefetch_autoplay_song(self, last_played_song: Song):
+    async def _prefetch_autoplay_song(self, last_played_song: Song) -> None:
         try:
             if not last_played_song: return
             
@@ -138,7 +139,6 @@ class MusicState:
                 else:
                     if last_title in normalized_title or normalized_title in last_title:
                         continue
-                    # [개선] 문자열 매칭 시 단어 단위(regex) 교집합을 확인하여 유사도 판별 보강
                     last_words = set(last_title.split())
                     curr_words = set(normalized_title.split())
                     if last_words and curr_words:
@@ -153,7 +153,9 @@ class MusicState:
 
             if candidates:
                 selected_data = random.choice(candidates)
-                new_song = Song(selected_data, self.guild.get_member(self.bot.user.id) or self.bot.user)
+                guild_member = self.guild.get_member(self.bot.user.id) if self.bot.user else None
+                requester = guild_member or self.guild.me
+                new_song = Song(selected_data, requester)
                 
                 self.queue.append(new_song)
                 logger.info(f"[{self.guild.name}] [Autoplay] 다음 곡 결정: '{new_song.title}'")
@@ -175,7 +177,6 @@ class MusicState:
 
         if self.current_song:
             song = self.current_song
-            # SF 테마 색상 (Cyan)
             embed = discord.Embed(title=f"**[ 💽 오디오_데이터_로드_완료 ]**", color=0x00FFFF, url=song.webpage_url)
             if song.thumbnail: embed.set_thumbnail(url=song.thumbnail)
             
@@ -186,7 +187,6 @@ class MusicState:
             progress = elapsed_s / song.duration if song.duration > 0 else 0
             bar_length = 12
             filled_length = int(bar_length * progress)
-            # SF 스타일 진행 바: [████▒▒▒▒▒▒]
             bar = '█' * filled_length + '▒' * (bar_length - filled_length)
             
             status_emoji = "▶"
@@ -204,7 +204,6 @@ class MusicState:
                 status_emoji = "⏳"
                 status_text = "준비 중..."
 
-            # yaml 포맷을 사용하여 터미널 느낌 구현
             description = (
                 f"```yaml\n"
                 f"제  목 : {song.title[:25]}{'...' if len(song.title) > 25 else ''}\n"
@@ -227,7 +226,6 @@ class MusicState:
             if self.bot.user and self.bot.user.avatar:
                 embed.set_thumbnail(url=self.bot.user.avatar.url)
         
-        # Footer 정보 구성
         footer_parts = [ f"🔉 볼륨: {int(self.volume * 100)}%" ]
         
         loop_text = "➡️ 반복 없음"
@@ -239,7 +237,6 @@ class MusicState:
         
         next_song_info = (f"{self.queue[0].title[:20]}..." if len(self.queue[0].title) > 20 else self.queue[0].title) if self.queue else "없음"
         
-        # [수정] 네트워크 레이턴시 표시 부분 제거
         footer_text = f"{' | '.join(footer_parts)}\n다음 트랙: {next_song_info}"
         
         if self.current_song and self.current_task:
@@ -248,7 +245,7 @@ class MusicState:
         embed.set_footer(text=footer_text)
         return embed
 
-    async def cleanup(self, leave=False):
+    async def cleanup(self, leave: bool = False) -> None:
         self.cancel_autoplay_task()
         if self.main_task: self.main_task.cancel()
         self.current_song = None
@@ -261,13 +258,13 @@ class MusicState:
                 self.voice_client = None
         if self.now_playing_message: await self.schedule_ui_update()
     
-    async def schedule_ui_update(self):
+    async def schedule_ui_update(self) -> None:
         if self.ui_update_task and not self.ui_update_task.done():
             self.ui_update_task.cancel()
 
         self.ui_update_task = self.bot.loop.create_task(self._delayed_ui_update())
 
-    async def _delayed_ui_update(self):
+    async def _delayed_ui_update(self) -> None:
         try:
             await asyncio.sleep(self.UI_UPDATE_COOLDOWN)
             async with self.update_lock:
@@ -275,7 +272,7 @@ class MusicState:
         except asyncio.CancelledError:
             pass
 
-    async def _execute_ui_update(self):
+    async def _execute_ui_update(self) -> None:
         try:
             from .music_utils import get_top_played_songs
             embed = await self.create_now_playing_embed()
@@ -292,7 +289,7 @@ class MusicState:
         except Exception as e:
             logger.error(f"[{self.guild.name}] Now Playing 메시지 처리 중 예기치 않은 오류: {e}", exc_info=True)
 
-    async def play_song_loop(self):
+    async def play_song_loop(self) -> None:
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
             await self.play_next_song.wait()
@@ -327,11 +324,11 @@ class MusicState:
                 
                 source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(stream_url, **ffmpeg_options), volume=self.volume)
                 
-                # [오류 방지] 이미 재생 중인 경우 ClientException 발생 방지
-                if self.voice_client.is_playing():
+                if self.voice_client and self.voice_client.is_playing():
                     self.voice_client.stop()
                     
-                self.voice_client.play(source, after=lambda e: self.handle_after_play(e))
+                if self.voice_client:
+                    self.voice_client.play(source, after=lambda e: self.handle_after_play(e))
                 
                 if self.current_song.webpage_url:
                     self.bot.loop.create_task(increment_play_count(self.guild.id, self.current_song.webpage_url, self.current_song.title))
@@ -357,7 +354,7 @@ class MusicState:
             if self.loop_mode == LoopMode.QUEUE and self.current_song:
                 self.queue.append(self.current_song)
 
-    def handle_after_play(self, error):
+    def handle_after_play(self, error: Optional[Exception]) -> None:
         if self.is_tts_interrupting: return
         if error: logger.error(f"재생 후 콜백 오류: {error}")
         self.bot.loop.call_soon_threadsafe(self.play_next_song.set)
