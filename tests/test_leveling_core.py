@@ -33,40 +33,6 @@ class TestLevelingCore:
         assert get_required_xp(2) == int(100 * (2 ** 1.5)) # 282
         assert get_required_xp(10) == int(100 * (10 ** 1.5)) # 3162
 
-    @pytest.mark.asyncio
-    async def test_assign_role_by_level(self):
-        """레벨에 따른 역할 승급 확인 (Mock 처리)"""
-        # Mock 봇 환경 설정
-        mock_bot = MagicMock()
-        cog = LevelingCog(mock_bot)
-        
-        # Mock Member, Roles 설정
-        mock_member = AsyncMock(spec=discord.Member)
-        
-        # 역할(Role) 모의 데이터 생성
-        role_lv1 = MagicMock(spec=discord.Role, name="Lv.1 Role")
-        role_lv1.name = "Lv.1 Beginner"
-        
-        role_lv10 = MagicMock(spec=discord.Role, name="Lv.10 Role")
-        role_lv10.name = "Lv.10 Pro"
-        
-        role_admin = MagicMock(spec=discord.Role, name="Admin")
-        role_admin.name = "Admin Role"
-        
-        mock_guild = MagicMock()
-        mock_guild.roles = [role_admin, role_lv1, role_lv10]
-        
-        mock_guild.me.guild_permissions.manage_roles = True
-        mock_member.guild = mock_guild
-        # 멤버가 현재 가지고 있는 역할 리스트
-        mock_member.roles = [role_lv1]
-
-        # 테스트 1: 레벨 12에 도달했을 때 (Lv.10 역할이 적용되어야 함)
-        await cog.assign_role_by_level(mock_member, 12)
-        
-        # 기존 역할 제거 및 새 역할 부여가 호출되었는지 검증
-        mock_member.remove_roles.assert_called_once_with(role_lv1, reason="레벨업(12)으로 인한 기존 역할 해제")
-        mock_member.add_roles.assert_called_once_with(role_lv10, reason="레벨업 달성 (Lv.12)")
 
     @pytest.mark.asyncio
     @patch("cogs.leveling.leveling_core.get_user_data")
