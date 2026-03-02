@@ -4,7 +4,7 @@ import os
 import random
 import time
 from collections import deque
-from typing import Optional
+from typing import Optional, Any, List, Tuple, Dict
 import io
 import hashlib
 import subprocess
@@ -19,50 +19,48 @@ from discord import ui
 
 try:
     from gtts import gTTS
-    GTTS_AVAILABLE = True
+    GTTS_AVAILABLE: bool = True
 except ImportError:
-    GTTS_AVAILABLE = False
-    logging.getLogger("MusicCog").warning("gTTS 라이브러리를 찾을 수 없습니다.")
+    GTTS_AVAILABLE: bool = False
+    logging.getLogger(__name__).warning("gTTS 라이브러리를 찾을 수 없습니다.")
 
 from .music_core import MusicState
 from .music_utils import (
     Song, LoopMode, LOOP_MODE_DATA, ytdl, URL_REGEX, MUSIC_CHANNEL_ID, MASTER_USER_ID,
     load_favorites, add_favorite, remove_favorites, BOT_EMBED_COLOR,
     load_music_settings, update_music_volume
-    # update_request_timing 제거됨
 )
 from .music_ui import QueueManagementView, FavoritesView, SearchSelect
 
-logger = logging.getLogger("MusicCog")
-command_logger = logging.getLogger("Commands")
+logger: logging.Logger = logging.getLogger(__name__)
+command_logger: logging.Logger = logging.getLogger("Commands")
 
 class MusicAgentCog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
-        self.music_states = {}
-        self.tts_lock = asyncio.Lock()
+    def __init__(self, bot: commands.Bot) -> None:
+        self.bot: commands.Bot = bot
+        self.music_states: dict = {}
+        self.tts_lock: asyncio.Lock = asyncio.Lock()
         
-        # [최적화] SD카드 수명 보호를 위해 시스템 임시 폴더(/tmp) 사용
-        self.tts_cache_dir = Path(tempfile.gettempdir()) / "bot_tts_cache"
+        self.tts_cache_dir: Path = Path(tempfile.gettempdir()) / "bot_tts_cache"
         self.tts_cache_dir.mkdir(parents=True, exist_ok=True)
-        self.initial_setup_done = False
+        self.initial_setup_done: bool = False
 
-    async def cog_load(self):
+    async def cog_load(self) -> None:
         self.update_progress_loop.start()
 
-    async def cog_unload(self):
+    async def cog_unload(self) -> None:
         self.update_progress_loop.cancel()
         cleanup_tasks = [state.cleanup(leave=True) for state in self.music_states.values()]
         await asyncio.gather(*cleanup_tasks)
 
     @tasks.loop(seconds=10)
-    async def update_progress_loop(self):
+    async def update_progress_loop(self) -> None:
         for state in self.music_states.values():
             if state.voice_client and state.voice_client.is_connected() and state.voice_client.is_playing():
                 await state.schedule_ui_update()
 
     @commands.Cog.listener()
-    async def on_ready(self):
+    async def on_ready(self) -> None:
         if not self.initial_setup_done:
             await self.cleanup_tts_cache()
             await self.precache_tts()
@@ -76,7 +74,7 @@ class MusicAgentCog(commands.Cog):
         hashed_name = hashlib.sha256(text.encode('utf-8')).hexdigest()
         return self.tts_cache_dir / f"{hashed_name}.opus"
 
-    async def _create_tts_file_if_not_exists(self, text: str):
+    async def _create_tts_file_if_not_exists(self, text: str) -> bool:
         filepath = self._get_tts_filepath(text)
         if filepath.exists(): return True
         
@@ -87,7 +85,7 @@ class MusicAgentCog(commands.Cog):
             mp3_fp.seek(0)
             mp3_bytes = mp3_fp.read()
 
-            def convert():
+            def convert() -> None:
                 command = ['ffmpeg', '-i', '-', '-c:a', 'libopus', '-b:a', '32k', '-hide_banner', '-loglevel', 'error', '-y', str(filepath)]
                 result = subprocess.run(command, input=mp3_bytes, capture_output=True, check=False)
                 if result.returncode != 0:
@@ -99,8 +97,7 @@ class MusicAgentCog(commands.Cog):
         except Exception:
             return False
 
-    async def cleanup_tts_cache(self):
-        # 임시 폴더는 재부팅시 자동 삭제되지만, 봇 실행 중 관리 차원에서 유지
+    async def cleanup_tts_cache(self) -> None:
         expiration_time = time_lib.time() - timedelta(days=1).total_seconds()
         for file in self.tts_cache_dir.glob('*.opus'):
             try:
@@ -108,21 +105,19 @@ class MusicAgentCog(commands.Cog):
                     file.unlink()
             except OSError as e: pass
 
-    async def precache_tts(self):
+    async def precache_tts(self) -> None:
         tasks = [self._create_tts_file_if_not_exists("노래봇이 입장했습니다.")]
         await asyncio.gather(*tasks)
 
-    def after_tts(self, state: MusicState, was_playing: bool, was_paused: bool):
+    def after_tts(self, state: MusicState, was_playing: bool, was_paused: bool) -> None:
         state.is_tts_interrupting = False
         if was_playing:
-            # TTS 재생 후 원래 노래를 다시 재생(resume)
             if state.voice_client and state.voice_client.is_paused():
                 state.voice_client.resume()
         elif not was_paused:
-            # 원래 일시정지 상태가 아니었으며 노래도 안 불렀을때 (이제 다음곡을 부르도록 유도)
             self.bot.loop.call_soon_threadsafe(state.play_next_song.set)
 
-    async def play_tts(self, state: MusicState, text: str):
+    async def play_tts(self, state: MusicState, text: str) -> None:
         if not GTTS_AVAILABLE or not state.voice_client or not state.voice_client.is_connected(): return
         
         await self._create_tts_file_if_not_exists(text)
@@ -140,7 +135,6 @@ class MusicAgentCog(commands.Cog):
                 if state.voice_client.is_playing() and state.current_song:
                     was_playing = True
                     state.is_tts_interrupting = True
-                    # 재생 중이던 곡을 멈추는게 아니라 pause 시켜서 큐가 엉키는 것을 방지
                     state.voice_client.pause()
                 elif state.voice_client.is_paused():
                     was_paused = True
@@ -183,14 +177,14 @@ class MusicAgentCog(commands.Cog):
             self.music_states[guild_id] = state
         return self.music_states[guild_id]
 
-    async def cleanup_channel_messages(self, state: MusicState):
+    async def cleanup_channel_messages(self, state: MusicState) -> None:
         if not state.text_channel or not state.now_playing_message: return
         if not state.text_channel.permissions_for(state.guild.me).manage_messages: return
         try: 
             await state.text_channel.purge(limit=100, check=lambda msg: msg.id != state.now_playing_message.id and not msg.pinned)
         except discord.HTTPException as e: pass
 
-    async def _ensure_voice_connection(self, user, state, send_message_func=None) -> bool:
+    async def _ensure_voice_connection(self, user: discord.Member, state: MusicState, send_message_func: Any = None) -> bool:
         if not user.voice or not user.voice.channel:
             if user.id != MASTER_USER_ID:
                 if send_message_func:
@@ -202,7 +196,7 @@ class MusicAgentCog(commands.Cog):
                 return False
         return True
 
-    async def _process_play_request(self, guild, channel, user, query: str, send_message_func):
+    async def _process_play_request(self, guild: discord.Guild, channel: Any, user: discord.Member, query: str, send_message_func: Any) -> None:
         state = await self.get_music_state(guild.id)
         
         if not await self._ensure_voice_connection(user, state, send_message_func):
@@ -272,7 +266,7 @@ class MusicAgentCog(commands.Cog):
         finally:
             await state.clear_task()
 
-    async def handle_play(self, interaction: discord.Interaction, query: str):
+    async def handle_play(self, interaction: discord.Interaction, query: str) -> None:
         await interaction.response.defer(ephemeral=True)
         
         music_channel = self.bot.get_channel(MUSIC_CHANNEL_ID)
@@ -280,13 +274,13 @@ class MusicAgentCog(commands.Cog):
             await interaction.followup.send(f"노래 명령어는 {music_channel.mention} 채널에서만 사용할 수 있습니다.", ephemeral=True)
             return
 
-        async def send_msg(content, view=discord.utils.MISSING, ephemeral=True, delete_after=None):
+        async def send_msg(content: str, view: Any = discord.utils.MISSING, ephemeral: bool = True, delete_after: Optional[int] = None) -> None:
             await interaction.followup.send(content, view=view, ephemeral=ephemeral)
 
-        await self._process_play_request(interaction.guild, interaction.channel, interaction.user, query, send_msg)
+        await self._process_play_request(interaction.guild, interaction.channel, interaction.user, query, send_msg) # type: ignore
 
     @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
+    async def on_message(self, message: discord.Message) -> None:
         if message.author.bot or message.channel.id != MUSIC_CHANNEL_ID:
             return
             
@@ -301,7 +295,7 @@ class MusicAgentCog(commands.Cog):
         except (discord.NotFound, discord.Forbidden):
             pass
 
-        async def send_msg(content, view=discord.utils.MISSING, ephemeral=False, delete_after=None):
+        async def send_msg(content: str, view: Any = discord.utils.MISSING, ephemeral: bool = False, delete_after: Optional[int] = None) -> None:
             try:
                 if view is not discord.utils.MISSING:
                     await message.channel.send(content, view=view, delete_after=30)
@@ -310,27 +304,27 @@ class MusicAgentCog(commands.Cog):
             except discord.HTTPException:
                 pass
 
-        await self._process_play_request(message.guild, message.channel, message.author, url, send_msg)
+        await self._process_play_request(message.guild, message.channel, message.author, url, send_msg) # type: ignore
 
-    async def queue_song(self, interaction: discord.Interaction, song_data: dict):
-        state = await self.get_music_state(interaction.guild.id)
+    async def queue_song(self, interaction: discord.Interaction, song_data: dict) -> None:
+        state = await self.get_music_state(interaction.guild.id) # type: ignore
         state.cancel_autoplay_task()
         song = Song(song_data, interaction.user)
         state.queue.append(song)
         if state.voice_client and not (state.voice_client.is_playing() or state.voice_client.is_paused()):
             state.play_next_song.set()
         await state.schedule_ui_update()
-        command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{interaction.channel.name}' 채널에서 검색 결과로 노래를 추가했습니다. (제목: '{song.title}')")
+        command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{interaction.channel.name}' 채널에서 검색 결과로 노래를 추가했습니다. (제목: '{song.title}')") # type: ignore
 
-    async def handle_skip(self, interaction: discord.Interaction):
-        state = await self.get_music_state(interaction.guild.id)
+    async def handle_skip(self, interaction: discord.Interaction) -> None:
+        state = await self.get_music_state(interaction.guild.id) # type: ignore
         if state.current_song and state.voice_client:
             state.voice_client.stop()
             await interaction.response.send_message("⏭️ 현재 노래를 건너뛰었습니다.", ephemeral=True, delete_after=5)
-            command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{interaction.channel.name}' 채널에서 노래를 스킵했습니다.")
+            command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{interaction.channel.name}' 채널에서 노래를 스킵했습니다.") # type: ignore
         else: await interaction.response.send_message("건너뛸 노래가 없습니다.", ephemeral=True)
 
-    def create_queue_embed(self, state: MusicState, selected_index: int = None):
+    def create_queue_embed(self, state: MusicState, selected_index: Optional[int] = None) -> discord.Embed:
         embed = discord.Embed(title="🎶 노래 대기열", color=BOT_EMBED_COLOR)
         if state.current_song: embed.add_field(name="현재 재생(일시정지) 중", value=f"[{state.current_song.title}]({state.current_song.webpage_url})", inline=False)
         if not state.queue: queue_text = "비어있음"
@@ -342,79 +336,79 @@ class MusicAgentCog(commands.Cog):
         embed.add_field(name=f"다음 곡 목록 ({len(state.queue)}개)", value=queue_text, inline=False)
         return embed
 
-    async def handle_queue(self, interaction: discord.Interaction):
-        state = await self.get_music_state(interaction.guild.id)
+    async def handle_queue(self, interaction: discord.Interaction) -> None:
+        state = await self.get_music_state(interaction.guild.id) # type: ignore
         embed = self.create_queue_embed(state)
         view = QueueManagementView(self, state)
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
-    async def handle_play_pause(self, interaction: discord.Interaction):
-        state = await self.get_music_state(interaction.guild.id)
+    async def handle_play_pause(self, interaction: discord.Interaction) -> None:
+        state = await self.get_music_state(interaction.guild.id) # type: ignore
         if state.voice_client and state.current_song:
             if state.voice_client.is_paused():
                 state.voice_client.resume()
                 if state.pause_start_time:
                     state.total_paused_duration += discord.utils.utcnow() - state.pause_start_time
                     state.pause_start_time = None
-                command_logger.info(f"사용자 '{interaction.user.display_name}'가 노래를 재개했습니다.")
+                command_logger.info(f"사용자 '{interaction.user.display_name}'가 노래를 재개했습니다.") # type: ignore
             elif state.voice_client.is_playing():
                 state.voice_client.pause()
                 state.pause_start_time = discord.utils.utcnow()
-                command_logger.info(f"사용자 '{interaction.user.display_name}'가 노래를 일시정지했습니다.")
+                command_logger.info(f"사용자 '{interaction.user.display_name}'가 노래를 일시정지했습니다.") # type: ignore
             await state.schedule_ui_update()
             await interaction.response.defer()
 
-    async def handle_loop(self, interaction: discord.Interaction):
-        state = await self.get_music_state(interaction.guild.id)
+    async def handle_loop(self, interaction: discord.Interaction) -> None:
+        state = await self.get_music_state(interaction.guild.id) # type: ignore
         state.loop_mode = LoopMode((state.loop_mode.value + 1) % 3)
         await state.schedule_ui_update()
         await interaction.response.defer()
-        command_logger.info(f"사용자 '{interaction.user.display_name}'가 반복 모드를 '{state.loop_mode.name}'(으)로 변경했습니다.")
+        command_logger.info(f"사용자 '{interaction.user.display_name}'가 반복 모드를 '{state.loop_mode.name}'(으)로 변경했습니다.") # type: ignore
 
-    async def handle_toggle_auto_play(self, interaction: discord.Interaction):
-        state = await self.get_music_state(interaction.guild.id)
+    async def handle_toggle_auto_play(self, interaction: discord.Interaction) -> None:
+        state = await self.get_music_state(interaction.guild.id) # type: ignore
         state.auto_play_enabled = not state.auto_play_enabled
         status = "활성화" if state.auto_play_enabled else "비활성화"
         if not state.auto_play_enabled: state.cancel_autoplay_task()
         await state.schedule_ui_update()
         await interaction.response.send_message(f"🎶 자동 재생을 {status}했습니다.", ephemeral=True, delete_after=5)
-        command_logger.info(f"사용자 '{interaction.user.display_name}'가 자동 재생을 {status}했습니다.")
+        command_logger.info(f"사용자 '{interaction.user.display_name}'가 자동 재생을 {status}했습니다.") # type: ignore
 
-    async def handle_add_favorite(self, interaction: discord.Interaction):
-        state = await self.get_music_state(interaction.guild.id)
-        if not state.current_song: return await interaction.response.send_message("재생 중인 노래가 없습니다.", ephemeral=True)
+    async def handle_add_favorite(self, interaction: discord.Interaction) -> None:
+        state = await self.get_music_state(interaction.guild.id) # type: ignore
+        if not state.current_song: return await interaction.response.send_message("재생 중인 노래가 없습니다.", ephemeral=True) # type: ignore
         song = state.current_song
         user_id = str(interaction.user.id)
         favorites = await load_favorites()
         user_favorites = favorites.get(user_id, [])
-        if any(fav['url'] == song.webpage_url for fav in user_favorites): return await interaction.response.send_message("이미 즐겨찾기에 추가된 노래입니다.", ephemeral=True)
+        if any(fav['url'] == song.webpage_url for fav in user_favorites): return await interaction.response.send_message("이미 즐겨찾기에 추가된 노래입니다.", ephemeral=True) # type: ignore
         await add_favorite(interaction.user.id, song.webpage_url, song.title)
         await interaction.response.send_message(f"⭐ '{song.title}'을(를) 즐겨찾기에 추가했습니다!", ephemeral=True)
-        command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{song.title}'을(를) 즐겨찾기에 추가했습니다.")
+        command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{song.title}'을(를) 즐겨찾기에 추가했습니다.") # type: ignore
 
-    async def handle_view_favorites(self, interaction: discord.Interaction):
+    async def handle_view_favorites(self, interaction: discord.Interaction) -> None:
         user_id = str(interaction.user.id)
         favorites = await load_favorites()
         user_favorites = favorites.get(user_id, [])
-        if not user_favorites: return await interaction.response.send_message("즐겨찾기 목록이 비어있습니다.", ephemeral=True)
+        if not user_favorites: return await interaction.response.send_message("즐겨찾기 목록이 비어있습니다.", ephemeral=True) # type: ignore
         view = FavoritesView(self, interaction, user_favorites)
         embed = view.create_favorites_embed()
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
-    async def handle_add_multiple_from_favorites(self, interaction: discord.Interaction, urls: list[str]) -> tuple[int, bool]:
-        state = await self.get_music_state(interaction.guild.id)
+    async def handle_add_multiple_from_favorites(self, interaction: discord.Interaction, urls: List[str]) -> Tuple[int, bool]:
+        state = await self.get_music_state(interaction.guild.id) # type: ignore
         state.cancel_autoplay_task()
         joined_vc = False
         
-        if not await self._ensure_voice_connection(interaction.user, state, None):
+        if not await self._ensure_voice_connection(interaction.user, state, None): # type: ignore
             return 0, False
                 
-        if interaction.user.voice and interaction.user.voice.channel:
+        if interaction.user.voice and interaction.user.voice.channel: # type: ignore
             if not state.voice_client or not state.voice_client.is_connected():
-                state.voice_client = await interaction.user.voice.channel.connect(timeout=20.0, self_deaf=True)
+                state.voice_client = await interaction.user.voice.channel.connect(timeout=20.0, self_deaf=True) # type: ignore
                 joined_vc = True
-            elif state.voice_client.channel != interaction.user.voice.channel:
-                await state.voice_client.move_to(interaction.user.voice.channel)
+            elif state.voice_client.channel != interaction.user.voice.channel: # type: ignore
+                await state.voice_client.move_to(interaction.user.voice.channel) # type: ignore
                 joined_vc = True
         
         count = 0
@@ -427,7 +421,7 @@ class MusicAgentCog(commands.Cog):
                         await state.set_task(f"❤️ 즐겨찾기 추가 중... ({i + 1}/{total_urls})")
 
                     # [삭제됨] 시간 측정 로직 제거
-                    data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
+                    data = await self.bot.loop.run_in_executor(None, lambda target_url=url: ytdl.extract_info(target_url, download=False))
                     # [삭제됨] update_request_timing 호출 제거
                     state.queue.append(Song(data, interaction.user))
                     count += 1
@@ -438,17 +432,17 @@ class MusicAgentCog(commands.Cog):
         if count > 0 and state.voice_client and not (state.voice_client.is_playing() or state.voice_client.is_paused()):
             state.play_next_song.set()
         
-        command_logger.info(f"사용자 '{interaction.user.display_name}'가 즐겨찾기에서 {count}곡을 대기열에 추가했습니다.")
+        command_logger.info(f"사용자 '{interaction.user.display_name}'가 즐겨찾기에서 {count}곡을 대기열에 추가했습니다.") # type: ignore
         
         return count, joined_vc
 
-    async def handle_delete_from_favorites(self, user_id: str, urls_to_delete: list[str]) -> int:
+    async def handle_delete_from_favorites(self, user_id: str, urls_to_delete: List[str]) -> int:
         deleted_count = await remove_favorites(int(user_id), urls_to_delete)
         command_logger.info(f"사용자 ID '{user_id}'가 즐겨찾기에서 {deleted_count}곡을 삭제했습니다.")
         return deleted_count
 
-    async def handle_shuffle(self, interaction: discord.Interaction):
-        state = await self.get_music_state(interaction.guild.id)
+    async def handle_shuffle(self, interaction: discord.Interaction) -> None:
+        state = await self.get_music_state(interaction.guild.id) # type: ignore
         if len(state.queue) < 2:
             await interaction.response.send_message("대기열에 섞을 노래가 부족합니다.", ephemeral=True, delete_after=5)
             return
@@ -458,36 +452,36 @@ class MusicAgentCog(commands.Cog):
         state.queue = deque(queue_list)
         await state.schedule_ui_update()
         await interaction.response.send_message("🔀 대기열을 섞었습니다!", ephemeral=True, delete_after=5)
-        command_logger.info(f"사용자 '{interaction.user.display_name}'가 대기열을 섞었습니다.")
+        command_logger.info(f"사용자 '{interaction.user.display_name}'가 대기열을 섞었습니다.") # type: ignore
 
-    async def handle_clear_queue(self, interaction: discord.Interaction, original_interaction: discord.Interaction):
-        state = await self.get_music_state(interaction.guild.id)
+    async def handle_clear_queue(self, interaction: discord.Interaction, original_interaction: discord.Interaction) -> None:
+        state = await self.get_music_state(interaction.guild.id) # type: ignore
         state.cancel_autoplay_task()
         count = len(state.queue)
         state.queue.clear()
         await state.schedule_ui_update()
         await original_interaction.edit_original_response(content=f"🗑️ 대기열의 노래 {count}개를 모두 삭제했습니다.", view=None)
-        command_logger.info(f"사용자 '{interaction.user.display_name}'가 대기열을 비웠습니다. ({count}곡 삭제)")
+        command_logger.info(f"사용자 '{interaction.user.display_name}'가 대기열을 비웠습니다. ({count}곡 삭제)") # type: ignore
 
-    async def leave_logic(self, guild_id: int):
+    async def leave_logic(self, guild_id: int) -> None:
         state = self.music_states.pop(guild_id, None)
         if not state: return
         await state.cleanup(leave=True)
 
-    async def handle_leave(self, interaction: discord.Interaction):
-        await self.leave_logic(interaction.guild.id)
+    async def handle_leave(self, interaction: discord.Interaction) -> None:
+        await self.leave_logic(interaction.guild.id) # type: ignore
         await interaction.response.send_message("🚪 음성 채널에서 퇴장했습니다.", ephemeral=True)
-        command_logger.info(f"사용자 '{interaction.user.display_name}'가 봇을 퇴장시켰습니다.")
+        command_logger.info(f"사용자 '{interaction.user.display_name}'가 봇을 퇴장시켰습니다.") # type: ignore
 
     @commands.Cog.listener()
-    async def on_voice_state_update(self, member, before, after):
-        if member.id == self.bot.user.id:
+    async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState) -> None:
+        if member.id == self.bot.user.id: # type: ignore
             if not before.channel and after.channel:
-                state = self.music_states.get(after.channel.guild.id)
+                state = self.music_states.get(after.channel.guild.id) # type: ignore
                 if state:
                     await asyncio.sleep(1.5)
                     self.bot.loop.create_task(self.play_tts(state, "노래봇이 입장했습니다."))
-            if before.channel and not after.channel: await self.leave_logic(before.channel.guild.id)
+            if before.channel and not after.channel: await self.leave_logic(before.channel.guild.id) # type: ignore
             return
 
         state = self.music_states.get(member.guild.id)
@@ -503,9 +497,9 @@ class MusicAgentCog(commands.Cog):
             await asyncio.sleep(2)
             current_state = self.music_states.get(member.guild.id)
             if current_state and current_state.voice_client and current_state.voice_client.is_connected():
-                if len(current_state.voice_client.channel.members) == 1: await self.leave_logic(member.guild.id)
+                if len(current_state.voice_client.channel.members) == 1: await self.leave_logic(member.guild.id) # type: ignore
 
-async def setup(bot: commands.Bot):
+async def setup(bot: commands.Bot) -> None:
     if MUSIC_CHANNEL_ID == 0:
         return
     await bot.add_cog(MusicAgentCog(bot))
