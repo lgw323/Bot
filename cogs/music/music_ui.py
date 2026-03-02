@@ -1,12 +1,19 @@
-from typing import List
+import logging
+from typing import List, Any, Optional
+
 import discord
 from discord import ui
+from discord.ext import commands
+
+from .music_utils import BOT_EMBED_COLOR, MASTER_USER_ID, LoopMode, LOOP_MODE_DATA
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 class SearchSelect(ui.Select):
-    def __init__(self, cog, search_results: List[dict]):
-        self.cog = cog
-        self.search_results = search_results
-        options = []
+    def __init__(self, cog: Any, search_results: List[dict]) -> None:
+        self.cog: Any = cog
+        self.search_results: List[dict] = search_results
+        options: List[discord.SelectOption] = []
         for i, result in enumerate(search_results):
             duration = result.get('duration', 0)
             minutes, seconds = divmod(duration, 60)
@@ -22,7 +29,7 @@ class SearchSelect(ui.Select):
             )
         super().__init__(placeholder="재생할 노래를 선택하세요...", min_values=1, max_values=1, options=options)
 
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
         selected_index = int(self.values[0])
         selected_song_data = self.search_results[selected_index]
@@ -31,11 +38,11 @@ class SearchSelect(ui.Select):
         await interaction.edit_original_response(content="✅ 선택한 노래를 대기열에 추가했습니다.", view=None)
 
 class QueueSelect(ui.Select):
-    def __init__(self, songs): 
+    def __init__(self, songs: List[Any]) -> None: 
         options = [discord.SelectOption(label=f"{i+1}. {song.title[:95]}", value=str(i)) for i, song in enumerate(songs)]
         super().__init__(placeholder="관리할 노래를 선택하세요...", min_values=1, max_values=1, options=options)
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: discord.Interaction) -> None:
         self.view.selected_index = int(self.values[0])
         for item in self.view.children:
             if isinstance(item, ui.Button) and item.custom_id in ["q_move_top", "q_remove"]:
@@ -43,26 +50,26 @@ class QueueSelect(ui.Select):
         await self.view.update_view(interaction, "노래를 선택했습니다. 아래 버튼으로 관리하세요.", bold_selection=True)
 
 class ConfirmClearView(ui.View):
-    def __init__(self, cog, interaction: discord.Interaction, queue_view):
+    def __init__(self, cog: Any, interaction: discord.Interaction, queue_view: ui.View) -> None:
         super().__init__(timeout=30)
-        self.cog = cog
-        self.original_interaction = interaction
-        self.queue_view = queue_view
-        self.message = None
+        self.cog: Any = cog
+        self.original_interaction: discord.Interaction = interaction
+        self.queue_view: ui.View = queue_view
+        self.message: Optional[discord.Message] = None
 
     @ui.button(label="확인", style=discord.ButtonStyle.danger)
-    async def confirm(self, interaction: discord.Interaction, button: ui.Button):
+    async def confirm(self, interaction: discord.Interaction, button: ui.Button) -> None:
         await interaction.response.defer()
         await self.cog.handle_clear_queue(interaction, self.original_interaction)
         self.stop()
 
     @ui.button(label="취소", style=discord.ButtonStyle.secondary)
-    async def cancel(self, interaction: discord.Interaction, button: ui.Button):
+    async def cancel(self, interaction: discord.Interaction, button: ui.Button) -> None:
         await interaction.response.defer()
         await self.original_interaction.edit_original_response(content="취소되었습니다.", view=self.queue_view)
         self.stop()
 
-    async def on_timeout(self):
+    async def on_timeout(self) -> None:
         if self.message:
             try:
                 await self.message.edit(content="시간이 초과되어 취소되었습니다.", view=None)
@@ -70,13 +77,15 @@ class ConfirmClearView(ui.View):
                 pass
 
 class QueueManagementView(ui.View):
-    def __init__(self, cog, state):
+    def __init__(self, cog: Any, state: Any) -> None:
         super().__init__(timeout=180)
-        self.cog, self.state, self.selected_index = cog, state, None
-        self.songs = list(self.state.queue)[:25]
+        self.cog: Any = cog
+        self.state: Any = state
+        self.selected_index: Optional[int] = None
+        self.songs: List[Any] = list(self.state.queue)[:25]
         self.build_view()
     
-    def build_view(self):
+    def build_view(self) -> None:
         self.clear_items()
         
         if self.songs:
@@ -101,27 +110,27 @@ class QueueManagementView(ui.View):
         clear_button.callback = self.clear_queue
         self.add_item(clear_button)
 
-    async def move_to_top(self, interaction: discord.Interaction):
+    async def move_to_top(self, interaction: discord.Interaction) -> None:
         if self.selected_index is not None and self.selected_index < len(list(self.state.queue)):
             song_to_move = list(self.state.queue)[self.selected_index]
             self.state.queue.remove(song_to_move)
             self.state.queue.insert(0, song_to_move)
             await self.update_view(interaction, f"✅ '{song_to_move.title}'을(를) 대기열 맨 위로 옮겼습니다.")
 
-    async def remove_song(self, interaction: discord.Interaction):
+    async def remove_song(self, interaction: discord.Interaction) -> None:
         if self.selected_index is not None and self.selected_index < len(list(self.state.queue)):
             song_to_remove = list(self.state.queue)[self.selected_index]
             self.state.queue.remove(song_to_remove)
             await self.update_view(interaction, f"🗑️ '{song_to_remove.title}'을(를) 대기열에서 삭제했습니다.")
     
-    async def shuffle(self, interaction: discord.Interaction):
+    async def shuffle(self, interaction: discord.Interaction) -> None:
         await self.cog.handle_shuffle(interaction)
 
-    async def clear_queue(self, interaction: discord.Interaction):
+    async def clear_queue(self, interaction: discord.Interaction) -> None:
         view = ConfirmClearView(self.cog, interaction, self)
         await interaction.response.edit_message(content="정말로 대기열을 모두 비우시겠습니까?", view=view)
 
-    async def update_view(self, interaction: discord.Interaction, message: str, bold_selection: bool = False):
+    async def update_view(self, interaction: discord.Interaction, message: str, bold_selection: bool = False) -> None:
         self.songs = list(self.state.queue)[:25]
         self.build_view()
             
@@ -134,25 +143,24 @@ class QueueManagementView(ui.View):
             await interaction.response.edit_message(content=message, embed=embed, view=self)
 
 class FavoritesSelect(ui.Select):
-    def __init__(self, favorites: List[dict]):
+    def __init__(self, favorites: List[dict]) -> None:
         options = [discord.SelectOption(label=f"{fav['title'][:95]}", value=fav['url']) for fav in favorites]
         super().__init__(placeholder="관리할 노래를 선택하세요...", min_values=1, max_values=len(options) if options else 1, options=options)
 
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: discord.Interaction) -> None:
         self.view.selected_urls = self.values
         await self.view.update_display(interaction)
 
 class FavoritesView(ui.View):
-    def __init__(self, cog, interaction: discord.Interaction, favorites: List[dict]):
+    def __init__(self, cog: Any, interaction: discord.Interaction, favorites: List[dict]) -> None:
         super().__init__(timeout=300)
-        from .music_utils import BOT_EMBED_COLOR
-        self.cog = cog
-        self.original_interaction = interaction
-        self.user_id = str(interaction.user.id)
-        self.favorites = favorites
-        self.is_delete_mode = False
-        self.selected_urls = []
-        self.BOT_EMBED_COLOR = BOT_EMBED_COLOR
+        self.cog: Any = cog
+        self.original_interaction: discord.Interaction = interaction
+        self.user_id: str = str(interaction.user.id)
+        self.favorites: List[dict] = favorites
+        self.is_delete_mode: bool = False
+        self.selected_urls: List[str] = []
+        self.BOT_EMBED_COLOR: int = BOT_EMBED_COLOR
         
         self.build_view()
 
@@ -177,7 +185,7 @@ class FavoritesView(ui.View):
         embed.set_footer(text=f"총 {len(self.favorites)}곡 | 선택됨: {len(self.selected_urls)}곡")
         return embed
 
-    def build_view(self):
+    def build_view(self) -> None:
         self.clear_items()
 
         if self.favorites:
@@ -204,30 +212,31 @@ class FavoritesView(ui.View):
         self.add_item(confirm_button)
         self.add_item(toggle_button)
     
-    async def update_display(self, interaction: discord.Interaction):
+    async def update_display(self, interaction: discord.Interaction) -> None:
         self.build_view()
         embed = self.create_favorites_embed()
         await interaction.response.edit_message(embed=embed, view=self)
 
-    async def toggle_mode(self, interaction: discord.Interaction):
+    async def toggle_mode(self, interaction: discord.Interaction) -> None:
         self.is_delete_mode = not self.is_delete_mode
         await self.update_display(interaction)
 
-    async def select_all(self, interaction: discord.Interaction):
+    async def select_all(self, interaction: discord.Interaction) -> None:
         self.selected_urls = [fav['url'] for fav in self.favorites]
         await self.update_display(interaction)
 
-    async def deselect_all(self, interaction: discord.Interaction):
+    async def deselect_all(self, interaction: discord.Interaction) -> None:
         self.selected_urls = []
         await self.update_display(interaction)
 
-    async def add_selected_to_queue(self, interaction: discord.Interaction):
+    async def add_selected_to_queue(self, interaction: discord.Interaction) -> None:
         if not self.selected_urls:
-            return await interaction.response.send_message("추가할 노래를 선택해주세요.", ephemeral=True)
+            await interaction.response.send_message("추가할 노래를 선택해주세요.", ephemeral=True)
+            return
         
-        from .music_utils import MASTER_USER_ID
         if not interaction.user.voice and interaction.user.id != MASTER_USER_ID:
-            return await interaction.response.send_message("음성 채널에 먼저 참여해주세요.", ephemeral=True)
+            await interaction.response.send_message("음성 채널에 먼저 참여해주세요.", ephemeral=True)
+            return
 
         await interaction.response.defer(thinking=True, ephemeral=True)
         count, joined = await self.cog.handle_add_multiple_from_favorites(interaction, self.selected_urls)
@@ -246,9 +255,10 @@ class FavoritesView(ui.View):
             pass
         self.stop()
 
-    async def delete_selected(self, interaction: discord.Interaction):
+    async def delete_selected(self, interaction: discord.Interaction) -> None:
         if not self.selected_urls:
-            return await interaction.response.send_message("삭제할 노래를 선택해주세요.", ephemeral=True)
+            await interaction.response.send_message("삭제할 노래를 선택해주세요.", ephemeral=True)
+            return
         
         await interaction.response.defer(thinking=True, ephemeral=True)
         count = await self.cog.handle_delete_from_favorites(self.user_id, self.selected_urls)
@@ -260,18 +270,17 @@ class FavoritesView(ui.View):
             pass
         self.stop()
 
-    async def on_timeout(self):
+    async def on_timeout(self) -> None:
         try:
             await self.original_interaction.edit_original_response(content="시간이 초과되었습니다.", view=None)
         except discord.HTTPException: pass
 
 class TopSongButton(ui.Button):
-    def __init__(self, cog, song: dict, row: int):
-        self.cog = cog
-        self.song_url = song["url"]
+    def __init__(self, cog: Any, song: dict, row: int) -> None:
+        self.cog: Any = cog
+        self.song_url: str = song["url"]
         
         title = song["title"]
-        # truncate title so it fits in the button
         if len(title) > 75:
             title = title[:75] + "..."
             
@@ -282,7 +291,7 @@ class TopSongButton(ui.Button):
             row=row
         )
 
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer(thinking=True, ephemeral=True)
         count, joined = await self.cog.handle_add_multiple_from_favorites(interaction, [self.song_url])
         message = f"🔥 많이 듣는 곡을 대기열에 추가했습니다."
@@ -294,21 +303,18 @@ class TopSongButton(ui.Button):
         await interaction.followup.send(message, ephemeral=True)
 
 class MusicPlayerView(ui.View):
-    def __init__(self, cog, state, top_songs=None):
+    def __init__(self, cog: Any, state: Any, top_songs: Optional[List[dict]] = None) -> None:
         super().__init__(timeout=None)
-        from .music_utils import LoopMode, LOOP_MODE_DATA
-        self.cog, self.state = cog, state
-        self.top_songs = top_songs or []
-        self.LoopMode = LoopMode
-        self.LOOP_MODE_DATA = LOOP_MODE_DATA
+        self.cog: Any = cog
+        self.state: Any = state
+        self.top_songs: List[dict] = top_songs or []
         self.create_buttons()
 
-    def create_buttons(self):
+    def create_buttons(self) -> None:
         self.clear_items()
         is_paused = self.state.voice_client and self.state.voice_client.is_paused()
         is_playing = self.state.current_song is not None
 
-        # Row 1: 핵심 스트림 제어 (아이콘 전용)
         play_pause_btn = ui.Button(label="", style=discord.ButtonStyle.secondary, emoji="▶️" if is_paused else "⏸️", disabled=not is_playing, row=0)
         play_pause_btn.callback = self.toggle_play_pause
         self.add_item(play_pause_btn)
@@ -329,11 +335,10 @@ class MusicPlayerView(ui.View):
         queue_btn.callback = self.show_queue
         self.add_item(queue_btn)
 
-        # Row 2: 보조 시스템 제어
         loop_mode = self.state.loop_mode
-        loop_label = "한 곡 반복" if loop_mode == self.LoopMode.SONG else "전체 반복" if loop_mode == self.LoopMode.QUEUE else "반복 없음"
-        loop_emoji = self.LOOP_MODE_DATA[loop_mode][1]
-        if loop_mode == self.LoopMode.NONE: loop_emoji = "➡️"
+        loop_label = "한 곡 반복" if loop_mode == LoopMode.SONG else "전체 반복" if loop_mode == LoopMode.QUEUE else "반복 없음"
+        loop_emoji = LOOP_MODE_DATA[loop_mode][1]
+        if loop_mode == LoopMode.NONE: loop_emoji = "➡️"
         
         loop_btn = ui.Button(label=loop_label, style=discord.ButtonStyle.secondary, emoji=loop_emoji, row=1)
         loop_btn.callback = self.toggle_loop
@@ -348,11 +353,10 @@ class MusicPlayerView(ui.View):
         fav_list_btn.callback = self.show_favorites
         self.add_item(fav_list_btn)
 
-        # Row 3 ~ Row 5: 하단 줄 (명예의 전당 Top 3)
         if self.top_songs:
             medals = ["🏆 1위", "🥈 2위", "🥉 3위"]
             for i, song in enumerate(self.top_songs[:3]):
-                row = i + 2  # Row 2, 3, 4 (0-indexed logic maps this to lines 3, 4, 5 in Discord view)
+                row = i + 2 
                 
                 url = song["url"]
                 base_title = song["title"]
@@ -360,7 +364,6 @@ class MusicPlayerView(ui.View):
                 
                 medal = medals[i]
                 
-                # Length check to prevent Button label limit (max 80 chars total)
                 title_max_len = 65 - len(f"[{medal}]  ({count}회)")
                 truncated_title = base_title if len(base_title) <= title_max_len else base_title[:title_max_len] + "..."
                 
@@ -368,8 +371,7 @@ class MusicPlayerView(ui.View):
                 
                 btn = ui.Button(style=discord.ButtonStyle.primary, label=full_label, row=row)
                 
-                # In order to capture the URL correctly in the local scope block
-                async def top_song_callback(interaction: discord.Interaction, target_url=url):
+                async def top_song_callback(interaction: discord.Interaction, target_url: str = url) -> None:
                     await interaction.response.defer(thinking=True, ephemeral=True)
                     c, joined = await self.cog.handle_add_multiple_from_favorites(interaction, [target_url])
                     msg = "🔥 많이 듣는 곡을 대기열에 추가했습니다."
@@ -384,7 +386,6 @@ class MusicPlayerView(ui.View):
                 self.add_item(btn)
 
     async def interaction_check_bot_connected(self, interaction: discord.Interaction) -> bool:
-        from .music_utils import MASTER_USER_ID
         if interaction.user.id == MASTER_USER_ID:
             return True
 
@@ -401,20 +402,19 @@ class MusicPlayerView(ui.View):
             return False
         return True
 
-    async def toggle_play_pause(self, i: discord.Interaction): 
+    async def toggle_play_pause(self, i: discord.Interaction) -> None: 
         if await self.interaction_check_bot_connected(i): await self.cog.handle_play_pause(i)
-    async def skip(self, i: discord.Interaction): 
+    async def skip(self, i: discord.Interaction) -> None: 
         if await self.interaction_check_bot_connected(i): await self.cog.handle_skip(i)
-    async def leave(self, i: discord.Interaction): 
+    async def leave(self, i: discord.Interaction) -> None: 
         if await self.interaction_check_bot_connected(i): await self.cog.handle_leave(i)
-    async def add_to_favorites(self, i: discord.Interaction): 
+    async def add_to_favorites(self, i: discord.Interaction) -> None: 
         if await self.interaction_check_bot_connected(i): await self.cog.handle_add_favorite(i)
-
-    async def toggle_loop(self, i: discord.Interaction): 
+    async def toggle_loop(self, i: discord.Interaction) -> None: 
         await self.cog.handle_loop(i)
-    async def toggle_auto_play(self, i: discord.Interaction):
+    async def toggle_auto_play(self, i: discord.Interaction) -> None:
         await self.cog.handle_toggle_auto_play(i)
-    async def show_queue(self, i: discord.Interaction): 
+    async def show_queue(self, i: discord.Interaction) -> None: 
         await self.cog.handle_queue(i)
-    async def show_favorites(self, i: discord.Interaction): 
+    async def show_favorites(self, i: discord.Interaction) -> None: 
         await self.cog.handle_view_favorites(i)
