@@ -44,7 +44,7 @@
 
 ## 📝 4. Git Commit Convention
 
-버전 관리를 위해 **Angular Commit Convention**을 준수합니다. 에이전트가 커밋 메시지를 생성할 때 다음 포맷을 사용하십시오.
+버전 관리를 위해 **Angular Commit Convention**을 준수합니다. 에이전트가 커밋 메시지를 생성할 때 다음 포맷을 사용하십시오. 커밋시 파일 하나씩 개별로 진행하십시오.
 
 ### Format
 `<type>[optional scope]: <description in Korean>`

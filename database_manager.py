@@ -1,37 +1,46 @@
 import sqlite3
 import json
-import os
 import logging
 import asyncio
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-logger = logging.getLogger("DatabaseManager")
-DB_PATH = "data/bot_database.db"
+logger: logging.Logger = logging.getLogger("DatabaseManager")
+
+# 현재 스크립트 위치 기준으로 절대 경로 설정
+BASE_DIR: Path = Path(__file__).parent
+DATA_DIR: Path = BASE_DIR / "data"
+
+DB_PATH: Path = DATA_DIR / "bot_database.db"
+SQL_BACKUP_PATH: Path = DATA_DIR / "database_backup.sql"
 
 # 기존 JSON 경로
-FAVORITES_FILE = "data/favorites.json"
-MUSIC_SETTINGS_FILE = "data/music_settings.json"
+FAVORITES_FILE: Path = DATA_DIR / "favorites.json"
+MUSIC_SETTINGS_FILE: Path = DATA_DIR / "music_settings.json"
 
-db_lock = asyncio.Lock()
+# SQLite 동시성 이슈(Concurrency)를 방어하기 위해 db_lock을 사용합니다.
+# 또한 check_same_thread=False 옵션을 추가하여 asyncio.to_thread에서 발생할 수 있는 스레드 참조 에러를 최적화합니다.
+db_lock: asyncio.Lock = asyncio.Lock()
 
-def init_db():
-    os.makedirs("data", exist_ok=True)
+
+def init_db() -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
     
     # 0. 백업 기반 자동 복구 (Main DB가 없고 SQL 덤프가 있는 경우)
-    sql_backup_path = "data/database_backup.sql"
-    if not os.path.exists(DB_PATH) and os.path.exists(sql_backup_path):
-        logger.info(f"Main DB not found. Restoring from {sql_backup_path}...")
+    if not DB_PATH.exists() and SQL_BACKUP_PATH.exists():
+        logger.info(f"Main DB not found. Restoring from {SQL_BACKUP_PATH}...")
         try:
-            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
-                with open(sql_backup_path, 'r', encoding='utf-8') as f:
-                    sql_script = f.read()
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+                with open(SQL_BACKUP_PATH, 'r', encoding='utf-8') as f:
+                    sql_script: str = f.read()
                 conn.executescript(sql_script)
                 conn.commit()
             logger.info("Database restored successfully from SQL dump.")
         except Exception as e:
-            logger.error(f"Failed to restore DB: {e}")
+            logger.error(f"Failed to restore DB: {e}", exc_info=True)
 
-    with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
-        c = conn.cursor()
+    with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+        c: sqlite3.Cursor = conn.cursor()
         
         # 1. users
         c.execute('''
@@ -44,9 +53,6 @@ def init_db():
                 PRIMARY KEY (user_id, guild_id)
             )
         ''')
-        
-        # [MIGRATION_HOOK] 
-        # (마이그레이션 완료되어 수동 삭제함)
         
         # 2. music_settings (guild 단위)
         c.execute('''
@@ -81,114 +87,116 @@ def init_db():
     logger.info("Database schemas initialized.")
 
 
-
-async def backup_database_to_sql():
+async def backup_database_to_sql() -> bool:
     """안전하게 현재 SQLite DB를 SQL 덤프 파일로 백업합니다."""
     async with db_lock:
-        def _backup():
-            sql_backup_path = "data/database_backup.sql"
+        def _backup() -> bool:
             try:
-                with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
-                    with open(sql_backup_path, 'w', encoding='utf-8') as f:
+                with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+                    with open(SQL_BACKUP_PATH, 'w', encoding='utf-8') as f:
                         for line in conn.iterdump():
                             f.write(f'{line}\n')
                 logger.info("Database successfully backed up to SQL dump.")
                 return True
             except Exception as e:
-                logger.error(f"Failed to backup DB to SQL: {e}")
+                logger.error(f"Failed to backup DB to SQL: {e}", exc_info=True)
                 return False
         return await asyncio.to_thread(_backup)
 
-def migrate_json_to_db():
-    with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
-        c = conn.cursor()
+
+def migrate_json_to_db() -> None:
+    with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+        c: sqlite3.Cursor = conn.cursor()
         
         # Migrate music_settings.json (guild_id)
-        if os.path.exists(MUSIC_SETTINGS_FILE):
+        if MUSIC_SETTINGS_FILE.exists():
             logger.info("Migrating music_settings.json...")
             try:
                 with open(MUSIC_SETTINGS_FILE, 'r', encoding='utf-8') as f:
-                    settings_data = json.load(f)
+                    settings_data: Dict[str, Any] = json.load(f)
                     
                 for guild_id_str, data in settings_data.items():
-                    guild_id = int(guild_id_str)
-                    volume = data.get("volume", 1.0)
+                    guild_id: int = int(guild_id_str)
+                    volume: float = data.get("volume", 1.0)
                     c.execute("INSERT OR IGNORE INTO music_settings (guild_id, volume) VALUES (?, ?)", (guild_id, volume))
                     c.execute("UPDATE music_settings SET volume = ? WHERE guild_id = ?", (volume, guild_id))
                     
-                    play_counts = data.get("play_counts", {})
+                    play_counts: Dict[str, Any] = data.get("play_counts", {})
                     for url, info in play_counts.items():
-                        title = info.get("title", "")
-                        count = info.get("count", 1)
+                        title: str = info.get("title", "")
+                        count: int = info.get("count", 1)
                         c.execute("INSERT OR REPLACE INTO music_play_counts (guild_id, url, title, play_count) VALUES (?, ?, ?, ?)",
                                   (guild_id, url, title, count))
                 
                 logger.info("music_settings.json migrated.")
-                os.rename(MUSIC_SETTINGS_FILE, MUSIC_SETTINGS_FILE + ".bak")
+                MUSIC_SETTINGS_FILE.rename(MUSIC_SETTINGS_FILE.with_suffix(".json.bak"))
             except Exception as e:
-                logger.error(f"Error migrating music_settings: {e}")
+                logger.error(f"Error migrating music_settings: {e}", exc_info=True)
 
         # Migrate favorites.json (user_id)
-        if os.path.exists(FAVORITES_FILE):
+        if FAVORITES_FILE.exists():
             logger.info("Migrating favorites.json...")
             try:
                 with open(FAVORITES_FILE, 'r', encoding='utf-8') as f:
-                    fav_data = json.load(f)
+                    fav_data: Dict[str, Any] = json.load(f)
                     
                 for user_id_str, data in fav_data.items():
                     if user_id_str == "_guild_settings":
                         continue
-                    user_id = int(user_id_str)
+                    user_id: int = int(user_id_str)
                     
                     # Ensure user exists in users table
                     c.execute("INSERT OR IGNORE INTO users (user_id, guild_id) VALUES (?, ?)", (user_id, 0))
                     
                     for song in data:
-                        title = song.get("title", "")
-                        url = song.get("url", "")
+                        title: str = song.get("title", "")
+                        url: str = song.get("url", "")
                         c.execute("INSERT OR IGNORE INTO favorites (user_id, url, title) VALUES (?, ?, ?)",
                                   (user_id, url, title))
                 
                 logger.info("favorites.json migrated.")
-                os.rename(FAVORITES_FILE, FAVORITES_FILE + ".bak")
+                FAVORITES_FILE.rename(FAVORITES_FILE.with_suffix(".json.bak"))
             except Exception as e:
-                logger.error(f"Error migrating favorites: {e}")
+                logger.error(f"Error migrating favorites: {e}", exc_info=True)
 
         conn.commit()
 
+
 # 비동기 DB 조회/조작 유틸 함수
-async def get_favorites():
+async def get_favorites() -> Dict[str, List[Dict[str, str]]]:
     async with db_lock:
-        def _get():
-            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
+        def _get() -> Dict[str, List[Dict[str, str]]]:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
                 conn.row_factory = sqlite3.Row
-                c = conn.cursor()
+                c: sqlite3.Cursor = conn.cursor()
                 c.execute("SELECT user_id, url, title FROM favorites")
-                res = {}
+                res: Dict[str, List[Dict[str, str]]] = {}
                 for row in c.fetchall():
-                    uid = str(row['user_id'])
+                    uid: str = str(row['user_id'])
                     if uid not in res:
                         res[uid] = []
                     res[uid].append({"url": row['url'], "title": row['title']})
                 return res
         return await asyncio.to_thread(_get)
 
-async def add_favorite(user_id: int, url: str, title: str):
+
+async def add_favorite(user_id: int, url: str, title: str) -> None:
     async with db_lock:
-        def _add():
-            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
-                c = conn.cursor()
+        def _add() -> None:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+                c: sqlite3.Cursor = conn.cursor()
                 c.execute("INSERT OR IGNORE INTO users (user_id, guild_id) VALUES (?, ?)", (user_id, 0))
                 c.execute("INSERT OR REPLACE INTO favorites (user_id, url, title) VALUES (?, ?, ?)", (user_id, url, title))
                 conn.commit()
         await asyncio.to_thread(_add)
 
-async def remove_favorites(user_id: int, urls: list[str]) -> int:
+
+async def remove_favorites(user_id: int, urls: List[str]) -> int:
     async with db_lock:
-        def _remove():
-            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
-                c = conn.cursor()
-                deleted_count = 0
+        def _remove() -> int:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+                c: sqlite3.Cursor = conn.cursor()
+                deleted_count: int = 0
                 for url in urls:
                     c.execute("DELETE FROM favorites WHERE user_id = ? AND url = ?", (user_id, url))
                     deleted_count += c.rowcount
@@ -196,23 +204,24 @@ async def remove_favorites(user_id: int, urls: list[str]) -> int:
                 return deleted_count
         return await asyncio.to_thread(_remove)
 
-async def get_music_settings():
+
+async def get_music_settings() -> Dict[str, Any]:
     async with db_lock:
-        def _get():
-            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
+        def _get() -> Dict[str, Any]:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
                 conn.row_factory = sqlite3.Row
-                c = conn.cursor()
-                res = {}
+                c: sqlite3.Cursor = conn.cursor()
+                res: Dict[str, Any] = {}
                 c.execute("SELECT guild_id, volume FROM music_settings")
                 for row in c.fetchall():
-                    gid = str(row['guild_id'])
+                    gid: str = str(row['guild_id'])
                     if gid not in res:
                         res[gid] = {"play_counts": {}}
                     res[gid]["volume"] = row['volume']
                 
                 c.execute("SELECT guild_id, url, title, play_count FROM music_play_counts")
                 for row in c.fetchall():
-                    gid = str(row['guild_id'])
+                    gid: str = str(row['guild_id'])
                     if gid not in res:
                         res[gid] = {"volume": 1.0, "play_counts": {}}
                     if "play_counts" not in res[gid]:
@@ -221,61 +230,66 @@ async def get_music_settings():
                 return res
         return await asyncio.to_thread(_get)
 
-async def update_music_volume(guild_id: int, volume: float):
+
+async def update_music_volume(guild_id: int, volume: float) -> None:
     async with db_lock:
-        def _update():
-            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
-                c = conn.cursor()
+        def _update() -> None:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+                c: sqlite3.Cursor = conn.cursor()
                 c.execute("INSERT OR IGNORE INTO music_settings (guild_id, volume) VALUES (?, ?)", (guild_id, volume))
                 c.execute("UPDATE music_settings SET volume = ? WHERE guild_id = ?", (volume, guild_id))
                 conn.commit()
         await asyncio.to_thread(_update)
 
-async def increment_play_count_db(guild_id: int, url: str, title: str):
+
+async def increment_play_count_db(guild_id: int, url: str, title: str) -> None:
     async with db_lock:
-        def _update():
-            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
-                c = conn.cursor()
+        def _update() -> None:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+                c: sqlite3.Cursor = conn.cursor()
                 c.execute("INSERT OR IGNORE INTO music_play_counts (guild_id, url, title, play_count) VALUES (?, ?, ?, 0)", (guild_id, url, title))
                 c.execute("UPDATE music_play_counts SET play_count = play_count + 1, title = ? WHERE guild_id = ? AND url = ?", (title, guild_id, url))
                 
                 c.execute("SELECT url FROM music_play_counts WHERE guild_id = ? ORDER BY play_count DESC LIMIT -1 OFFSET 50", (guild_id,))
-                to_delete = [r[0] for r in c.fetchall()]
+                to_delete: List[str] = [r[0] for r in c.fetchall()]
                 for del_url in to_delete:
                     c.execute("DELETE FROM music_play_counts WHERE guild_id = ? AND url = ?", (guild_id, del_url))
                 conn.commit()
         await asyncio.to_thread(_update)
 
-async def get_top_played_songs_db(guild_id: int, limit: int = 5):
+
+async def get_top_played_songs_db(guild_id: int, limit: int = 5) -> List[Dict[str, Any]]:
     async with db_lock:
-        def _get():
-            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
+        def _get() -> List[Dict[str, Any]]:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
                 conn.row_factory = sqlite3.Row
-                c = conn.cursor()
+                c: sqlite3.Cursor = conn.cursor()
                 c.execute("SELECT url, title, play_count as count FROM music_play_counts WHERE guild_id = ? ORDER BY play_count DESC LIMIT ?", (guild_id, limit))
                 return [dict(row) for row in c.fetchall()]
         return await asyncio.to_thread(_get)
+
 
 # ==========================================
 # 레벨링 영역 DB 함수 (Users 테이블)
 # ==========================================
 
-async def get_user_data(user_id: int, guild_id: int):
+async def get_user_data(user_id: int, guild_id: int) -> Optional[Dict[str, Any]]:
     async with db_lock:
-        def _get():
-            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
+        def _get() -> Optional[Dict[str, Any]]:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
                 conn.row_factory = sqlite3.Row
-                c = conn.cursor()
+                c: sqlite3.Cursor = conn.cursor()
                 c.execute("SELECT user_id, guild_id, xp, level, total_vc_seconds FROM users WHERE user_id = ? AND guild_id = ?", (user_id, guild_id))
                 row = c.fetchone()
                 return dict(row) if row else None
         return await asyncio.to_thread(_get)
 
-async def update_user_xp(user_id: int, guild_id: int, xp_added: int, vc_sec_added: int = 0, new_level: int = None):
+
+async def update_user_xp(user_id: int, guild_id: int, xp_added: int, vc_sec_added: int = 0, new_level: Optional[int] = None) -> None:
     async with db_lock:
-        def _update():
-            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
-                c = conn.cursor()
+        def _update() -> None:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+                c: sqlite3.Cursor = conn.cursor()
                 
                 # 먼저 데이터가 있는지 검사하고 없으면 기본값으로 생성
                 c.execute("INSERT OR IGNORE INTO users (user_id, guild_id) VALUES (?, ?)", (user_id, guild_id))
@@ -289,12 +303,13 @@ async def update_user_xp(user_id: int, guild_id: int, xp_added: int, vc_sec_adde
                 conn.commit()
         await asyncio.to_thread(_update)
 
-async def get_top_users(guild_id: int, limit: int = 10):
+
+async def get_top_users(guild_id: int, limit: int = 10) -> List[Dict[str, Any]]:
     async with db_lock:
-        def _get():
-            with sqlite3.connect(DB_PATH, timeout=10.0) as conn:
+        def _get() -> List[Dict[str, Any]]:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
                 conn.row_factory = sqlite3.Row
-                c = conn.cursor()
+                c: sqlite3.Cursor = conn.cursor()
                 
                 # 순수하게 현재 서버(guild_id)의 데이터만 가져와 랭킹을 산정합니다.
                 c.execute('''
@@ -305,6 +320,6 @@ async def get_top_users(guild_id: int, limit: int = 10):
                     LIMIT ?
                 ''', (guild_id, limit))
                 
-                rows = [dict(row) for row in c.fetchall()]
+                rows: List[Dict[str, Any]] = [dict(row) for row in c.fetchall()]
                 return rows
         return await asyncio.to_thread(_get)
