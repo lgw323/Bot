@@ -47,7 +47,13 @@ class LevelingCog(commands.Cog):
                 for vc in guild.voice_channels:
                     for member in vc.members:
                         if not member.bot and member.id not in self.voice_sessions:
-                            self.voice_sessions[member.id] = {"time": time.time(), "guild_id": guild.id}
+                            self.voice_sessions[member.id] = {
+                                "time": time.time(),
+                                "guild_id": guild.id,
+                                "is_muted_or_deafened": member.voice.self_mute or member.voice.mute or member.voice.self_deaf or member.voice.deaf if member.voice else False,
+                                "last_state_change": time.time(),
+                                "valid_duration": 0.0
+                            }
                             recovered += 1
             if recovered > 0:
                 logger.info(f"[Leveling] 봇 재기동: {recovered}명의 음성 세션을 복구하여 추적을 시작합니다.")
@@ -61,11 +67,16 @@ class LevelingCog(commands.Cog):
             for member_id, session_data in list(self.voice_sessions.items()):
                 join_time: float = session_data["time"]
                 guild_id: int = session_data["guild_id"]
-                duration_sec: int = int(time.time() - join_time)
                 
-                if duration_sec >= 600:
-                    duration_10min: int = duration_sec // 600
-                    xp_to_add: int = duration_10min * 1
+                # 진행 중이던 상태 정산
+                if not session_data.get("is_muted_or_deafened", False):
+                    session_data["valid_duration"] += time.time() - session_data.get("last_state_change", join_time)
+                
+                duration_sec: int = int(session_data.get("valid_duration", 0.0))
+                
+                if duration_sec >= 60:
+                    duration_1min: int = duration_sec // 60
+                    xp_to_add: int = duration_1min * 1
                     
                     user_data: Optional[Dict[str, any]] = await get_user_data(member_id, guild_id)
                     current_level: int = user_data["level"] if user_data else 1
@@ -122,22 +133,49 @@ class LevelingCog(commands.Cog):
 
             # 방에 들어옴
             if not before.channel and after.channel:
-                self.voice_sessions[member.id] = {"time": time.time(), "guild_id": member.guild.id}
+                is_muted_or_deafened = after.self_mute or after.mute or after.self_deaf or after.deaf
+                self.voice_sessions[member.id] = {
+                    "time": time.time(), 
+                    "guild_id": member.guild.id,
+                    "is_muted_or_deafened": is_muted_or_deafened,
+                    "last_state_change": time.time(),
+                    "valid_duration": 0.0
+                }
+            
+            # 방 안에서 상태가 변경됨 (뮤트/데프 등)
+            elif before.channel and after.channel and before.channel == after.channel:
+                if member.id in self.voice_sessions:
+                    session_data = self.voice_sessions[member.id]
+                    was_muted = session_data.get("is_muted_or_deafened", False)
+                    is_muted_now = after.self_mute or after.mute or after.self_deaf or after.deaf
+                    
+                    if was_muted != is_muted_now:
+                        # 정상 상태(unmuted)에서 뮤트 상태로 바뀐 경우: 그간의 시간 누적
+                        if not was_muted:
+                            session_data["valid_duration"] += time.time() - session_data["last_state_change"]
+                        
+                        # 상태 업데이트
+                        session_data["is_muted_or_deafened"] = is_muted_now
+                        session_data["last_state_change"] = time.time()
             
             # 방에서 나감
             elif before.channel and not after.channel:
                 if member.id in self.voice_sessions:
                     session_data: dict = self.voice_sessions.pop(member.id)
-                    join_time: float = session_data["time"]
-                    duration_sec: int = int(time.time() - join_time)
                     
-                    # 10분을 채우지 않으면 경험치 스킵 (악용 방지)
-                    if duration_sec < 600:
+                    # 마지막으로 머물던 상태가 정상이었다면 그 시간도 누적
+                    if not session_data.get("is_muted_or_deafened", False):
+                        session_data["valid_duration"] += time.time() - session_data.get("last_state_change", session_data["time"])
+                        
+                    duration_sec: int = int(session_data.get("valid_duration", 0.0))
+                    
+                    # 1분을 채우지 않으면 경험치 스킵 (악용 방지)
+                    if duration_sec < 60:
                         return
 
-                    # 10분당 1 XP 지급
-                    duration_10min: int = duration_sec // 600
-                    xp_to_add: int = duration_10min * 1
+                    # 1분당 1 XP 지급
+                    duration_1min: int = duration_sec // 60
+                    xp_to_add: int = duration_1min * 1
                     
                     if xp_to_add > 0:
                         user_data: Optional[Dict[str, any]] = await get_user_data(member.id, member.guild.id)
