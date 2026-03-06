@@ -127,6 +127,15 @@ class LogAgentCog(commands.Cog, name="LogAgent"):
                 await self.control_message.delete()
             except Exception:
                 pass
+        else:
+            # 봇이 재시작되어 메모리에 제어 메시지 객체가 없을 때, 중복 생성을 막기 위해 이전 패널들을 스캔 후 삭제합니다.
+            try:
+                async for msg in channel.history(limit=50):
+                    if msg.author == self.bot.user and "**[ 🛠️ 시스템 제어 패널 ]**" in msg.content:
+                        await msg.delete()
+            except Exception:
+                pass
+                
         try:
             self.control_message = await channel.send(
                 "**[ 🛠️ 시스템 제어 패널 ]**\n아래 버튼을 눌러 봇 최신화 및 강제 재시작을 수행할 수 있습니다.", 
