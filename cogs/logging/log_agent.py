@@ -129,7 +129,7 @@ class LogAgentCog(commands.Cog, name="LogAgent"):
                 pass
         try:
             self.control_message = await channel.send(
-                "**[ 🛠️ 시스템 제어 패널 ]**\\n아래 버튼을 눌러 봇 최신화 및 강제 재시작을 수행할 수 있습니다.", 
+                "**[ 🛠️ 시스템 제어 패널 ]**\n아래 버튼을 눌러 봇 최신화 및 강제 재시작을 수행할 수 있습니다.", 
                 view=RestartControlView()
             )
         except Exception as e:
