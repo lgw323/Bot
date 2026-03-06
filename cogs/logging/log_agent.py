@@ -3,6 +3,7 @@ import sys
 import logging
 import traceback
 import asyncio
+import subprocess
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 from typing import Optional, Any
@@ -23,6 +24,24 @@ load_dotenv(dotenv_path=ENV_PATH)
 LOG_DIR: Path = BASE_DIR / "data" / "logs"
 # 디스코드 로그 채널 ID (로그 전용 서버의 채널 ID)
 LOG_CHANNEL_ID: int = int(os.getenv("LOG_CHANNEL_ID", "0"))
+MASTER_USER_ID: int = int(os.getenv("MASTER_USER_ID", "0"))
+
+class RestartControlView(discord.ui.View):
+    def __init__(self) -> None:
+        super().__init__(timeout=None) # 상시 유지
+
+    @discord.ui.button(label="🔄 수동 업데이트 및 재시작", style=discord.ButtonStyle.green, custom_id="log_agent:restart_bot")
+    async def restart_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        if interaction.user.id != MASTER_USER_ID:
+            await interaction.response.send_message("이 버튼을 사용할 권한이 없습니다.", ephemeral=True)
+            return
+            
+        await interaction.response.send_message("🔄 수동 업데이트 및 재시작 스크립트를 서버에서 실행합니다. 잠시 후 봇이 갱신 후 재구동됩니다.", ephemeral=True)
+        try:
+            # Prod 환경(Raspberry Pi)을 기준으로 작성됨
+            subprocess.Popen(['bash', '/home/os/bot/scripts/auto_update.sh'])
+        except Exception as e:
+            logging.error(f"수동 업데이트 스크립트 실행 실패: {e}")
 
 class DiscordLogHandler(logging.Handler):
     """
@@ -83,6 +102,9 @@ class DiscordLogHandler(logging.Handler):
                 embed.set_footer(text=footer_text)
                 
                 await self.target_channel.send(embed=embed)
+                
+                if hasattr(self, 'cog') and getattr(self, 'cog'):
+                    await self.cog.send_control_panel(self.target_channel)
 
         except Exception:
             # 재귀 에러 방지용 내부 try-except (디스코드 전송 실패 또는 예외 처리 시 조용히 무시)
@@ -97,6 +119,21 @@ class LogAgentCog(commands.Cog, name="LogAgent"):
         self._setup_logging()
         # 다른 Cog에서 self.bot.log.info(...) 형태로 사용할 수 있도록 주입
         self.bot.log: logging.Logger = logging.getLogger("MyBot")
+        self.control_message: Optional[discord.Message] = None
+
+    async def send_control_panel(self, channel: discord.TextChannel) -> None:
+        if self.control_message:
+            try:
+                await self.control_message.delete()
+            except Exception:
+                pass
+        try:
+            self.control_message = await channel.send(
+                "**[ 🛠️ 시스템 제어 패널 ]**\\n아래 버튼을 눌러 봇 최신화 및 강제 재시작을 수행할 수 있습니다.", 
+                view=RestartControlView()
+            )
+        except Exception as e:
+            logging.error(f"컨트롤 패널 메시지 갱신 실패: {e}")
 
     def _setup_logging(self) -> None:
         """
@@ -154,6 +191,7 @@ class LogAgentCog(commands.Cog, name="LogAgent"):
         try:
             # 6. [디스코드 핸들러] 연결
             discord_handler: DiscordLogHandler = DiscordLogHandler(self.bot)
+            discord_handler.cog = self
             # 디스코드 알림은 메시지 본문만 깔끔하게 전달 (Embed 내부에서 처리)
             discord_handler.setFormatter(logging.Formatter('%(message)s'))
             logging.getLogger().addHandler(discord_handler)
@@ -198,6 +236,7 @@ class LogAgentCog(commands.Cog, name="LogAgent"):
                 )
                 try:
                     await target_channel.send(embed=embed)
+                    await self.send_control_panel(target_channel)
                 except Exception as e:
                     logging.error(f"구동 알림 전송 실패: {e}")
         except Exception as e:
