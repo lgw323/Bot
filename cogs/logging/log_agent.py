@@ -36,10 +36,21 @@ class RestartControlView(discord.ui.View):
             await interaction.response.send_message("이 버튼을 사용할 권한이 없습니다.", ephemeral=True)
             return
             
-        await interaction.response.send_message("🔄 수동 업데이트 및 재시작 스크립트를 서버에서 실행합니다. 잠시 후 봇이 갱신 후 재구동됩니다.", ephemeral=True)
+        await interaction.response.send_message("🔄 시스템 상태 백업 및 재구동 스크립트를 서버에서 실행합니다. 잠시 후 봇이 갱신 후 재구동됩니다.", ephemeral=True)
+        
+        # 1. 재시작 직전 음악 상태 안전하게 백업 (Race Condition 방지)
         try:
-            # Prod 환경(Raspberry Pi)을 기준으로 작성됨
-            subprocess.Popen(['bash', '/home/os/bot/scripts/auto_update.sh'])
+            music_cog = interaction.client.get_cog('MusicAgentCog')
+            if music_cog:
+                from cogs.music.music_utils import save_music_states
+                await save_music_states(music_cog.music_states)
+                logging.info("음악 상태 백업 완료.")
+        except Exception as e:
+            logging.error(f"음악 상태 백업 실패: {e}")
+
+        # 2. 업데이트 스크립트 강제 구동 호출 (--daily 인자 주입)
+        try:
+            subprocess.Popen(['bash', '/home/os/bot/scripts/auto_update.sh', '--daily'])
         except Exception as e:
             logging.error(f"수동 업데이트 스크립트 실행 실패: {e}")
 
