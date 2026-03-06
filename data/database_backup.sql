@@ -41,10 +41,10 @@ CREATE TABLE music_play_counts (
             );
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=Nxb2nM7oz0c','골판지 전사 OP (더빙판)',2);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=r3YNWOfRwIA','아쉬운상어페라리(MoeChakkaFerrari)',3);
-INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=zG7bjyIqQ1s','[Helldivers 2] 민주주의는 뽕짝으로 부터 (뽕짝 ver.)',2);
+INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=zG7bjyIqQ1s','[Helldivers 2] 민주주의는 뽕짝으로 부터 (뽕짝 ver.)',3);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=DPYCaIbUz7A','BEYOND THE TIME (Mobius No Sora Wo Koete) -2025 Version-',3);
-INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=Cb0JZhdmjtg','IRIS OUT',3);
-INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=107UoVP2fAA','Heroine',2);
+INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=Cb0JZhdmjtg','IRIS OUT',4);
+INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=107UoVP2fAA','Heroine',3);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=R401j1QAvEg','スプリットダンス / 初音ミク・重音テト',4);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=iU6mMLmaZhg','March Of The Defenders',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=GJMCi3NMyCQ','Working Class',2);
@@ -83,6 +83,8 @@ INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.c
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=aW-lSN5QbF4','Oceano',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=B3wTGh1j4tw','Luna',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=BXsWn9DhF5g','Welcome To Jurassic Park',1);
+INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=M9XPfymOx3Q','에릭사티 ''짐노페디'' 1번 (Erik Satie ''Gymnopedie No.1 Lent et douloureux'')',2);
+INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=NtB3mwMmUfE','(한글 자막 / 가사) 길티기어 스트라이브 해피 케이오스 테마곡 - Drift',1);
 CREATE TABLE music_settings (
                 guild_id INTEGER PRIMARY KEY,
                 volume REAL DEFAULT 1.0
@@ -96,16 +98,16 @@ CREATE TABLE "users" (
                 total_vc_seconds INTEGER DEFAULT 0,
                 PRIMARY KEY (user_id, guild_id)
             );
-INSERT INTO "users" VALUES(231782966127230976,860135576224792617,16685,31,0);
+INSERT INTO "users" VALUES(231782966127230976,860135576224792617,16791,31,0);
 INSERT INTO "users" VALUES(271259127584391168,860135576224792617,3830,12,0);
-INSERT INTO "users" VALUES(404259657570582538,860135576224792617,5304,15,8695);
-INSERT INTO "users" VALUES(428487165975068672,860135576224792617,4845,14,1374);
-INSERT INTO "users" VALUES(429559300994629632,860135576224792617,1261,6,7541);
+INSERT INTO "users" VALUES(404259657570582538,860135576224792617,5609,15,8695);
+INSERT INTO "users" VALUES(428487165975068672,860135576224792617,4906,14,1374);
+INSERT INTO "users" VALUES(429559300994629632,860135576224792617,1539,7,7541);
 INSERT INTO "users" VALUES(682242502841204751,860135576224792617,688,4,0);
 INSERT INTO "users" VALUES(765164086412574720,860135576224792617,346,3,0);
-INSERT INTO "users" VALUES(281745554097176577,860135576224792617,40061,55,39041);
-INSERT INTO "users" VALUES(415738789428723714,860135576224792617,11101,24,26619);
-INSERT INTO "users" VALUES(315064065783365632,860135576224792617,16806,31,19798);
+INSERT INTO "users" VALUES(281745554097176577,860135576224792617,40733,55,39041);
+INSERT INTO "users" VALUES(415738789428723714,860135576224792617,11708,24,27126);
+INSERT INTO "users" VALUES(315064065783365632,860135576224792617,17322,32,19798);
 INSERT INTO "users" VALUES(415738789428723714,812141867898503188,2190,8,21991);
 INSERT INTO "users" VALUES(280876747589681163,860135576224792617,401,3,0);
 COMMIT;
