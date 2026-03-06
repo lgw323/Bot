@@ -50,6 +50,11 @@ class MusicAgentCog(commands.Cog):
 
     async def cog_unload(self) -> None:
         self.update_progress_loop.cancel()
+        
+        # 봇 종료 및 Cog 언로드 시 현재 상태 직렬화 후 캐싱 통보
+        from .music_utils import save_music_states
+        await save_music_states(self.music_states)
+        
         cleanup_tasks = [state.cleanup(leave=True) for state in self.music_states.values()]
         await asyncio.gather(*cleanup_tasks)
 
@@ -67,8 +72,59 @@ class MusicAgentCog(commands.Cog):
             self.initial_setup_done = True
         if MUSIC_CHANNEL_ID == 0:
             return
+            
+        # [세션 복원 추가 구현물] 파일에서 종료 직전 State 읽어오기
+        from .music_utils import load_music_states
+        restored_states = await load_music_states()
+        
         for guild in self.bot.guilds:
-            await self.get_music_state(guild.id)
+            state = await self.get_music_state(guild.id)
+            
+            # 복원할 데이터가 현재 길드에 존재하면
+            guild_id_str = str(guild.id)
+            if guild_id_str in restored_states:
+                data = restored_states[guild_id_str]
+                logger.info(f"[{guild.name}] 이전 음악 세션 복원 시작...")
+                
+                # 1. 속성 복원
+                state.volume = data.get('volume', 1.0)
+                state.loop_mode = LoopMode[data.get('loop_mode', 'NONE')]
+                state.auto_play_enabled = data.get('auto_play_enabled', False)
+                state.seek_time = data.get('elapsed_seconds', 0)
+                
+                # 텍스트 채널 복원
+                tc_id = data.get('text_channel_id')
+                if tc_id: state.text_channel = self.bot.get_channel(tc_id)
+                
+                # 2. 큐(Queue) 복원
+                saved_queue = data.get('queue', [])
+                for q_item in saved_queue:
+                    req_user = guild.get_member(q_item.get('requester_id')) or guild.me
+                    song = Song(q_item, req_user)
+                    state.queue.append(song)
+                
+                # 3. 현재 듣던 곡 복원
+                saved_current = data.get('current_song')
+                if saved_current:
+                    req_user = guild.get_member(saved_current.get('requester_id')) or guild.me
+                    song = Song(saved_current, req_user)
+                    # 재생 중이던 곡을 큐 맨 앞에 강제 삽입하고 play_next_song 시그널을 보냄
+                    state.queue.appendleft(song)
+
+                # 4. 음성 채널 재연결
+                vc_id = data.get('voice_channel_id')
+                if vc_id:
+                    v_channel = self.bot.get_channel(vc_id)
+                    if v_channel and isinstance(v_channel, discord.VoiceChannel):
+                        try:
+                            state.voice_client = await v_channel.connect(timeout=20.0, self_deaf=True)
+                            logger.info(f"[{guild.name}] 음성 채널 자동 재연결 성공. (채널: {v_channel.name})")
+                        except Exception as e:
+                            logger.error(f"[{guild.name}] 음성 채널 자동 재연결 실패: {e}")
+                
+                # 복원 완료 후 큐를 시작
+                if state.voice_client and (saved_current or saved_queue):
+                    state.play_next_song.set()
 
     def _get_tts_filepath(self, text: str) -> Path:
         hashed_name = hashlib.sha256(text.encode('utf-8')).hexdigest()
