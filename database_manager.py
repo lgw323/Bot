@@ -4,6 +4,9 @@ import logging
 import asyncio
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+import os
+from cryptography.fernet import Fernet
+from cryptography.fernet import InvalidToken
 
 logger: logging.Logger = logging.getLogger("DatabaseManager")
 
@@ -22,6 +25,44 @@ MUSIC_SETTINGS_FILE: Path = DATA_DIR / "music_settings.json"
 # 또한 check_same_thread=False 옵션을 추가하여 asyncio.to_thread에서 발생할 수 있는 스레드 참조 에러를 최적화합니다.
 db_lock: asyncio.Lock = asyncio.Lock()
 
+# 암호화 인스턴스 초기화
+_cipher_suite: Optional[Fernet] = None
+def get_cipher() -> Optional[Fernet]:
+    global _cipher_suite
+    if _cipher_suite is None:
+        key = os.environ.get("DB_ENCRYPTION_KEY")
+        if key:
+            try:
+                _cipher_suite = Fernet(key.encode('utf-8'))
+            except Exception as e:
+                logger.error(f"Invalid DB_ENCRYPTION_KEY format: {e}")
+                return None
+        else:
+            logger.warning("DB_ENCRYPTION_KEY not found in environment variables. Database backups will NOT be encrypted.")
+            return None
+    return _cipher_suite
+
+def encode_data(text: str) -> str:
+    """텍스트를 암호화하여 Hex 변환 문자열 또는 urlsafe_b64 문자열로 리턴합니다."""
+    cipher = get_cipher()
+    if cipher and text:
+        return cipher.encrypt(text.encode('utf-8')).decode('utf-8')
+    return text
+
+def decode_data(encrypted_text: str) -> str:
+    """암호화된 텍스트를 복호화하여 원문으로 리턴합니다."""
+    cipher = get_cipher()
+    if cipher and encrypted_text:
+        try:
+            return cipher.decrypt(encrypted_text.encode('utf-8')).decode('utf-8')
+        except InvalidToken:
+            # 암호화되지 않은 평문이거나 키가 바뀐 경우 원문 그대로 반환 시도
+            return encrypted_text
+        except Exception as e:
+            logger.error(f"Decryption failed: {e}")
+            return encrypted_text
+    return encrypted_text
+
 
 def init_db() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -32,7 +73,56 @@ def init_db() -> None:
         try:
             with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
                 with open(SQL_BACKUP_PATH, 'r', encoding='utf-8') as f:
-                    sql_script: str = f.read()
+                    # SQL 덤프 파일 내의 암호화된 데이터를 복호화하여 로드
+                    sql_script_lines = []
+                    for line in f:
+                        # INSERT INTO favorites VALUES(user_id, 'enc_url', 'enc_title'); 의 형태이거나
+                        # INSERT INTO music_play_counts VALUES(guild_id, 'enc_url', 'enc_title', play_count);
+                        if line.startswith("INSERT INTO \"favorites\" VALUES("):
+                            parts = line.split("VALUES(", 1)
+                            if len(parts) == 2:
+                                value_part = parts[1].rsplit(");", 1)[0]
+                                # SQLite 덤프는 문자열을 '' 로 감쌈
+                                try:
+                                    import ast
+                                    # 파이썬 튜플 형태로 파싱 후 복호화 시도
+                                    val_tuple = ast.literal_eval("(" + value_part + ")")
+                                    if len(val_tuple) == 3:
+                                        user_id, enc_url, enc_title = val_tuple
+                                        dec_url = decode_data(enc_url)
+                                        dec_title = decode_data(enc_title)
+                                        
+                                        # '' 안의 따옴표 이스케이프 지원용 단순화
+                                        dec_url_str = str(dec_url).replace("'", "''")
+                                        dec_title_str = str(dec_title).replace("'", "''")
+                                        
+                                        line = f"INSERT INTO \"favorites\" VALUES({user_id},'{dec_url_str}','{dec_title_str}');\n"
+                                except Exception as e:
+                                    logger.error(f"Failed to decrypt favorites backup line: {e}")
+                                    
+                        elif line.startswith("INSERT INTO \"music_play_counts\" VALUES("):
+                            parts = line.split("VALUES(", 1)
+                            if len(parts) == 2:
+                                value_part = parts[1].rsplit(");", 1)[0]
+                                try:
+                                    import ast
+                                    val_tuple = ast.literal_eval("(" + value_part + ")")
+                                    if len(val_tuple) == 4:
+                                        guild_id, enc_url, enc_title, play_count = val_tuple
+                                        dec_url = decode_data(enc_url)
+                                        dec_title = decode_data(enc_title)
+                                        
+                                        dec_url_str = str(dec_url).replace("'", "''")
+                                        dec_title_str = str(dec_title).replace("'", "''")
+                                        
+                                        line = f"INSERT INTO \"music_play_counts\" VALUES({guild_id},'{dec_url_str}','{dec_title_str}',{play_count});\n"
+                                except Exception as e:
+                                    logger.error(f"Failed to decrypt play counts backup line: {e}")
+
+                        sql_script_lines.append(line)
+                    
+                    sql_script = "".join(sql_script_lines)
+                    
                 conn.executescript(sql_script)
                 conn.commit()
             logger.info("Database restored successfully from SQL dump.")
@@ -88,13 +178,48 @@ def init_db() -> None:
 
 
 async def backup_database_to_sql() -> bool:
-    """안전하게 현재 SQLite DB를 SQL 덤프 파일로 백업합니다."""
+    """안전하게 현재 SQLite DB를 SQL 덤프 파일로 백업합니다. 이때 지정된 테이블의 컬럼은 암호화합니다."""
     async with db_lock:
         def _backup() -> bool:
             try:
                 with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
                     with open(SQL_BACKUP_PATH, 'w', encoding='utf-8') as f:
+                        # iterdump()를 가로채어 특정 INSERT 문일 경우 암호화 수행
                         for line in conn.iterdump():
+                            # favorites 테이블의 url, title 필드 암호화
+                            if line.startswith("INSERT INTO \"favorites\" VALUES("):
+                                try:
+                                    parts = line.split("VALUES(", 1)
+                                    if len(parts) == 2:
+                                        value_part = parts[1].rsplit(");", 1)[0]
+                                        
+                                        import ast
+                                        val_tuple = ast.literal_eval("(" + value_part + ")")
+                                        if len(val_tuple) == 3:
+                                            user_id, url, title = val_tuple
+                                            enc_url = encode_data(str(url))
+                                            enc_title = encode_data(str(title))
+                                            line = f"INSERT INTO \"favorites\" VALUES({user_id},'{enc_url}','{enc_title}');"
+                                except Exception as e:
+                                    logger.error(f"Failed to encrypt favorites backup line: {e}")
+
+                            # music_play_counts 테이블의 url, title 필드 암호화
+                            elif line.startswith("INSERT INTO \"music_play_counts\" VALUES("):
+                                try:
+                                    parts = line.split("VALUES(", 1)
+                                    if len(parts) == 2:
+                                        value_part = parts[1].rsplit(");", 1)[0]
+                                        
+                                        import ast
+                                        val_tuple = ast.literal_eval("(" + value_part + ")")
+                                        if len(val_tuple) == 4:
+                                            guild_id, url, title, play_count = val_tuple
+                                            enc_url = encode_data(str(url))
+                                            enc_title = encode_data(str(title))
+                                            line = f"INSERT INTO \"music_play_counts\" VALUES({guild_id},'{enc_url}','{enc_title}',{play_count});"
+                                except Exception as e:
+                                    logger.error(f"Failed to encrypt play counts backup line: {e}")
+                            
                             f.write(f'{line}\n')
                 logger.info("Database successfully backed up to SQL dump.")
                 return True
