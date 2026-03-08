@@ -1,0 +1,55 @@
+# ==========================================
+# [1. 시스템 인증 및 기본 설정]
+# ==========================================
+# Discord 봇 토큰
+DISCORD_TOKEN=censored
+
+# Google Gemini API 키
+GOOGLE_API_KEY=censored
+
+# 데이터베이스 백업 암호화 키 (필수, 44자리 Base64 문자열이어야 작동합니다)
+DB_ENCRYPTION_KEY=your_base64_encryption_key_here=
+
+# 디버그 모드 (True/False)
+DEBUG_MODE=False
+
+# 최고관리자 ID
+MASTER_USER_ID=censored
+
+# ==========================================
+# [2. 로깅 시스템 설정 (Log Agent)]
+# ==========================================
+# 로그 전용 서버의 '텍스트 채널 ID' (정수형 숫자)
+# 봇이 이 채널에 에러 로그를 전송합니다.
+LOG_CHANNEL_ID=censored
+
+
+# ==========================================
+# [3. 음악 기능 설정 (Music Agent)]
+# ==========================================
+# 음악 명령어를 사용할 채널 ID
+MUSIC_CHANNEL_ID=censored
+
+
+# ==========================================
+# [4. 요약 기능 설정 (Summary Agent)]
+# ==========================================
+# 요약 로그를 수집할 대상 채널 ID
+SUMMARY_CHANNEL_ID=censored
+
+# Gemini 모델 설정
+GEMINI_MODEL=gemini-flash-latest
+TEMPERATURE=0.5
+DEFAULT_MAX_REQUEST_TOKENS=150000
+MAX_RESPONSE_TOKENS=25000
+
+# 요약 로직 파라미터
+DEFAULT_SUMMARY_HOURS=6.0
+TIMEZONE_OFFSET_HOURS=9
+
+# 메시지 수집 및 관리 파라미터
+LOG_RETENTION_HOURS=12
+INITIAL_LOAD_HOURS=6.0
+MAX_LOG_COUNT=1000
+MAX_HISTORY_FETCH=500
+PRUNE_INTERVAL_MINUTES=30
