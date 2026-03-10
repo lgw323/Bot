@@ -43,7 +43,7 @@ INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.c
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=r3YNWOfRwIA','아쉬운상어페라리(MoeChakkaFerrari)',3);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=zG7bjyIqQ1s','[Helldivers 2] 민주주의는 뽕짝으로 부터 (뽕짝 ver.)',4);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=DPYCaIbUz7A','BEYOND THE TIME (Mobius No Sora Wo Koete) -2025 Version-',3);
-INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=Cb0JZhdmjtg','IRIS OUT',4);
+INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=Cb0JZhdmjtg','IRIS OUT',5);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=107UoVP2fAA','Heroine',3);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=R401j1QAvEg','スプリットダンス / 初音ミク・重音テト',4);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=GJMCi3NMyCQ','Working Class',2);
@@ -51,7 +51,6 @@ INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.c
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=h1NrTdPDZ6s','긴급출동 레스큐 파이어 한국어 오프닝 (15화~29화) [TOMICA HERO RESCUE FIRE OPENING]',2);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=QkF3oxziUI4','Led Zeppelin - Stairway To Heaven (Official Audio)',4);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=QRsykxsshJU','시마무라 우즈키 - M@STERPIECE 자막',1);
-INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=TbdZiu3Rarw','RESPECT New Song - Only For You (Full M/V)',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=p2rmoi1caNY','Hyundai N | N Playlist — Nürburgring Eurobeat Dash',3);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=LevPoT72rbw','Arknights OST - Battleplan Arclight | アークナイツ/明日方舟 危機契約 弧光 BGM',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=NTrm_idbhUk','Kikuo - 愛して愛して愛して',2);
@@ -80,7 +79,6 @@ INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.c
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=OMOGaugKpzs','The Police - Every Breath You Take (Official Music Video)',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=FTQbiNvZqaY','Toto - Africa (Official HD Video)',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=Q2FzZSBD5LE','Deep Purple - Smoke On the Water (Official Music Video)',1);
-INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=TngViNw2pOo','Layla',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=1vrEljMfXYo','John Denver - Take Me Home, Country Roads (Official Audio)',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=4-43lLKaqBQ','The Animals - House of the Rising Sun (1964) ♫ 60+ YEARS 🎶⭐ ❤',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=O4irXQhgMqg','The Rolling Stones - Paint It, Black (Official Lyric Video)',1);
@@ -89,6 +87,8 @@ INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.c
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=6Ejga4kJUts','The Cranberries - Zombie (Official Music Video)',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=DeumyOzKqgI','Adele - Skyfall (Official Lyric Video)',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=Oextk-If8HQ','Keane - Somewhere Only We Know (Official Music Video)',1);
+INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=2n5MGtzApxU','몬스터 헌터 와일즈 OST - 영웅의 증표',1);
+INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=5KI80OCGOxM','【유희왕GX 더빙판】 난 지고 싶지 않아!',1);
 CREATE TABLE music_settings (
                 guild_id INTEGER PRIMARY KEY,
                 volume REAL DEFAULT 1.0
@@ -102,16 +102,16 @@ CREATE TABLE "users" (
                 total_vc_seconds INTEGER DEFAULT 0,
                 PRIMARY KEY (user_id, guild_id)
             );
-INSERT INTO "users" VALUES(231782966127230976,860135576224792617,26554,42,0);
-INSERT INTO "users" VALUES(271259127584391168,860135576224792617,4757,14,0);
-INSERT INTO "users" VALUES(404259657570582538,860135576224792617,7983,19,8695);
+INSERT INTO "users" VALUES(231782966127230976,860135576224792617,26768,42,4047);
+INSERT INTO "users" VALUES(271259127584391168,860135576224792617,4836,14,0);
+INSERT INTO "users" VALUES(404259657570582538,860135576224792617,8113,19,15332);
 INSERT INTO "users" VALUES(428487165975068672,860135576224792617,5474,15,1374);
-INSERT INTO "users" VALUES(429559300994629632,860135576224792617,2414,9,33662);
+INSERT INTO "users" VALUES(429559300994629632,860135576224792617,2418,9,33972);
 INSERT INTO "users" VALUES(682242502841204751,860135576224792617,688,4,0);
 INSERT INTO "users" VALUES(765164086412574720,860135576224792617,622,4,0);
-INSERT INTO "users" VALUES(281745554097176577,860135576224792617,51810,65,80384);
-INSERT INTO "users" VALUES(415738789428723714,860135576224792617,13315,27,27126);
-INSERT INTO "users" VALUES(315064065783365632,860135576224792617,28532,44,54077);
+INSERT INTO "users" VALUES(281745554097176577,860135576224792617,52010,65,80384);
+INSERT INTO "users" VALUES(415738789428723714,860135576224792617,13703,27,37958);
+INSERT INTO "users" VALUES(315064065783365632,860135576224792617,28667,44,54077);
 INSERT INTO "users" VALUES(415738789428723714,812141867898503188,2190,8,21991);
-INSERT INTO "users" VALUES(280876747589681163,860135576224792617,721,4,0);
+INSERT INTO "users" VALUES(280876747589681163,860135576224792617,735,4,0);
 COMMIT;
