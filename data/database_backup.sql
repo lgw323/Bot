@@ -41,7 +41,7 @@ CREATE TABLE music_play_counts (
             );
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=Nxb2nM7oz0c','골판지 전사 OP (더빙판)',2);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=r3YNWOfRwIA','아쉬운상어페라리(MoeChakkaFerrari)',3);
-INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=zG7bjyIqQ1s','[Helldivers 2] 민주주의는 뽕짝으로 부터 (뽕짝 ver.)',4);
+INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=zG7bjyIqQ1s','[Helldivers 2] 민주주의는 뽕짝으로 부터 (뽕짝 ver.)',5);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=DPYCaIbUz7A','BEYOND THE TIME (Mobius No Sora Wo Koete) -2025 Version-',3);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=Cb0JZhdmjtg','IRIS OUT',5);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=107UoVP2fAA','Heroine',3);
@@ -50,7 +50,6 @@ INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.c
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=BsLMyEFtqV8','Rescue Fire',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=h1NrTdPDZ6s','긴급출동 레스큐 파이어 한국어 오프닝 (15화~29화) [TOMICA HERO RESCUE FIRE OPENING]',2);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=QkF3oxziUI4','Led Zeppelin - Stairway To Heaven (Official Audio)',4);
-INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=QRsykxsshJU','시마무라 우즈키 - M@STERPIECE 자막',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=p2rmoi1caNY','Hyundai N | N Playlist — Nürburgring Eurobeat Dash',3);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=LevPoT72rbw','Arknights OST - Battleplan Arclight | アークナイツ/明日方舟 危機契約 弧光 BGM',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=NTrm_idbhUk','Kikuo - 愛して愛して愛して',2);
@@ -89,6 +88,7 @@ INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.c
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=Oextk-If8HQ','Keane - Somewhere Only We Know (Official Music Video)',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=2n5MGtzApxU','몬스터 헌터 와일즈 OST - 영웅의 증표',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=5KI80OCGOxM','【유희왕GX 더빙판】 난 지고 싶지 않아!',1);
+INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=EuCKE4gFmP4','Arknights OST - Battleplan Extinguished Sins「Lyric Video」- Martin Gonzalez & Elizabeth Hull',1);
 CREATE TABLE music_settings (
                 guild_id INTEGER PRIMARY KEY,
                 volume REAL DEFAULT 1.0
@@ -102,16 +102,16 @@ CREATE TABLE "users" (
                 total_vc_seconds INTEGER DEFAULT 0,
                 PRIMARY KEY (user_id, guild_id)
             );
-INSERT INTO "users" VALUES(231782966127230976,860135576224792617,27059,42,4047);
+INSERT INTO "users" VALUES(231782966127230976,860135576224792617,27852,43,4047);
 INSERT INTO "users" VALUES(271259127584391168,860135576224792617,4957,14,0);
-INSERT INTO "users" VALUES(404259657570582538,860135576224792617,8381,20,15332);
-INSERT INTO "users" VALUES(428487165975068672,860135576224792617,5474,15,1374);
+INSERT INTO "users" VALUES(404259657570582538,860135576224792617,8394,20,15772);
+INSERT INTO "users" VALUES(428487165975068672,860135576224792617,5531,15,1374);
 INSERT INTO "users" VALUES(429559300994629632,860135576224792617,2418,9,33972);
 INSERT INTO "users" VALUES(682242502841204751,860135576224792617,688,4,0);
 INSERT INTO "users" VALUES(765164086412574720,860135576224792617,703,4,0);
-INSERT INTO "users" VALUES(281745554097176577,860135576224792617,53432,66,103474);
-INSERT INTO "users" VALUES(415738789428723714,860135576224792617,14167,28,37958);
-INSERT INTO "users" VALUES(315064065783365632,860135576224792617,29322,45,77154);
+INSERT INTO "users" VALUES(281745554097176577,860135576224792617,55439,68,103474);
+INSERT INTO "users" VALUES(415738789428723714,860135576224792617,14327,28,37958);
+INSERT INTO "users" VALUES(315064065783365632,860135576224792617,30262,46,77154);
 INSERT INTO "users" VALUES(415738789428723714,812141867898503188,2190,8,21991);
-INSERT INTO "users" VALUES(280876747589681163,860135576224792617,783,4,0);
+INSERT INTO "users" VALUES(280876747589681163,860135576224792617,876,5,0);
 COMMIT;
