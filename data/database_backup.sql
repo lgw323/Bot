@@ -77,7 +77,6 @@ INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.c
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=PadKCVBIN94','Queen - Bohemian Rhapsody 1981 Live Video Full HD',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=OMOGaugKpzs','The Police - Every Breath You Take (Official Music Video)',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=FTQbiNvZqaY','Toto - Africa (Official HD Video)',1);
-INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=Q2FzZSBD5LE','Deep Purple - Smoke On the Water (Official Music Video)',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=1vrEljMfXYo','John Denver - Take Me Home, Country Roads (Official Audio)',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=4-43lLKaqBQ','The Animals - House of the Rising Sun (1964) ♫ 60+ YEARS 🎶⭐ ❤',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=O4irXQhgMqg','The Rolling Stones - Paint It, Black (Official Lyric Video)',1);
@@ -89,6 +88,7 @@ INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.c
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=2n5MGtzApxU','몬스터 헌터 와일즈 OST - 영웅의 증표',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=5KI80OCGOxM','【유희왕GX 더빙판】 난 지고 싶지 않아!',1);
 INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=EuCKE4gFmP4','Arknights OST - Battleplan Extinguished Sins「Lyric Video」- Martin Gonzalez & Elizabeth Hull',1);
+INSERT INTO "music_play_counts" VALUES(860135576224792617,'https://www.youtube.com/watch?v=171skzi5BKc','Queen - Made In Heaven (Official Lyric Video)',1);
 CREATE TABLE music_settings (
                 guild_id INTEGER PRIMARY KEY,
                 volume REAL DEFAULT 1.0
@@ -102,16 +102,16 @@ CREATE TABLE "users" (
                 total_vc_seconds INTEGER DEFAULT 0,
                 PRIMARY KEY (user_id, guild_id)
             );
-INSERT INTO "users" VALUES(231782966127230976,860135576224792617,27852,43,4047);
+INSERT INTO "users" VALUES(231782966127230976,860135576224792617,27911,43,4047);
 INSERT INTO "users" VALUES(271259127584391168,860135576224792617,4957,14,0);
 INSERT INTO "users" VALUES(404259657570582538,860135576224792617,8394,20,15772);
 INSERT INTO "users" VALUES(428487165975068672,860135576224792617,5531,15,1374);
 INSERT INTO "users" VALUES(429559300994629632,860135576224792617,2418,9,33972);
-INSERT INTO "users" VALUES(682242502841204751,860135576224792617,688,4,0);
+INSERT INTO "users" VALUES(682242502841204751,860135576224792617,754,4,0);
 INSERT INTO "users" VALUES(765164086412574720,860135576224792617,703,4,0);
-INSERT INTO "users" VALUES(281745554097176577,860135576224792617,55439,68,103474);
+INSERT INTO "users" VALUES(281745554097176577,860135576224792617,55766,68,114489);
 INSERT INTO "users" VALUES(415738789428723714,860135576224792617,14327,28,37958);
-INSERT INTO "users" VALUES(315064065783365632,860135576224792617,30262,46,77154);
+INSERT INTO "users" VALUES(315064065783365632,860135576224792617,30517,46,88183);
 INSERT INTO "users" VALUES(415738789428723714,812141867898503188,2190,8,21991);
 INSERT INTO "users" VALUES(280876747589681163,860135576224792617,876,5,0);
 COMMIT;
