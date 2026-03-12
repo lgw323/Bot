@@ -22,16 +22,20 @@ if [ -f "$DATA_DIR/bot_database.db" ]; then
     # sqlite3 패키지가 라즈베리파이에 설치되어 있지 않을 경우를 대비하여
     # 파이썬 내장 모듈을 통해 메모리에 스냅샷을 찍고 sql 텍스트로 덤프합니다. (Lock 방지 안전 백업)
     python3 -c "
-import sqlite3, sys
+import sys
+import asyncio
+from pathlib import Path
+from dotenv import load_dotenv
+
+bot_dir = Path('$BOT_DIR')
+load_dotenv(dotenv_path=bot_dir / '.env')
+
+import database_manager
+
 try:
-    src = sqlite3.connect('$DATA_DIR/bot_database.db')
-    dst = sqlite3.connect(':memory:')
-    src.backup(dst)
-    src.close()
-    with open('$DATA_DIR/database_backup.sql', 'w', encoding='utf-8') as f:
-        for line in dst.iterdump():
-            f.write(f'{line}\n')
-    dst.close()
+    success = asyncio.run(database_manager.backup_database_to_sql())
+    if not success:
+        sys.exit('Backup Error: backup_database_to_sql returned False')
 except Exception as e:
     sys.exit(f'Backup Error: {e}')
 "
