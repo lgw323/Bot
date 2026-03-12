@@ -167,11 +167,7 @@ class MusicAgentCog(commands.Cog):
 
     def after_tts(self, state: MusicState, was_playing: bool, was_paused: bool) -> None:
         state.is_tts_interrupting = False
-        if was_playing:
-            if state.voice_client and state.voice_client.is_paused():
-                state.voice_client.resume()
-        elif not was_paused:
-            self.bot.loop.call_soon_threadsafe(state.play_next_song.set)
+        self.bot.loop.call_soon_threadsafe(state.play_next_song.set)
 
     async def play_tts(self, state: MusicState, text: str) -> None:
         if not GTTS_AVAILABLE or not state.voice_client or not state.voice_client.is_connected(): return
@@ -191,18 +187,19 @@ class MusicAgentCog(commands.Cog):
                 if state.voice_client.is_playing() and state.current_song:
                     was_playing = True
                     state.is_tts_interrupting = True
-                    state.voice_client.pause()
-                elif state.voice_client.is_paused():
+                    state.queue.appendleft(state.current_song)
+                    state.voice_client.stop()
+                elif state.voice_client.is_paused() and state.current_song:
                     was_paused = True
+                    state.is_tts_interrupting = True
+                    state.queue.appendleft(state.current_song)
+                    state.voice_client.stop()
                 
                 tts_source = discord.FFmpegPCMAudio(str(tts_filepath))
                 tts_volume_source = discord.PCMVolumeTransformer(tts_source, volume=2.0)
                 state.voice_client.play(tts_volume_source, after=lambda e: self.after_tts(state, was_playing, was_paused))
             except Exception:
-                if was_playing and state.voice_client and state.voice_client.is_paused():
-                    state.voice_client.resume()
-                elif not was_paused:
-                    self.bot.loop.call_soon_threadsafe(state.play_next_song.set)
+                self.bot.loop.call_soon_threadsafe(state.play_next_song.set)
     
     async def get_music_state(self, guild_id: int) -> MusicState:
         if guild_id not in self.music_states:
