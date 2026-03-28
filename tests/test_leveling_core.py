@@ -53,7 +53,7 @@ class TestLevelingCore:
         expected_xp = 12
         
         # 사용자가 이미 Lv.1이고 XP가 90이라고 가정 (다음 레벨 조건 미충족)
-        mock_get_user.return_value = {"level": 1, "xp": 90}
+        mock_get_user.return_value = {"level": 1, "xp": 90, "total_vc_seconds": 0}
         
         await cog.on_message(mock_message)
         
