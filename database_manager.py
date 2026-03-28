@@ -429,7 +429,7 @@ async def update_user_xp(user_id: int, guild_id: int, xp_added: int, vc_sec_adde
         await asyncio.to_thread(_update)
 
 
-async def get_top_users(guild_id: int, limit: int = 10) -> List[Dict[str, Any]]:
+async def get_top_users(guild_id: int, limit: int = 10, vc_xp_per_min: int = 5) -> List[Dict[str, Any]]:
     async with db_lock:
         def _get() -> List[Dict[str, Any]]:
             with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
@@ -438,12 +438,13 @@ async def get_top_users(guild_id: int, limit: int = 10) -> List[Dict[str, Any]]:
                 
                 # 순수하게 현재 서버(guild_id)의 데이터만 가져와 랭킹을 산정합니다.
                 c.execute('''
-                    SELECT user_id, xp, level
+                    SELECT user_id, xp, level, total_vc_seconds,
+                           (xp + (total_vc_seconds / 60) * ?) as total_xp
                     FROM users 
                     WHERE guild_id = ?
-                    ORDER BY xp DESC
+                    ORDER BY total_xp DESC
                     LIMIT ?
-                ''', (guild_id, limit))
+                ''', (vc_xp_per_min, guild_id, limit))
                 
                 rows: List[Dict[str, Any]] = [dict(row) for row in c.fetchall()]
                 return rows
