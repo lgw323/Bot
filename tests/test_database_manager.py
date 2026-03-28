@@ -84,6 +84,7 @@ class TestDatabaseManager:
         assert len(top_users) == 1
         assert top_users[0]["user_id"] == user_id
         assert top_users[0]["xp"] == 150
+        assert top_users[0]["total_xp"] == 250  # 150 Text XP + (1200 / 60) * 5 Voice XP
 
     @pytest.mark.asyncio
     async def test_music_settings_and_favorites(self, setup_database):
