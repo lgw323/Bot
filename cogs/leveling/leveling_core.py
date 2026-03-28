@@ -34,6 +34,13 @@ def get_required_xp(level: int) -> int:
     # 레벨업 요구량 곡선: 100 * (level ^ 1.5)
     return int(100 * (level ** 1.5))
 
+def calculate_level_from_xp(total_xp: int) -> int:
+    """총 경험치를 기반으로 항상 정확한 현재 레벨을 역산합니다."""
+    level = 1
+    while total_xp >= get_required_xp(level):
+        level += 1
+    return level
+
 class LevelingCog(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot: commands.Bot = bot
@@ -203,15 +210,17 @@ class LevelingCog(commands.Cog):
 
             user_data: Optional[Dict[str, any]] = await get_user_data(interaction.user.id, interaction.guild.id)
             
-            level: int = user_data["level"] if user_data else 1
             text_xp: int = user_data["xp"] if user_data else 0
             vc_seconds: int = user_data["total_vc_seconds"] if user_data else 0
             
             voice_xp: int = (vc_seconds // 60) * VC_XP_PER_MIN
             total_xp: int = text_xp + voice_xp
             
-            curr_req_xp: int = get_required_xp(level - 1) if level > 1 else 0
-            next_req_xp: int = get_required_xp(level)
+            # DB 캐시된 레벨이 아니라 수식에서 정확한 현재 레벨을 추출합니다. (과거 소급 뻥튀기 방어)
+            real_level: int = calculate_level_from_xp(total_xp)
+            
+            curr_req_xp: int = get_required_xp(real_level - 1) if real_level > 1 else 0
+            next_req_xp: int = get_required_xp(real_level)
             
             # 진행도 바 계산 (10칸)
             progress_total: int = next_req_xp - curr_req_xp
@@ -225,7 +234,7 @@ class LevelingCog(commands.Cog):
             vc_minutes: int = (vc_seconds % 3600) // 60
             
             embed: discord.Embed = discord.Embed(title=f"👤 {interaction.user.display_name}님의 정보", color=0x3498DB)
-            embed.add_field(name="현재 레벨", value=f"**Lv.{level}**", inline=True)
+            embed.add_field(name="현재 레벨", value=f"**Lv.{real_level}**", inline=True)
             embed.add_field(name="총 경험치", value=f"**{total_xp:,} XP**", inline=True)
             embed.add_field(name="경험치 상세", value=f"💬 텍스트: {text_xp:,} XP\n🎙️ 음성: {voice_xp:,} XP", inline=False)
             embed.add_field(name="진행도", value=f"{progress_bar} ({ratio*100:.1f}%)", inline=False)
@@ -267,7 +276,8 @@ class LevelingCog(commands.Cog):
                     elif idx == 1: medal = "🥈"
                     elif idx == 2: medal = "🥉"
                     
-                    description += f"{medal} **{idx+1}위** | {name} - **Lv.{row['level']}** ({row['total_xp']:,} XP)\n\n"
+                    real_level: int = calculate_level_from_xp(row['total_xp'])
+                    description += f"{medal} **{idx+1}위** | {name} - **Lv.{real_level}** ({row['total_xp']:,} XP)\n\n"
             
             embed.description = description
             await interaction.followup.send(embed=embed)
