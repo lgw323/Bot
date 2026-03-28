@@ -5,7 +5,8 @@ __pycache__/
 *.pyd
 .Python
 env/
-venv/cl
+venv/
+bot_env/
 
 # IDE/Editor
 .vscode/
@@ -19,6 +20,7 @@ pi5_ubuntu_setup_guide.md
 tts_cache/
 assets/
 data/logs/
+data/startup_reason.txt
 *.log
 
 # Database
