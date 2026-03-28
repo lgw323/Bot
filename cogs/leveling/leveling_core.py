@@ -14,6 +14,7 @@ from database_manager import db_lock, get_user_data, update_user_xp, get_top_use
 
 logger: logging.Logger = logging.getLogger("LevelingCog")
 SUMMARY_CHANNEL_ID: int = int(os.getenv("SUMMARY_CHANNEL_ID", "0"))
+VC_XP_PER_MIN: int = 5
 
 # --- Helper Functions ---
 def calculate_jamo_length(text: str) -> int:
@@ -75,14 +76,13 @@ class LevelingCog(commands.Cog):
                 duration_sec: int = int(session_data.get("valid_duration", 0.0))
                 
                 if duration_sec >= 60:
-                    duration_1min: int = duration_sec // 60
-                    xp_to_add: int = duration_1min * 1
-                    
                     user_data: Optional[Dict[str, any]] = await get_user_data(member_id, guild_id)
                     current_level: int = user_data["level"] if user_data else 1
-                    current_xp: int = user_data["xp"] if user_data else 0
+                    current_text_xp: int = user_data["xp"] if user_data else 0
+                    current_vc_sec: int = user_data["total_vc_seconds"] if user_data else 0
                     
-                    total_xp: int = current_xp + xp_to_add
+                    new_vc_sec: int = current_vc_sec + duration_sec
+                    total_xp: int = current_text_xp + (new_vc_sec // 60) * VC_XP_PER_MIN
                     new_level: int = current_level
                     
                     # 레벨업 스케일 계산 (기동 중이므로 역할 부여는 생략, 레벨만 갱신)
@@ -90,7 +90,7 @@ class LevelingCog(commands.Cog):
                         new_level += 1
                     
                     final_new_level: Optional[int] = new_level if new_level > current_level else None
-                    await update_user_xp(member_id, guild_id, xp_added=xp_to_add, vc_sec_added=duration_sec, new_level=final_new_level)
+                    await update_user_xp(member_id, guild_id, xp_added=0, vc_sec_added=duration_sec, new_level=final_new_level)
                 
                 # 세션 삭제
                 self.voice_sessions.pop(member_id, None)
@@ -112,9 +112,10 @@ class LevelingCog(commands.Cog):
             if xp_to_add > 0:
                 user_data: Optional[Dict[str, any]] = await get_user_data(message.author.id, message.guild.id)
                 current_level: int = user_data["level"] if user_data else 1
-                current_xp: int = user_data["xp"] if user_data else 0
+                current_text_xp: int = user_data["xp"] if user_data else 0
+                current_vc_sec: int = user_data["total_vc_seconds"] if user_data else 0
                     
-                total_xp: int = current_xp + xp_to_add
+                total_xp: int = (current_text_xp + xp_to_add) + (current_vc_sec // 60) * VC_XP_PER_MIN
                 new_level: int = current_level
                 while total_xp >= get_required_xp(new_level):
                     new_level += 1
@@ -173,23 +174,21 @@ class LevelingCog(commands.Cog):
                     if duration_sec < 60:
                         return
 
-                    # 1분당 1 XP 지급
-                    duration_1min: int = duration_sec // 60
-                    xp_to_add: int = duration_1min * 1
+                    user_data: Optional[Dict[str, any]] = await get_user_data(member.id, member.guild.id)
+                    current_level: int = user_data["level"] if user_data else 1
+                    current_text_xp: int = user_data["xp"] if user_data else 0
+                    current_vc_sec: int = user_data["total_vc_seconds"] if user_data else 0
                     
-                    if xp_to_add > 0:
-                        user_data: Optional[Dict[str, any]] = await get_user_data(member.id, member.guild.id)
-                        current_level: int = user_data["level"] if user_data else 1
-                        current_xp: int = user_data["xp"] if user_data else 0
-                        
-                        total_xp: int = current_xp + xp_to_add
-                        new_level: int = current_level
-                        while total_xp >= get_required_xp(new_level):
-                            new_level += 1
-                        
-                        final_new_level: Optional[int] = new_level if new_level > current_level else None
-                        
-                        await update_user_xp(member.id, member.guild.id, xp_added=xp_to_add, vc_sec_added=duration_sec, new_level=final_new_level)
+                    new_vc_sec: int = current_vc_sec + duration_sec
+                    total_xp: int = current_text_xp + (new_vc_sec // 60) * VC_XP_PER_MIN
+                    new_level: int = current_level
+                    
+                    while total_xp >= get_required_xp(new_level):
+                        new_level += 1
+                    
+                    final_new_level: Optional[int] = new_level if new_level > current_level else None
+                    
+                    await update_user_xp(member.id, member.guild.id, xp_added=0, vc_sec_added=duration_sec, new_level=final_new_level)
         except Exception as e:
             logger.error(f"[Leveling] on_voice_state_update 처리 중 오류 발생: {e}", exc_info=True)
 
@@ -205,15 +204,18 @@ class LevelingCog(commands.Cog):
             user_data: Optional[Dict[str, any]] = await get_user_data(interaction.user.id, interaction.guild.id)
             
             level: int = user_data["level"] if user_data else 1
-            xp: int = user_data["xp"] if user_data else 0
+            text_xp: int = user_data["xp"] if user_data else 0
             vc_seconds: int = user_data["total_vc_seconds"] if user_data else 0
+            
+            voice_xp: int = (vc_seconds // 60) * VC_XP_PER_MIN
+            total_xp: int = text_xp + voice_xp
             
             curr_req_xp: int = get_required_xp(level - 1) if level > 1 else 0
             next_req_xp: int = get_required_xp(level)
             
             # 진행도 바 계산 (10칸)
             progress_total: int = next_req_xp - curr_req_xp
-            progress_current: int = xp - curr_req_xp
+            progress_current: int = total_xp - curr_req_xp
             ratio: float = progress_current / progress_total if progress_total > 0 else 0.0
             filled_blocks: int = int(ratio * 10)
             empty_blocks: int = 10 - filled_blocks
@@ -224,9 +226,10 @@ class LevelingCog(commands.Cog):
             
             embed: discord.Embed = discord.Embed(title=f"👤 {interaction.user.display_name}님의 정보", color=0x3498DB)
             embed.add_field(name="현재 레벨", value=f"**Lv.{level}**", inline=True)
-            embed.add_field(name="누적 경험치", value=f"{xp:,} XP", inline=True)
+            embed.add_field(name="총 경험치", value=f"**{total_xp:,} XP**", inline=True)
+            embed.add_field(name="경험치 상세", value=f"💬 텍스트: {text_xp:,} XP\n🎙️ 음성: {voice_xp:,} XP", inline=False)
             embed.add_field(name="진행도", value=f"{progress_bar} ({ratio*100:.1f}%)", inline=False)
-            embed.add_field(name="다음 레벨까지", value=f"{(next_req_xp - xp):,} XP 남음", inline=False)
+            embed.add_field(name="다음 레벨까지", value=f"{(next_req_xp - total_xp):,} XP 남음", inline=False)
             embed.add_field(name="음성 채널 누적 체류", value=f"{vc_hours}시간 {vc_minutes}분", inline=False)
             embed.set_thumbnail(url=interaction.user.display_avatar.url)
             
@@ -264,7 +267,7 @@ class LevelingCog(commands.Cog):
                     elif idx == 1: medal = "🥈"
                     elif idx == 2: medal = "🥉"
                     
-                    description += f"{medal} **{idx+1}위** | {name} - **Lv.{row['level']}** ({row['xp']:,} XP)\n\n"
+                    description += f"{medal} **{idx+1}위** | {name} - **Lv.{row['level']}** ({row['total_xp']:,} XP)\n\n"
             
             embed.description = description
             await interaction.followup.send(embed=embed)
