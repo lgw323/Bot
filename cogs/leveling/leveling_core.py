@@ -235,11 +235,13 @@ class LevelingCog(commands.Cog):
             
             embed: discord.Embed = discord.Embed(title=f"👤 {interaction.user.display_name}님의 정보", color=0x3498DB)
             embed.add_field(name="현재 레벨", value=f"**Lv.{real_level}**", inline=True)
-            embed.add_field(name="총 경험치", value=f"**{total_xp:,} XP**", inline=True)
+            embed.add_field(name="총 누적 경험치", value=f"**{total_xp:,} XP**", inline=True)
             embed.add_field(name="경험치 상세", value=f"💬 텍스트: {text_xp:,} XP\n🎙️ 음성: {voice_xp:,} XP", inline=False)
-            embed.add_field(name="진행도", value=f"{progress_bar} ({ratio*100:.1f}%)", inline=False)
-            embed.add_field(name="다음 레벨까지", value=f"{(next_req_xp - total_xp):,} XP 남음", inline=False)
-            embed.add_field(name="음성 채널 누적 체류", value=f"{vc_hours}시간 {vc_minutes}분", inline=False)
+            
+            # 진행도 표기를 RPG 게임 포맷(현재/목표치)으로 개선
+            embed.add_field(name="다음 레벨까지 (진행도)", value=f"{progress_bar} **{ratio*100:.1f}%**\n`[ {progress_current:,} / {progress_total:,} XP ]` (달성까지 **{progress_total - progress_current:,} XP** 남음)", inline=False)
+            
+            embed.add_field(name="음성 채널 누적 체류", value=f"**{vc_hours}시간 {vc_minutes}분**", inline=False)
             embed.set_thumbnail(url=interaction.user.display_avatar.url)
             
             await interaction.followup.send(embed=embed)
