@@ -31,8 +31,9 @@ def calculate_jamo_length(text: str) -> int:
     return length
 
 def get_required_xp(level: int) -> int:
-    # 레벨업 요구량 곡선: 150 * (level ^ 1.5)
-    return int(150 * (level ** 1.5))
+    # 레벨업 요구량 곡선: 100 * (level ^ 1.8) + 10 * (1.1 ^ level)
+    # 기존 유저 동의 하에 후반부 진입을 막기 위한 기하급수적 난이도 적용
+    return int(100 * (level ** 1.8) + 10 * (1.1 ** level))
 
 def calculate_level_from_xp(total_xp: int) -> int:
     """총 경험치를 기반으로 항상 정확한 현재 레벨을 역산합니다."""
