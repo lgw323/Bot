@@ -38,7 +38,8 @@
 
 [Unit]
 Description=Discord Music Bot
-After=network.target
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 User=os
@@ -49,6 +50,8 @@ ExecStart=/home/os/bot/bot_env/bin/python main_bot.py
 
 # 봇이 죽으면 무조건 다시 시작 (핵심 안정성 기능)
 Restart=always
+# 실패 시 1초만에 연속 재시작하지 않고 5초 대기 (정전/인터넷 지연 방어)
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
