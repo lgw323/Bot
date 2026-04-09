@@ -29,9 +29,9 @@ class TestLevelingCore:
 
     def test_get_required_xp(self):
         """레벨별 필수 경험치 커브 무결성 검증"""
-        assert get_required_xp(1) == int(150 * (1 ** 1.5))
-        assert get_required_xp(2) == int(150 * (2 ** 1.5))
-        assert get_required_xp(10) == int(150 * (10 ** 1.5))
+        assert get_required_xp(1) == int(100 * (1 ** 1.8) + 10 * (1.1 ** 1))
+        assert get_required_xp(2) == int(100 * (2 ** 1.8) + 10 * (1.1 ** 2))
+        assert get_required_xp(10) == int(100 * (10 ** 1.8) + 10 * (1.1 ** 10))
 
 
     @pytest.mark.asyncio
@@ -52,10 +52,11 @@ class TestLevelingCore:
         mock_message.content = "안녕하세요" # 3타+3타+2타+2타+2타 = 12
         expected_xp = 12
         
-        # 사용자가 이미 Lv.1이고 XP가 140이라고 가정 (다음 레벨 조건 충족 대기)
-        mock_get_user.return_value = {"level": 1, "xp": 140, "total_vc_seconds": 0}
+        # 사용자가 이미 Lv.1이고 XP가 100이라고 가정 (다음 레벨 조건 충족 대기)
+        # 새로운 1레벨 요구치는 111 (100 * 1^1.8 + 10*1.1) 입니다.
+        mock_get_user.return_value = {"level": 1, "xp": 100, "total_vc_seconds": 0}
         
         await cog.on_message(mock_message)
         
-        # XP 업데이트 함수가 올바른 추가분과 함께 불렸는지 검증 (140 + 12 = 152이므로 레벨 1구간(150)을 넘어 Lv.2가 되어야함)
+        # XP 업데이트 함수가 올바른 추가분과 함께 불렸는지 검증 (100 + 12 = 112이므로 레벨 1구간(111)을 넘어 Lv.2가 되어야함)
         mock_update_xp.assert_called_once_with(111, 222, xp_added=expected_xp, new_level=2)
