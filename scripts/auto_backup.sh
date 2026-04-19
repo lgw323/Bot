@@ -41,50 +41,48 @@ except Exception as e:
 "
 fi
 
-# 모든 대상 파일을 스테이징 (순수 텍스트 백업본)
-git add "$DATA_DIR"/*.sql
-
-# 스테이징된 변경사항이 있는지 확인
-if ! git diff --staged --quiet; then
-    
-    # 어떤 파일이 변경되었는지 목록 추출
-    STAGED_FILES=$(git diff --name-only --cached)
-    
-    # 플래그 설정 (.sql 덤프가 포함되었는지 확인)
-    HAS_DB=$(echo "$STAGED_FILES" | grep ".sql")
-    
-    # 상황별 커밋 메시지 생성
-    if [ -n "$HAS_DB" ]; then
-        MSG_TYPE="User Data Update"
-    else
-        MSG_TYPE="Routine Backup"
-    fi
-
-    TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
-    COMMIT_MSG="Auto-backup: $MSG_TYPE [$TIMESTAMP]"
-    
-    # 커밋 수행
-    git commit -m "$COMMIT_MSG"
-    echo "[$TIMESTAMP] 💾 커밋 완료: $MSG_TYPE" >> "$LOG_FILE"
-fi
+TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
 
 # ==========================================
-# 3. GitHub 동기화 (Push Check)
+# 3. 임시 로컬 저장소 생성 및 독립 브랜치(db-backup) Push
 # ==========================================
-git fetch origin main
-LOCAL=$(git rev-parse HEAD)
-REMOTE=$(git rev-parse origin/main)
+BACKUP_REPO_DIR="/tmp/bot_db_backup"
 
-if [ "$LOCAL" != "$REMOTE" ]; then
-    TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
-    
-    # 충돌 방지 및 업로드
-    git pull --rebase origin main
-    git push origin main
-    
-    if [ $? -eq 0 ]; then
-        echo "[$TIMESTAMP] ☁️ 업로드 완료." >> "$LOG_FILE"
-    else
-        echo "[$TIMESTAMP] ❌ 업로드 실패." >> "$LOG_FILE"
-    fi
+# 이전 백업 찌꺼기 제거 및 디렉토리 구조 생성
+rm -rf "$BACKUP_REPO_DIR"
+mkdir -p "$BACKUP_REPO_DIR/data"
+
+# 백업본을 임시 상자로 복사
+if ls "$DATA_DIR"/*.sql 1> /dev/null 2>&1; then
+    cp "$DATA_DIR"/*.sql "$BACKUP_REPO_DIR/data/"
+else
+    echo "[$TIMESTAMP] ❌ 백업 파일(.sql)이 존재하지 않아 푸시를 취소합니다." >> "$LOG_FILE"
+    exit 1
 fi
+
+cd "$BACKUP_REPO_DIR" || exit
+
+# 일회용 git 초기화
+git init --initial-branch=backup 1> /dev/null 2>&1
+
+# 메인 저장소의 리모트 URL 가져오기
+REMOTE_URL=$(cd "$BOT_DIR" && git config --get remote.origin.url)
+if [ -z "$REMOTE_URL" ]; then
+    REMOTE_URL="https://github.com/lgw323/Bot.git"
+fi
+
+# 커밋 및 강제 푸시 (과거 기록 덮어쓰기)
+git add .
+git commit -m "Auto-backup: User Data Update [$TIMESTAMP]" 1> /dev/null 2>&1
+
+# 원격의 db-backup 브랜치로 강제 밀어넣기 (--force)
+git push --force "$REMOTE_URL" backup:db-backup
+
+if [ $? -eq 0 ]; then
+    echo "[$TIMESTAMP] ☁️ 업로드 완료 (db-backup 브랜치 강제 푸시)." >> "$LOG_FILE"
+else
+    echo "[$TIMESTAMP] ❌ 업로드 실패 (db-backup 브랜치)." >> "$LOG_FILE"
+fi
+
+# 로봇 퇴근 전 빈 상자 파기
+rm -rf "$BACKUP_REPO_DIR"
