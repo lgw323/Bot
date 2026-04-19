@@ -72,13 +72,20 @@ def init_db() -> None:
         logger.info("Local DB and backup SQL not found. Attempting to fetch from remote 'db-backup' branch...")
         try:
             import subprocess
-            # 원격 db-backup 브랜치의 정보만 가져옴
             subprocess.run(["git", "fetch", "origin", "db-backup"], check=True, cwd=BASE_DIR, capture_output=True)
-            # 가져온 브랜치에서 data/database_backup.sql 파일만 쏙 빼와서 현재 워킹트리에 이식
-            subprocess.run(["git", "--work-tree=.", "checkout", "origin/db-backup", "--", "data/database_backup.sql"], check=True, cwd=BASE_DIR, capture_output=True)
-            logger.info("Successfully fetched database_backup.sql from remote branch!")
+            
+            # git show를 통해 Index(Staging Area) 오염 없이 순수 데이터만 추출합니다.
+            result = subprocess.run(
+                ["git", "show", "origin/db-backup:data/database_backup.sql"],
+                check=True, cwd=BASE_DIR, capture_output=True
+            )
+            SQL_BACKUP_PATH.write_bytes(result.stdout)
+            
+            logger.info("Successfully fetched database_backup.sql from remote branch without polluting Index!")
         except Exception as e:
-            logger.warning(f"Could not auto-fetch backup from remote (It might not exist yet or connection failed): {e}")
+            logger.critical(f"FATAL Error fetching backup: {e}")
+            import sys
+            sys.exit("System Halt: Empty DB creation blocked due to remote fetch failure. Check network or db-backup branch.")
 
     # 0.5. 백업 기반 자동 복구 (Main DB가 없고 SQL 덤프가 있는 경우)
     if not DB_PATH.exists() and SQL_BACKUP_PATH.exists():

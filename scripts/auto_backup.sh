@@ -44,21 +44,33 @@ fi
 TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
 
 # ==========================================
-# 3. 임시 로컬 저장소 생성 및 독립 브랜치(db-backup) Push
+# 3. 임시 로컬 보관소 롤백용 아카이브 구축 및 빈 깡통 검증
 # ==========================================
-BACKUP_REPO_DIR="/tmp/bot_db_backup"
+ARCHIVE_DIR="$DATA_DIR/archives"
+mkdir -p "$ARCHIVE_DIR"
 
-# 이전 백업 찌꺼기 제거 및 디렉토리 구조 생성
-rm -rf "$BACKUP_REPO_DIR"
-mkdir -p "$BACKUP_REPO_DIR/data"
-
-# 백업본을 임시 상자로 복사
 if ls "$DATA_DIR"/*.sql 1> /dev/null 2>&1; then
-    cp "$DATA_DIR"/*.sql "$BACKUP_REPO_DIR/data/"
+    # 빈 깡통 DB 강제푸시 방지 (용량이 너무 작으면 푸시 차단)
+    FILE_SIZE=$(wc -c < "$DATA_DIR/database_backup.sql")
+    if [ "$FILE_SIZE" -lt 1024 ]; then
+        echo "[$TIMESTAMP] 🔴 치명적 에러: 백업 파일 용량이 비정상적으로 작습니다 ($FILE_SIZE bytes). 빈 깡통 덮어쓰기를 막기 위해 작업을 중단합니다." >> "$LOG_FILE"
+        exit 1
+    fi
+    # 7일 롤백 유지용 로컬 아카이브에 백업
+    cp "$DATA_DIR/database_backup.sql" "$ARCHIVE_DIR/database_backup_$(date "+%Y%m%d_%H%M").sql"
+    find "$ARCHIVE_DIR" -type f -name "*.sql" -mtime +7 -exec rm {} \;
 else
     echo "[$TIMESTAMP] ❌ 백업 파일(.sql)이 존재하지 않아 푸시를 취소합니다." >> "$LOG_FILE"
     exit 1
 fi
+
+# ==========================================
+# 4. 안전한 임시 상자(mktemp) 생성 및 독립 브랜치(db-backup) Push
+# ==========================================
+# mktemp를 사용해 충돌 없는 고유 임시 디렉토리 생성
+BACKUP_REPO_DIR=$(mktemp -d)
+mkdir -p "$BACKUP_REPO_DIR/data"
+cp "$DATA_DIR"/database_backup.sql "$BACKUP_REPO_DIR/data/"
 
 cd "$BACKUP_REPO_DIR" || exit
 
