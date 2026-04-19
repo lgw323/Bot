@@ -28,3 +28,4 @@ data/startup_reason.txt
 *.sqlite
 *.sqlite3-journal
 *.bak
+*.sql
