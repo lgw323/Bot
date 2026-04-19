@@ -31,7 +31,8 @@ def setup_database(temp_db_path, temp_backup_path):
     """테스트를 위해 database_manager의 DB 경로를 임시 경로로 패치하고 초기화합니다."""
     with patch("database_manager.DB_PATH", temp_db_path), \
          patch("database_manager.DATA_DIR", temp_db_path.parent), \
-         patch("database_manager.SQL_BACKUP_PATH", temp_backup_path):
+         patch("database_manager.SQL_BACKUP_PATH", temp_backup_path), \
+         patch("subprocess.run"):
         
         # 테스트 전 DB 초기화 실행 (메모리 누수나 기존 파일 오염 방지)
         database_manager.init_db()
