@@ -314,8 +314,16 @@ class MusicAgentCog(commands.Cog):
                 state.play_next_song.set()
 
         except Exception as e:
-            logger.error(f"[{guild.name}] 노래 정보 처리 중 오류", exc_info=True)
-            await send_message_func("노래 정보를 가져오는 중 오류가 발생했습니다.", ephemeral=True, delete_after=5)
+            error_msg = str(e)
+            if "Premium members" in error_msg or "members-only" in error_msg:
+                logger.warning(f"[{guild.name}] 프리미엄 전용 음원 재생 시도 차단: {query}")
+                await send_message_func("⚠️ YouTube Music Premium 전용 음원(또는 멤버십 전용 영상)이라 재생할 수 없습니다.", ephemeral=True, delete_after=8)
+            elif "Video unavailable" in error_msg or "Private video" in error_msg:
+                logger.warning(f"[{guild.name}] 재생할 수 없는 영상 시도: {query}")
+                await send_message_func("⚠️ 삭제되었거나 비공개 처리되어 재생할 수 없는 영상입니다.", ephemeral=True, delete_after=8)
+            else:
+                logger.error(f"[{guild.name}] 노래 정보 처리 중 오류", exc_info=True)
+                await send_message_func("노래 정보를 가져오는 중 오류가 발생했습니다.", ephemeral=True, delete_after=5)
         finally:
             await state.clear_task()
 
