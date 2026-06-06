@@ -255,6 +255,11 @@ class MusicAgentCog(commands.Cog):
         if not await self._ensure_voice_connection(user, state, send_message_func):
             return
 
+        # 어드민 우회로 노래를 추가하는 경우, 요청자를 봇(guild.me)으로 위장
+        requester = user
+        if not user.voice or not user.voice.channel:
+            requester = guild.me
+
         is_url = URL_REGEX.match(query)
         task_description = f"`'{query}'`(을)를 처리하는 중..."
         await state.set_task(task_description)
@@ -282,7 +287,7 @@ class MusicAgentCog(commands.Cog):
                 total_songs = len(entries)
                 for i, song_data in enumerate(entries):
                     if song_data:
-                        song = Song(song_data, user)
+                        song = Song(song_data, requester)
                         state.queue.append(song)
                         added_count += 1
                         
@@ -304,7 +309,7 @@ class MusicAgentCog(commands.Cog):
                 return
 
             else:
-                song = Song(data, user)
+                song = Song(data, requester)
                 state.queue.append(song)
                 logger.info(f"[{guild.name}] 대기열 추가: '{song.title}'")
                 command_logger.info(f"사용자 '{user.display_name}'가 '{channel.name}' 채널에서 노래를 추가했습니다. (제목: '{song.title}', URL: {query})")
