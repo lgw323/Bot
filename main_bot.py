@@ -43,7 +43,8 @@ class MyBot(commands.Bot):
             "cogs.summary.summary_listeners",
             "cogs.music.music_agent",
             "cogs.leveling.leveling_core",
-            "cogs.application_commands"
+            "cogs.application_commands",
+            "cogs.birthday.birthday_core"
         ]
         # UI에 사용할 Rich Console 객체를 봇 인스턴스에 저장
         self.console: Console = Console()
