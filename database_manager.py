@@ -193,6 +193,17 @@ def init_db() -> None:
             )
         ''')
         
+        # 5. birthdays (user 단위 생일)
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS birthdays (
+                user_id INTEGER,
+                guild_id INTEGER,
+                month INTEGER,
+                day INTEGER,
+                PRIMARY KEY(user_id, guild_id)
+            )
+        ''')
+        
         conn.commit()
     logger.info("Database schemas initialized.")
 
@@ -468,4 +479,46 @@ async def get_top_users(guild_id: int, limit: int = 10, vc_xp_per_min: int = 5) 
                 
                 rows: List[Dict[str, Any]] = [dict(row) for row in c.fetchall()]
                 return rows
+        return await asyncio.to_thread(_get)
+
+# ==========================================
+# 생일 기능 DB 함수
+# ==========================================
+
+async def add_birthday(user_id: int, guild_id: int, month: int, day: int) -> None:
+    async with db_lock:
+        def _add() -> None:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+                c: sqlite3.Cursor = conn.cursor()
+                c.execute("INSERT OR REPLACE INTO birthdays (user_id, guild_id, month, day) VALUES (?, ?, ?, ?)", (user_id, guild_id, month, day))
+                conn.commit()
+        await asyncio.to_thread(_add)
+
+async def remove_birthday(user_id: int, guild_id: int) -> int:
+    async with db_lock:
+        def _remove() -> int:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+                c: sqlite3.Cursor = conn.cursor()
+                c.execute("DELETE FROM birthdays WHERE user_id = ? AND guild_id = ?", (user_id, guild_id))
+                conn.commit()
+                return c.rowcount
+        return await asyncio.to_thread(_remove)
+
+async def get_birthdays_today(guild_id: int, month: int, day: int) -> List[int]:
+    async with db_lock:
+        def _get() -> List[int]:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+                c: sqlite3.Cursor = conn.cursor()
+                c.execute("SELECT user_id FROM birthdays WHERE guild_id = ? AND month = ? AND day = ?", (guild_id, month, day))
+                return [row[0] for row in c.fetchall()]
+        return await asyncio.to_thread(_get)
+
+async def get_all_birthdays(guild_id: int) -> List[Dict[str, int]]:
+    async with db_lock:
+        def _get() -> List[Dict[str, int]]:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+                conn.row_factory = sqlite3.Row
+                c: sqlite3.Cursor = conn.cursor()
+                c.execute("SELECT user_id, month, day FROM birthdays WHERE guild_id = ? ORDER BY month, day", (guild_id,))
+                return [dict(row) for row in c.fetchall()]
         return await asyncio.to_thread(_get)
