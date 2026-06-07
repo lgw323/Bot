@@ -37,6 +37,7 @@ YTDL_OPTIONS: Dict[str, Any] = {
     'playlistend': 50,
     'quiet': True,
     'no_warnings': True,
+    'ignoreerrors': True,
     'default_search': 'auto',
     'source_address': '0.0.0.0',
     'http_headers': {
