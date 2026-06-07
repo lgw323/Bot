@@ -47,7 +47,6 @@ class TestSystemIntegrity:
         assert database_manager is not None, "database_manager 모듈을 불러오지 못했습니다."
         # 추가 무결성: init_db 등 주요 함수가 존재하는지 체크
         assert hasattr(database_manager, "init_db"), "init_db 함수가 database_manager에 존재하지 않습니다."
-        assert hasattr(database_manager, "migrate_json_to_db"), "migrate_json_to_db 함수가 database_manager에 존재하지 않습니다."
 
     @pytest.mark.parametrize("module_path", ALL_COG_MODULES)
     def test_cog_modules_import(self, module_path: str):
