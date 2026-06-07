@@ -299,7 +299,7 @@ class MusicAgentCog(commands.Cog):
                 await send_message_func(f"✅ 재생목록에서 **{added_count}**개의 노래를 대기열에 추가했습니다.", ephemeral=True, delete_after=5)
 
             elif 'entries' in data:
-                entries = data.get('entries', [])
+                entries = [e for e in data.get('entries', []) if e]
                 if not entries:
                     await send_message_func("노래 정보를 찾을 수 없습니다.", ephemeral=True, delete_after=5)
                     return
@@ -323,7 +323,7 @@ class MusicAgentCog(commands.Cog):
             if "Premium members" in error_msg or "members-only" in error_msg:
                 logger.warning(f"[{guild.name}] 프리미엄 전용 음원 재생 시도 차단: {query}")
                 await send_message_func("⚠️ YouTube Music Premium 전용 음원(또는 멤버십 전용 영상)이라 재생할 수 없습니다.", ephemeral=True, delete_after=8)
-            elif "Video unavailable" in error_msg or "Private video" in error_msg:
+            elif "Video unavailable" in error_msg or "Private video" in error_msg or "not available" in error_msg.lower():
                 logger.warning(f"[{guild.name}] 재생할 수 없는 영상 시도: {query}")
                 await send_message_func("⚠️ 삭제되었거나 비공개 처리되어 재생할 수 없는 영상입니다.", ephemeral=True, delete_after=8)
             else:
