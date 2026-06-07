@@ -105,7 +105,6 @@ def main() -> None:
             # 추후 별도의 초기화 스크립트나 관리자(Cog) 내부 로직으로 구조적 분리 및 의존성 주입이 필요함.
             try:
                 database_manager.init_db()
-                database_manager.migrate_json_to_db()
             except Exception as e:
                 logger.error(f"DB 초기화 중 예외 발생: {e}", exc_info=True)
 
