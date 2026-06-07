@@ -29,8 +29,7 @@ class TestMainBot:
 
     @pytest.mark.asyncio
     @patch("database_manager.init_db")
-    @patch("database_manager.migrate_json_to_db")
-    async def test_setup_hook_loads_extensions(self, mock_migrate, mock_init):
+    async def test_setup_hook_loads_extensions(self, mock_init):
         """setup_hook에서 Cog들과 DB 초기화 작업이 연결(호출)되는지 시뮬레이션"""
         bot = MyBot(command_prefix="!", intents=discord.Intents.default())
         # load_extension, tree.sync 등의 비동기 동작 모방
