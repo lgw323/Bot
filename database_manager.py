@@ -17,9 +17,7 @@ DATA_DIR: Path = BASE_DIR / "data"
 DB_PATH: Path = DATA_DIR / "bot_database.db"
 SQL_BACKUP_PATH: Path = DATA_DIR / "database_backup.sql"
 
-# 기존 JSON 경로
-FAVORITES_FILE: Path = DATA_DIR / "favorites.json"
-MUSIC_SETTINGS_FILE: Path = DATA_DIR / "music_settings.json"
+# 기존 JSON 경로는 더 이상 사용하지 않아 삭제됨
 
 # SQLite 동시성 이슈(Concurrency)를 방어하기 위해 db_lock을 사용합니다.
 # 또한 check_same_thread=False 옵션을 추가하여 asyncio.to_thread에서 발생할 수 있는 스레드 참조 에러를 최적화합니다.
@@ -160,9 +158,18 @@ def init_db() -> None:
                 xp INTEGER DEFAULT 0,
                 level INTEGER DEFAULT 1,
                 total_vc_seconds INTEGER DEFAULT 0,
+                birth_month INTEGER,
+                birth_day INTEGER,
                 PRIMARY KEY (user_id, guild_id)
             )
         ''')
+        
+        # 레거시 users 테이블 구조에 생일 컬럼이 없다면 자동 추가
+        c.execute("PRAGMA table_info(users)")
+        columns = [info[1] for info in c.fetchall()]
+        if 'birth_month' not in columns:
+            c.execute("ALTER TABLE users ADD COLUMN birth_month INTEGER")
+            c.execute("ALTER TABLE users ADD COLUMN birth_day INTEGER")
         
         # 2. music_settings (guild 단위)
         c.execute('''
@@ -193,16 +200,27 @@ def init_db() -> None:
             )
         ''')
         
-        # 5. birthdays (user 단위 생일)
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS birthdays (
-                user_id INTEGER,
-                guild_id INTEGER,
-                month INTEGER,
-                day INTEGER,
-                PRIMARY KEY(user_id, guild_id)
-            )
-        ''')
+        # 5. 기존 birthdays 테이블 마이그레이션 및 파기 로직
+        c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='birthdays'")
+        if c.fetchone():
+            logger.info("Migrating legacy 'birthdays' table into 'users' table...")
+            try:
+                # 기존 users 테이블에 없고 birthdays 테이블에만 있는 유저 처리
+                c.execute('''
+                    INSERT OR IGNORE INTO users (user_id, guild_id, birth_month, birth_day)
+                    SELECT user_id, guild_id, month, day FROM birthdays
+                ''')
+                # users 테이블에 이미 있는 유저의 생일 컬럼 업데이트
+                c.execute('''
+                    UPDATE users 
+                    SET birth_month = (SELECT month FROM birthdays WHERE birthdays.user_id = users.user_id AND birthdays.guild_id = users.guild_id),
+                        birth_day = (SELECT day FROM birthdays WHERE birthdays.user_id = users.user_id AND birthdays.guild_id = users.guild_id)
+                    WHERE EXISTS (SELECT 1 FROM birthdays WHERE birthdays.user_id = users.user_id AND birthdays.guild_id = users.guild_id)
+                ''')
+                c.execute("DROP TABLE birthdays")
+                logger.info("Legacy 'birthdays' table dropped successfully.")
+            except Exception as e:
+                logger.error(f"Error during birthdays migration: {e}")
         
         conn.commit()
     logger.info("Database schemas initialized.")
@@ -260,62 +278,7 @@ async def backup_database_to_sql() -> bool:
         return await asyncio.to_thread(_backup)
 
 
-def migrate_json_to_db() -> None:
-    with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
-        c: sqlite3.Cursor = conn.cursor()
-        
-        # Migrate music_settings.json (guild_id)
-        if MUSIC_SETTINGS_FILE.exists():
-            logger.info("Migrating music_settings.json...")
-            try:
-                with open(MUSIC_SETTINGS_FILE, 'r', encoding='utf-8') as f:
-                    settings_data: Dict[str, Any] = json.load(f)
-                    
-                for guild_id_str, data in settings_data.items():
-                    guild_id: int = int(guild_id_str)
-                    volume: float = data.get("volume", 1.0)
-                    c.execute("INSERT OR IGNORE INTO music_settings (guild_id, volume) VALUES (?, ?)", (guild_id, volume))
-                    c.execute("UPDATE music_settings SET volume = ? WHERE guild_id = ?", (volume, guild_id))
-                    
-                    play_counts: Dict[str, Any] = data.get("play_counts", {})
-                    for url, info in play_counts.items():
-                        title: str = info.get("title", "")
-                        count: int = info.get("count", 1)
-                        c.execute("INSERT OR REPLACE INTO music_play_counts (guild_id, url, title, play_count) VALUES (?, ?, ?, ?)",
-                                  (guild_id, url, title, count))
-                
-                logger.info("music_settings.json migrated.")
-                MUSIC_SETTINGS_FILE.rename(MUSIC_SETTINGS_FILE.with_suffix(".json.bak"))
-            except Exception as e:
-                logger.error(f"Error migrating music_settings: {e}", exc_info=True)
-
-        # Migrate favorites.json (user_id)
-        if FAVORITES_FILE.exists():
-            logger.info("Migrating favorites.json...")
-            try:
-                with open(FAVORITES_FILE, 'r', encoding='utf-8') as f:
-                    fav_data: Dict[str, Any] = json.load(f)
-                    
-                for user_id_str, data in fav_data.items():
-                    if user_id_str == "_guild_settings":
-                        continue
-                    user_id: int = int(user_id_str)
-                    
-                    # Ensure user exists in users table
-                    c.execute("INSERT OR IGNORE INTO users (user_id, guild_id) VALUES (?, ?)", (user_id, 0))
-                    
-                    for song in data:
-                        title: str = song.get("title", "")
-                        url: str = song.get("url", "")
-                        c.execute("INSERT OR IGNORE INTO favorites (user_id, url, title) VALUES (?, ?, ?)",
-                                  (user_id, url, title))
-                
-                logger.info("favorites.json migrated.")
-                FAVORITES_FILE.rename(FAVORITES_FILE.with_suffix(".json.bak"))
-            except Exception as e:
-                logger.error(f"Error migrating favorites: {e}", exc_info=True)
-
-        conn.commit()
+# migrate_json_to_db() 함수는 불필요해져 삭제되었습니다.
 
 
 # 비동기 DB 조회/조작 유틸 함수
@@ -490,7 +453,8 @@ async def add_birthday(user_id: int, guild_id: int, month: int, day: int) -> Non
         def _add() -> None:
             with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
                 c: sqlite3.Cursor = conn.cursor()
-                c.execute("INSERT OR REPLACE INTO birthdays (user_id, guild_id, month, day) VALUES (?, ?, ?, ?)", (user_id, guild_id, month, day))
+                c.execute("INSERT OR IGNORE INTO users (user_id, guild_id) VALUES (?, ?)", (user_id, guild_id))
+                c.execute("UPDATE users SET birth_month = ?, birth_day = ? WHERE user_id = ? AND guild_id = ?", (month, day, user_id, guild_id))
                 conn.commit()
         await asyncio.to_thread(_add)
 
@@ -499,9 +463,10 @@ async def remove_birthday(user_id: int, guild_id: int) -> int:
         def _remove() -> int:
             with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
                 c: sqlite3.Cursor = conn.cursor()
-                c.execute("DELETE FROM birthdays WHERE user_id = ? AND guild_id = ?", (user_id, guild_id))
+                c.execute("UPDATE users SET birth_month = NULL, birth_day = NULL WHERE user_id = ? AND guild_id = ?", (user_id, guild_id))
+                updated = c.rowcount
                 conn.commit()
-                return c.rowcount
+                return updated
         return await asyncio.to_thread(_remove)
 
 async def get_birthdays_today(guild_id: int, month: int, day: int) -> List[int]:
@@ -509,7 +474,7 @@ async def get_birthdays_today(guild_id: int, month: int, day: int) -> List[int]:
         def _get() -> List[int]:
             with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
                 c: sqlite3.Cursor = conn.cursor()
-                c.execute("SELECT user_id FROM birthdays WHERE guild_id = ? AND month = ? AND day = ?", (guild_id, month, day))
+                c.execute("SELECT user_id FROM users WHERE guild_id = ? AND birth_month = ? AND birth_day = ?", (guild_id, month, day))
                 return [row[0] for row in c.fetchall()]
         return await asyncio.to_thread(_get)
 
@@ -519,6 +484,6 @@ async def get_all_birthdays(guild_id: int) -> List[Dict[str, int]]:
             with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
                 conn.row_factory = sqlite3.Row
                 c: sqlite3.Cursor = conn.cursor()
-                c.execute("SELECT user_id, month, day FROM birthdays WHERE guild_id = ? ORDER BY month, day", (guild_id,))
+                c.execute("SELECT user_id, birth_month as month, birth_day as day FROM users WHERE guild_id = ? AND birth_month IS NOT NULL ORDER BY birth_month, birth_day", (guild_id,))
                 return [dict(row) for row in c.fetchall()]
         return await asyncio.to_thread(_get)
