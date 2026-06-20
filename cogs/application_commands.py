@@ -50,6 +50,15 @@ class CommandsCog(commands.Cog):
         else:
             await interaction.response.send_message("노래 기능이 아직 준비되지 않았습니다.", ephemeral=True)
 
+    # --- 시청 명령어 ---
+    @app_commands.command(name="시청", description="외부 웹 브라우저에서 유튜브를 동시에 볼 수 있는 실시간 시청 방을 개설합니다.")
+    async def watch_command(self, interaction: discord.Interaction):
+        cog = self.bot.get_cog("WatchAgentCog")
+        if cog:
+            await cog.handle_watch_together(interaction)
+        else:
+            await interaction.response.send_message("시청 기능이 아직 준비되지 않았습니다.", ephemeral=True)
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(CommandsCog(bot))
