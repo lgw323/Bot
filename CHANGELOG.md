@@ -14,7 +14,6 @@
 - FastAPI 비동기 웹서버 및 WebSocket을 활용한 실시간 상태 동기화 중계 모듈(`cogs/watch_together/watch_server.py`)을 탑재했습니다.
 - 디스코드 슬래시 명령어 `/시청`을 통한 UUID 기반 방 세션 개설 및 웰컴 링크 임베드 전송 기능을 구현했습니다.
 - YouTube IFrame API와 웹소켓 양방향 통신을 조립한 모던 Glassmorphism UI 스타일의 전용 웹 플레이어 화면(`templates/player.html`)을 추가했습니다.
-- 초보자도 한 줄 한 줄 따라 하며 라즈베리파이 5 서버 외부 접속로를 뚫을 수 있도록 안내하는 Cloudflare Tunnel 및 개인 도메인 연동 가이드 문서(`docs/cloudflare_tunnel_guide.md`)를 신설했습니다.
 
 ### Changed
 - 로컬 윈도우/리눅스 개발 편의성을 극대화하기 위해 파이썬 가상환경(`.venv` 및 `bot_env`) 생성, 패키지 설치 및 실행 절차에 대한 가이드라인을 `README.md` 및 `project_context.md`에 공식 추가했습니다.
