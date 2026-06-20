@@ -27,7 +27,7 @@
 
 #### 🎛️ Command Router (글로벌 명령어 모음)
 *   `application_commands.py`: **디스코드 슬래시 명령어 중앙 제어소(Controller).**
-    *   `/재생`, `/요약` 등 유저가 디스코드에 입력하는 모든 빗금(`/`) Application 명령어의 형태(인터페이스)를 선언합니다.
+    *   `/재생`, `/요약`, `/생일등록`, `/생일목록`, `/내정보`, `/랭킹` 등 유저가 디스코드에 입력하는 모든 빗금(`/`) Application 명령어의 형태(인터페이스)를 선언합니다.
     *   입력받은 명령어는 각각 알맞은 엔진 모듈(`MusicAgentCog` 등)로 전달(Routing)되며, 전역 에러 핸들링도 이곳에서 전담합니다.
 
 #### 🎶 Music (음악 시스템) - `cogs/music/`
@@ -65,6 +65,46 @@
 
 ### 5. 데이터 컨테이너 (Data Directory)
 이 폴더는 로컬 라즈베리파이 환경에서 구동/정리되며 깃허브에는 기본적으로 업로드되지 않습니다.
-*   `bot_database.db`: 사용자 경험치 레벨, 음악 볼륨 등 핵심 데이터를 영구 보관하는 SQLite3 데이터베이스 파일.
+*   `bot_database.db`: 사용자 경험치 레벨 및 생일 정보, 음악 볼륨 등 핵심 데이터를 영구 보관하는 SQLite3 데이터베이스 파일.
 *   `archives/`: 치명적 장애 발생 시 과거 시점으로 자유롭게 롤백 탈출을 할 수 있도록, 최대 7일 치의 데이터베이스 백업 덤프본(`.sql`)들이 날짜별로 누적 보관되는 로컬 타임머신 공간입니다.
 *   `logs/`: 날짜별로 순환(Rotation) 생성되는 `system.log` 파일들이 보관됩니다.
+
+---
+
+## 🛠️ 로컬 개발 환경 설정 및 실행 가이드 (Virtual Environment)
+
+프로젝트를 로컬 환경(Windows)에서 실행하거나 개발 및 테스트할 때는 아래 단계에 따라 파이썬 가상환경(`venv`)을 구성하여 의존성을 독립적으로 분리하는 것을 강력히 권장합니다.
+
+### 1. 가상환경 생성 및 활성화
+```bash
+# 1. 프로젝트 폴더 내부로 이동 후 가상환경(.venv) 생성
+python -m venv .venv
+
+# 2. 가상환경 활성화 (Windows PowerShell 기준)
+.venv\Scripts\Activate.ps1
+
+# 3. (옵션) 가상환경 활성화 (Windows cmd 기준)
+.venv\Scripts\activate.bat
+```
+
+### 2. 의존성 패키지 설치
+가상환경이 활성화된 상태(프롬프트 앞에 `(.venv)`가 보임)에서 실행합니다.
+```bash
+# 필수 라이브러리 및 웹소켓/서버(fastapi, uvicorn 등) 설치
+pip install -r requirements.txt fastapi uvicorn
+
+# 개발 및 테스트 환경 구축이 필요한 경우 추가 설치
+pip install -r requirements-dev.txt pytest pytest-asyncio
+```
+
+### 3. 디스코드 봇 로컬 실행
+```bash
+# 가상환경 내부 파이썬을 이용하여 봇 시작
+python main_bot.py
+```
+
+### 4. 로컬 테스트 검증 수행
+```bash
+# pytest를 사용한 전체 무결성 테스트 실행
+pytest tests/
+```
