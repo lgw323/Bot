@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watch Together - 동시 시청</title>
+    <!-- Google Font - Outfit / Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0c10;
+            --glass-bg: rgba(26, 27, 38, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --primary-color: #7289da;
+            --text-color: #c5c6c7;
+            --title-color: #ffffff;
+            --accent-color: #1f2833;
+            --active-color: #43b581;
+            --danger-color: #f04747;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 10% 20%, rgba(90, 103, 216, 0.1) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(114, 137, 218, 0.08) 0%, transparent 40%);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            background: rgba(11, 12, 16, 0.7);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            color: var(--title-color);
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        header h1 span {
+            color: var(--primary-color);
+        }
+
+        .status-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 0.9rem;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge-ws {
+            background: rgba(67, 181, 129, 0.15);
+            color: var(--active-color);
+            border: 1px solid rgba(67, 181, 129, 0.2);
+        }
+        
+        .badge-ws.disconnected {
+            background: rgba(240, 71, 71, 0.15);
+            color: var(--danger-color);
+            border: 1px solid rgba(240, 71, 71, 0.2);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: currentColor;
+            display: inline-block;
+        }
+
+        /* 메인 레이아웃 */
+        main {
+            display: flex;
+            flex: 1;
+            padding: 30px;
+            gap: 30px;
+            max-width: 1600px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* 왼쪽: 플레이어 섹션 */
+        .player-section {
+            flex: 2.2;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* 16:9 비율 */
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--glass-border);
+        }
+
+        #yt-player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .video-info {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .video-title {
+            color: var(--title-color);
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        /* 오른쪽: 사이드바 */
+        .sidebar-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-height: calc(100vh - 120px);
+        }
+
+        .card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .playlist-card {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .card-title {
+            color: var(--title-color);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .input-group input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: var(--title-color);
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            background: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s, transform 0.1s;
+        }
+
+        .btn:hover {
+            background: #5b6ebd;
+        }
+        
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-danger {
+            background: rgba(240, 71, 71, 0.15);
+            color: var(--danger-color);
+            border: 1px solid rgba(240, 71, 71, 0.2);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+        .btn-danger:hover {
+            background: var(--danger-color);
+            color: #fff;
+        }
+
+        /* 재생 대기열 리스트 */
+        .playlist-items {
+            list-style: none;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 5px;
+        }
+
+        .playlist-items::-webkit-scrollbar {
+            width: 6px;
+        }
+        .playlist-items::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .playlist-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.2s, border-color 0.2s;
+            cursor: pointer;
+        }
+
+        .playlist-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .playlist-item.active {
+            border-color: var(--primary-color);
+            background: rgba(114, 137, 218, 0.05);
+        }
+
+        .item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-title {
+            color: var(--title-color);
+            font-weight: 500;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+
+        .item-meta {
+            font-size: 0.75rem;
+            color: #72767d;
+        }
+
+        /* 안내 모달 / 토스트 */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            padding: 14px 24px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            color: var(--title-color);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        @media (max-width: 1024px) {
+            main {
+                flex-direction: column;
+                padding: 15px;
+            }
+            header {
+                padding: 15px 20px;
+            }
+            .sidebar-section {
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Watch <span>Together</span></h1>
+        <div class="status-container">
+            <div id="connection-badge" class="badge badge-ws disconnected">
+                <span class="dot"></span> <span id="ws-status-text">연결 대기 중</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- 왼쪽: 플레이어 공간 -->
+        <section class="player-section">
+            <div class="video-wrapper">
+                <!-- 유튜브 IFrame API가 로딩되면 여기에 삽입됨 -->
+                <div id="yt-player"></div>
+            </div>
+            <div class="video-info">
+                <div id="current-video-title" class="video-title">대기열에서 영상을 선택하거나 추가해 주세요.</div>
+                <div style="font-size: 0.85rem; color: #72767d;">
+                    💡 현재 시청 상태가 실시간으로 동기화되고 있습니다.
+                </div>
+            </div>
+        </section>
+
+        <!-- 오른쪽: 대기열 관리 사이드바 -->
+        <section class="sidebar-section">
+            <div class="card playlist-card">
+                <div class="card-title">
+                    공유 재생 대기열
+                </div>
+                
+                <!-- 동영상 추가 입력창 -->
+                <div class="input-group">
+                    <input type="text" id="youtube-url-input" placeholder="YouTube 주소(URL) 입력">
+                    <button class="btn" id="add-video-btn">추가</button>
+                </div>
+
+                <!-- 플레이리스트 항목 -->
+                <ul class="playlist-items" id="playlist-items-ul">
+                    <!-- JS에서 동적 추가 -->
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <!-- 알림용 토스트 메신저 -->
+    <div id="toast-message" class="toast">알림 메시지</div>
+
+    <!-- YouTube IFrame API 비동기 로드 -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        // 세션 ID 추출 (URL 파라미터에서 추출)
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session');
+        
+        if (!sessionId) {
+            alert("세션 ID가 존재하지 않습니다. 정상적인 주소로 접속해 주세요.");
+            window.stop();
+        }
+
+        // 닉네임 설정 (무작위 닉네임 생성 또는 사용자 지정 가능)
+        const addedBy = "유저_" + Math.floor(Math.random() * 1000);
+
+        let player;
+        let ws;
+        let currentVideoId = null;
+        let isSyncing = false; // 동기화 패킷 처리 중 무한 루프 차단 플래그
+        let lastReceivedTime = 0;
+        let playlist = [];
+
+        // 1. YouTube IFrame API 로드 성공 시 호출되는 콜백
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('yt-player', {
+                height: '100%',
+                width: '100%',
+                videoId: '', // 최초 로드 시 빈 영상
+                playerVars: {
+                    'autoplay': 0,
+                    'controls': 1,
+                    'rel': 0,
+                    'modestbranding': 1,
+                    'origin': window.location.origin
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            initWebSocket();
+            fetchPlaylist();
+        }
+
+        // 사용자가 수동으로 조작했는지 확인하기 위한 플래그
+        let userAction = true;
+
+        // 플레이어 상태 감지 및 서버 전송
+        function onPlayerStateChange(event) {
+            if (isSyncing) return; // 동기화 패킷에 의한 상태 변경이면 무시
+
+            const time = player.getCurrentTime();
+            if (event.data === YT.PlayerState.PLAYING) {
+                sendWsMessage({
+                    type: "state_change",
+                    state: "playing",
+                    time: time
+                });
+            } else if (event.data === YT.PlayerState.PAUSED) {
+                sendWsMessage({
+                    type: "state_change",
+                    state: "paused",
+                    time: time
+                });
+            }
+        }
+
+        // 주기적인 재생 지점(Seek) 동기화 트리거
+        // 사용자가 슬라이더 바를 눌러 건너뛰기 했을 때의 이벤트는 감지가 까다로우므로
+        // 주기적으로 현재 타임을 관측해 크게 튀면 전송하는 방식으로 우회 보강
+        let prevTime = 0;
+        setInterval(() => {
+            if (!player || isSyncing || !player.getCurrentTime) return;
+            const currTime = player.getCurrentTime();
+            const state = player.getPlayerState();
+            
+            // 재생 중일 때, 1초 타이머 범위 밖으로 튀면 사용자가 건너뛰기(Seek)한 것으로 판정
+            if (state === YT.PlayerState.PLAYING) {
+                const diff = Math.abs(currTime - prevTime);
+                if (diff > 2.5) {
+                    sendWsMessage({
+                        type: "seek",
+                        time: currTime
+                    });
+                }
+            }
+            prevTime = currTime;
+        }, 800);
+
+        // 2. WebSocket 초기화 및 통신 핸들러
+        function initWebSocket() {
+            const loc = window.location;
+            const wsProto = loc.protocol === "https:" ? "wss:" : "ws:";
+            const wsUrl = `${wsProto}//${loc.host}/ws/${sessionId}`;
+            
+            ws = new WebSocket(wsUrl);
+
+            const badge = document.getElementById("connection-badge");
+            const badgeText = document.getElementById("ws-status-text");
+
+            ws.onopen = () => {
+                badge.className = "badge badge-ws";
+                badgeText.innerText = "실시간 동기화 됨";
+                showToast("실시간 동기화가 활성화되었습니다.");
+                
+                // 최초 접속 시, 기존에 접속해 있던 다른 클라이언트에게 상태 정보를 요청 (동기화 요청)
+                sendWsMessage({ type: "sync_request" });
+            };
+
+            ws.onclose = () => {
+                badge.className = "badge badge-ws disconnected";
+                badgeText.innerText = "연결 끊김 (재시도 중)";
+                showToast("연결이 종료되었습니다. 3초 후 재연결을 시도합니다.");
+                setTimeout(initWebSocket, 3000);
+            };
+
+            ws.onerror = (err) => {
+                console.error("WS Error:", err);
+            };
+
+            ws.onmessage = async (event) => {
+                const message = JSON.parse(event.data);
+                
+                isSyncing = true; // 무한 동기화 루프 방지 ON
+
+                switch (message.type) {
+                    case "user_joined":
+                        showToast(message.message);
+                        // 내가 방의 선구자(기존 플레이어)라면 신입에게 현재 플레이 상태를 전달
+                        if (player && player.getPlayerState() !== YT.PlayerState.UNSTARTED) {
+                            sendWsMessage({
+                                type: "sync_response",
+                                state: player.getPlayerState() === YT.PlayerState.PLAYING ? "playing" : "paused",
+                                time: player.getCurrentTime(),
+                                videoId: currentVideoId
+                            });
+                        }
+                        break;
+
+                    case "user_left":
+                        showToast(message.message);
+                        break;
+
+                    case "state_change":
+                        syncPlayerState(message.state, message.time);
+                        break;
+
+                    case "seek":
+                        syncPlayerSeek(message.time);
+                        break;
+
+                    case "sync_request":
+                        // 누군가 싱크를 구걸할 때 내 상태 전송
+                        if (player && player.getPlayerState() !== -1) {
+                            sendWsMessage({
+                                type: "sync_response",
+                                state: player.getPlayerState() === YT.PlayerState.PLAYING ? "playing" : "paused",
+                                time: player.getCurrentTime(),
+                                videoId: currentVideoId
+                            });
+                        }
+                        break;
+
+                    case "sync_response":
+                        // 받아온 타겟 비디오와 현재 비디오가 다르면 영상 변경
+                        if (message.videoId && message.videoId !== currentVideoId) {
+                            loadVideoById(message.videoId, false);
+                        }
+                        // 상태 및 시각 강제 동기화
+                        syncPlayerState(message.state, message.time);
+                        break;
+
+                    case "playlist_change":
+                        showToast(message.message);
+                        fetchPlaylist();
+                        break;
+                }
+
+                // 동기화 명령 처리 후 살짝 텀을 두고 플래그 해제
+                setTimeout(() => { isSyncing = false; }, 400);
+            };
+        }
+
+        function sendWsMessage(obj) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(obj));
+            }
+        }
+
+        // 3. 브라우저 비디오 컨트롤 동기화 실행 (역치 필터링 포함)
+        function syncPlayerState(targetState, targetTime) {
+            if (!player) return;
+            
+            const currTime = player.getCurrentTime();
+            const timeDiff = Math.abs(currTime - targetTime);
+
+            // 오차 강제 교정 역치 (1.5초)
+            if (timeDiff > 1.5) {
+                player.seekTo(targetTime, true);
+            }
+
+            if (targetState === "playing") {
+                if (player.getPlayerState() !== YT.PlayerState.PLAYING) {
+                    player.playVideo();
+                }
+            } else if (targetState === "paused") {
+                if (player.getPlayerState() !== YT.PlayerState.PAUSED) {
+                    player.pauseVideo();
+                }
+            }
+        }
+
+        function syncPlayerSeek(targetTime) {
+            if (!player) return;
+            const currTime = player.getCurrentTime();
+            const timeDiff = Math.abs(currTime - targetTime);
+            
+            // 오차가 1.5초 이상 벌어질 때만 화면 튐(Seek) 적용
+            if (timeDiff > 1.5) {
+                player.seekTo(targetTime, true);
+            }
+        }
+
+        // 4. 동영상 제어 유틸 함수
+        function extractVideoId(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        function loadVideoById(videoId, triggerWs = true) {
+            if (!player) return;
+            currentVideoId = videoId;
+            player.loadVideoById(videoId);
+            
+            // 현재 대기열의 항목 이름으로 뷰 갱신
+            const activeItem = playlist.find(item => extractVideoId(item.video_url) === videoId);
+            if (activeItem) {
+                document.getElementById("current-video-title").innerText = activeItem.video_title;
+                highlightPlaylistItem(activeItem.video_url);
+            }
+
+            if (triggerWs) {
+                sendWsMessage({
+                    type: "sync_response",
+                    state: "playing",
+                    time: 0,
+                    videoId: videoId
+                });
+            }
+        }
+
+        // 5. 플레이리스트 데이터 연동 API 호출
+        async function fetchPlaylist() {
+            try {
+                const response = await fetch(`/api/playlist/${sessionId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    playlist = data.playlist;
+                    renderPlaylist();
+                }
+            } catch (err) {
+                console.error("Failed to fetch playlist:", err);
+            }
+        }
+
+        function renderPlaylist() {
+            const ul = document.getElementById("playlist-items-ul");
+            ul.innerHTML = "";
+
+            if (playlist.length === 0) {
+                ul.innerHTML = `<li style="text-align: center; font-size: 0.85rem; padding: 20px; color: #72767d;">대기열이 비어 있습니다.</li>`;
+                return;
+            }
+
+            playlist.forEach((item, index) => {
+                const videoId = extractVideoId(item.video_url);
+                const li = document.createElement("li");
+                li.className = "playlist-item";
+                if (videoId === currentVideoId) {
+                    li.classList.add("active");
+                }
+
+                li.innerHTML = `
+                    <div class="item-info" onclick="playPlaylistVideo('${videoId}')">
+                        <div class="item-title">${item.video_title}</div>
+                        <div class="item-meta">추가자: ${item.added_by}</div>
+                    </div>
+                    <button class="btn-danger" onclick="removeVideo(event, '${item.video_url}')">삭제</button>
+                `;
+                ul.appendChild(li);
+            });
+        }
+
+        function playPlaylistVideo(videoId) {
+            if (videoId) {
+                loadVideoById(videoId, true);
+            }
+        }
+
+        function highlightPlaylistItem(videoUrl) {
+            const items = document.querySelectorAll(".playlist-item");
+            items.forEach(item => item.classList.remove("active"));
+            
+            // 비디오 URL 매칭 활성화 클래스 부여
+            playlist.forEach((item, index) => {
+                if (item.video_url === videoUrl) {
+                    const el = document.getElementById("playlist-items-ul").children[index];
+                    if (el) el.classList.add("active");
+                }
+            });
+        }
+
+        // 비디오 삭제 요청
+        async function removeVideo(event, videoUrl) {
+            event.stopPropagation(); // li 클릭 이벤트 버블링 차단
+            
+            try {
+                const response = await fetch(`/api/playlist/${sessionId}/remove?video_url=${encodeURIComponent(videoUrl)}`, {
+                    method: "POST"
+                });
+                if (response.ok) {
+                    fetchPlaylist();
+                }
+            } catch (err) {
+                console.error("Failed to remove video:", err);
+            }
+        }
+
+        // 비디오 추가 버튼 클릭 핸들러
+        document.getElementById("add-video-btn").onclick = async () => {
+            const input = document.getElementById("youtube-url-input");
+            const url = input.value.trim();
+            if (!url) return;
+
+            const videoId = extractVideoId(url);
+            if (!videoId) {
+                alert("유효한 유튜브 동영상 주소를 입력해 주세요.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/playlist/${sessionId}/add`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        video_url: url,
+                        added_by: addedBy
+                    })
+                });
+
+                if (response.ok) {
+                    input.value = "";
+                    fetchPlaylist();
+                    showToast("대기열에 동영상을 성공적으로 추가했습니다.");
+                    
+                    // 만약 현재 비디오가 재생 중이지 않고 비어있는 경우, 자동으로 첫 동영상을 실행
+                    if (!currentVideoId) {
+                        setTimeout(() => {
+                            loadVideoById(videoId, true);
+                        }, 500);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to add video:", err);
+            }
+        };
+
+        // 6. 유틸성 알림 메신저 (Toast)
+        function showToast(msg) {
+            const toast = document.getElementById("toast-message");
+            toast.innerText = msg;
+            toast.classList.add("show");
+            setTimeout(() => {
+                toast.classList.remove("show");
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
