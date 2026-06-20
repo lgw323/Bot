@@ -44,12 +44,24 @@ class MyBot(commands.Bot):
             "cogs.music.music_agent",
             "cogs.leveling.leveling_core",
             "cogs.application_commands",
-            "cogs.birthday.birthday_core"
+            "cogs.birthday.birthday_core",
+            "cogs.watch_together.watch_agent"
         ]
         # UI에 사용할 Rich Console 객체를 봇 인스턴스에 저장
         self.console: Console = Console()
 
     async def setup_hook(self) -> None:
+        import uvicorn
+        from cogs.watch_together.watch_server import app
+        
+        async def start_webserver():
+            config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="warning")
+            server = uvicorn.Server(config)
+            await server.serve()
+            
+        asyncio.create_task(start_webserver())
+        logger.info("FastAPI WebServer background task scheduled on port 8000.")
+
         with Progress(
             TextColumn("[bold blue]>[/bold blue]", justify="right"),
             TextColumn("[progress.description]{task.description}"),
