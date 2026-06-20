@@ -7,6 +7,7 @@ __pycache__/
 env/
 venv/
 bot_env/
+.venv/
 
 # IDE/Editor
 .vscode/
