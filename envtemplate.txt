@@ -53,3 +53,10 @@ INITIAL_LOAD_HOURS=6.0
 MAX_LOG_COUNT=1000
 MAX_HISTORY_FETCH=500
 PRUNE_INTERVAL_MINUTES=30
+
+# ==========================================
+# [5. 동시 시청 설정 (Watch Together)]
+# ==========================================
+# 외부 웹 브라우저 접속용 도메인 주소 (Cloudflare Tunnel에 맵핑한 도메인 주소)
+# 예: https://watch.yourdomain.com
+WATCH_TOGETHER_URL=https://watch.yourdomain.com
