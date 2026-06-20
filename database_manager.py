@@ -200,27 +200,27 @@ def init_db() -> None:
             )
         ''')
         
-        # 5. 기존 birthdays 테이블 마이그레이션 및 파기 로직
-        c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='birthdays'")
-        if c.fetchone():
-            logger.info("Migrating legacy 'birthdays' table into 'users' table...")
-            try:
-                # 기존 users 테이블에 없고 birthdays 테이블에만 있는 유저 처리
-                c.execute('''
-                    INSERT OR IGNORE INTO users (user_id, guild_id, birth_month, birth_day)
-                    SELECT user_id, guild_id, month, day FROM birthdays
-                ''')
-                # users 테이블에 이미 있는 유저의 생일 컬럼 업데이트
-                c.execute('''
-                    UPDATE users 
-                    SET birth_month = (SELECT month FROM birthdays WHERE birthdays.user_id = users.user_id AND birthdays.guild_id = users.guild_id),
-                        birth_day = (SELECT day FROM birthdays WHERE birthdays.user_id = users.user_id AND birthdays.guild_id = users.guild_id)
-                    WHERE EXISTS (SELECT 1 FROM birthdays WHERE birthdays.user_id = users.user_id AND birthdays.guild_id = users.guild_id)
-                ''')
-                c.execute("DROP TABLE birthdays")
-                logger.info("Legacy 'birthdays' table dropped successfully.")
-            except Exception as e:
-                logger.error(f"Error during birthdays migration: {e}")
+        # 5. watch_sessions (방 정보)
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS watch_sessions (
+                session_id TEXT PRIMARY KEY,
+                guild_id INTEGER,
+                created_by INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # 6. watch_playlists (세션 공유 대기열)
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS watch_playlists (
+                session_id TEXT,
+                video_url TEXT,
+                video_title TEXT,
+                added_by TEXT,
+                order_index INTEGER,
+                PRIMARY KEY (session_id, video_url)
+            )
+        ''')
         
         conn.commit()
     logger.info("Database schemas initialized.")
@@ -487,3 +487,83 @@ async def get_all_birthdays(guild_id: int) -> List[Dict[str, int]]:
                 c.execute("SELECT user_id, birth_month as month, birth_day as day FROM users WHERE guild_id = ? AND birth_month IS NOT NULL ORDER BY birth_month, birth_day", (guild_id,))
                 return [dict(row) for row in c.fetchall()]
         return await asyncio.to_thread(_get)
+
+
+# ==========================================
+# 동시 시청 (Watch Together) 영역 DB 함수
+# ==========================================
+
+async def add_watch_session(session_id: str, guild_id: int, created_by: int) -> None:
+    async with db_lock:
+        def _add() -> None:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+                c: sqlite3.Cursor = conn.cursor()
+                c.execute(
+                    "INSERT OR REPLACE INTO watch_sessions (session_id, guild_id, created_by) VALUES (?, ?, ?)",
+                    (session_id, guild_id, created_by)
+                )
+                conn.commit()
+        await asyncio.to_thread(_add)
+
+
+async def get_watch_session(session_id: str) -> Optional[Dict[str, Any]]:
+    async with db_lock:
+        def _get() -> Optional[Dict[str, Any]]:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+                conn.row_factory = sqlite3.Row
+                c: sqlite3.Cursor = conn.cursor()
+                c.execute("SELECT session_id, guild_id, created_by, created_at FROM watch_sessions WHERE session_id = ?", (session_id,))
+                row = c.fetchone()
+                return dict(row) if row else None
+        return await asyncio.to_thread(_get)
+
+
+async def delete_watch_session(session_id: str) -> None:
+    async with db_lock:
+        def _delete() -> None:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+                c: sqlite3.Cursor = conn.cursor()
+                c.execute("DELETE FROM watch_sessions WHERE session_id = ?", (session_id,))
+                c.execute("DELETE FROM watch_playlists WHERE session_id = ?", (session_id,))
+                conn.commit()
+        await asyncio.to_thread(_delete)
+
+
+async def get_watch_playlist(session_id: str) -> List[Dict[str, Any]]:
+    async with db_lock:
+        def _get() -> List[Dict[str, Any]]:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+                conn.row_factory = sqlite3.Row
+                c: sqlite3.Cursor = conn.cursor()
+                c.execute(
+                    "SELECT video_url, video_title, added_by, order_index FROM watch_playlists WHERE session_id = ? ORDER BY order_index ASC",
+                    (session_id,)
+                )
+                return [dict(row) for row in c.fetchall()]
+        return await asyncio.to_thread(_get)
+
+
+async def add_to_watch_playlist(session_id: str, video_url: str, video_title: str, added_by: str) -> None:
+    async with db_lock:
+        def _add() -> None:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+                c: sqlite3.Cursor = conn.cursor()
+                c.execute("SELECT COALESCE(MAX(order_index), 0) FROM watch_playlists WHERE session_id = ?", (session_id,))
+                max_idx = c.fetchone()[0]
+                
+                c.execute(
+                    "INSERT OR REPLACE INTO watch_playlists (session_id, video_url, video_title, added_by, order_index) VALUES (?, ?, ?, ?, ?)",
+                    (session_id, video_url, video_title, added_by, max_idx + 1)
+                )
+                conn.commit()
+        await asyncio.to_thread(_add)
+
+
+async def remove_from_watch_playlist(session_id: str, video_url: str) -> None:
+    async with db_lock:
+        def _remove() -> None:
+            with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+                c: sqlite3.Cursor = conn.cursor()
+                c.execute("DELETE FROM watch_playlists WHERE session_id = ? AND video_url = ?", (session_id, video_url))
+                conn.commit()
+        await asyncio.to_thread(_remove)
