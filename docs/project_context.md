@@ -8,11 +8,13 @@
 
 본 프로젝트는 코드 작성 환경과 실제 배포/운영 환경이 철저히 분리되어 있습니다.
 
-- **Dev Environment (Main PC)**: 코드 에디팅 및 GitHub Push 수행.
-- **Prod Environment (Raspberry Pi 5)**: GitHub Pull 및 실제 봇 구동. Linux(Ubuntu/Debian) OS 사용.
+- **Dev Environment (Main PC)**: 코드 에디팅 및 GitHub Push 수행. Windows OS 사용하며 `.venv` 가상환경에서 의존성 관리.
+- **Prod Environment (Raspberry Pi 5)**: GitHub Pull 및 실제 봇 구동. Linux(Ubuntu/Debian) OS 사용하며 `bot_env` 가상환경에서 의존성 관리.
 
 > [!IMPORTANT]
 > **[Constraint 1]**: 파일 경로, 프로세스 관리, 외부 시스템 호출 등 운영체제 종속적인 코드를 작성할 경우, 반드시 **Linux 환경(Prod)**을 기준으로 작동하도록 작성하십시오. 로컬 테스트를 위한 임시 경로나 Windows 전용 모듈 사용을 엄격히 금지합니다.
+> 
+> **[Constraint 1.5 - Virtual Environment]**: 로컬 및 운영 환경 모두 각각의 가상환경(`.venv` 및 `bot_env`) 하위에서 독립적으로 라이브러리를 설치 및 실행해야 하며, 시스템 전역 파이썬 패키지 영역을 오염시키는 외부 설치를 금지합니다. 새로운 의존성 추가 시 `requirements.txt`와 `requirements-dev.txt`에 기록을 의무화합니다.
 
 ---
 
@@ -21,13 +23,13 @@
 디스코드 봇의 구조는 다음과 같이 분리되어 있습니다. 지정된 책임을 벗어나는 코드 배치를 금지합니다.
 
 - **`main_bot.py`**: 시스템 진입점(Entry Point). Cog 로드, 전역 이벤트 등록, 봇 인증 로직만 포함합니다. 비즈니스 로직 삽입을 금지합니다.
-- **`database_manager.py`**: SQLite DB 연결 및 테이블 스키마 관리 매니저. DB Lock 방지를 위해 모든 DB 커넥션 관리는 이곳으로 중앙집중화합니다.
+- **`database_manager.py`**: SQLite DB 연결 및 테이블 스키마 관리 매니저. DB Lock 방지를 위해 모든 DB 커넥션 관리는 이곳으로 중앙집중화합니다. (v1.2.2 패치에 따라 `birthdays` 테이블이 `users` 테이블로 병합 통합되었습니다.)
 - **`cogs/`**: 독립적인 기능 모듈 디렉토리.
     - `music/`: 음악 컨트롤러(`music_agent`), 코어 스트리밍(`music_core`), 인터페이스(`music_ui`) 구조 유지.
     - `summary/`: 리스너와 AI 요약 에이전트 분리.
     - `leveling/`: 채팅/음성 경험치 연산 및 역할(Role) 부여 로직.
     - `logging/`: 전역 로깅 하이재킹 및 디스코드 원격 에러 알림.
-    - `birthday/`: 생일 등록 관리 및 지정된 시간(오전 9시) 정기 축하 알람 제공.
+    - `birthday/`: 생일 등록 관리 및 지정된 시간(오전 9시) 정기 축하 알람 제공. (유저 생일 정보는 `users` DB 테이블 내에서 통합 관리)
 - **`tests/`**: TDD 및 시스템 무결성 검증을 위한 `pytest` 기반 테스트 코드 디렉토리.
 - **`scripts/`, `docs/`**: 리눅스 쉘 스크립트(`.sh`) 및 문서. 파이썬 코드와 섞이지 않도록 격리합니다.
 
@@ -46,7 +48,9 @@
 
 ## 📝 4. Git Commit Convention
 
-버전 관리를 위해 **Angular Commit Convention**을 준수합니다. 에이전트가 커밋 메시지를 생성할 때 다음 포맷을 사용하십시오. 커밋시 파일 하나씩 개별로 진행하십시오.
+버전 관리를 위해 **Angular Commit Convention**을 준수합니다. 에이전트가 커밋 메시지를 생성할 때 다음 포맷을 사용하십시오.
+- **[주의] 파일별 개별 커밋 실행**: 변경 사항이 있는 파일들은 반드시 개별적으로 한 번에 하나씩 커밋해야 합니다.
+- **[주의] 고유 메시지 작성**: 개별 파일들을 일괄적으로 동일한 메시지로 커밋하는 행위를 엄격히 금지합니다. 각 파일이 가진 고유한 변경 내역과 책임을 반영하여 각각 다르고 구체적인 메시지를 작성하십시오.
 
 ### Format
 `<type>[optional scope]: <description in Korean>`
