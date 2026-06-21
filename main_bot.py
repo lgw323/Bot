@@ -54,6 +54,9 @@ class MyBot(commands.Bot):
         import uvicorn
         from cogs.watch_together.watch_server import app
         
+        # FastAPI 서버가 디스코드 봇 객체에 접근할 수 있도록 상태 주입
+        app.state.bot = self
+        
         async def start_webserver():
             config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="warning")
             server = uvicorn.Server(config)
