@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import time
 import statistics
 
+import shlex
 import discord
 from discord.ext import commands
 import yt_dlp
@@ -320,7 +321,23 @@ class MusicState:
                 
                 self.current_song.stream_url = stream_url
                 
-                ffmpeg_options = {'before_options': f'-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -nostdin -ss {self.seek_time}', 'options': '-vn'}
+                # 1. 기본 reconnect 및 stdin 옵션 구성
+                before_opts = '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -nostdin'
+                
+                # 2. 재생 시점에만 ss 탐색 옵션 동적 추가 (ss 0으로 인한 에러 방지)
+                if self.seek_time > 0:
+                    before_opts += f' -ss {self.seek_time}'
+                
+                # 3. HTTP 403 Forbidden 방지를 위해 yt-dlp의 http_headers 주입
+                headers = data.get('http_headers')
+                if headers:
+                    header_str = "".join(f"{k}: {v}\r\n" for k, v in headers.items())
+                    before_opts += f' -headers {shlex.quote(header_str)}'
+                
+                ffmpeg_options = {
+                    'before_options': before_opts,
+                    'options': '-vn'
+                }
                 
                 source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(stream_url, **ffmpeg_options), volume=self.volume)
                 
