@@ -302,6 +302,22 @@ class TopSongButton(ui.Button):
             message += "\n음성 채널에 자동으로 참가했습니다!"
         await interaction.followup.send(message, ephemeral=True)
 
+class SearchSongModal(ui.Modal, title="🎵 노래 검색 및 재생"):
+    def __init__(self, cog: Any) -> None:
+        super().__init__(timeout=180)
+        self.cog = cog
+        self.query = ui.TextInput(
+            label="검색어 또는 유튜브 URL 입력",
+            placeholder="예: 아이유 밤편지 또는 https://youtu.be/...",
+            required=True,
+            style=discord.TextStyle.short
+        )
+        self.add_item(self.query)
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        await self.cog.handle_search_modal_submit(interaction, self.query.value)
+
+
 class MusicPlayerView(ui.View):
     def __init__(self, cog: Any, state: Any, top_songs: Optional[List[dict]] = None) -> None:
         super().__init__(timeout=None)
@@ -315,6 +331,7 @@ class MusicPlayerView(ui.View):
         is_paused = self.state.voice_client and self.state.voice_client.is_paused()
         is_playing = self.state.current_song is not None
 
+        # 행 0: 음악 재생 제어
         play_pause_btn = ui.Button(label="", style=discord.ButtonStyle.secondary, emoji="▶️" if is_paused else "⏸️", disabled=not is_playing, row=0)
         play_pause_btn.callback = self.toggle_play_pause
         self.add_item(play_pause_btn)
@@ -335,6 +352,7 @@ class MusicPlayerView(ui.View):
         queue_btn.callback = self.show_queue
         self.add_item(queue_btn)
 
+        # 행 1: 플레이어 설정 및 유틸
         loop_mode = self.state.loop_mode
         loop_label = "한 곡 반복" if loop_mode == LoopMode.SONG else "전체 반복" if loop_mode == LoopMode.QUEUE else "반복 없음"
         loop_emoji = LOOP_MODE_DATA[loop_mode][1]
@@ -344,45 +362,70 @@ class MusicPlayerView(ui.View):
         loop_btn.callback = self.toggle_loop
         self.add_item(loop_btn)
 
-        auto_play_label = "AI 추천재생: ON" if self.state.auto_play_enabled else "AI 추천재생: OFF"
+        auto_play_label = "추천재생: ON" if self.state.auto_play_enabled else "추천재생: OFF"
         auto_play_btn = ui.Button(label=auto_play_label, style=discord.ButtonStyle.secondary, emoji="🤖", row=1)
         auto_play_btn.callback = self.toggle_auto_play
         self.add_item(auto_play_btn)
 
-        fav_list_btn = ui.Button(label="내 보관함 열기", style=discord.ButtonStyle.secondary, emoji="💾", row=1)
+        fav_list_btn = ui.Button(label="보관함", style=discord.ButtonStyle.secondary, emoji="💾", row=1)
         fav_list_btn.callback = self.show_favorites
         self.add_item(fav_list_btn)
 
+        search_btn = ui.Button(label="노래 검색", style=discord.ButtonStyle.primary, emoji="🔎", row=1)
+        search_btn.callback = self.search_song
+        self.add_item(search_btn)
+
+        watch_btn = ui.Button(label="시청방", style=discord.ButtonStyle.success, emoji="🎬", row=1)
+        watch_btn.callback = self.watch_together
+        self.add_item(watch_btn)
+
+        # 행 2: 서버 편의 기능
+        summary_btn = ui.Button(label="요약", style=discord.ButtonStyle.secondary, emoji="📝", row=2)
+        summary_btn.callback = self.request_summary
+        self.add_item(summary_btn)
+
+        my_info_btn = ui.Button(label="내 정보", style=discord.ButtonStyle.secondary, emoji="👤", row=2)
+        my_info_btn.callback = self.view_my_info
+        self.add_item(my_info_btn)
+
+        rank_btn = ui.Button(label="랭킹", style=discord.ButtonStyle.secondary, emoji="🏆", row=2)
+        rank_btn.callback = self.view_leaderboard
+        self.add_item(rank_btn)
+
+        birthday_btn = ui.Button(label="생일 목록", style=discord.ButtonStyle.secondary, emoji="🎂", row=2)
+        birthday_btn.callback = self.view_birthdays
+        self.add_item(birthday_btn)
+
+        # 행 3 & 4: 인기 곡 (최대 2개 배치)
         if self.top_songs:
-            medals = ["🏆 1위", "🥈 2위", "🥉 3위"]
-            for i, song in enumerate(self.top_songs[:3]):
-                row = i + 2 
-                
+            medals = ["🏆 1위", "🥈 2위"]
+            for i, song in enumerate(self.top_songs[:2]):
+                row = i + 3
                 url = song["url"]
                 base_title = song["title"]
                 count = song["count"]
-                
                 medal = medals[i]
                 
                 title_max_len = 65 - len(f"[{medal}]  ({count}회)")
                 truncated_title = base_title if len(base_title) <= title_max_len else base_title[:title_max_len] + "..."
-                
                 full_label = f"[{medal}] {truncated_title} ({count}회)"
                 
                 btn = ui.Button(style=discord.ButtonStyle.primary, label=full_label, row=row)
                 
-                async def top_song_callback(interaction: discord.Interaction, target_url: str = url) -> None:
-                    await interaction.response.defer(thinking=True, ephemeral=True)
-                    c, joined = await self.cog.handle_add_multiple_from_favorites(interaction, [target_url])
-                    msg = "🔥 많이 듣는 곡을 대기열에 추가했습니다."
-                    st = await self.cog.get_music_state(interaction.guild.id)
-                    if st.voice_client and not st.voice_client.is_connected() and c > 0:
-                        msg += "\n음성 채널에 참여하시면 재생이 시작됩니다."
-                    elif joined:
-                        msg += "\n음성 채널에 자동으로 참가했습니다!"
-                    await interaction.followup.send(msg, ephemeral=True)
+                def make_callback(target_url):
+                    async def top_song_callback(interaction: discord.Interaction) -> None:
+                        await interaction.response.defer(thinking=True, ephemeral=True)
+                        c, joined = await self.cog.handle_add_multiple_from_favorites(interaction, [target_url])
+                        msg = "🔥 많이 듣는 곡을 대기열에 추가했습니다."
+                        st = await self.cog.get_music_state(interaction.guild.id)
+                        if st.voice_client and not st.voice_client.is_connected() and c > 0:
+                            msg += "\n음성 채널에 참여하시면 재생이 시작됩니다."
+                        elif joined:
+                            msg += "\n음성 채널에 자동으로 참가했습니다!"
+                        await interaction.followup.send(msg, ephemeral=True)
+                    return top_song_callback
                 
-                btn.callback = top_song_callback
+                btn.callback = make_callback(url)
                 self.add_item(btn)
 
     async def interaction_check_bot_connected(self, interaction: discord.Interaction) -> bool:
@@ -418,3 +461,22 @@ class MusicPlayerView(ui.View):
         await self.cog.handle_queue(i)
     async def show_favorites(self, i: discord.Interaction) -> None: 
         await self.cog.handle_view_favorites(i)
+
+    async def search_song(self, i: discord.Interaction) -> None:
+        modal = SearchSongModal(self.cog)
+        await i.response.send_modal(modal)
+
+    async def watch_together(self, i: discord.Interaction) -> None:
+        await self.cog.handle_watch_together_btn(i)
+
+    async def request_summary(self, i: discord.Interaction) -> None:
+        await self.cog.handle_summary_btn(i)
+
+    async def view_my_info(self, i: discord.Interaction) -> None:
+        await self.cog.handle_my_info_btn(i)
+
+    async def view_leaderboard(self, i: discord.Interaction) -> None:
+        await self.cog.handle_leaderboard_btn(i)
+
+    async def view_birthdays(self, i: discord.Interaction) -> None:
+        await self.cog.handle_birthday_list_btn(i)
