@@ -45,18 +45,19 @@ def test_music_player_view_initialization() -> None:
     
     top_songs = [
         {"url": "https://url1", "title": "Top 1", "count": 10},
-        {"url": "https://url2", "title": "Top 2", "count": 5}
+        {"url": "https://url2", "title": "Top 2", "count": 5},
+        {"url": "https://url3", "title": "Top 3", "count": 2}
     ]
     
     view = MusicPlayerView(cog=mock_cog, state=mock_state, top_songs=top_songs)
     
-    # 5 (Row 0) + 5 (Row 1) + 4 (Row 2) + 2 (Row 3,4 top songs) = 16 buttons
-    assert len(view.children) == 16
+    # 5 (Row 0) + 4 (Row 1) + 3 (Row 2, 3, 4 top songs) = 12 buttons
+    assert len(view.children) == 12
     
     labels = [child.label for child in view.children if isinstance(child, discord.ui.Button) and child.label]
     assert "노래 검색" in labels
-    assert "시청방" in labels
-    assert "요약" in labels
-    assert "내 정보" in labels
-    assert "랭킹" in labels
-    assert "생일 목록" in labels
+    assert "시청방" not in labels
+    assert "요약" not in labels
+    assert "내 정보" not in labels
+    assert "랭킹" not in labels
+    assert "생일 목록" not in labels
