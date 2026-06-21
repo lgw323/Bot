@@ -8,12 +8,11 @@ import os
 from cryptography.fernet import Fernet
 from cryptography.fernet import InvalidToken
 
-# --- SQLite WAL 모드 및 성능 최적화 래핑 ---
+# --- SQLite 성능 최적화 래핑 ---
 _original_connect = sqlite3.connect
 def _custom_connect(*args, **kwargs):
     conn = _original_connect(*args, **kwargs)
     try:
-        conn.execute("PRAGMA journal_mode=WAL;")
         conn.execute("PRAGMA synchronous=NORMAL;")
         conn.execute("PRAGMA temp_store=MEMORY;")
         conn.execute("PRAGMA cache_size=-2000;")
@@ -162,6 +161,11 @@ def init_db() -> None:
             logger.error(f"Failed to restore DB: {e}", exc_info=True)
 
     with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
+        # journal_mode는 데이터베이스 파일에 영구 기록되므로 초기화 시 한 번만 설정합니다.
+        try:
+            conn.execute("PRAGMA journal_mode=WAL;")
+        except Exception as e:
+            logger.warning(f"Failed to set journal_mode to WAL: {e}")
         c: sqlite3.Cursor = conn.cursor()
         
         # 1. users
