@@ -1,7 +1,7 @@
 # DiscordBot (다기능 디스코드 봇)
 
 이 프로젝트는 파이썬(discord.py)으로 작성된 다기능 디스코드 봇입니다. 
-주요 기능으로 **노래 재생**, **대화 요약(AI)**, **경험치/레벨링 시스템**, **전역 로깅 시스템**, 그리고 **생일 관리 시스템**을 포함하고 있습니다.
+주요 기능으로 **노래 재생**, **유튜브 동시 시청(Watch Together)**, **대화 요약(AI)**, **경험치/레벨링 시스템**, **전역 로깅 시스템**, 그리고 **생일 관리 시스템**을 포함하고 있습니다.
 또한 `pytest` 기반의 탄탄한 테스트 코드가 구축되어 있어 안정성이 보장되는 봇 플랫폼입니다.
 
 ---
@@ -19,7 +19,7 @@
 *   `requirements.txt` / `requirements-dev.txt`: 파이썬 패키지 의존성 목록 (실행 환경 및 개발/테스트 환경 분리).
 
 ### 2. 스크립트 및 문서 (Scripts & Docs)
-*   `docs/`: 라즈베리파이 서버 구축, 테스트 가이드, 개발 정책(Project Context) 등 봇 운영 및 유지보수에 필요한 문서들이 포함되어 있습니다.
+*   `docs/`: 개발 정책([project-context.md](file:///c:/Users/dlrjs/Desktop/1_programming/4_python/DiscordBot/docs/project-context.md)), 서버 배포([deployment-guide.md](file:///c:/Users/dlrjs/Desktop/1_programming/4_python/DiscordBot/docs/deployment-guide.md)), 테스트 방법([test-guide.md](file:///c:/Users/dlrjs/Desktop/1_programming/4_python/DiscordBot/docs/test-guide.md)) 등 봇 운영 및 개발에 필요한 핵심 문서들이 포함되어 있습니다.
 *   `scripts/`: 서버 자동 백업 및 깃허브 최신화(자동 업데이트)를 위한 리눅스 쉘 스크립트 모음.
 
 ### 3. 기능 모듈 (Cogs Directory)
@@ -27,7 +27,7 @@
 
 #### 🎛️ Command Router (글로벌 명령어 모음)
 *   `application_commands.py`: **디스코드 슬래시 명령어 중앙 제어소(Controller).**
-    *   `/재생`, `/요약`, `/생일등록`, `/생일목록`, `/내정보`, `/랭킹` 등 유저가 디스코드에 입력하는 모든 빗금(`/`) Application 명령어의 형태(인터페이스)를 선언합니다.
+    *   `/재생`, `/요약`, `/시청`, `/생일등록`, `/생일목록`, `/내정보`, `/랭킹` 등 유저가 디스코드에 입력하는 모든 빗금(`/`) Application 명령어의 형태(인터페이스)를 선언합니다.
     *   입력받은 명령어는 각각 알맞은 엔진 모듈(`MusicAgentCog` 등)로 전달(Routing)되며, 전역 에러 핸들링도 이곳에서 전담합니다.
 
 #### 🎶 Music (음악 시스템) - `cogs/music/`
@@ -43,6 +43,11 @@
 #### 🧠 Summary (대화 요약 시스템) - `cogs/summary/`
 *   `summary_listeners.py`: 지정된 채널의 메시지를 실시간으로 모니터링하여 임시 메모리에 적재합니다.
 *   `summarizer_agent.py`: **AI 요약 엔진.** API(Google Gemini 등)와 통신하여 채팅 로그들을 요약(핵심 요지, 세부 내용)하고, 알기 쉬운 구조로 변환하여 채널에 응답합니다.
+
+#### 🎬 Watch Together (동시 시청 시스템) - `cogs/watch_together/`
+*   `watch_agent.py`: `/시청` 명령어의 상호작용을 처리하고 웹 플레이어 접속용 URL(임베드)을 생성 및 연동합니다.
+*   `watch_server.py`: FastAPI와 WebSocket을 이용하여 다수 유저들의 재생 시점 및 플레이리스트 동기화를 중계하는 실시간 웹 서버입니다.
+*   **자가 소멸 기능**: 모든 브라우저의 접속이 끊긴 후, 5초 동안 신규 접속이 감지되지 않으면 해당 세션을 자동으로 즉각 데이터베이스에서 소멸시킵니다.
 
 #### 📈 Leveling (경험치 시스템) - `cogs/leveling/`
 *   `leveling_core.py`: **채팅 및 음성 채널 경험치 관리자.**
@@ -61,7 +66,7 @@
 
 ### 4. 테스트 시스템 (tests/)
 *   **단위/통합 테스트 완비**: 봇이 멈추거나 꼬이는 상황을 방지하기 위해 TDD(테스트 주도 개발)에 기반한 검증 코드가 마련되어 있습니다.
-*   명령어 하나로(예: `pytest tests/`) 데이터베이스 병목, 음악 큐 엣지 케이스, 경험치 정확도 등 40여 가지 이상의 상황극을 시뮬레이션해 봇 건강 상태를 진단할 수 있습니다. (`docs/TEST_GUIDE.md` 참조)
+*   명령어 하나로(예: `pytest tests/`) 데이터베이스 병목, 음악 큐 엣지 케이스, 경험치 정확도 등 50여 가지 이상의 상황극을 시뮬레이션해 봇 건강 상태를 진단할 수 있습니다. ([test-guide.md](file:///c:/Users/dlrjs/Desktop/1_programming/4_python/DiscordBot/docs/test-guide.md) 참조)
 
 ### 5. 데이터 컨테이너 (Data Directory)
 이 폴더는 로컬 라즈베리파이 환경에서 구동/정리되며 깃허브에는 기본적으로 업로드되지 않습니다.
@@ -91,7 +96,7 @@ python -m venv .venv
 가상환경이 활성화된 상태(프롬프트 앞에 `(.venv)`가 보임)에서 실행합니다.
 ```bash
 # 필수 라이브러리 및 웹소켓/서버(fastapi, uvicorn 등) 설치
-pip install -r requirements.txt fastapi uvicorn
+pip install -r requirements.txt
 
 # 개발 및 테스트 환경 구축이 필요한 경우 추가 설치
 pip install -r requirements-dev.txt pytest pytest-asyncio
