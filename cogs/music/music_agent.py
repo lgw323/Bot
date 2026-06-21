@@ -345,6 +345,57 @@ class MusicAgentCog(commands.Cog):
 
         await self._process_play_request(interaction.guild, interaction.channel, interaction.user, query, send_msg) # type: ignore
 
+    async def handle_search_modal_submit(self, interaction: discord.Interaction, query: str) -> None:
+        await interaction.response.defer(ephemeral=True)
+        
+        music_channel = self.bot.get_channel(MUSIC_CHANNEL_ID)
+        if interaction.channel_id != MUSIC_CHANNEL_ID:
+            await interaction.followup.send(f"노래 검색은 {music_channel.mention} 채널에서만 사용할 수 있습니다.", ephemeral=True)
+            return
+
+        async def send_msg(content: str, view: Any = discord.utils.MISSING, ephemeral: bool = True, delete_after: Optional[int] = None) -> None:
+            await interaction.followup.send(content, view=view, ephemeral=ephemeral)
+
+        await self._process_play_request(interaction.guild, interaction.channel, interaction.user, query, send_msg)
+
+    async def handle_watch_together_btn(self, interaction: discord.Interaction) -> None:
+        cog = self.bot.get_cog("WatchAgentCog")
+        if cog:
+            await cog.handle_watch_together(interaction, ephemeral=True)
+        else:
+            await interaction.response.send_message("시청 기능이 아직 준비되지 않았습니다.", ephemeral=True)
+
+    async def handle_summary_btn(self, interaction: discord.Interaction) -> None:
+        summary_cog = self.bot.get_cog("SummaryListenersCog")
+        if not summary_cog:
+            await interaction.response.send_message("요약 기능이 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.", ephemeral=True)
+            return
+        
+        await interaction.response.defer(thinking=True, ephemeral=True)
+        from cogs.application_commands import DEFAULT_SUMMARY_HOURS
+        await summary_cog.execute_summary(interaction, DEFAULT_SUMMARY_HOURS)
+
+    async def handle_my_info_btn(self, interaction: discord.Interaction) -> None:
+        leveling_cog = self.bot.get_cog("LevelingCog")
+        if leveling_cog:
+            await leveling_cog.profile(interaction)
+        else:
+            await interaction.response.send_message("레벨 기능이 아직 준비되지 않았습니다.", ephemeral=True)
+
+    async def handle_leaderboard_btn(self, interaction: discord.Interaction) -> None:
+        leveling_cog = self.bot.get_cog("LevelingCog")
+        if leveling_cog:
+            await leveling_cog.leaderboard(interaction, ephemeral=True)
+        else:
+            await interaction.response.send_message("레벨 기능이 아직 준비되지 않았습니다.", ephemeral=True)
+
+    async def handle_birthday_list_btn(self, interaction: discord.Interaction) -> None:
+        birthday_cog = self.bot.get_cog("BirthdayCoreCog")
+        if birthday_cog:
+            await birthday_cog.list_birthdays(interaction, ephemeral=True)
+        else:
+            await interaction.response.send_message("생일 기능이 아직 준비되지 않았습니다.", ephemeral=True)
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
         if message.author.bot or message.channel.id != MUSIC_CHANNEL_ID:
