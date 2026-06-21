@@ -375,32 +375,11 @@ class MusicPlayerView(ui.View):
         search_btn.callback = self.search_song
         self.add_item(search_btn)
 
-        watch_btn = ui.Button(label="시청방", style=discord.ButtonStyle.success, emoji="🎬", row=1)
-        watch_btn.callback = self.watch_together
-        self.add_item(watch_btn)
-
-        # 행 2: 서버 편의 기능
-        summary_btn = ui.Button(label="요약", style=discord.ButtonStyle.secondary, emoji="📝", row=2)
-        summary_btn.callback = self.request_summary
-        self.add_item(summary_btn)
-
-        my_info_btn = ui.Button(label="내 정보", style=discord.ButtonStyle.secondary, emoji="👤", row=2)
-        my_info_btn.callback = self.view_my_info
-        self.add_item(my_info_btn)
-
-        rank_btn = ui.Button(label="랭킹", style=discord.ButtonStyle.secondary, emoji="🏆", row=2)
-        rank_btn.callback = self.view_leaderboard
-        self.add_item(rank_btn)
-
-        birthday_btn = ui.Button(label="생일 목록", style=discord.ButtonStyle.secondary, emoji="🎂", row=2)
-        birthday_btn.callback = self.view_birthdays
-        self.add_item(birthday_btn)
-
-        # 행 3 & 4: 인기 곡 (최대 2개 배치)
+        # 행 2 & 3 & 4: 인기 곡 (최대 3개 배치)
         if self.top_songs:
-            medals = ["🏆 1위", "🥈 2위"]
-            for i, song in enumerate(self.top_songs[:2]):
-                row = i + 3
+            medals = ["🏆 1위", "🥈 2위", "🥉 3위"]
+            for i, song in enumerate(self.top_songs[:3]):
+                row = i + 2
                 url = song["url"]
                 base_title = song["title"]
                 count = song["count"]
@@ -465,18 +444,3 @@ class MusicPlayerView(ui.View):
     async def search_song(self, i: discord.Interaction) -> None:
         modal = SearchSongModal(self.cog)
         await i.response.send_modal(modal)
-
-    async def watch_together(self, i: discord.Interaction) -> None:
-        await self.cog.handle_watch_together_btn(i)
-
-    async def request_summary(self, i: discord.Interaction) -> None:
-        await self.cog.handle_summary_btn(i)
-
-    async def view_my_info(self, i: discord.Interaction) -> None:
-        await self.cog.handle_my_info_btn(i)
-
-    async def view_leaderboard(self, i: discord.Interaction) -> None:
-        await self.cog.handle_leaderboard_btn(i)
-
-    async def view_birthdays(self, i: discord.Interaction) -> None:
-        await self.cog.handle_birthday_list_btn(i)
