@@ -14,7 +14,7 @@ class WatchAgentCog(commands.Cog):
         # 외부 도메인 주소 환경 변수 조회 (없으면 기본값 사용)
         self.base_url = os.getenv("WATCH_TOGETHER_URL", "http://localhost:8000")
 
-    async def handle_watch_together(self, interaction: discord.Interaction):
+    async def handle_watch_together(self, interaction: discord.Interaction, ephemeral: bool = False):
         # 1. 고유 세션 UUID 생성
         session_id = str(uuid.uuid4())
         guild_id = interaction.guild_id or 0
@@ -38,7 +38,7 @@ class WatchAgentCog(commands.Cog):
             embed.add_field(name="🧑 방장", value=interaction.user.mention, inline=True)
             embed.set_footer(text="유튜브 공식 영상 중 퍼가기(임베드)가 금지된 일부 영상은 같이 재생이 불가능할 수 있습니다.")
             
-            await interaction.response.send_message(embed=embed)
+            await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
             logger.info(f"Watch Together session created: {session_id} by User: {user_id}")
             
         except Exception as e:
