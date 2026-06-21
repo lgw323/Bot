@@ -27,11 +27,15 @@ async def test_watch_db_operations():
     user_id = 11111
     
     # 1-1. 세션 등록 테스트
-    await database_manager.add_watch_session(session_id, guild_id, user_id)
+    channel_id = 12345
+    message_id = 67890
+    await database_manager.add_watch_session(session_id, guild_id, user_id, channel_id, message_id)
     session = await database_manager.get_watch_session(session_id)
     assert session is not None
     assert session["guild_id"] == guild_id
     assert session["created_by"] == user_id
+    assert session["channel_id"] == channel_id
+    assert session["message_id"] == message_id
     
     # 1-2. 공유 대기열 추가 테스트
     video_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
@@ -125,9 +129,9 @@ async def test_watch_server_self_destruct():
     manager.active_connections[session_id_active] = ["mock_websocket"]
     
     try:
-        # 3. 두 세션에 대해 self_destruct_session 실행 (유예 시간 0.05초)
-        await self_destruct_session(session_id_empty, delay=0.05)
-        await self_destruct_session(session_id_active, delay=0.05)
+        # 3. 두 세션에 대해 self_destruct_session 실행 (유예 시간 0.05초, 테스트용 유예 우회 적용)
+        await self_destruct_session(session_id_empty, delay=0.05, ignore_grace=True)
+        await self_destruct_session(session_id_active, delay=0.05, ignore_grace=True)
         
         # 4. 검증
         # 빈 세션은 삭제되어야 함
