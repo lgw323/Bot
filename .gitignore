@@ -1,32 +1,74 @@
-# Python
+# ==========================================
+# Discord Bot - Git Ignore Rules
+# ==========================================
+
+# --- Python ---
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
 .Python
 env/
 venv/
 bot_env/
 .venv/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# IDE/Editor
+# --- Pytest / Testing ---
+.pytest_cache/
+.tox/
+.coverage
+.cache
+htmlcov/
+
+# --- IDEs / Editors ---
 .vscode/
 .idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*~
+.DS_Store
 
-# Secrets
+# --- Secrets & Configurations ---
+# API 키 및 토큰 등이 포함되므로 절대 Git에 업로드하지 마십시오.
 .env
-pi5_ubuntu_setup_guide.md
+.env.local
+.env.development
+.env.test
+.env.production
 
-# data
-tts_cache/
-assets/
+# --- Temporary Data & Logs ---
 data/logs/
 data/startup_reason.txt
 *.log
+bot_tts_cache/
+tts_cache/
+assets/
 
-# Database
+# --- Local Databases ---
+# 로컬 SQLite 데이터베이스 파일 및 임시 파일들은 Git 추적에서 제외합니다.
+# (데이터 백업은 별도의 백업 스크립트와 브랜치를 통해 수행됩니다.)
 *.db
 *.sqlite
-*.sqlite3-journal
+*.sqlite3
+*-journal
+*-wal
+*-shm
 *.bak
 *.sql
