@@ -35,3 +35,4 @@ RapidFuzz>=3.14.1
 # Web Server (Required for watch_together module)
 fastapi>=0.138.0
 uvicorn>=0.49.0
+websockets>=12.0
