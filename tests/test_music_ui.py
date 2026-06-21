@@ -31,3 +31,32 @@ async def test_queue_management_view_initialization() -> None:
     assert len(view.children) > 0
     # QueueSelect, move_top_button, remove_button, shuffle_button, clear_button
     assert len(view.children) == 5
+
+def test_music_player_view_initialization() -> None:
+    from cogs.music.music_ui import MusicPlayerView
+    from cogs.music.music_utils import LoopMode
+    mock_cog = MagicMock()
+    mock_state = MagicMock()
+    mock_state.voice_client = MagicMock()
+    mock_state.voice_client.is_paused.return_value = False
+    mock_state.current_song = MagicMock()
+    mock_state.loop_mode = LoopMode.NONE
+    mock_state.auto_play_enabled = False
+    
+    top_songs = [
+        {"url": "https://url1", "title": "Top 1", "count": 10},
+        {"url": "https://url2", "title": "Top 2", "count": 5}
+    ]
+    
+    view = MusicPlayerView(cog=mock_cog, state=mock_state, top_songs=top_songs)
+    
+    # 5 (Row 0) + 5 (Row 1) + 4 (Row 2) + 2 (Row 3,4 top songs) = 16 buttons
+    assert len(view.children) == 16
+    
+    labels = [child.label for child in view.children if isinstance(child, discord.ui.Button) and child.label]
+    assert "노래 검색" in labels
+    assert "시청방" in labels
+    assert "요약" in labels
+    assert "내 정보" in labels
+    assert "랭킹" in labels
+    assert "생일 목록" in labels
