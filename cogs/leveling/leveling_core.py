@@ -255,11 +255,11 @@ class LevelingCog(commands.Cog):
 
 
     @app_commands.command(name="랭킹", description="서버 내 경험치 랭킹 TOP 10을 확인합니다.")
-    async def leaderboard(self, interaction: discord.Interaction) -> None:
+    async def leaderboard(self, interaction: discord.Interaction, ephemeral: bool = False) -> None:
         try:
-            await interaction.response.defer(ephemeral=False)
+            await interaction.response.defer(ephemeral=ephemeral)
             if not interaction.guild:
-                await interaction.followup.send("이 명령어는 서버 내에서만 사용할 수 있습니다.")
+                await interaction.followup.send("이 명령어는 서버 내에서만 사용할 수 있습니다.", ephemeral=ephemeral)
                 return
 
             top_users: list[Dict[str, any]] = await get_top_users(interaction.guild.id)
