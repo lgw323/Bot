@@ -21,13 +21,10 @@ class WatchAgentCog(commands.Cog):
         user_id = interaction.user.id
         
         try:
-            # 2. SQLite DB에 세션 등록
-            await add_watch_session(session_id, guild_id, user_id)
-            
-            # 3. 접속 주소 구성
+            # 2. 접속 주소 구성
             join_url = f"{self.base_url}/watch?session={session_id}"
             
-            # 4. 임베드 메시지 구성
+            # 3. 임베드 메시지 구성
             embed = discord.Embed(
                 title="🎬 Watch Together 방이 개설되었습니다!",
                 description="아래 링크를 통해 외부 웹 브라우저로 동시 시청 세션에 참여하세요.",
@@ -39,6 +36,20 @@ class WatchAgentCog(commands.Cog):
             embed.set_footer(text="유튜브 공식 영상 중 퍼가기(임베드)가 금지된 일부 영상은 같이 재생이 불가능할 수 있습니다.")
             
             await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
+            
+            # 4. 메시지 ID 및 채널 ID 캡처 (ephemeral=False 인 경우에만)
+            message_id = None
+            channel_id = None
+            if not ephemeral:
+                try:
+                    msg = await interaction.original_response()
+                    message_id = msg.id
+                    channel_id = msg.channel.id
+                except Exception as ex_msg:
+                    logger.error(f"Failed to fetch original response message for watch session: {ex_msg}")
+            
+            # 5. SQLite DB에 세션 등록
+            await add_watch_session(session_id, guild_id, user_id, channel_id, message_id)
             logger.info(f"Watch Together session created: {session_id} by User: {user_id}")
             
         except Exception as e:
