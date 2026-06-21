@@ -2,6 +2,14 @@ import pytest
 import pytest_asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 import uuid
+
+# Add project root to sys.path
+import sys
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 import database_manager
 from fastapi.testclient import TestClient
 from cogs.watch_together.watch_server import app
@@ -98,3 +106,41 @@ async def test_watch_server_endpoints():
     finally:
         # 정리
         await database_manager.delete_watch_session(session_id)
+
+
+@pytest.mark.asyncio
+async def test_watch_server_self_destruct():
+    from cogs.watch_together.watch_server import self_destruct_session, manager
+    
+    session_id_empty = str(uuid.uuid4())
+    session_id_active = str(uuid.uuid4())
+    guild_id = 777
+    user_id = 999
+    
+    # 1. 두 세션 등록
+    await database_manager.add_watch_session(session_id_empty, guild_id, user_id)
+    await database_manager.add_watch_session(session_id_active, guild_id, user_id)
+    
+    # 2. active 세션에 모의 커넥션 추가
+    manager.active_connections[session_id_active] = ["mock_websocket"]
+    
+    try:
+        # 3. 두 세션에 대해 self_destruct_session 실행 (유예 시간 0.05초)
+        await self_destruct_session(session_id_empty, delay=0.05)
+        await self_destruct_session(session_id_active, delay=0.05)
+        
+        # 4. 검증
+        # 빈 세션은 삭제되어야 함
+        session_empty = await database_manager.get_watch_session(session_id_empty)
+        assert session_empty is None
+        
+        # 활성 세션은 남아있어야 함
+        session_active = await database_manager.get_watch_session(session_id_active)
+        assert session_active is not None
+        
+    finally:
+        # 정리
+        if session_id_active in manager.active_connections:
+            del manager.active_connections[session_id_active]
+        await database_manager.delete_watch_session(session_id_empty)
+        await database_manager.delete_watch_session(session_id_active)
