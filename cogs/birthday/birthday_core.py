@@ -97,7 +97,7 @@ class BirthdayCoreCog(commands.Cog):
             await interaction.response.send_message(f"❌ {user.display_name} 님의 등록된 생일 정보가 없습니다.", ephemeral=True)
 
     @app_commands.command(name="생일목록", description="서버에 등록된 생일 목록을 확인합니다.")
-    async def list_birthdays(self, interaction: discord.Interaction):
+    async def list_birthdays(self, interaction: discord.Interaction, ephemeral: bool = False):
         birthdays = await get_all_birthdays(interaction.guild_id)
         if not birthdays:
             await interaction.response.send_message("현재 등록된 생일 정보가 없습니다.", ephemeral=True)
@@ -110,7 +110,7 @@ class BirthdayCoreCog(commands.Cog):
             lines.append(f"• **{name}**: {b['month']}월 {b['day']}일")
         
         embed = discord.Embed(title="🎂 서버 생일 목록 🎂", description="\n".join(lines), color=0xFFB6C1)
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
 
 async def setup(bot: commands.Bot) -> None:
