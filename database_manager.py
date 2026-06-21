@@ -224,9 +224,18 @@ def init_db() -> None:
                 session_id TEXT PRIMARY KEY,
                 guild_id INTEGER,
                 created_by INTEGER,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                channel_id INTEGER,
+                message_id INTEGER
             )
         ''')
+        
+        # 기존 테이블에 컬럼이 없을 시 자동 추가
+        c.execute("PRAGMA table_info(watch_sessions)")
+        watch_columns = [info[1] for info in c.fetchall()]
+        if 'channel_id' not in watch_columns:
+            c.execute("ALTER TABLE watch_sessions ADD COLUMN channel_id INTEGER")
+            c.execute("ALTER TABLE watch_sessions ADD COLUMN message_id INTEGER")
         
         # 6. watch_playlists (세션 공유 대기열)
         c.execute('''
@@ -511,14 +520,14 @@ async def get_all_birthdays(guild_id: int) -> List[Dict[str, int]]:
 # 동시 시청 (Watch Together) 영역 DB 함수
 # ==========================================
 
-async def add_watch_session(session_id: str, guild_id: int, created_by: int) -> None:
+async def add_watch_session(session_id: str, guild_id: int, created_by: int, channel_id: Optional[int] = None, message_id: Optional[int] = None) -> None:
     async with db_lock:
         def _add() -> None:
             with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
                 c: sqlite3.Cursor = conn.cursor()
                 c.execute(
-                    "INSERT OR REPLACE INTO watch_sessions (session_id, guild_id, created_by) VALUES (?, ?, ?)",
-                    (session_id, guild_id, created_by)
+                    "INSERT OR REPLACE INTO watch_sessions (session_id, guild_id, created_by, channel_id, message_id) VALUES (?, ?, ?, ?, ?)",
+                    (session_id, guild_id, created_by, channel_id, message_id)
                 )
                 conn.commit()
         await asyncio.to_thread(_add)
@@ -530,7 +539,7 @@ async def get_watch_session(session_id: str) -> Optional[Dict[str, Any]]:
             with sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False) as conn:
                 conn.row_factory = sqlite3.Row
                 c: sqlite3.Cursor = conn.cursor()
-                c.execute("SELECT session_id, guild_id, created_by, created_at FROM watch_sessions WHERE session_id = ?", (session_id,))
+                c.execute("SELECT session_id, guild_id, created_by, created_at, channel_id, message_id FROM watch_sessions WHERE session_id = ?", (session_id,))
                 row = c.fetchone()
                 return dict(row) if row else None
         return await asyncio.to_thread(_get)
