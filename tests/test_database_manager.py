@@ -62,6 +62,23 @@ class TestDatabaseManager:
             assert "music_play_counts" in tables
             assert "favorites" in tables
 
+    def test_sqlite_pragmas_applied(self, setup_database):
+        """SQLite WAL 모드 및 성능 최적화 PRAGMA가 데이터베이스 연결에 올바르게 적용되는지 검증"""
+        temp_db_path = setup_database
+        with sqlite3.connect(temp_db_path) as conn:
+            c = conn.cursor()
+            c.execute("PRAGMA journal_mode;")
+            journal_mode = c.fetchone()[0]
+            assert journal_mode.lower() == "wal"
+            
+            c.execute("PRAGMA synchronous;")
+            synchronous = c.fetchone()[0]
+            assert synchronous == 1
+            
+            c.execute("PRAGMA temp_store;")
+            temp_store = c.fetchone()[0]
+            assert temp_store == 2
+
     @pytest.mark.asyncio
     async def test_user_xp_update_and_get(self, setup_database):
         """레벨링 시스템의 XP 업데이트와 조회가 정상 동작하는지 트랜잭션 검증"""
