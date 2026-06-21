@@ -13,10 +13,22 @@ from database_manager import (
     get_watch_session,
     get_watch_playlist,
     add_to_watch_playlist,
-    remove_from_watch_playlist
+    remove_from_watch_playlist,
+    delete_watch_session
 )
 
 logger = logging.getLogger("WatchServer")
+
+SELF_DESTRUCT_DELAY = 5.0
+
+async def self_destruct_session(session_id: str, delay: float = SELF_DESTRUCT_DELAY):
+    await asyncio.sleep(delay)
+    if session_id not in manager.active_connections or not manager.active_connections[session_id]:
+        logger.info(f"Self-destructing session {session_id} due to inactivity (0 users).")
+        try:
+            await delete_watch_session(session_id)
+        except Exception as e:
+            logger.error(f"Failed to delete watch session {session_id} on self-destruct: {e}", exc_info=True)
 
 app = FastAPI(title="Watch Together Sync Server")
 
@@ -40,6 +52,8 @@ class ConnectionManager:
             self.active_connections[session_id].remove(websocket)
             if not self.active_connections[session_id]:
                 del self.active_connections[session_id]
+                # 마지막 유저가 퇴장했으므로 5초 유예 소멸 비동기 태스크 시작
+                asyncio.create_task(self_destruct_session(session_id))
             logger.info(f"WebSocket client disconnected from session: {session_id}")
 
     async def broadcast(self, session_id: str, message: dict, exclude: WebSocket = None):
