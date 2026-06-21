@@ -60,6 +60,7 @@ data/startup_reason.txt
 bot_tts_cache/
 tts_cache/
 assets/
+scratch/
 
 # --- Local Databases ---
 # 로컬 SQLite 데이터베이스 파일 및 임시 파일들은 Git 추적에서 제외합니다.
