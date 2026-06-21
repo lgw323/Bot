@@ -8,6 +8,20 @@ import os
 from cryptography.fernet import Fernet
 from cryptography.fernet import InvalidToken
 
+# --- SQLite WAL 모드 및 성능 최적화 래핑 ---
+_original_connect = sqlite3.connect
+def _custom_connect(*args, **kwargs):
+    conn = _original_connect(*args, **kwargs)
+    try:
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA synchronous=NORMAL;")
+        conn.execute("PRAGMA temp_store=MEMORY;")
+        conn.execute("PRAGMA cache_size=-2000;")
+    except Exception as e:
+        logging.getLogger("DatabaseManager").warning(f"SQLite PRAGMA optimization failed: {e}")
+    return conn
+sqlite3.connect = _custom_connect
+
 logger: logging.Logger = logging.getLogger("DatabaseManager")
 
 # 현재 스크립트 위치 기준으로 절대 경로 설정
