@@ -21,11 +21,46 @@ logger = logging.getLogger("WatchServer")
 
 SELF_DESTRUCT_DELAY = 5.0
 
-async def self_destruct_session(session_id: str, delay: float = SELF_DESTRUCT_DELAY):
+async def self_destruct_session(session_id: str, delay: float = SELF_DESTRUCT_DELAY, ignore_grace: bool = False):
+    # 1. 30초 개설 유예 대기 검사 (최초 생성 직후 소멸 시점 방지)
+    db_session = await get_watch_session(session_id)
+    if db_session and not ignore_grace:
+        from datetime import datetime, timezone
+        try:
+            # SQLite3는 CURRENT_TIMESTAMP 값을 기본 "YYYY-MM-DD HH:MM:SS" 형태로 저장함 (UTC 기준)
+            created_at_dt = datetime.strptime(db_session["created_at"], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+            now_utc = datetime.now(timezone.utc)
+            elapsed = (now_utc - created_at_dt).total_seconds()
+            if elapsed < 30.0:
+                remaining = 30.0 - elapsed
+                logger.info(f"Session {session_id} is newly created. Waiting remaining {remaining:.1f}s before self-destruct check.")
+                await asyncio.sleep(remaining)
+        except Exception as e:
+            logger.error(f"Error checking watch session elapsed time: {e}", exc_info=True)
+
     await asyncio.sleep(delay)
     if session_id not in manager.active_connections or not manager.active_connections[session_id]:
         logger.info(f"Self-destructing session {session_id} due to inactivity (0 users).")
         try:
+            # 2. 소멸 시점에 디스코드 초대 임베드 메시지 자동 삭제
+            bot = getattr(app.state, "bot", None)
+            if bot and db_session:
+                ch_id = db_session.get("channel_id")
+                msg_id = db_session.get("message_id")
+                if ch_id and msg_id:
+                    logger.info(f"Attempting to delete Discord invite message {msg_id} in channel {ch_id}")
+                    try:
+                        channel = bot.get_channel(ch_id)
+                        if not channel:
+                            channel = await bot.fetch_channel(ch_id)
+                        if channel:
+                            msg = await channel.fetch_message(msg_id)
+                            if msg:
+                                await msg.delete()
+                                logger.info(f"Successfully deleted Discord invite message for session {session_id}")
+                    except Exception as e_discord:
+                        logger.warning(f"Failed to delete Discord invite message on self-destruct: {e_discord}")
+            
             await delete_watch_session(session_id)
         except Exception as e:
             logger.error(f"Failed to delete watch session {session_id} on self-destruct: {e}", exc_info=True)
