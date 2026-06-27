@@ -175,7 +175,12 @@
         }
 
         .playlist-card {
-            flex: 1;
+            flex: 1.2;
+            overflow: hidden;
+        }
+
+        .chat-card {
+            flex: 1.8;
             overflow: hidden;
         }
 
@@ -238,6 +243,8 @@
             padding: 4px 8px;
             border-radius: 6px;
             font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
         }
         .btn-danger:hover {
             background: var(--danger-color);
@@ -267,13 +274,11 @@
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.03);
             border-radius: 8px;
-            padding: 12px;
+            padding: 10px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
             gap: 10px;
             transition: background 0.2s, border-color 0.2s;
-            cursor: pointer;
         }
 
         .playlist-item:hover {
@@ -286,9 +291,26 @@
             background: rgba(114, 137, 218, 0.05);
         }
 
+        .item-thumb-wrapper {
+            width: 64px;
+            height: 48px;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #000;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .item-thumb-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         .item-info {
             flex: 1;
             min-width: 0;
+            cursor: pointer;
         }
 
         .item-title {
@@ -306,7 +328,74 @@
             color: #72767d;
         }
 
-        /* 안내 모달 / 토스트 */
+        /* 실시간 채팅 메시지 로그 영역 */
+        #chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border: 1px solid var(--glass-border);
+        }
+
+        #chat-messages::-webkit-scrollbar {
+            width: 5px;
+        }
+        #chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .chat-message {
+            font-size: 0.85rem;
+            line-height: 1.4;
+            word-break: break-all;
+        }
+
+        .chat-user {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-right: 6px;
+        }
+
+        .chat-text {
+            color: var(--title-color);
+        }
+
+        .system-message {
+            font-size: 0.8rem;
+            color: #8e9297;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 6px 10px;
+            border-radius: 6px;
+            border-left: 3px solid var(--primary-color);
+            font-style: italic;
+        }
+
+        /* 참여자 배지 리스트 */
+        #users-badge-list {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 5px;
+        }
+
+        .user-badge {
+            background: rgba(114, 137, 218, 0.15);
+            color: var(--primary-color);
+            border: 1px solid rgba(114, 137, 218, 0.2);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        /* 안내 토스트 */
         .toast {
             position: fixed;
             bottom: 20px;
@@ -369,8 +458,9 @@
             </div>
         </section>
 
-        <!-- 오른쪽: 대기열 관리 사이드바 -->
+        <!-- 오른쪽: 사이드바 -->
         <section class="sidebar-section">
+            <!-- 1. 공유 재생 대기열 -->
             <div class="card playlist-card">
                 <div class="card-title">
                     공유 재생 대기열
@@ -378,7 +468,7 @@
                 
                 <!-- 동영상 추가 입력창 -->
                 <div class="input-group">
-                    <input type="text" id="youtube-url-input" placeholder="YouTube 주소(URL) 입력">
+                    <input type="text" id="youtube-url-input" placeholder="YouTube 주소(URL) 입력 후 Enter">
                     <button class="btn" id="add-video-btn">추가</button>
                 </div>
 
@@ -386,6 +476,27 @@
                 <ul class="playlist-items" id="playlist-items-ul">
                     <!-- JS에서 동적 추가 -->
                 </ul>
+            </div>
+
+            <!-- 2. 실시간 채팅 & 참여자 -->
+            <div class="card chat-card">
+                <div class="card-title" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                    <div>실시간 대화</div>
+                    <div id="users-badge-list">
+                        <!-- 접속자 뱃지가 동적으로 삽입됨 -->
+                    </div>
+                </div>
+
+                <!-- 실시간 메시지 로그 -->
+                <div id="chat-messages">
+                    <!-- 일반 채팅 & 시스템 동기화 알림 적재 -->
+                </div>
+
+                <!-- 메시지 입력창 -->
+                <div class="input-group" style="margin-bottom: 0;">
+                    <input type="text" id="chat-input" placeholder="메시지를 입력하세요...">
+                    <button class="btn" id="send-chat-btn">전송</button>
+                </div>
             </div>
         </section>
     </main>
@@ -405,7 +516,7 @@
             window.stop();
         }
 
-        // 닉네임 설정 (무작위 닉네임 생성 또는 사용자 지정 가능)
+        // 닉네임 설정 (무작위 닉네임 생성 및 유지)
         const addedBy = "유저_" + Math.floor(Math.random() * 1000);
 
         let player;
@@ -460,19 +571,39 @@
                     state: "paused",
                     time: time
                 });
+            } else if (event.data === YT.PlayerState.ENDED) {
+                // 영상 재생이 끝났을 때 자동 다음 비디오 재생
+                playNextVideo();
+            }
+        }
+
+        // 대기열의 다음 비디오 자동 재생 처리
+        function playNextVideo() {
+            if (playlist.length === 0) return;
+            
+            // 현재 활성화된 비디오의 인덱스 조회
+            const currentIndex = playlist.findIndex(item => extractVideoId(item.video_url) === currentVideoId);
+            
+            // 다음 비디오가 존재할 경우 로드 후 전체 유저에게 브로드캐스트
+            if (currentIndex !== -1 && currentIndex + 1 < playlist.length) {
+                const nextItem = playlist[currentIndex + 1];
+                const nextVideoId = extractVideoId(nextItem.video_url);
+                if (nextVideoId) {
+                    appendSystemMessage("🎵 재생이 완료되어 다음 대기열 동영상을 자동으로 재생합니다.");
+                    loadVideoById(nextVideoId, true);
+                }
+            } else {
+                appendSystemMessage("📭 대기열의 모든 동영상 재생이 끝났습니다.");
             }
         }
 
         // 주기적인 재생 지점(Seek) 동기화 트리거
-        // 사용자가 슬라이더 바를 눌러 건너뛰기 했을 때의 이벤트는 감지가 까다로우므로
-        // 주기적으로 현재 타임을 관측해 크게 튀면 전송하는 방식으로 우회 보강
         let prevTime = 0;
         setInterval(() => {
             if (!player || isSyncing || !player.getCurrentTime) return;
             const currTime = player.getCurrentTime();
             const state = player.getPlayerState();
             
-            // 재생 중일 때, 1초 타이머 범위 밖으로 튀면 사용자가 건너뛰기(Seek)한 것으로 판정
             if (state === YT.PlayerState.PLAYING) {
                 const diff = Math.abs(currTime - prevTime);
                 if (diff > 2.5) {
@@ -501,8 +632,11 @@
                 badgeText.innerText = "실시간 동기화 됨";
                 showToast("실시간 동기화가 활성화되었습니다.");
                 
-                // 최초 접속 시, 기존에 접속해 있던 다른 클라이언트에게 상태 정보를 요청 (동기화 요청)
-                sendWsMessage({ type: "sync_request" });
+                // 닉네임을 서버에 보내 가입(Join)을 완료시킴
+                sendWsMessage({
+                    type: "join",
+                    username: addedBy
+                });
             };
 
             ws.onclose = () => {
@@ -524,8 +658,9 @@
                 switch (message.type) {
                     case "user_joined":
                         showToast(message.message);
+                        appendSystemMessage(message.message);
                         // 내가 방의 선구자(기존 플레이어)라면 신입에게 현재 플레이 상태를 전달
-                        if (player && player.getPlayerState() !== YT.PlayerState.UNSTARTED) {
+                        if (player && player.getPlayerState() !== YT.PlayerState.UNSTARTED && player.getPlayerState() !== -1) {
                             sendWsMessage({
                                 type: "sync_response",
                                 state: player.getPlayerState() === YT.PlayerState.PLAYING ? "playing" : "paused",
@@ -537,18 +672,29 @@
 
                     case "user_left":
                         showToast(message.message);
+                        appendSystemMessage(message.message);
+                        break;
+
+                    case "user_list":
+                        updateUsersList(message.users);
+                        break;
+
+                    case "chat":
+                        appendChatMessage(message.username, message.text);
                         break;
 
                     case "state_change":
                         syncPlayerState(message.state, message.time);
+                        appendSystemMessage(`ℹ️ 누군가 동영상을 ${message.state === 'playing' ? '재생' : '일시정지'}했습니다.`);
                         break;
 
                     case "seek":
                         syncPlayerSeek(message.time);
+                        appendSystemMessage(`ℹ️ 누군가 재생 구간을 건너뛰었습니다.`);
                         break;
 
                     case "sync_request":
-                        // 누군가 싱크를 구걸할 때 내 상태 전송
+                        // 누군가 싱크를 요청할 때 내 상태 전송
                         if (player && player.getPlayerState() !== -1) {
                             sendWsMessage({
                                 type: "sync_response",
@@ -570,6 +716,7 @@
 
                     case "playlist_change":
                         showToast(message.message);
+                        appendSystemMessage(message.message);
                         fetchPlaylist();
                         break;
                 }
@@ -680,6 +827,9 @@
                 }
 
                 li.innerHTML = `
+                    <div class="item-thumb-wrapper">
+                        <img src="https://img.youtube.com/vi/${videoId}/mqdefault.jpg" alt="thumbnail">
+                    </div>
                     <div class="item-info" onclick="playPlaylistVideo('${videoId}')">
                         <div class="item-title">${item.video_title}</div>
                         <div class="item-meta">추가자: ${item.added_by}</div>
@@ -725,8 +875,8 @@
             }
         }
 
-        // 비디오 추가 버튼 클릭 핸들러
-        document.getElementById("add-video-btn").onclick = async () => {
+        // 비디오 추가 기능 수행
+        async function addVideoFromInput() {
             const input = document.getElementById("youtube-url-input");
             const url = input.value.trim();
             if (!url) return;
@@ -752,7 +902,6 @@
                     fetchPlaylist();
                     showToast("대기열에 동영상을 성공적으로 추가했습니다.");
                     
-                    // 만약 현재 비디오가 재생 중이지 않고 비어있는 경우, 자동으로 첫 동영상을 실행
                     if (!currentVideoId) {
                         setTimeout(() => {
                             loadVideoById(videoId, true);
@@ -762,15 +911,88 @@
             } catch (err) {
                 console.error("Failed to add video:", err);
             }
+        }
+
+        // 비디오 추가 버튼 클릭 핸들러
+        document.getElementById("add-video-btn").onclick = addVideoFromInput;
+
+        // 비디오 추가 입력창 Enter 키 바인딩
+        document.getElementById("youtube-url-input").onkeypress = (event) => {
+            if (event.key === 'Enter') {
+                addVideoFromInput();
+            }
         };
 
-        // 6. 유틸성 알림 메신저 (Toast)
+        // 6. 실시간 채팅 UI 연동 및 이벤트 핸들러
+        document.getElementById("chat-input").onkeypress = (event) => {
+            if (event.key === 'Enter') {
+                sendChatMessage();
+            }
+        };
+
+        document.getElementById("send-chat-btn").onclick = sendChatMessage;
+
+        function sendChatMessage() {
+            const input = document.getElementById("chat-input");
+            const text = input.value.trim();
+            if (!text) return;
+
+            // 로컬 화면에 즉시 렌더링
+            appendChatMessage(addedBy, text);
+
+            // 전체 방 참여자들에게 웹소켓 중계 발송
+            sendWsMessage({
+                type: "chat",
+                username: addedBy,
+                text: text
+            });
+
+            input.value = "";
+        }
+
+        function appendChatMessage(sender, text) {
+            const container = document.getElementById("chat-messages");
+            const el = document.createElement("div");
+            el.className = "chat-message";
+            el.innerHTML = `<span class="chat-user">${escapeHtml(sender)}:</span><span class="chat-text">${escapeHtml(text)}</span>`;
+            container.appendChild(el);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function appendSystemMessage(msg) {
+            const container = document.getElementById("chat-messages");
+            const el = document.createElement("div");
+            el.className = "chat-message system-message";
+            el.innerText = msg;
+            container.appendChild(el);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 참여자 목록 갱신
+        function updateUsersList(users) {
+            const listEl = document.getElementById("users-badge-list");
+            listEl.innerHTML = "";
+            users.forEach(user => {
+                const badge = document.createElement("span");
+                badge.className = "user-badge";
+                badge.innerText = user;
+                listEl.appendChild(badge);
+            });
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+
+        // 7. 유틸성 알림 메신저 (Toast)
         function showToast(msg) {
             const toast = document.getElementById("toast-message");
             toast.innerText = msg;
             toast.classList.add("show");
             setTimeout(() => {
-                toast.classList.remove("show");
+                toast.className = "toast";
             }, 3000);
         }
     </script>
