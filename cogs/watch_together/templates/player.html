@@ -110,14 +110,16 @@
             max-width: 1600px;
             width: 100%;
             margin: 0 auto;
+            align-items: stretch;
         }
 
         /* 왼쪽: 플레이어 섹션 */
         .player-section {
-            flex: 2.2;
+            flex: 1; /* 남은 화면 전체를 채우도록 설정 */
             display: flex;
             flex-direction: column;
             gap: 20px;
+            min-width: 0; /* flex 컨테이너 내부 찌그러짐 방지 */
         }
 
         .video-wrapper {
@@ -150,14 +152,19 @@
 
         .video-title {
             color: var(--title-color);
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-weight: 600;
             margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis; /* 제목이 길면 말줄임표 처리해 한 줄로 강제 고정 */
+            max-width: 100%;
         }
 
         /* 오른쪽: 사이드바 */
         .sidebar-section {
-            flex: 1;
+            width: 380px; /* 사이드바 가로 너비를 380px로 완전 고정하여 플레이어 영역을 최대로 확보 */
+            flex-shrink: 0; /* 화면 크기가 줄어들어도 사이드바가 찌그러지지 않고 고정됨 */
             display: flex;
             flex-direction: column;
             gap: 20px;
@@ -427,6 +434,7 @@
                 padding: 15px 20px;
             }
             .sidebar-section {
+                width: 100%; /* 모바일 환경에서는 100% 가로 너비를 채우도록 설정 */
                 max-height: none;
             }
         }
