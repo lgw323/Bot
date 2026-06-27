@@ -74,15 +74,26 @@ class ConnectionManager:
     def __init__(self):
         # 방(session_id)별 활성 웹소켓 목록 매핑
         self.active_connections: Dict[str, List[WebSocket]] = {}
+        # 방(session_id)별 (웹소켓 -> 닉네임) 매핑
+        self.user_names: Dict[str, Dict[WebSocket, str]] = {}
 
     async def connect(self, session_id: str, websocket: WebSocket):
         await websocket.accept()
         if session_id not in self.active_connections:
             self.active_connections[session_id] = []
         self.active_connections[session_id].append(websocket)
+        
+        if session_id not in self.user_names:
+            self.user_names[session_id] = {}
+            
         logger.info(f"WebSocket client connected to session: {session_id}. Active users: {len(self.active_connections[session_id])}")
 
     def disconnect(self, session_id: str, websocket: WebSocket):
+        if session_id in self.user_names and websocket in self.user_names[session_id]:
+            del self.user_names[session_id][websocket]
+            if not self.user_names[session_id]:
+                del self.user_names[session_id]
+
         if session_id in self.active_connections:
             self.active_connections[session_id].remove(websocket)
             if not self.active_connections[session_id]:
@@ -135,13 +146,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
         return
 
     await manager.connect(session_id, websocket)
-    
-    # 누군가 새로 들어왔을 때, 방의 다른 참여자들에게 현재 재생 정보를 알려달라고 요청하는 브로드캐스트 전송
-    await manager.broadcast(
-        session_id, 
-        {"type": "user_joined", "message": "새로운 참가자가 연결되었습니다."}, 
-        exclude=websocket
-    )
+    username = "알 수 없는 유저"
 
     try:
         while True:
@@ -150,8 +155,41 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
             message = json.loads(data)
             msg_type = message.get("type")
             
+            if msg_type == "join":
+                username = message.get("username", "임시유저")
+                if session_id in manager.user_names:
+                    manager.user_names[session_id][websocket] = username
+                
+                # 누군가 새로 들어왔을 때, 방의 다른 참여자들에게 알림 전송 및 접속자 명단 브로드캐스트
+                await manager.broadcast(
+                    session_id, 
+                    {
+                        "type": "user_joined", 
+                        "username": username,
+                        "message": f"👉 {username}님이 시청방에 입장하셨습니다."
+                    },
+                    exclude=websocket
+                )
+                
+                # 접속자 명단 전체에 전송
+                users_list = list(manager.user_names.get(session_id, {}).values())
+                await manager.broadcast(
+                    session_id,
+                    {
+                        "type": "user_list",
+                        "users": users_list
+                    }
+                )
+                
+                # 방 안의 다른 클라이언트들에게 재생 상태 공유를 구걸함
+                await manager.broadcast(
+                    session_id,
+                    {"type": "sync_request"},
+                    exclude=websocket
+                )
+            
             # 메시지 타입에 따른 중계 처리
-            if msg_type in ["state_change", "seek", "sync_response", "chat", "playlist_change"]:
+            elif msg_type in ["state_change", "seek", "sync_response", "chat", "playlist_change"]:
                 # 보낸 클라이언트를 제외하고 세션 내 모든 참가자에게 브로드캐스트
                 await manager.broadcast(session_id, message, exclude=websocket)
             elif msg_type == "sync_request":
@@ -159,11 +197,25 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                 await manager.broadcast(session_id, message, exclude=websocket)
                 
     except WebSocketDisconnect:
+        # 퇴장 시 닉네임을 구하고 세션에서 해제
         manager.disconnect(session_id, websocket)
         await manager.broadcast(
             session_id, 
-            {"type": "user_left", "message": "참가자가 퇴장했습니다."}, 
+            {
+                "type": "user_left", 
+                "username": username,
+                "message": f"👈 {username}님이 시청방에서 퇴장하셨습니다."
+            }, 
             exclude=websocket
+        )
+        # 퇴장 후 갱신된 접속자 명단 전체 전송
+        users_list = list(manager.user_names.get(session_id, {}).values())
+        await manager.broadcast(
+            session_id,
+            {
+                "type": "user_list",
+                "users": users_list
+            }
         )
     except Exception as e:
         logger.error(f"WebSocket error: {e}", exc_info=True)
