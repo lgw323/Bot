@@ -14,6 +14,7 @@ from database_manager import db_lock, get_user_data, update_user_xp, get_top_use
 
 logger: logging.Logger = logging.getLogger("LevelingCog")
 SUMMARY_CHANNEL_ID: int = int(os.getenv("SUMMARY_CHANNEL_ID", "0"))
+MASTER_USER_ID: int = int(os.getenv("MASTER_USER_ID", "0"))
 VC_XP_PER_MIN: int = 5
 
 # --- Helper Functions ---
@@ -202,14 +203,22 @@ class LevelingCog(commands.Cog):
 
     # --- Commands ---
     @app_commands.command(name="내정보", description="나의 현재 레벨과 경험치 진행도를 확인합니다.")
-    async def profile(self, interaction: discord.Interaction) -> None:
+    async def profile(self, interaction: discord.Interaction, user: Optional[discord.Member] = None) -> None:
         try:
             await interaction.response.defer(ephemeral=True)
             if not interaction.guild:
                 await interaction.followup.send("이 명령어는 서버 내에서만 사용할 수 있습니다.")
                 return
 
-            user_data: Optional[Dict[str, any]] = await get_user_data(interaction.user.id, interaction.guild.id)
+            # 스텔스 권한 제어: MASTER_USER_ID인 경우에만 타인 조회 허용, 그 외에는 인자를 조용히 무시하고 본인 정보 반환
+            target_user = interaction.user
+            if user is not None:
+                if interaction.user.id == MASTER_USER_ID:
+                    target_user = user
+                else:
+                    pass  # 다른 유저가 조회했을 때 거부 반응을 주지 않고 조용히 자신의 정보 카드를 반환
+
+            user_data: Optional[Dict[str, any]] = await get_user_data(target_user.id, interaction.guild.id)
             
             text_xp: int = user_data["xp"] if user_data else 0
             vc_seconds: int = user_data["total_vc_seconds"] if user_data else 0
@@ -234,7 +243,7 @@ class LevelingCog(commands.Cog):
             vc_hours: int = vc_seconds // 3600
             vc_minutes: int = (vc_seconds % 3600) // 60
             
-            embed: discord.Embed = discord.Embed(title=f"👤 {interaction.user.display_name}님의 정보", color=0x3498DB)
+            embed: discord.Embed = discord.Embed(title=f"👤 {target_user.display_name}님의 정보", color=0x3498DB)
             embed.add_field(name="현재 레벨", value=f"**Lv.{real_level}**", inline=True)
             embed.add_field(name="총 누적 경험치", value=f"**{total_xp:,} XP**", inline=True)
             embed.add_field(name="경험치 상세", value=f"💬 텍스트: {text_xp:,} XP\n🎙️ 음성: {voice_xp:,} XP", inline=False)
@@ -243,7 +252,7 @@ class LevelingCog(commands.Cog):
             embed.add_field(name="다음 레벨까지 (진행도)", value=f"{progress_bar} **{ratio*100:.1f}%**\n`[ {progress_current:,} / {progress_total:,} XP ]` (달성까지 **{progress_total - progress_current:,} XP** 남음)", inline=False)
             
             embed.add_field(name="음성 채널 누적 체류", value=f"**{vc_hours}시간 {vc_minutes}분**", inline=False)
-            embed.set_thumbnail(url=interaction.user.display_avatar.url)
+            embed.set_thumbnail(url=target_user.display_avatar.url)
             
             await interaction.followup.send(embed=embed)
         except Exception as e:
