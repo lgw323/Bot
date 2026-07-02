@@ -60,3 +60,12 @@ PRUNE_INTERVAL_MINUTES=30
 # 외부 웹 브라우저 접속용 도메인 주소 (Cloudflare Tunnel에 맵핑한 도메인 주소)
 # 예: https://watch.yourdomain.com
 WATCH_TOGETHER_URL=https://watch.yourdomain.com
+
+# ==========================================
+# [6. 실시간 음성 욕설 감지 및 AI 채점 설정]
+# ==========================================
+# 실시간 음성 채널 감지 기능 활성화 여부 (True/False)
+VOICE_PROFANITY_DETECTION=True
+
+# 로컬 LM Studio 서버 API 엔드포인트 주소
+LM_STUDIO_API_URL=http://localhost:1234/v1

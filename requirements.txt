@@ -7,10 +7,14 @@
 
 # Core Discord Library
 discord.py[voice]>=2.6.0
+discord-ext-voice-recv>=0.1.7
 
 # Voice Support (Required for music_core.py)
 PyNaCl>=1.5.0
 davey
+
+# Speech Recognition & STT
+SpeechRecognition>=3.10.0
 
 # Utilities/Others
 youtube-search-python==1.6.6
