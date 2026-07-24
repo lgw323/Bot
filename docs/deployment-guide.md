@@ -120,10 +120,14 @@ source bot_env/bin/activate
 # 3. 봇 실행에 필요한 모든 파이썬 라이브러리를 한 번에 설치합니다.
 pip install -r requirements.txt
 
-# 4. 데이터베이스 및 스크립트 실행 폴더 권한 부여 (필수)
-chmod -R 777 scripts/
-chmod -R 777 data/
+# 4. 실행 스크립트와 데이터 폴더에 필요한 최소 권한만 부여합니다.
+chmod 755 scripts/auto_update.sh scripts/auto_backup.sh
+install -d -m 700 data data/logs
 ```
+
+`777`처럼 모든 사용자가 수정할 수 있는 권한은 사용하지 않습니다. 스크립트는
+소유자만 수정하고 다른 사용자는 읽고 실행만 할 수 있으며, 데이터 폴더는 `os`
+사용자만 접근할 수 있게 합니다.
 
 ---
 
@@ -143,6 +147,11 @@ chmod -R 777 data/
    ```
 4. 혹시 `Are you sure you want to continue connecting (yes/no)?` 라고 물어보면 `yes`를 치고 엔터를 누릅니다.
 5. 라즈베리파이 접속 비밀번호를 입력하고 엔터를 치면 파일 전송이 1초 만에 깔끔히 완료됩니다!
+6. 전송한 `.env`는 `os` 사용자만 읽고 쓸 수 있게 권한을 제한합니다.
+   ```cmd
+   ssh os@botserver.local "chmod 600 /home/os/bot/.env"
+   ```
+   서버 주소가 다르면 `botserver.local`을 실제 주소로 바꿉니다.
 
 `.env`에는 암호화 키와 함께 백업 전용 비공개 저장소 주소가 있어야 합니다.
 GitHub 토큰을 URL에 직접 넣지 말고, Pi에 설정된 Git 자격 증명을 사용합니다.
