@@ -118,17 +118,36 @@ def _decode_backup_value(value: Any) -> str:
 
 
 def _fetch_remote_backup() -> None:
-    """Fetch the current SQL dump from the existing db-backup branch."""
-    logger.info("Local DB and backup SQL not found. Attempting to fetch from remote 'db-backup' branch...")
+    """Fetch the current SQL dump from the dedicated private repository."""
+    remote_url = os.environ.get("DB_BACKUP_REMOTE_URL", "").strip()
+    if not remote_url:
+        logger.critical(
+            "DB_BACKUP_REMOTE_URL is required for remote database recovery."
+        )
+        sys.exit(
+            "System Halt: DB_BACKUP_REMOTE_URL is required for private "
+            "database backup recovery."
+        )
+
+    logger.info(
+        "Local DB and backup SQL not found. Attempting to fetch the private "
+        "'db-backup' branch..."
+    )
     try:
         subprocess.run(
-            ["git", "fetch", "origin", "db-backup"],
+            [
+                "git",
+                "fetch",
+                "--no-tags",
+                remote_url,
+                "db-backup",
+            ],
             check=True,
             cwd=BASE_DIR,
             capture_output=True,
         )
         result = subprocess.run(
-            ["git", "show", "origin/db-backup:data/database_backup.sql"],
+            ["git", "show", "FETCH_HEAD:data/database_backup.sql"],
             check=True,
             cwd=BASE_DIR,
             capture_output=True,
@@ -139,7 +158,8 @@ def _fetch_remote_backup() -> None:
         logger.critical(f"FATAL Error fetching backup: {e}")
         sys.exit(
             "System Halt: Empty DB creation blocked due to remote fetch failure. "
-            "Check network or db-backup branch."
+            "Check DB_BACKUP_REMOTE_URL, credentials, network, or the "
+            "db-backup branch."
         )
 
 

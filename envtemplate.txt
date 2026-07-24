@@ -10,6 +10,9 @@ GOOGLE_API_KEY=censored
 # 데이터베이스 백업 암호화 키 (필수, 44자리 Base64 문자열이어야 작동합니다)
 DB_ENCRYPTION_KEY=your_base64_encryption_key_here=
 
+# 암호화된 DB 백업 전용 비공개 Git 저장소 (필수)
+DB_BACKUP_REMOTE_URL=https://github.com/your-account/your-private-data-repo.git
+
 # 디버그 모드 (True/False)
 DEBUG_MODE=False
 

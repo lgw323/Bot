@@ -9,6 +9,7 @@ from cryptography.fernet import Fernet
 import database_manager
 
 TEST_ENCRYPTION_KEY = Fernet.generate_key().decode("ascii")
+PRIVATE_BACKUP_REMOTE = "https://github.com/lgw323/Bot-Data.git"
 
 
 def assert_no_backup_temp_files(backup_path):
@@ -62,18 +63,46 @@ class TestDatabaseManager:
         with patch("database_manager.DB_PATH", db_path), \
              patch("database_manager.DATA_DIR", tmp_path), \
              patch("database_manager.SQL_BACKUP_PATH", backup_path), \
+             patch.dict(
+                 os.environ,
+                 {"DB_BACKUP_REMOTE_URL": PRIVATE_BACKUP_REMOTE},
+             ), \
              patch("subprocess.run", side_effect=[fetch_result, show_result]) as mock_run:
             database_manager.init_db()
 
         assert mock_run.call_count == 2
         assert mock_run.call_args_list[0].args[0] == [
-            "git", "fetch", "origin", "db-backup"
+            "git",
+            "fetch",
+            "--no-tags",
+            PRIVATE_BACKUP_REMOTE,
+            "db-backup",
         ]
         assert mock_run.call_args_list[1].args[0] == [
-            "git", "show", "origin/db-backup:data/database_backup.sql"
+            "git", "show", "FETCH_HEAD:data/database_backup.sql"
         ]
         assert backup_path.read_bytes() == backup_sql
         assert db_path.exists()
+
+    def test_init_db_halts_without_private_backup_remote(
+        self,
+        tmp_path,
+    ):
+        """별도 백업 주소가 없을 때 공개 코드 저장소로 우회하면 안 됩니다."""
+        db_path = tmp_path / "blocked_without_remote.db"
+        backup_path = tmp_path / "missing_without_remote.sql"
+
+        with patch("database_manager.DB_PATH", db_path), \
+             patch("database_manager.DATA_DIR", tmp_path), \
+             patch("database_manager.SQL_BACKUP_PATH", backup_path), \
+             patch.dict(os.environ, {}, clear=True), \
+             patch("subprocess.run") as mock_run:
+            with pytest.raises(SystemExit, match="DB_BACKUP_REMOTE_URL"):
+                database_manager.init_db()
+
+        mock_run.assert_not_called()
+        assert not db_path.exists()
+        assert not backup_path.exists()
 
     def test_init_db_halts_when_remote_backup_fetch_fails(
         self,
@@ -86,6 +115,10 @@ class TestDatabaseManager:
         with patch("database_manager.DB_PATH", db_path), \
              patch("database_manager.DATA_DIR", tmp_path), \
              patch("database_manager.SQL_BACKUP_PATH", backup_path), \
+             patch.dict(
+                 os.environ,
+                 {"DB_BACKUP_REMOTE_URL": PRIVATE_BACKUP_REMOTE},
+             ), \
              patch("subprocess.run", side_effect=RuntimeError("offline")):
             with pytest.raises(SystemExit, match="Empty DB creation blocked"):
                 database_manager.init_db()
@@ -108,6 +141,10 @@ class TestDatabaseManager:
         with patch("database_manager.DB_PATH", db_path), \
              patch("database_manager.DATA_DIR", tmp_path), \
              patch("database_manager.SQL_BACKUP_PATH", backup_path), \
+             patch.dict(
+                 os.environ,
+                 {"DB_BACKUP_REMOTE_URL": PRIVATE_BACKUP_REMOTE},
+             ), \
              patch(
                  "subprocess.run",
                  side_effect=[fetch_result, show_result],

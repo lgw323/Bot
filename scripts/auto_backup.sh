@@ -102,9 +102,16 @@ cd "$BACKUP_REPO_DIR" ||
 git init --initial-branch=backup > /dev/null 2>&1 ||
     log_failure "임시 Git 저장소 초기화에 실패했습니다."
 
-REMOTE_URL="$(cd "$BOT_DIR" && git config --get remote.origin.url)"
+REMOTE_URL="$("$BOT_DIR/bot_env/bin/python" -c "
+from dotenv import dotenv_values
+
+value = dotenv_values('$BOT_DIR/.env').get('DB_BACKUP_REMOTE_URL')
+print((value or '').strip())
+")" ||
+    log_failure "비공개 백업 원격 저장소 주소를 읽을 수 없습니다."
+
 if [ -z "$REMOTE_URL" ]; then
-    REMOTE_URL="https://github.com/lgw323/Bot.git"
+    log_failure "백업 원격 저장소 주소가 없습니다. DB_BACKUP_REMOTE_URL을 확인하세요."
 fi
 
 git add . ||

@@ -144,6 +144,14 @@ chmod -R 777 data/
 4. 혹시 `Are you sure you want to continue connecting (yes/no)?` 라고 물어보면 `yes`를 치고 엔터를 누릅니다.
 5. 라즈베리파이 접속 비밀번호를 입력하고 엔터를 치면 파일 전송이 1초 만에 깔끔히 완료됩니다!
 
+`.env`에는 암호화 키와 함께 백업 전용 비공개 저장소 주소가 있어야 합니다.
+GitHub 토큰을 URL에 직접 넣지 말고, Pi에 설정된 Git 자격 증명을 사용합니다.
+
+```dotenv
+DB_ENCRYPTION_KEY=발급받은_기존_키
+DB_BACKUP_REMOTE_URL=https://github.com/계정/비공개-데이터-저장소.git
+```
+
 ---
 
 ## ⚙️ 6단계: 서비스 데몬 설정 (Systemd - 자동 재시작 및 백그라운드 구동)
@@ -214,12 +222,14 @@ crontab -e
 # 2. [일일 정기 점검] yt-dlp만 최신화하고 성공 시 봇 재시작 (매일 새벽 04:00)
 3 4 * * * /home/os/bot/scripts/auto_update.sh --daily
 
-# 3. [데이터 백업] 6시간마다 사용자 데이터 GitHub 'db-backup' 브랜치로 단일 푸시 및 내부 최대 7일 롤백 저장 (0, 6, 12, 18시) 
+# 3. [데이터 백업] 6시간마다 별도 비공개 저장소의 'db-backup' 브랜치로 단일 푸시 및 내부 최대 7일 롤백 저장 (0, 6, 12, 18시)
 3 */6 * * * /home/os/bot/scripts/auto_backup.sh
 ```
 👉 **`Ctrl + O` -> `Enter` -> `Ctrl + X`** 로 저장하고 나옵니다.
 
-> DB 백업에는 `.env`의 유효한 `DB_ENCRYPTION_KEY`가 반드시 필요합니다. 새
+> DB 백업에는 `.env`의 유효한 `DB_ENCRYPTION_KEY`와
+> `DB_BACKUP_REMOTE_URL`이 반드시 필요합니다. 백업 주소가 없으면 공개 코드
+> 저장소로 대신 올리지 않고 실패합니다. 새
 > `data/database_backup.sql`은 확장자와 경로는 유지하지만, 내용은 사용자 ID,
 > 음악 정보와 SQL 구조까지 포함해 파일 전체가 암호화됩니다. 텍스트 편집기로
 > SQL을 읽을 수 없는 것이 정상입니다. 복구할 서버에도 백업을 만들 때 사용한 것과
@@ -280,7 +290,7 @@ tail -f ~/bot/data/logs/backup.log
 ```
 
 백업 성공 여부는 `backup.log`, 최근 로컬 복구본은 `data/archives/`, 원격 최신
-복구본은 `db-backup` 브랜치에서 확인합니다. 실제 DB 교체나 SQL 복구는 데이터
+복구본은 별도 비공개 저장소의 `db-backup` 브랜치에서 확인합니다. 실제 DB 교체나 SQL 복구는 데이터
 손실 위험이 있으므로 대상 백업의 시점과 크기를 확인한 뒤 진행합니다.
 
 `backup.log`에 `ERROR`가 있으면 그 실행에서는 원격 백업까지 완료되지 않은
