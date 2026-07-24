@@ -115,7 +115,7 @@ restart_service() {
     fi
 
     sleep 3
-    if ! sudo systemctl is-active --quiet discordbot; then
+    if ! systemctl is-active --quiet discordbot; then
         rm -f "$STARTUP_REASON_FILE"
         return 1
     fi
@@ -137,7 +137,7 @@ rollback_code() {
     fi
 
     sleep 3
-    sudo systemctl is-active --quiet discordbot
+    systemctl is-active --quiet discordbot
 }
 
 

@@ -50,6 +50,15 @@ def test_restart_failure_rolls_back_changed_code() -> None:
     assert "이전 코드 복구" in script
 
 
+def test_service_health_check_does_not_require_sudo() -> None:
+    """허용된 재시작 뒤 일반 사용자도 가능한 상태 조회를 sudo로 실행하지 않습니다."""
+    script = read_update_script()
+
+    assert "sudo systemctl restart discordbot" in script
+    assert "sudo systemctl is-active" not in script
+    assert script.count("systemctl is-active --quiet discordbot") == 2
+
+
 def test_retired_packages_are_removed_only_after_successful_restart() -> None:
     """사용하지 않는 패키지는 새 코드가 정상 기동한 뒤에만 정리해야 합니다."""
     script = read_update_script()
