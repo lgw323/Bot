@@ -1,0 +1,36 @@
+# ==========================================
+# Discord Bot Runtime Requirements
+# 
+# Note: This file only contains top-level direct dependencies.
+# Intermediary or transitive dependencies will be installed automatically by pip.
+# ==========================================
+
+# Core Discord Library
+discord.py[voice]>=2.6.0
+
+# discord.py[voice]가 음악 재생에 필요한 PyNaCl과 davey를 설치합니다.
+
+# Utilities/Others
+cryptography==42.0.5
+# AI Services
+google-genai>=2.14.0
+
+# Media Downloading
+yt-dlp>=2025.12.8
+
+# Environment Config
+python-dotenv>=1.1.1
+
+# Console UI & Formatting
+rich>=14.1.0
+
+# Optional Features (TTS & Search)
+gTTS>=2.5.4
+RapidFuzz>=3.14.1
+
+# Web Server (Required for watch_together module)
+fastapi>=0.139.2
+pydantic>=2.9.0
+aiohttp>=3.14.3
+uvicorn>=0.49.0
+websockets>=12.0
