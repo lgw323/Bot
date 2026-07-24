@@ -33,6 +33,10 @@ def setup_database(temp_db_path, temp_backup_path):
     with patch("database_manager.DB_PATH", temp_db_path), \
          patch("database_manager.DATA_DIR", temp_db_path.parent), \
          patch("database_manager.SQL_BACKUP_PATH", temp_backup_path), \
+         patch.dict(
+             os.environ,
+             {"DB_BACKUP_REMOTE_URL": PRIVATE_BACKUP_REMOTE},
+         ), \
          patch("subprocess.run") as mock_run:
         
         # mock_run의 반환값을 수정해서 write_bytes가 에러나지 않게 방어
