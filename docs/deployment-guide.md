@@ -146,10 +146,12 @@ chmod -R 777 data/
 
 `.env`에는 암호화 키와 함께 백업 전용 비공개 저장소 주소가 있어야 합니다.
 GitHub 토큰을 URL에 직접 넣지 말고, Pi에 설정된 Git 자격 증명을 사용합니다.
+현재 프로젝트의 백업 저장소는 비공개 `lgw323/Bot-Data`이고 기본 브랜치는
+`db-backup`입니다.
 
 ```dotenv
 DB_ENCRYPTION_KEY=발급받은_기존_키
-DB_BACKUP_REMOTE_URL=https://github.com/계정/비공개-데이터-저장소.git
+DB_BACKUP_REMOTE_URL=https://github.com/lgw323/Bot-Data.git
 ```
 
 ---

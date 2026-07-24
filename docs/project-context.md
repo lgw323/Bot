@@ -63,6 +63,16 @@ DB 연결 설정은 봇 전용 연결 함수에서만 적용하며 Python 표준
 
 ## 4. 데이터와 백업의 현재 상태
 
+### 저장소 분리
+
+- 공개 코드 저장소는 [`lgw323/Bot`](https://github.com/lgw323/Bot)이며
+  `main` 브랜치에 코드, 테스트와 문서만 둡니다.
+- 운영 백업 저장소는 비공개 [`lgw323/Bot-Data`](https://github.com/lgw323/Bot-Data)이며
+  코드 이력과 독립된 `db-backup` 브랜치에 최신 암호화 백업 한 개만 둡니다.
+- 공개 코드 저장소에는 `db-backup` 브랜치를 만들지 않습니다.
+- 실제 저장소 주소는 각 실행 환경의 `.env`에 있는 `DB_BACKUP_REMOTE_URL`로
+  지정합니다. 이 값이 없으면 공개 `origin`으로 우회하지 않습니다.
+
 ### 운영 데이터
 
 - SQLite DB: `data/bot_database.db`

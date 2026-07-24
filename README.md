@@ -43,7 +43,8 @@ python main_bot.py
 ## 데이터와 백업
 
 - 운영 데이터는 Git에서 제외된 `data/bot_database.db`에 저장됩니다.
-- 최근 SQL 백업은 `DB_BACKUP_REMOTE_URL`로 지정한 별도 비공개 저장소의
+- 최근 SQL 백업은 `DB_BACKUP_REMOTE_URL`로 지정한 별도 비공개
+  [`lgw323/Bot-Data`](https://github.com/lgw323/Bot-Data) 저장소의
   `db-backup` 브랜치에 단일 커밋으로 갱신됩니다. 코드 저장소에는 DB 백업
   브랜치를 두지 않습니다.
 - Pi의 `data/archives/`에는 최근 7일의 로컬 SQL 백업이 보관됩니다.
