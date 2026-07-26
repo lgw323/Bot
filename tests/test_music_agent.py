@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 from collections import deque
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -126,3 +128,72 @@ async def test_on_ready_restores_complete_music_session() -> None:
     assert state.voice_client is connected_voice_client
     assert [song.title for song in state.queue] == ["Current Song", "Next Song"]
     state.play_next_song.set.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+async def test_toggle_auto_play_off_cancels_pending_lookup() -> None:
+    bot = MagicMock()
+    bot.loop = asyncio.get_running_loop()
+    bot.wait_until_ready = AsyncMock()
+    bot.is_closed.return_value = False
+    guild = MagicMock()
+    guild.id = 12345
+    guild.name = "Test Guild"
+
+    from cogs.music.music_core import MusicState
+
+    music_state = MusicState(bot, MagicMock(), guild)
+    music_state.auto_play_enabled = True
+    autoplay_task = asyncio.create_task(asyncio.sleep(3600))
+    music_state.autoplay_task = autoplay_task
+    music_state.schedule_ui_update = AsyncMock()
+
+    agent = MusicAgentCog(bot)
+    agent.get_music_state = AsyncMock(return_value=music_state)
+    interaction = MagicMock()
+    interaction.guild.id = guild.id
+    interaction.user.display_name = "Tester"
+    interaction.response.send_message = AsyncMock()
+
+    await agent.handle_toggle_auto_play(interaction)
+    await asyncio.sleep(0)
+
+    assert music_state.auto_play_enabled is False
+    assert music_state.autoplay_task is None
+    assert autoplay_task.cancelled()
+    music_state.schedule_ui_update.assert_awaited_once_with()
+    interaction.response.send_message.assert_awaited_once()
+    await music_state.cleanup(leave=True, update_ui=False)
+
+
+@pytest.mark.asyncio
+async def test_favorites_add_path_can_cancel_autoplay_without_error() -> None:
+    bot = MagicMock()
+    bot.loop = asyncio.get_running_loop()
+    bot.wait_until_ready = AsyncMock()
+    bot.is_closed.return_value = False
+    guild = MagicMock()
+    guild.id = 12345
+    guild.name = "Test Guild"
+
+    from cogs.music.music_core import MusicState
+
+    music_state = MusicState(bot, MagicMock(), guild)
+    autoplay_task = asyncio.create_task(asyncio.sleep(3600))
+    music_state.autoplay_task = autoplay_task
+
+    agent = MusicAgentCog(bot)
+    agent.get_music_state = AsyncMock(return_value=music_state)
+    agent._ensure_voice_connection = AsyncMock(return_value=False)
+    interaction = MagicMock()
+    interaction.guild.id = guild.id
+
+    result = await agent.handle_add_multiple_from_favorites(
+        interaction,
+        ["https://youtu.be/dQw4w9WgXcQ"],
+    )
+    await asyncio.sleep(0)
+
+    assert result == (0, False)
+    assert autoplay_task.cancelled()
+    await music_state.cleanup(leave=True, update_ui=False)

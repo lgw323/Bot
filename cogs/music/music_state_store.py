@@ -73,6 +73,30 @@ class MusicStateStore:
         try:
             export_data = serialize_music_states(states)
             if not export_data:
+                if self.state_file.exists():
+                    try:
+                        with self.state_file.open(
+                            "r",
+                            encoding="utf-8",
+                        ) as state_file:
+                            json.load(state_file)
+                    except (OSError, json.JSONDecodeError) as e:
+                        logger.warning(
+                            "Keeping unreadable music state for diagnosis: %s",
+                            e,
+                        )
+                    else:
+                        try:
+                            self.state_file.unlink()
+                            logger.info(
+                                "Removed stale empty music state snapshot: %s",
+                                self.state_file,
+                            )
+                        except OSError as e:
+                            logger.warning(
+                                "Failed to remove stale music state: %s",
+                                e,
+                            )
                 return
 
             self.state_file.parent.mkdir(parents=True, exist_ok=True)

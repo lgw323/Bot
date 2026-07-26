@@ -1,6 +1,7 @@
 import pytest
 import logging
 import asyncio
+import io
 from unittest.mock import MagicMock, AsyncMock, patch
 
 from cogs.logging.log_agent import (
@@ -137,3 +138,86 @@ class TestLogAgent:
         sent = channel.send.call_args.kwargs
         assert sent["embed"].title == "🎬 Watch Together 세션 생성"
         assert isinstance(sent["view"], WatchSessionControlView)
+
+    def test_setup_logging_preserves_foreign_handlers(self, tmp_path):
+        root_logger = logging.getLogger()
+        original_level = root_logger.level
+        project_logger_names = (
+            "MyBot",
+            "DatabaseManager",
+            "Commands",
+            "LevelingCog",
+            "WatchAgent",
+            "WatchServer",
+            "cogs",
+        )
+        original_project_levels = {
+            name: logging.getLogger(name).level
+            for name in project_logger_names
+        }
+        foreign_handler = logging.StreamHandler(io.StringIO())
+        root_logger.addHandler(foreign_handler)
+        before_handlers = set(root_logger.handlers)
+        cog = object.__new__(LogAgentCog)
+
+        try:
+            with patch(
+                "cogs.logging.log_agent.LOG_DIR",
+                tmp_path / "logs",
+            ):
+                cog._setup_logging()
+
+            assert foreign_handler in root_logger.handlers
+            owned_handlers = [
+                handler
+                for handler in root_logger.handlers
+                if getattr(
+                    handler,
+                    "_discordbot_owned_handler",
+                    False,
+                )
+            ]
+            assert len(owned_handlers) == 2
+
+            logging.getLogger("MyBot").info("project-info-marker")
+            for handler in owned_handlers:
+                handler.flush()
+            log_text = (tmp_path / "logs" / "system.log").read_text(
+                encoding="utf-8",
+            )
+            assert "project-info-marker" in log_text
+        finally:
+            for handler in list(root_logger.handlers):
+                if handler not in before_handlers:
+                    root_logger.removeHandler(handler)
+                    handler.close()
+            root_logger.removeHandler(foreign_handler)
+            foreign_handler.close()
+            root_logger.setLevel(original_level)
+            for name, level in original_project_levels.items():
+                logging.getLogger(name).setLevel(level)
+
+    @pytest.mark.asyncio
+    async def test_on_ready_adds_one_discord_handler_across_reconnects(self):
+        root_logger = logging.getLogger()
+        bot = MagicMock()
+        cog = object.__new__(LogAgentCog)
+        cog.bot = bot
+        cog.discord_handler = None
+        cog._ready_initialized = False
+        cog._send_startup_notification = AsyncMock()
+
+        try:
+            await cog.on_ready()
+            await cog.on_ready()
+
+            handlers = [
+                handler
+                for handler in root_logger.handlers
+                if isinstance(handler, DiscordLogHandler)
+                and handler.bot is bot
+            ]
+            assert len(handlers) == 1
+            cog._send_startup_notification.assert_awaited_once_with()
+        finally:
+            cog.cog_unload()

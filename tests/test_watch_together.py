@@ -91,7 +91,7 @@ async def test_watch_server_endpoints():
             
             response = client.post(
                 f"/api/playlist/{session_id}/add",
-                json={"video_url": "https://www.youtube.com/watch?v=123", "added_by": "테스터"}
+                json={"video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "added_by": "테스터"}
             )
             assert response.status_code == 200
             
@@ -218,6 +218,8 @@ async def test_watch_agent_cleans_only_stale_sessions_once():
 
 @pytest.mark.asyncio
 async def test_watch_creation_sends_private_admin_control():
+    from cogs.watch_together.watch_server import manager
+
     bot = MagicMock()
     log_cog = MagicMock()
     log_cog.send_watch_session_control = AsyncMock()
@@ -236,19 +238,63 @@ async def test_watch_creation_sends_private_admin_control():
         return_value=original_message,
     )
 
-    try:
-        await cog.handle_watch_together(interaction)
+    with patch.object(manager, "schedule_self_destruct") as schedule:
+        try:
+            await cog.handle_watch_together(interaction)
 
-        log_cog.send_watch_session_control.assert_awaited_once()
-        request = log_cog.send_watch_session_control.call_args.kwargs
-        assert request["guild_id"] == 101
-        assert request["created_by"] == 202
-        assert request["channel_id"] == 404
+            log_cog.send_watch_session_control.assert_awaited_once()
+            request = log_cog.send_watch_session_control.call_args.kwargs
+            assert request["guild_id"] == 101
+            assert request["created_by"] == 202
+            assert request["channel_id"] == 404
+            schedule.assert_called_once_with(request["session_id"])
+        finally:
+            if log_cog.send_watch_session_control.await_count:
+                session_id = (
+                    log_cog.send_watch_session_control.call_args.kwargs[
+                        "session_id"
+                    ]
+                )
+                await database_manager.delete_watch_session(session_id)
+
+
+@pytest.mark.asyncio
+async def test_watch_playlist_rejects_non_youtube_urls():
+    session_id = str(uuid.uuid4())
+    await database_manager.add_watch_session(session_id, 888, 999)
+
+    try:
+        response = client.post(
+            f"/api/playlist/{session_id}/add",
+            json={
+                "video_url": "https://example.com/not-youtube",
+                "added_by": "테스터",
+            },
+        )
+
+        assert response.status_code == 400
+        assert await database_manager.get_watch_playlist(session_id) == []
     finally:
-        if log_cog.send_watch_session_control.await_count:
-            session_id = (
-                log_cog.send_watch_session_control.call_args.kwargs[
-                    "session_id"
-                ]
-            )
-            await database_manager.delete_watch_session(session_id)
+        await database_manager.delete_watch_session(session_id)
+
+
+def test_watch_player_renders_playlist_without_dynamic_inner_html():
+    from pathlib import Path
+
+    player_path = (
+        Path(__file__).resolve().parents[1]
+        / "cogs"
+        / "watch_together"
+        / "templates"
+        / "player.html"
+    )
+    player_html = player_path.read_text(encoding="utf-8")
+    render_section = player_html.split(
+        "function renderPlaylist()",
+        1,
+    )[1].split("function playPlaylistVideo", 1)[0]
+
+    assert ".innerHTML" not in render_section
+    assert "onclick=" not in render_section
+    assert "textContent = item.video_title" in render_section
+    assert "addEventListener" in render_section

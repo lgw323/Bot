@@ -160,6 +160,20 @@ class MusicState:
         except Exception:
             logger.error(f"[{self.guild.name}] [Autoplay] 오류 발생", exc_info=True)
         finally:
+            current_task = asyncio.current_task()
+            if self.autoplay_task is current_task:
+                self.autoplay_task = None
+
+    def cancel_autoplay_task(self) -> None:
+        """Cancel only the pending autoplay lookup, if one exists."""
+        task = self.autoplay_task
+        if task is None:
+            return
+
+        if not task.done():
+            task.cancel()
+
+        if self.autoplay_task is task:
             self.autoplay_task = None
 
     async def create_now_playing_embed(self) -> discord.Embed:

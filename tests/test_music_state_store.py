@@ -113,3 +113,33 @@ async def test_invalid_json_is_kept_for_diagnosis(tmp_path) -> None:
 
     assert await store.load_once() == {}
     assert state_path.exists()
+
+
+@pytest.mark.asyncio
+async def test_empty_states_remove_previous_valid_snapshot(tmp_path) -> None:
+    state_path = tmp_path / "music_state.json"
+    state_path.write_text('{"12345": {"queue": []}}', encoding="utf-8")
+    store = MusicStateStore(state_path)
+    empty_state = MagicMock()
+    empty_state.current_song = None
+    empty_state.queue = []
+
+    await store.save({12345: empty_state})
+
+    assert not state_path.exists()
+
+
+@pytest.mark.asyncio
+async def test_empty_states_keep_invalid_snapshot_for_diagnosis(
+    tmp_path,
+) -> None:
+    state_path = tmp_path / "music_state.json"
+    state_path.write_text("{invalid json", encoding="utf-8")
+    store = MusicStateStore(state_path)
+    empty_state = MagicMock()
+    empty_state.current_song = None
+    empty_state.queue = []
+
+    await store.save({12345: empty_state})
+
+    assert state_path.read_text(encoding="utf-8") == "{invalid json"

@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 from unittest.mock import AsyncMock, patch
 
@@ -22,7 +24,12 @@ class TestMainBot:
 
     @pytest.mark.asyncio
     @patch("database_manager.init_db")
-    async def test_setup_hook_loads_extensions(self, mock_init):
+    @patch("uvicorn.Server.serve", new_callable=AsyncMock)
+    async def test_setup_hook_loads_extensions(
+        self,
+        mock_serve,
+        mock_init,
+    ):
         """setup_hook에서 Cog들과 DB 초기화 작업이 연결(호출)되는지 시뮬레이션"""
         bot = MyBot(command_prefix="!", intents=discord.Intents.default())
         # load_extension, tree.sync 등의 비동기 동작 모방
@@ -32,9 +39,33 @@ class TestMainBot:
         # 실제 환경에서는 GUI 패널이 돌아가므로 시간 소요 제거 대신 호출 여부만 확인
         await bot.setup_hook()
         
+        mock_init.assert_called_once_with()
         # 모든 extesnsion이 로드 시도되었는지 확인
         assert bot.load_extension.call_count == len(bot.initial_extensions)
         for ext in bot.initial_extensions:
             bot.load_extension.assert_any_call(ext)
         
         bot.tree.sync.assert_called_once()
+        await asyncio.sleep(0)
+        mock_serve.assert_awaited_once()
+        await bot.close()
+
+    @pytest.mark.asyncio
+    @patch(
+        "database_manager.init_db",
+        side_effect=RuntimeError("restore failed"),
+    )
+    async def test_setup_hook_stops_before_services_when_db_fails(
+        self,
+        mock_init,
+    ):
+        bot = MyBot(command_prefix="!", intents=discord.Intents.default())
+        bot.load_extension = AsyncMock()
+
+        with pytest.raises(RuntimeError, match="restore failed"):
+            await bot.setup_hook()
+
+        mock_init.assert_called_once_with()
+        bot.load_extension.assert_not_awaited()
+        assert bot.webserver_task is None
+        await bot.close()

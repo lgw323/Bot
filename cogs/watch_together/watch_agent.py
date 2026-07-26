@@ -83,6 +83,8 @@ class WatchAgentCog(commands.Cog):
             
             # 5. SQLite DB에 세션 등록
             await add_watch_session(session_id, guild_id, user_id, channel_id, message_id)
+            from .watch_server import manager
+            manager.schedule_self_destruct(session_id)
             logger.info(f"Watch Together session created: {session_id} by User: {user_id}")
 
             log_cog = self.bot.get_cog("LogAgent")

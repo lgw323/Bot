@@ -7,6 +7,8 @@ from pydantic import BaseModel
 from pathlib import Path
 import aiohttp
 import asyncio
+import re
+from urllib.parse import parse_qs, urlparse
 
 # 데이터베이스 매니저 모듈 임포트
 from database_manager import (
@@ -20,6 +22,62 @@ from database_manager import (
 logger = logging.getLogger("WatchServer")
 
 SELF_DESTRUCT_DELAY = 5.0
+YOUTUBE_VIDEO_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{11}$")
+YOUTUBE_HOSTS = {
+    "youtube.com",
+    "www.youtube.com",
+    "m.youtube.com",
+    "music.youtube.com",
+    "youtu.be",
+}
+
+
+def extract_youtube_video_id(video_url: str) -> str | None:
+    """Return a validated YouTube video id without changing the API contract."""
+    try:
+        parsed = urlparse(video_url.strip())
+    except (TypeError, ValueError):
+        return None
+
+    if parsed.scheme not in {"http", "https"}:
+        return None
+
+    host = (parsed.hostname or "").lower()
+    if host not in YOUTUBE_HOSTS:
+        return None
+
+    candidate: str | None = None
+    if host == "youtu.be":
+        candidate = parsed.path.strip("/").split("/", 1)[0]
+    elif parsed.path == "/watch":
+        candidate = parse_qs(parsed.query).get("v", [None])[0]
+    else:
+        path_parts = [part for part in parsed.path.split("/") if part]
+        if len(path_parts) >= 2 and path_parts[0] in {
+            "embed",
+            "live",
+            "shorts",
+        }:
+            candidate = path_parts[1]
+
+    if candidate and YOUTUBE_VIDEO_ID_PATTERN.fullmatch(candidate):
+        return candidate
+    return None
+
+
+def sanitize_display_text(
+    value: object,
+    *,
+    default: str,
+    max_length: int,
+) -> str:
+    """Normalize browser-provided display text before broadcasting it."""
+    if not isinstance(value, str):
+        return default
+    normalized = value.strip()
+    if not normalized:
+        return default
+    return normalized[:max_length]
 
 async def self_destruct_session(session_id: str, delay: float = SELF_DESTRUCT_DELAY, ignore_grace: bool = False):
     # 1. 30초 개설 유예 대기 검사 (최초 생성 직후 소멸 시점 방지)
@@ -54,8 +112,46 @@ class ConnectionManager:
         self.active_connections: Dict[str, List[WebSocket]] = {}
         # 방(session_id)별 (웹소켓 -> 닉네임) 매핑
         self.user_names: Dict[str, Dict[WebSocket, str]] = {}
+        self.self_destruct_tasks: Dict[str, asyncio.Task[None]] = {}
+
+    def schedule_self_destruct(
+        self,
+        session_id: str,
+        *,
+        delay: float = SELF_DESTRUCT_DELAY,
+        ignore_grace: bool = False,
+    ) -> asyncio.Task[None]:
+        existing = self.self_destruct_tasks.get(session_id)
+        if existing and not existing.done():
+            return existing
+
+        task = asyncio.create_task(
+            self_destruct_session(
+                session_id,
+                delay=delay,
+                ignore_grace=ignore_grace,
+            )
+        )
+        self.self_destruct_tasks[session_id] = task
+
+        def discard_finished(finished: asyncio.Task[None]) -> None:
+            if self.self_destruct_tasks.get(session_id) is finished:
+                self.self_destruct_tasks.pop(session_id, None)
+
+        task.add_done_callback(discard_finished)
+        return task
+
+    def cancel_self_destruct(self, session_id: str) -> None:
+        task = self.self_destruct_tasks.pop(session_id, None)
+        if (
+            task
+            and not task.done()
+            and task is not asyncio.current_task()
+        ):
+            task.cancel()
 
     async def connect(self, session_id: str, websocket: WebSocket):
+        self.cancel_self_destruct(session_id)
         await websocket.accept()
         if session_id not in self.active_connections:
             self.active_connections[session_id] = []
@@ -73,11 +169,12 @@ class ConnectionManager:
                 del self.user_names[session_id]
 
         if session_id in self.active_connections:
-            self.active_connections[session_id].remove(websocket)
+            if websocket in self.active_connections[session_id]:
+                self.active_connections[session_id].remove(websocket)
             if not self.active_connections[session_id]:
                 del self.active_connections[session_id]
                 # 마지막 유저가 퇴장했으므로 5초 유예 소멸 비동기 태스크 시작
-                asyncio.create_task(self_destruct_session(session_id))
+                self.schedule_self_destruct(session_id)
             logger.info(f"WebSocket client disconnected from session: {session_id}")
 
     async def broadcast(self, session_id: str, message: dict, exclude: WebSocket = None):
@@ -123,6 +220,7 @@ async def close_watch_session(
     reason: str,
 ) -> bool:
     """Close clients and remove all state for one session idempotently."""
+    manager.cancel_self_destruct(session_id)
     db_session = await get_watch_session(session_id)
     if not db_session:
         manager.active_connections.pop(session_id, None)
@@ -188,7 +286,11 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
             msg_type = message.get("type")
             
             if msg_type == "join":
-                username = message.get("username", "임시유저")
+                username = sanitize_display_text(
+                    message.get("username"),
+                    default="임시유저",
+                    max_length=50,
+                )
                 if session_id in manager.user_names:
                     manager.user_names[session_id][websocket] = username
                 
@@ -221,7 +323,27 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                 )
             
             # 메시지 타입에 따른 중계 처리
-            elif msg_type in ["state_change", "seek", "sync_response", "chat", "playlist_change"]:
+            elif msg_type == "chat":
+                chat_text = sanitize_display_text(
+                    message.get("text"),
+                    default="",
+                    max_length=500,
+                )
+                if not chat_text:
+                    continue
+                safe_message = dict(message)
+                safe_message["username"] = sanitize_display_text(
+                    message.get("username"),
+                    default=username,
+                    max_length=50,
+                )
+                safe_message["text"] = chat_text
+                await manager.broadcast(
+                    session_id,
+                    safe_message,
+                    exclude=websocket,
+                )
+            elif msg_type in ["state_change", "seek", "sync_response", "playlist_change"]:
                 # 보낸 클라이언트를 제외하고 세션 내 모든 참가자에게 브로드캐스트
                 await manager.broadcast(session_id, message, exclude=websocket)
             elif msg_type == "sync_request":
@@ -278,6 +400,17 @@ async def api_add_playlist(session_id: str, request: VideoAddRequest):
     
     # 3-1. 유튜브 메타데이터 및 OEmbed 활용 제목 간편 조회
     video_url = request.video_url.strip()
+    if not extract_youtube_video_id(video_url):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid YouTube video URL",
+        )
+
+    added_by = sanitize_display_text(
+        request.added_by,
+        default="임시유저",
+        max_length=50,
+    )
     video_title = "알 수 없는 유튜브 비디오"
     
     # 유튜브 URL 파싱 테스트 및 oembed 조회
@@ -288,17 +421,21 @@ async def api_add_playlist(session_id: str, request: VideoAddRequest):
                 async with session.get(oembed_url, timeout=5.0) as resp:
                     if resp.status == 200:
                         meta = await resp.json()
-                        video_title = meta.get("title", video_title)
+                        video_title = sanitize_display_text(
+                            meta.get("title"),
+                            default=video_title,
+                            max_length=200,
+                        )
         except Exception as e:
             logger.warning(f"Failed to fetch YouTube oembed title: {e}")
             
     # DB에 플레이리스트 추가
-    await add_to_watch_playlist(session_id, video_url, video_title, request.added_by)
+    await add_to_watch_playlist(session_id, video_url, video_title, added_by)
     
     # 플레이리스트 갱신 알림을 방 전체에 브로드캐스트
     await manager.broadcast(
         session_id,
-        {"type": "playlist_change", "message": f"{request.added_by}님이 새 비디오를 추가했습니다."}
+        {"type": "playlist_change", "message": f"{added_by}님이 새 비디오를 추가했습니다."}
     )
     
     return JSONResponse(content={"status": "success", "title": video_title})

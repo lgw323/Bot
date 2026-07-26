@@ -100,3 +100,57 @@ async def test_cleanup_keeps_final_ui_update_for_user_disconnect(
     await state.cleanup(leave=True)
 
     state.schedule_ui_update.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
+async def test_cancel_autoplay_task_is_safe_and_idempotent(
+    mock_cog: MagicMock,
+    mock_guild: MagicMock,
+) -> None:
+    bot = MagicMock()
+    bot.loop = asyncio.get_running_loop()
+    bot.wait_until_ready = AsyncMock()
+    bot.is_closed.return_value = False
+    state = MusicState(
+        bot=bot,
+        cog=mock_cog,
+        guild=mock_guild,
+    )
+    autoplay_task = asyncio.create_task(asyncio.sleep(3600))
+    state.autoplay_task = autoplay_task
+    await asyncio.sleep(0)
+
+    state.cancel_autoplay_task()
+    state.cancel_autoplay_task()
+    await asyncio.sleep(0)
+
+    assert state.autoplay_task is None
+    assert autoplay_task.done()
+    assert autoplay_task.cancelled()
+    await state.cleanup(leave=True, update_ui=False)
+
+
+@pytest.mark.asyncio
+async def test_cancelled_autoplay_task_cannot_clear_new_task_reference(
+    mock_cog: MagicMock,
+    mock_guild: MagicMock,
+) -> None:
+    bot = MagicMock()
+    bot.loop = asyncio.get_running_loop()
+    bot.wait_until_ready = AsyncMock()
+    bot.is_closed.return_value = False
+    state = MusicState(
+        bot=bot,
+        cog=mock_cog,
+        guild=mock_guild,
+    )
+    old_task = asyncio.create_task(asyncio.sleep(3600))
+    state.autoplay_task = old_task
+    state.cancel_autoplay_task()
+    new_task = asyncio.create_task(asyncio.sleep(3600))
+    state.autoplay_task = new_task
+    await asyncio.sleep(0)
+
+    assert old_task.cancelled()
+    assert state.autoplay_task is new_task
+    await state.cleanup(leave=True, update_ui=False)

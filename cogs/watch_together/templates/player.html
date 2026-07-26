@@ -819,31 +819,58 @@
 
         function renderPlaylist() {
             const ul = document.getElementById("playlist-items-ul");
-            ul.innerHTML = "";
+            ul.replaceChildren();
 
             if (playlist.length === 0) {
-                ul.innerHTML = `<li style="text-align: center; font-size: 0.85rem; padding: 20px; color: #72767d;">대기열이 비어 있습니다.</li>`;
+                const emptyItem = document.createElement("li");
+                emptyItem.style.textAlign = "center";
+                emptyItem.style.fontSize = "0.85rem";
+                emptyItem.style.padding = "20px";
+                emptyItem.style.color = "#72767d";
+                emptyItem.textContent = "대기열이 비어 있습니다.";
+                ul.appendChild(emptyItem);
                 return;
             }
 
             playlist.forEach((item, index) => {
                 const videoId = extractVideoId(item.video_url);
+                if (!videoId) return;
+
                 const li = document.createElement("li");
                 li.className = "playlist-item";
                 if (videoId === currentVideoId) {
                     li.classList.add("active");
                 }
 
-                li.innerHTML = `
-                    <div class="item-thumb-wrapper">
-                        <img src="https://img.youtube.com/vi/${videoId}/mqdefault.jpg" alt="thumbnail">
-                    </div>
-                    <div class="item-info" onclick="playPlaylistVideo('${videoId}')">
-                        <div class="item-title">${item.video_title}</div>
-                        <div class="item-meta">추가자: ${item.added_by}</div>
-                    </div>
-                    <button class="btn-danger" onclick="removeVideo(event, '${item.video_url}')">삭제</button>
-                `;
+                const thumbnailWrapper = document.createElement("div");
+                thumbnailWrapper.className = "item-thumb-wrapper";
+                const thumbnail = document.createElement("img");
+                thumbnail.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+                thumbnail.alt = "thumbnail";
+                thumbnailWrapper.appendChild(thumbnail);
+
+                const itemInfo = document.createElement("div");
+                itemInfo.className = "item-info";
+                itemInfo.addEventListener("click", () => {
+                    playPlaylistVideo(videoId);
+                });
+
+                const title = document.createElement("div");
+                title.className = "item-title";
+                title.textContent = item.video_title;
+                const metadata = document.createElement("div");
+                metadata.className = "item-meta";
+                metadata.textContent = `추가자: ${item.added_by}`;
+                itemInfo.append(title, metadata);
+
+                const removeButton = document.createElement("button");
+                removeButton.className = "btn-danger";
+                removeButton.textContent = "삭제";
+                removeButton.addEventListener("click", (event) => {
+                    removeVideo(event, item.video_url);
+                });
+
+                li.append(thumbnailWrapper, itemInfo, removeButton);
                 ul.appendChild(li);
             });
         }

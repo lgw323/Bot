@@ -49,20 +49,27 @@ class MyBot(commands.Bot):
         ]
         # UI에 사용할 Rich Console 객체를 봇 인스턴스에 저장
         self.console: Console = Console()
+        self.webserver: Optional[Any] = None
+        self.webserver_task: Optional[asyncio.Task[None]] = None
 
     async def setup_hook(self) -> None:
+        # DB 복구와 스키마 준비가 끝난 뒤에만 외부 요청과 Cog 이벤트를 받습니다.
+        await asyncio.to_thread(database_manager.init_db)
+
         import uvicorn
         from cogs.watch_together.watch_server import app
         
         # FastAPI 서버가 디스코드 봇 객체에 접근할 수 있도록 상태 주입
         app.state.bot = self
         
-        async def start_webserver():
-            config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="warning")
-            server = uvicorn.Server(config)
-            await server.serve()
-            
-        asyncio.create_task(start_webserver())
+        config = uvicorn.Config(
+            app,
+            host="0.0.0.0",
+            port=8000,
+            log_level="warning",
+        )
+        self.webserver = uvicorn.Server(config)
+        self.webserver_task = asyncio.create_task(self.webserver.serve())
         logger.info("FastAPI WebServer background task scheduled on port 8000.")
 
         with Progress(
@@ -101,6 +108,25 @@ class MyBot(commands.Bot):
         except Exception as e:
             logger.error(f"슬래시 커맨드 동기화 중 일반 오류 발생: {e}", exc_info=True)
 
+    async def close(self) -> None:
+        if self.webserver is not None:
+            self.webserver.should_exit = True
+
+        await super().close()
+
+        if self.webserver_task and not self.webserver_task.done():
+            try:
+                await asyncio.wait_for(self.webserver_task, timeout=5.0)
+            except asyncio.TimeoutError:
+                self.webserver_task.cancel()
+                await asyncio.gather(
+                    self.webserver_task,
+                    return_exceptions=True,
+                )
+
+        self.webserver_task = None
+        self.webserver = None
+
 # --- 메인 실행 함수 ---
 def main() -> None:
     try:
@@ -116,13 +142,6 @@ def main() -> None:
 
         @bot.event
         async def on_ready() -> None:
-            # TODO: [SRP 위배] DB 초기화 및 데이터 마이그레이션(business logic)은 main_bot.py의 책임이 아님.
-            # 추후 별도의 초기화 스크립트나 관리자(Cog) 내부 로직으로 구조적 분리 및 의존성 주입이 필요함.
-            try:
-                database_manager.init_db()
-            except Exception as e:
-                logger.error(f"DB 초기화 중 예외 발생: {e}", exc_info=True)
-
             # on_ready UI 패널은 그대로 유지합니다.
             if bot.user:
                 panel: Panel = Panel(

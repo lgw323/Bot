@@ -25,6 +25,16 @@ LOG_DIR: Path = BASE_DIR / "data" / "logs"
 # 디스코드 로그 채널 ID (로그 전용 서버의 채널 ID)
 LOG_CHANNEL_ID: int = int(os.getenv("LOG_CHANNEL_ID", "0"))
 MASTER_USER_ID: int = int(os.getenv("MASTER_USER_ID", "0"))
+OWNED_HANDLER_ATTRIBUTE = "_discordbot_owned_handler"
+PROJECT_LOGGER_NAMES = (
+    "MyBot",
+    "DatabaseManager",
+    "Commands",
+    "LevelingCog",
+    "WatchAgent",
+    "WatchServer",
+    "cogs",
+)
 
 
 class WatchSessionControlView(discord.ui.View):
@@ -81,7 +91,7 @@ class RestartControlView(discord.ui.View):
             if music_cog:
                 from cogs.music.music_utils import save_music_states
                 await save_music_states(music_cog.music_states)
-                logging.info("음악 상태 백업 완료.")
+                logging.getLogger("MyBot").info("음악 상태 백업 완료.")
         except Exception as e:
             logging.error(f"음악 상태 백업 실패: {e}")
 
@@ -190,6 +200,15 @@ class LogAgentCog(commands.Cog, name="LogAgent"):
         # 다른 Cog에서 self.bot.log.info(...) 형태로 사용할 수 있도록 주입
         self.bot.log: logging.Logger = logging.getLogger("MyBot")
         self.control_message: Optional[discord.Message] = None
+        self.discord_handler: Optional[DiscordLogHandler] = None
+        self._ready_initialized = False
+
+    def cog_unload(self) -> None:
+        if self.discord_handler is not None:
+            root_logger = logging.getLogger()
+            root_logger.removeHandler(self.discord_handler)
+            self.discord_handler.close()
+            self.discord_handler = None
 
     async def send_control_panel(self, channel: discord.TextChannel) -> None:
         if self.control_message:
@@ -273,11 +292,16 @@ class LogAgentCog(commands.Cog, name="LogAgent"):
 
             # 2. 루트 로거 가져오기 및 초기화
             logger: logging.Logger = logging.getLogger()
-            logger.setLevel(logging.WARNING) # SD카드 수명 및 메모리 절약을 위해 WARNING 레벨 이상만 포착
-            
-            # 기존 핸들러가 있다면 제거 (중복 출력 방지)
-            if logger.hasHandlers():
-                logger.handlers.clear()
+            # 외부 라이브러리는 WARNING 기준을 유지하고 프로젝트 INFO만 명시적으로 허용합니다.
+            logger.setLevel(logging.WARNING)
+            for logger_name in PROJECT_LOGGER_NAMES:
+                logging.getLogger(logger_name).setLevel(logging.INFO)
+
+            # 다른 라이브러리의 핸들러는 보존하고 이 Cog가 만든 핸들러만 교체합니다.
+            for handler in list(logger.handlers):
+                if getattr(handler, OWNED_HANDLER_ATTRIBUTE, False):
+                    logger.removeHandler(handler)
+                    handler.close()
 
             # 3. 포매터 정의 (로그의 모양 결정)
             standard_formatter: logging.Formatter = logging.Formatter(
@@ -296,15 +320,19 @@ class LogAgentCog(commands.Cog, name="LogAgent"):
             )
             file_handler.setFormatter(standard_formatter)
             file_handler.setLevel(logging.INFO) # 파일에는 모든 정보 기록
+            setattr(file_handler, OWNED_HANDLER_ATTRIBUTE, True)
             logger.addHandler(file_handler)
 
             # 5. [콘솔 핸들러] 설정 (터미널 출력용)
             console_handler: logging.StreamHandler = logging.StreamHandler(sys.stdout)
             console_handler.setFormatter(standard_formatter)
             console_handler.setLevel(logging.INFO)
+            setattr(console_handler, OWNED_HANDLER_ATTRIBUTE, True)
             logger.addHandler(console_handler)
 
-            logging.info("✅ 로깅 시스템 초기화 완료 (File + Console)")
+            logging.getLogger("MyBot").info(
+                "✅ 로깅 시스템 초기화 완료 (File + Console)"
+            )
         except Exception:
             # 로깅 시스템 자체 초기화 실패 시 시스템 에러 출력 후 회피
             sys.stderr.write("[LogAgentCog] 로깅 시스템 초기화 중 심각한 오류 발생\\n")
@@ -315,19 +343,47 @@ class LogAgentCog(commands.Cog, name="LogAgent"):
         """
         봇이 준비되면 디스코드 핸들러를 연결합니다.
         """
+        if self._ready_initialized:
+            return
+        self._ready_initialized = True
+
         try:
             # 6. [디스코드 핸들러] 연결
-            discord_handler: DiscordLogHandler = DiscordLogHandler(self.bot)
-            discord_handler.cog = self
-            # 디스코드 알림은 메시지 본문만 깔끔하게 전달 (Embed 내부에서 처리)
-            discord_handler.setFormatter(logging.Formatter('%(message)s'))
-            logging.getLogger().addHandler(discord_handler)
+            root_logger = logging.getLogger()
+            discord_handler = next(
+                (
+                    handler
+                    for handler in root_logger.handlers
+                    if isinstance(handler, DiscordLogHandler)
+                    and handler.bot is self.bot
+                ),
+                None,
+            )
+            if discord_handler is None:
+                discord_handler = DiscordLogHandler(self.bot)
+                discord_handler.cog = self
+                setattr(
+                    discord_handler,
+                    OWNED_HANDLER_ATTRIBUTE,
+                    True,
+                )
+                # 디스코드 알림은 메시지 본문만 깔끔하게 전달 (Embed 내부에서 처리)
+                discord_handler.setFormatter(
+                    logging.Formatter('%(message)s')
+                )
+                root_logger.addHandler(discord_handler)
+
+            self.discord_handler = discord_handler
             
-            logging.info(f"✅ 원격 로그 모니터링 활성화 (Target Channel ID: {LOG_CHANNEL_ID})")
+            logging.getLogger("MyBot").info(
+                "✅ 원격 로그 모니터링 활성화 "
+                f"(Target Channel ID: {LOG_CHANNEL_ID})"
+            )
             
             # 7. 구동 사유 (Startup Reason) 파악 및 알림 전송
             await self._send_startup_notification()
         except Exception as e:
+            self._ready_initialized = False
             # 핸들러 부착 실패 시 로컬 로그 기록
             logging.error(f"[LogAgentCog] on_ready 실행 중 에러 발생: {e}", exc_info=True)
 
