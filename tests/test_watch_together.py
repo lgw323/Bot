@@ -74,6 +74,11 @@ async def test_watch_server_endpoints():
         assert '<main class="app-shell">' in response.text
         assert 'role="log"' in response.text
         assert 'aria-live="polite"' in response.text
+        assert 'id="session-participant-count"' in response.text
+        assert 'id="sync-status"' in response.text
+        assert 'role="tablist"' in response.text
+        assert "공동 제어" in response.text
+        assert "호스트" not in response.text
         rendered_body = response.text.split("<body>", 1)[1]
         assert "WATCH NODE" not in rendered_body
         assert "SECURE CHANNEL" not in rendered_body
@@ -120,10 +125,11 @@ def test_watch_design_system_stylesheet_is_served():
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/css")
-    assert "--color-canvas:" in response.text
-    assert "--color-accent:" in response.text
+    assert "--canvas:" in response.text
+    assert "--orange:" in response.text
+    assert "--line:" in response.text
     assert "--space-4:" in response.text
-    assert "--radius-md:" in response.text
+    assert "--motion-state:" in response.text
     assert "@media (prefers-reduced-motion: reduce)" in response.text
 
 
@@ -348,3 +354,48 @@ def test_watch_player_renders_chat_and_users_without_dynamic_html():
     assert "textContent = text" in chat_section
     assert "replaceChildren()" in users_section
     assert "textContent = user" in users_section
+
+
+def test_watch_player_maps_real_session_events_to_visible_state():
+    from pathlib import Path
+
+    player_path = (
+        Path(__file__).resolve().parents[1]
+        / "cogs"
+        / "watch_together"
+        / "templates"
+        / "player.html"
+    )
+    player_html = player_path.read_text(encoding="utf-8")
+
+    assert "function setConnectionState" in player_html
+    assert "function setPlaybackState" in player_html
+    assert "function setSyncState" in player_html
+    assert 'case "state_change":' in player_html
+    assert 'case "seek":' in player_html
+    assert 'case "sync_request":' in player_html
+    assert 'case "sync_response":' in player_html
+    assert 'setConnectionState("reconnecting", "재연결 중")' in player_html
+    assert 'setSyncState("offline", "연결 끊김")' in player_html
+    assert "updateParticipantCount(users.length)" in player_html
+    assert "updateQueueCount(playlist.length)" in player_html
+
+
+def test_watch_player_operation_tabs_are_keyboard_accessible():
+    from pathlib import Path
+
+    player_path = (
+        Path(__file__).resolve().parents[1]
+        / "cogs"
+        / "watch_together"
+        / "templates"
+        / "player.html"
+    )
+    player_html = player_path.read_text(encoding="utf-8")
+
+    assert 'role="tablist"' in player_html
+    assert player_html.count('role="tab"') == 2
+    assert player_html.count('role="tabpanel"') == 2
+    assert 'event.key !== "ArrowLeft"' in player_html
+    assert 'event.key !== "ArrowRight"' in player_html
+    assert 'tab.setAttribute("aria-selected", String(isActive))' in player_html
