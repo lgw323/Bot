@@ -37,8 +37,33 @@ python -m pytest tests/
 python main_bot.py
 ```
 
-실제 Raspberry Pi 설치와 systemd·cron 설정은
-[배포 안내](docs/deployment-guide.md)를 따릅니다.
+테스트가 끝까지 실행되어 `passed`가 표시되면 현재 자동 검사 범위를 통과한
+것입니다. `FAILED`나 `ERROR`가 나타나면 실제 봇을 시작하기 전에 원인을
+확인합니다. 실제 Raspberry Pi 설치와 systemd·cron 설정은
+[운영 가이드](docs/operations.md)를 따릅니다.
+
+## 테스트와 데이터 보호
+
+기본 전체 테스트 명령은 다음과 같습니다.
+
+```powershell
+python -m pytest tests/
+```
+
+테스트는 `tests/conftest.py`가 준비한 임시 SQLite DB와 임시 백업 경로를
+사용합니다. 실제 `data/bot_database.db`, 실제 SQL 백업, Discord, Gemini,
+YouTube, GitHub와 systemd에는 접근하지 않습니다.
+
+종료되지 않은 비동기 작업을 더 엄격하게 검사하려면 다음 명령을 사용합니다.
+
+```powershell
+python -m pytest tests/ -W error::RuntimeWarning -W error::pytest.PytestUnraisableExceptionWarning
+```
+
+테스트 개수는 기능 추가에 따라 달라지므로 문서의 고정 숫자보다 실행 결과를
+기준으로 판단합니다. Python 3.12에서는 Discord 음성 재생이 사용하는 `audioop`
+지원 종료 예고가 표시될 수 있으며, Python 3.13 전환 전에 별도 호환 검증이
+필요합니다.
 
 ## 데이터와 백업
 
@@ -58,8 +83,8 @@ python main_bot.py
 - 새 전체 암호화 형식뿐 아니라 기존의 필드 암호화 SQL 백업도 같은 키로 복구할
   수 있습니다.
 
-현재 데이터 정책과 남아 있는 위험은
-[프로젝트 배경과 설계 의도](docs/project-context.md)에 기록합니다.
+현재 데이터 정책, 기능 의도와 남아 있는 위험은
+[제품 명세](docs/product-spec.md)에 기록합니다.
 
 ## 프로젝트 구조
 
@@ -70,17 +95,16 @@ python main_bot.py
 | `cogs/` | 음악, 요약, 레벨링, 생일, 로깅, Watch Together 기능 |
 | `scripts/` | Pi 자동 업데이트와 DB 백업 |
 | `tests/` | 현재 동작과 회귀를 확인하는 pytest 테스트 |
-| `docs/` | 프로젝트 배경, 배포와 테스트 안내 |
+| `docs/` | 제품 명세, 운영 절차와 과거 작업 기록 |
 
 ## 문서 안내
 
 | 문서 | 책임 |
 | --- | --- |
 | `README.md` | 기능 개요와 로컬 시작 방법 |
-| `docs/project-context.md` | 제품 의도, 유지해야 할 동작과 알려진 위험 |
-| `docs/deployment-guide.md` | Raspberry Pi 설치·운영·복구 절차 |
-| `docs/test-guide.md` | 현재 테스트 범위와 실행 방법 |
-| `docs/refactoring-report.md` | 이번 리팩터링의 목적·변경 내용·검증 결과 |
+| `docs/product-spec.md` | 제품 의도, 유지해야 할 동작과 알려진 위험 |
+| `docs/operations.md` | Raspberry Pi 설치·운영·복구 절차 |
+| `docs/archive/` | 완료된 과거 작업의 시점별 보고서 |
 | `AGENTS.md` | 이 저장소에서 작업하는 코딩 에이전트의 규칙 |
 | `CHANGELOG.md` | 실제로 완료된 변경 이력 |
 
