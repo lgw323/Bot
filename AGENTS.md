@@ -42,7 +42,7 @@
 
 - `database_manager.py`의 기존 public async 함수는 다른 기능이 사용하는 내부 API로 간주합니다.
 - 연결 설정, schema 준비, backup/restore, 기능별 CRUD를 분리할 때도 public 함수의 입력과 반환 형식을 유지합니다.
-- SQLite WAL과 PRAGMA 정책은 `docs/project-context.md`의 기존 운영 의도를 확인한 뒤 변경합니다.
+- SQLite WAL과 PRAGMA 정책은 `docs/product-spec.md`의 기존 운영 의도를 확인한 뒤 변경합니다.
 - 사용자 ID는 민감한 데이터로 취급합니다. 음악 취향을 드러낼 수 있는 URL과 제목도 보호 대상입니다. 새 원격 백업은 SQL 구조를 포함한 파일 전체를 `DB_ENCRYPTION_KEY`로 암호화하며, 같은 키 없이는 복구할 수 없어야 합니다.
 - 원격 백업은 `DB_BACKUP_REMOTE_URL`로 지정한 별도 비공개 저장소의 `db-backup` 브랜치만 사용합니다. 설정이 없을 때 공개 코드 저장소로 우회하지 않습니다.
 - 기존 일부 필드 암호화 방식의 백업은 복구 호환성을 유지하되, 새 백업은 전체 파일 암호화 형식으로만 생성합니다.
@@ -96,9 +96,12 @@
 ## 6. 문서와 변경 기록
 
 - `README.md`에는 기능 개요, 로컬 시작 방법과 문서 안내만 둡니다.
-- `docs/project-context.md`에는 제품 의도, 유지할 동작과 알려진 위험을 기록합니다.
-- `docs/deployment-guide.md`에는 Raspberry Pi 설치·운영 절차만 기록합니다.
-- `docs/test-guide.md`에는 실제로 존재하는 test 범위와 실행 방법만 기록합니다.
+- `docs/product-spec.md`에는 제품 의도, 유지할 동작과 알려진 위험을 기록합니다.
+- `docs/operations.md`에는 Raspberry Pi 설치·운영·복구 절차만 기록합니다.
+- `docs/archive/`에는 완료된 과거 작업의 시점별 보고서만 보관하며 현재 사양의
+  근거로 사용하지 않습니다.
+- 테스트 실행 방법은 `README.md`, 테스트 작업 원칙은 이 `AGENTS.md`, 기능별
+  유지 계약은 `docs/product-spec.md`에서 관리합니다.
 - 이 `AGENTS.md`에는 코딩 에이전트의 작업 규칙만 두고 제품 설명을 중복해 늘리지 않습니다.
 - 사용자 기능, 실행 명령, 설정값, backup 정책을 변경하면 책임이 맞는 문서를 함께 확인합니다.
 - 의미 있는 기능 또는 구조 변경은 `CHANGELOG.md`에 기록합니다.
@@ -107,7 +110,31 @@
 
 ## 7. Git과 작업 안전
 
+### 원자적 커밋
+
+- 하나의 커밋은 하나의 기능, 버그, 리팩터링 또는 문서 책임만 다룹니다.
+- 서로 독립적으로 설명하거나 되돌릴 수 있는 변경은 별도 커밋으로 나눕니다.
+- 파일이 다르다는 이유만으로 기계적으로 나누지 않습니다. 구현과 그 구현을
+  검증하는 test는 함께 있어야 커밋이 정상 동작한다면 같은 커밋에 둡니다.
+- 기능 구현, 독립적인 문서 정리와 관련 없는 리팩터링을 한 커밋에 섞지 않습니다.
+- 각 커밋은 가능한 한 그 시점에서 관련 test를 통과하고 독립적으로 revert할 수
+  있어야 합니다.
+- commit 전 `git diff --cached --check`와 staged diff를 확인해 의도하지 않은
+  파일, 실제 데이터와 비밀 정보가 포함되지 않았는지 검사합니다.
+- commit message는 `feat:`, `fix:`, `test:`, `docs:`, `refactor:`, `chore:` 등으로
+  책임을 구분하고, 같은 작업에서 의미가 겹치는 message를 반복하지 않습니다.
+
+### Pull Request
+
+- PR은 목적, 주요 변경, 호환성·영향 범위, 테스트 결과, 롤백 방법과 체크리스트를
+  포함합니다.
+- PR을 만들기 전에 commit 목록이 책임별로 분리됐는지와 최종 diff가 요청 범위만
+  포함하는지 확인합니다.
+- 자동 검사가 없더라도 관련 test와 전체 test의 실제 실행 결과를 PR에 기록합니다.
+- merge 전에 base branch와 충돌 여부, 승인되지 않은 동작·데이터 형식 변경이
+  없는지 확인합니다.
+
 - 사용자가 만든 기존 변경을 보존하고 관련 없는 파일을 되돌리지 않습니다.
 - `.env`, 실제 DB, SQL backup, log, cache를 commit하지 않습니다.
 - `git reset --hard`, history rewrite, force push는 사용자의 명시적인 요청 없이 실행하지 않습니다.
-- 되돌릴 수 있는 작은 commit을 우선하며, 각 변경의 검증 방법과 rollback 방법을 남깁니다.
+- 각 변경의 검증 방법과 rollback 방법을 commit 또는 PR에 남깁니다.
