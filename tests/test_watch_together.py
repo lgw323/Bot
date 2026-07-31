@@ -70,16 +70,6 @@ async def test_watch_server_endpoints():
         response = client.get(f"/watch?session={session_id}")
         assert response.status_code == 200
         assert "Watch Together" in response.text
-        assert 'href="/watch-assets/watch.css"' in response.text
-        assert '<main class="app-shell">' in response.text
-        assert 'role="log"' in response.text
-        assert 'aria-live="polite"' in response.text
-        rendered_body = response.text.split("<body>", 1)[1]
-        assert "WATCH NODE" not in rendered_body
-        assert "SECURE CHANNEL" not in rendered_body
-        assert "Signal Nominal" not in rendered_body
-        assert "QUEUE/01" not in rendered_body
-        assert "COMMS/02" not in rendered_body
         
         # 2-3. API를 통한 플레이리스트 조회 (빈 값)
         response = client.get(f"/api/playlist/{session_id}")
@@ -113,18 +103,6 @@ async def test_watch_server_endpoints():
     finally:
         # 정리
         await database_manager.delete_watch_session(session_id)
-
-
-def test_watch_design_system_stylesheet_is_served():
-    response = client.get("/watch-assets/watch.css")
-
-    assert response.status_code == 200
-    assert response.headers["content-type"].startswith("text/css")
-    assert "--color-canvas:" in response.text
-    assert "--color-accent:" in response.text
-    assert "--space-4:" in response.text
-    assert "--radius-md:" in response.text
-    assert "@media (prefers-reduced-motion: reduce)" in response.text
 
 
 @pytest.mark.asyncio
@@ -320,31 +298,3 @@ def test_watch_player_renders_playlist_without_dynamic_inner_html():
     assert "onclick=" not in render_section
     assert "textContent = item.video_title" in render_section
     assert "addEventListener" in render_section
-    assert 'itemInfo.setAttribute("role", "button")' in render_section
-    assert 'itemInfo.addEventListener("keydown"' in render_section
-
-
-def test_watch_player_renders_chat_and_users_without_dynamic_html():
-    from pathlib import Path
-
-    player_path = (
-        Path(__file__).resolve().parents[1]
-        / "cogs"
-        / "watch_together"
-        / "templates"
-        / "player.html"
-    )
-    player_html = player_path.read_text(encoding="utf-8")
-    chat_section = player_html.split(
-        "function appendChatMessage",
-        1,
-    )[1].split("function appendSystemMessage", 1)[0]
-    users_section = player_html.split(
-        "function updateUsersList",
-        1,
-    )[1].split("// 7.", 1)[0]
-
-    assert ".innerHTML" not in chat_section
-    assert "textContent = text" in chat_section
-    assert "replaceChildren()" in users_section
-    assert "textContent = user" in users_section

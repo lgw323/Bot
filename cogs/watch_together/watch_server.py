@@ -3,7 +3,6 @@ import logging
 from typing import Dict, List
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from pathlib import Path
 import aiohttp
@@ -21,10 +20,6 @@ from database_manager import (
 )
 
 logger = logging.getLogger("WatchServer")
-
-WATCH_TOGETHER_DIR = Path(__file__).resolve().parent
-TEMPLATE_DIR = WATCH_TOGETHER_DIR / "templates"
-STATIC_DIR = WATCH_TOGETHER_DIR / "static"
 
 SELF_DESTRUCT_DELAY = 5.0
 YOUTUBE_VIDEO_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{11}$")
@@ -107,11 +102,9 @@ async def self_destruct_session(session_id: str, delay: float = SELF_DESTRUCT_DE
         await close_watch_session(session_id, reason="접속자 없음 자동 종료")
 
 app = FastAPI(title="Watch Together Sync Server")
-app.mount(
-    "/watch-assets",
-    StaticFiles(directory=STATIC_DIR),
-    name="watch-assets",
-)
+
+# 정적 템플릿 경로 설정
+TEMPLATE_DIR = Path(__file__).parent / "templates"
 
 class ConnectionManager:
     def __init__(self):
