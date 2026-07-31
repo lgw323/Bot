@@ -9,6 +9,13 @@
 
 ## [Unreleased]
 
+### Changed
+- Watch Together 웹 플레이어를 어두운 전술 네트워크 콘솔과 주황색 상태 신호를
+  중심으로 한 Watch Relay 테마로 개편했습니다. 기존 URL, HTTP endpoint,
+  WebSocket 메시지와 재생·대기열·채팅 동작은 유지합니다.
+- 데스크톱과 모바일 레이아웃을 유지하면서 연결 상태, 활성 재생 항목과 시스템
+  알림의 시각적 구분을 강화하고 모션 감소 환경 설정을 지원합니다.
+
 ### Fixed
 - 음악 UI와 재생목록·즐겨찾기·대기열 관리가 존재하지 않는
   `MusicState.cancel_autoplay_task()`를 호출해 중단되던 문제를 수정하고,
