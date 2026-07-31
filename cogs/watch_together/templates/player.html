@@ -4,1084 +4,139 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Watch Together - 동시 시청</title>
-    <!-- 전술 콘솔용 디스플레이·본문 글꼴 -->
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-color: #0b0c10;
-            --glass-bg: rgba(26, 27, 38, 0.65);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --primary-color: #7289da;
-            --text-color: #c5c6c7;
-            --title-color: #ffffff;
-            --accent-color: #1f2833;
-            --active-color: #43b581;
-            --danger-color: #f04747;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Outfit', 'Inter', sans-serif;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            background-image: radial-gradient(circle at 10% 20%, rgba(90, 103, 216, 0.1) 0%, transparent 40%),
-                              radial-gradient(circle at 90% 80%, rgba(114, 137, 218, 0.08) 0%, transparent 40%);
-            color: var(--text-color);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-        }
-
-        header {
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--glass-border);
-            backdrop-filter: blur(10px);
-            background: rgba(11, 12, 16, 0.7);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        header h1 {
-            color: var(--title-color);
-            font-size: 1.6rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        header h1 span {
-            color: var(--primary-color);
-        }
-
-        .status-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-size: 0.9rem;
-        }
-
-        .badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .badge-ws {
-            background: rgba(67, 181, 129, 0.15);
-            color: var(--active-color);
-            border: 1px solid rgba(67, 181, 129, 0.2);
-        }
-        
-        .badge-ws.disconnected {
-            background: rgba(240, 71, 71, 0.15);
-            color: var(--danger-color);
-            border: 1px solid rgba(240, 71, 71, 0.2);
-        }
-
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: currentColor;
-            display: inline-block;
-        }
-
-        /* 메인 레이아웃 */
-        main {
-            display: flex;
-            flex: 1;
-            padding: 30px;
-            gap: 30px;
-            max-width: 1600px;
-            width: 100%;
-            margin: 0 auto;
-            align-items: stretch;
-        }
-
-        /* 왼쪽: 플레이어 섹션 */
-        .player-section {
-            flex: 1; /* 남은 화면 전체를 채우도록 설정 */
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            min-width: 0; /* flex 컨테이너 내부 찌그러짐 방지 */
-        }
-
-        .video-wrapper {
-            position: relative;
-            width: 100%;
-            padding-top: 56.25%; /* 16:9 비율 */
-            background: #000;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border: 1px solid var(--glass-border);
-        }
-
-        #yt-player {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        .video-info {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            backdrop-filter: blur(12px);
-            border-radius: 16px;
-            padding: 20px;
-        }
-
-        .video-title {
-            color: var(--title-color);
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis; /* 제목이 길면 말줄임표 처리해 한 줄로 강제 고정 */
-            max-width: 100%;
-        }
-
-        /* 오른쪽: 사이드바 */
-        .sidebar-section {
-            width: 380px; /* 사이드바 가로 너비를 380px로 완전 고정하여 플레이어 영역을 최대로 확보 */
-            flex-shrink: 0; /* 화면 크기가 줄어들어도 사이드바가 찌그러지지 않고 고정됨 */
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            max-height: calc(100vh - 120px);
-        }
-
-        .card {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            backdrop-filter: blur(12px);
-            border-radius: 16px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .playlist-card {
-            flex: 1.2;
-            overflow: hidden;
-        }
-
-        .chat-card {
-            flex: 1.8;
-            overflow: hidden;
-        }
-
-        .card-title {
-            color: var(--title-color);
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .input-group input {
-            flex: 1;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--glass-border);
-            border-radius: 8px;
-            padding: 10px 14px;
-            color: var(--title-color);
-            font-size: 0.9rem;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        .input-group input:focus {
-            border-color: var(--primary-color);
-        }
-
-        .btn {
-            background: var(--primary-color);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 18px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background 0.3s, transform 0.1s;
-        }
-
-        .btn:hover {
-            background: #5b6ebd;
-        }
-        
-        .btn:active {
-            transform: scale(0.97);
-        }
-
-        .btn-danger {
-            background: rgba(240, 71, 71, 0.15);
-            color: var(--danger-color);
-            border: 1px solid rgba(240, 71, 71, 0.2);
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: background 0.2s, color 0.2s;
-        }
-        .btn-danger:hover {
-            background: var(--danger-color);
-            color: #fff;
-        }
-
-        /* 재생 대기열 리스트 */
-        .playlist-items {
-            list-style: none;
-            overflow-y: auto;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            padding-right: 5px;
-        }
-
-        .playlist-items::-webkit-scrollbar {
-            width: 6px;
-        }
-        .playlist-items::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-        }
-
-        .playlist-item {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            border-radius: 8px;
-            padding: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: background 0.2s, border-color 0.2s;
-        }
-
-        .playlist-item:hover {
-            background: rgba(255, 255, 255, 0.06);
-            border-color: rgba(255, 255, 255, 0.08);
-        }
-
-        .playlist-item.active {
-            border-color: var(--primary-color);
-            background: rgba(114, 137, 218, 0.05);
-        }
-
-        .item-thumb-wrapper {
-            width: 64px;
-            height: 48px;
-            border-radius: 4px;
-            overflow: hidden;
-            background: #000;
-            flex-shrink: 0;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .item-thumb-wrapper img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .item-info {
-            flex: 1;
-            min-width: 0;
-            cursor: pointer;
-        }
-
-        .item-title {
-            color: var(--title-color);
-            font-weight: 500;
-            font-size: 0.9rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-bottom: 2px;
-        }
-
-        .item-meta {
-            font-size: 0.75rem;
-            color: #72767d;
-        }
-
-        /* 실시간 채팅 메시지 로그 영역 */
-        #chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            border: 1px solid var(--glass-border);
-        }
-
-        #chat-messages::-webkit-scrollbar {
-            width: 5px;
-        }
-        #chat-messages::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-        }
-
-        .chat-message {
-            font-size: 0.85rem;
-            line-height: 1.4;
-            word-break: break-all;
-        }
-
-        .chat-user {
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-right: 6px;
-        }
-
-        .chat-text {
-            color: var(--title-color);
-        }
-
-        .system-message {
-            font-size: 0.8rem;
-            color: #8e9297;
-            background: rgba(255, 255, 255, 0.02);
-            padding: 6px 10px;
-            border-radius: 6px;
-            border-left: 3px solid var(--primary-color);
-            font-style: italic;
-        }
-
-        /* 참여자 배지 리스트 */
-        #users-badge-list {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            margin-top: 5px;
-        }
-
-        .user-badge {
-            background: rgba(114, 137, 218, 0.15);
-            color: var(--primary-color);
-            border: 1px solid rgba(114, 137, 218, 0.2);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            display: inline-block;
-        }
-
-        /* 안내 토스트 */
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            backdrop-filter: blur(10px);
-            padding: 14px 24px;
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-            color: var(--title-color);
-            transform: translateY(100px);
-            opacity: 0;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
-            z-index: 1000;
-        }
-
-        .toast.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        @media (max-width: 1024px) {
-            main {
-                flex-direction: column;
-                padding: 15px;
-            }
-            header {
-                padding: 15px 20px;
-            }
-            .sidebar-section {
-                width: 100%; /* 모바일 환경에서는 100% 가로 너비를 채우도록 설정 */
-                max-height: none;
-            }
-        }
-    </style>
-    <style>
-        /* Watch Relay: ISAC/SHD에서 영감을 받은 독자적인 전술 네트워크 테마 */
-        :root {
-            --bg-color: #070a08;
-            --glass-bg: rgba(13, 18, 15, 0.94);
-            --glass-border: rgba(255, 125, 22, 0.22);
-            --primary-color: #ff7d16;
-            --primary-bright: #ff9d47;
-            --primary-dim: rgba(255, 125, 22, 0.1);
-            --text-color: #aab3ac;
-            --title-color: #edf2ee;
-            --accent-color: #151b17;
-            --active-color: #ff8a24;
-            --danger-color: #f05245;
-            --grid-color: rgba(255, 125, 22, 0.035);
-            --muted-color: #667169;
-            --panel-cut: 13px;
-        }
-
-        * {
-            font-family: 'Noto Sans KR', sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            background-image:
-                linear-gradient(var(--grid-color) 1px, transparent 1px),
-                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px),
-                radial-gradient(circle at 14% 8%, rgba(255, 125, 22, 0.08), transparent 28%),
-                radial-gradient(circle at 84% 92%, rgba(255, 125, 22, 0.04), transparent 32%);
-            background-size: 42px 42px, 42px 42px, auto, auto;
-            position: relative;
-        }
-
-        body::before {
-            content: "";
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 999;
-            opacity: 0.17;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent 0,
-                transparent 3px,
-                rgba(0, 0, 0, 0.2) 4px
-            );
-        }
-
-        header {
-            min-height: 72px;
-            padding: 12px 34px;
-            border-bottom: 1px solid rgba(255, 125, 22, 0.3);
-            background: rgba(7, 10, 8, 0.94);
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
-        }
-
-        .brand-lockup {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .relay-mark {
-            width: 39px;
-            height: 39px;
-            display: grid;
-            place-items: center;
-            border: 1px solid var(--primary-color);
-            border-radius: 50%;
-            color: var(--primary-color);
-            font: 700 0.72rem/1 'IBM Plex Mono', monospace;
-            box-shadow:
-                0 0 0 4px rgba(255, 125, 22, 0.07),
-                inset 0 0 13px rgba(255, 125, 22, 0.13);
-            position: relative;
-        }
-
-        .relay-mark::before,
-        .relay-mark::after {
-            content: "";
-            position: absolute;
-            inset: -5px;
-            border: 1px solid transparent;
-            border-top-color: rgba(255, 125, 22, 0.6);
-            border-bottom-color: rgba(255, 125, 22, 0.22);
-            border-radius: 50%;
-            animation: relay-orbit 7s linear infinite;
-        }
-
-        .relay-mark::after {
-            inset: 5px;
-            animation-direction: reverse;
-            animation-duration: 4s;
-        }
-
-        @keyframes relay-orbit {
-            to { transform: rotate(360deg); }
-        }
-
-        header h1 {
-            display: block;
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 1.38rem;
-            line-height: 1;
-            letter-spacing: 0.13em;
-            text-transform: uppercase;
-        }
-
-        header h1 span {
-            font-family: inherit;
-        }
-
-        .brand-subtitle,
-        .eyebrow,
-        .telemetry-item {
-            font-family: 'IBM Plex Mono', monospace;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-        }
-
-        .brand-subtitle {
-            margin-top: 6px;
-            color: var(--muted-color);
-            font-size: 0.61rem;
-        }
-
-        .status-container {
-            gap: 22px;
-        }
-
-        .system-clock {
-            color: var(--muted-color);
-            font: 500 0.65rem/1.4 'IBM Plex Mono', monospace;
-            text-align: right;
-            letter-spacing: 0.08em;
-        }
-
-        .badge {
-            border-radius: 2px;
-            clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px);
-            font: 600 0.7rem/1 'IBM Plex Mono', monospace;
-            letter-spacing: 0.05em;
-        }
-
-        .badge-ws {
-            background: rgba(255, 125, 22, 0.09);
-            color: var(--primary-bright);
-            border-color: rgba(255, 125, 22, 0.42);
-        }
-
-        .badge-ws.disconnected {
-            background: rgba(240, 82, 69, 0.09);
-            color: var(--danger-color);
-            border-color: rgba(240, 82, 69, 0.4);
-        }
-
-        .dot {
-            width: 7px;
-            height: 7px;
-            box-shadow: 0 0 9px currentColor;
-            animation: status-pulse 2.2s ease-in-out infinite;
-        }
-
-        @keyframes status-pulse {
-            50% { opacity: 0.35; }
-        }
-
-        main {
-            padding: 26px 30px 34px;
-            gap: 22px;
-            max-width: 1720px;
-        }
-
-        .player-section,
-        .sidebar-section {
-            gap: 14px;
-        }
-
-        .sidebar-section {
-            width: 400px;
-            max-height: calc(100vh - 112px);
-        }
-
-        .section-heading {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            min-height: 25px;
-        }
-
-        .eyebrow {
-            color: var(--primary-color);
-            font-size: 0.66rem;
-        }
-
-        .telemetry {
-            display: flex;
-            gap: 18px;
-        }
-
-        .telemetry-item {
-            color: var(--muted-color);
-            font-size: 0.58rem;
-        }
-
-        .telemetry-item strong {
-            color: #aeb8b0;
-            font: inherit;
-        }
-
-        .video-frame {
-            position: relative;
-            padding: 7px;
-            background:
-                linear-gradient(90deg, var(--primary-color), transparent 12%) top left / 46% 1px no-repeat,
-                linear-gradient(180deg, var(--primary-color), transparent 12%) top left / 1px 46% no-repeat,
-                linear-gradient(-90deg, var(--primary-color), transparent 12%) bottom right / 46% 1px no-repeat,
-                linear-gradient(0deg, var(--primary-color), transparent 12%) bottom right / 1px 46% no-repeat;
-        }
-
-        .video-wrapper {
-            border-radius: 1px;
-            border-color: rgba(255, 125, 22, 0.18);
-            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.58);
-        }
-
-        .video-frame-label {
-            position: absolute;
-            z-index: 3;
-            top: 15px;
-            left: 15px;
-            padding: 4px 7px;
-            color: var(--primary-bright);
-            background: rgba(5, 8, 6, 0.82);
-            border-left: 2px solid var(--primary-color);
-            font: 600 0.58rem/1 'IBM Plex Mono', monospace;
-            letter-spacing: 0.13em;
-            pointer-events: none;
-        }
-
-        .video-info,
-        .card {
-            position: relative;
-            border-radius: 1px;
-            clip-path: polygon(
-                var(--panel-cut) 0,
-                100% 0,
-                100% calc(100% - var(--panel-cut)),
-                calc(100% - var(--panel-cut)) 100%,
-                0 100%,
-                0 var(--panel-cut)
-            );
-            border-color: rgba(255, 125, 22, 0.2);
-            background:
-                linear-gradient(135deg, rgba(255, 125, 22, 0.08), transparent 24px),
-                var(--glass-bg);
-            backdrop-filter: blur(8px);
-        }
-
-        .video-info {
-            padding: 16px 18px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .signal-glyph {
-            width: 34px;
-            height: 34px;
-            flex: 0 0 34px;
-            border: 1px solid rgba(255, 125, 22, 0.38);
-            border-radius: 50%;
-            position: relative;
-        }
-
-        .signal-glyph::before,
-        .signal-glyph::after {
-            content: "";
-            position: absolute;
-            border: 1px solid var(--primary-color);
-            border-radius: 50%;
-        }
-
-        .signal-glyph::before {
-            inset: 7px;
-        }
-
-        .signal-glyph::after {
-            width: 4px;
-            height: 4px;
-            top: 14px;
-            left: 14px;
-            background: var(--primary-color);
-            box-shadow: 0 0 8px var(--primary-color);
-        }
-
-        .video-copy {
-            min-width: 0;
-        }
-
-        .video-title {
-            font-family: 'Rajdhani', 'Noto Sans KR', sans-serif;
-            font-size: 1.18rem;
-            letter-spacing: 0.02em;
-            margin-bottom: 5px;
-        }
-
-        .sync-note {
-            color: var(--muted-color);
-            font: 400 0.7rem/1.4 'IBM Plex Mono', monospace;
-        }
-
-        .card {
-            padding: 16px;
-        }
-
-        .card::after {
-            content: attr(data-panel-code);
-            position: absolute;
-            top: 6px;
-            right: 9px;
-            color: rgba(255, 125, 22, 0.3);
-            font: 500 0.52rem/1 'IBM Plex Mono', monospace;
-            letter-spacing: 0.12em;
-        }
-
-        .card-title {
-            margin-bottom: 13px;
-            padding-bottom: 9px;
-            border-bottom: 1px solid rgba(255, 125, 22, 0.14);
-            color: var(--title-color);
-            font-family: 'Rajdhani', 'Noto Sans KR', sans-serif;
-            font-size: 1rem;
-            letter-spacing: 0.06em;
-        }
-
-        .title-index {
-            color: var(--primary-color);
-            font: 500 0.61rem/1 'IBM Plex Mono', monospace;
-            margin-right: 7px;
-        }
-
-        .input-group {
-            gap: 7px;
-            margin-bottom: 12px;
-        }
-
-        .input-group input {
-            border-radius: 1px;
-            border-color: rgba(255, 255, 255, 0.08);
-            background: rgba(0, 0, 0, 0.32);
-            font-family: 'IBM Plex Mono', 'Noto Sans KR', monospace;
-            font-size: 0.74rem;
-        }
-
-        .input-group input:focus {
-            border-color: rgba(255, 125, 22, 0.7);
-            box-shadow: inset 3px 0 0 var(--primary-color);
-        }
-
-        .btn,
-        .btn-danger {
-            border-radius: 1px;
-            clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
-            font-family: 'Rajdhani', 'Noto Sans KR', sans-serif;
-            letter-spacing: 0.05em;
-        }
-
-        .btn {
-            background: var(--primary-color);
-            color: #171008;
-            padding: 10px 16px;
-        }
-
-        .btn:hover {
-            background: var(--primary-bright);
-            box-shadow: 0 0 16px rgba(255, 125, 22, 0.25);
-        }
-
-        .playlist-items {
-            gap: 6px;
-        }
-
-        .playlist-item {
-            position: relative;
-            border-radius: 1px;
-            border-color: rgba(255, 255, 255, 0.045);
-            background: rgba(255, 255, 255, 0.018);
-            padding: 8px 8px 8px 11px;
-        }
-
-        .playlist-item::before {
-            content: "";
-            position: absolute;
-            inset: 0 auto 0 0;
-            width: 2px;
-            background: transparent;
-        }
-
-        .playlist-item:hover {
-            background: rgba(255, 125, 22, 0.045);
-            border-color: rgba(255, 125, 22, 0.15);
-        }
-
-        .playlist-item.active {
-            border-color: rgba(255, 125, 22, 0.32);
-            background: rgba(255, 125, 22, 0.075);
-        }
-
-        .playlist-item.active::before {
-            background: var(--primary-color);
-            box-shadow: 0 0 10px var(--primary-color);
-        }
-
-        .item-thumb-wrapper {
-            width: 62px;
-            height: 42px;
-            border-radius: 0;
-            filter: saturate(0.72) contrast(1.05);
-        }
-
-        .item-title {
-            font-family: 'Noto Sans KR', sans-serif;
-            font-size: 0.81rem;
-        }
-
-        .item-meta {
-            color: var(--muted-color);
-            font: 400 0.61rem/1.3 'IBM Plex Mono', monospace;
-        }
-
-        #chat-messages {
-            border-radius: 1px;
-            border-color: rgba(255, 125, 22, 0.1);
-            background:
-                linear-gradient(rgba(255, 125, 22, 0.025) 1px, transparent 1px),
-                rgba(0, 0, 0, 0.24);
-            background-size: 100% 24px;
-        }
-
-        .chat-message {
-            font-family: 'IBM Plex Mono', 'Noto Sans KR', monospace;
-            font-size: 0.72rem;
-        }
-
-        .chat-user {
-            color: var(--primary-bright);
-            font-family: inherit;
-        }
-
-        .system-message {
-            border-radius: 0;
-            border-left-color: var(--primary-color);
-            color: #7d8981;
-            background: rgba(255, 125, 22, 0.035);
-            font-style: normal;
-        }
-
-        #users-badge-list {
-            margin-top: 0;
-        }
-
-        .user-badge {
-            border-radius: 1px;
-            background: rgba(255, 125, 22, 0.07);
-            color: var(--primary-bright);
-            border-color: rgba(255, 125, 22, 0.24);
-            font: 500 0.58rem/1.2 'IBM Plex Mono', monospace;
-        }
-
-        .toast {
-            max-width: min(390px, calc(100vw - 30px));
-            border-radius: 1px;
-            border-color: rgba(255, 125, 22, 0.38);
-            border-left: 3px solid var(--primary-color);
-            background: rgba(10, 14, 11, 0.96);
-            color: var(--title-color);
-            font: 500 0.72rem/1.5 'IBM Plex Mono', 'Noto Sans KR', monospace;
-            clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px);
-        }
-
-        @media (max-width: 1024px) {
-            main {
-                padding: 18px 15px 28px;
-            }
-
-            .sidebar-section {
-                width: 100%;
-                max-height: none;
-            }
-        }
-
-        @media (max-width: 640px) {
-            header {
-                padding: 11px 14px;
-            }
-
-            .relay-mark,
-            .system-clock,
-            .telemetry {
-                display: none;
-            }
-
-            header h1 {
-                font-size: 1.12rem;
-            }
-
-            .brand-subtitle {
-                font-size: 0.52rem;
-            }
-
-            .badge {
-                padding: 7px 8px;
-                font-size: 0.59rem;
-            }
-
-            .section-heading {
-                min-height: 19px;
-            }
-
-            .video-frame {
-                padding: 4px;
-            }
-
-            .video-info {
-                padding: 13px;
-            }
-
-            .signal-glyph {
-                display: none;
-            }
-
-            .card {
-                padding: 13px;
-            }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            *,
-            *::before,
-            *::after {
-                scroll-behavior: auto !important;
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/watch-assets/watch.css">
 </head>
 <body>
 
-    <header>
-        <div class="brand-lockup">
-            <div class="relay-mark" aria-hidden="true">WR</div>
-            <div>
-                <h1>Watch <span>Relay</span></h1>
-                <div class="brand-subtitle">Synchronized media network</div>
+    <header class="app-header">
+        <div class="app-header__inner">
+            <div class="brand-lockup">
+                <div class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M8 7.5v9l8-4.5-8-4.5Z" fill="currentColor"/>
+                    </svg>
+                </div>
+                <div class="brand-copy">
+                    <p class="brand-title">Watch Together</p>
+                    <p class="brand-subtitle">YouTube 동시 시청</p>
+                </div>
             </div>
-        </div>
-        <div class="status-container">
-            <div class="system-clock" aria-hidden="true">
-                WATCH NODE<br>SECURE CHANNEL
-            </div>
-            <div id="connection-badge" class="badge badge-ws disconnected">
-                <span class="dot"></span> <span id="ws-status-text">연결 대기 중</span>
+            <div class="status-container">
+                <div
+                    id="connection-badge"
+                    class="badge badge-ws disconnected"
+                    role="status"
+                    aria-live="polite"
+                >
+                    <span class="dot" aria-hidden="true"></span>
+                    <span id="ws-status-text">연결 대기 중</span>
+                </div>
             </div>
         </div>
     </header>
 
-    <main>
-        <!-- 왼쪽: 플레이어 공간 -->
-        <section class="player-section">
-            <div class="section-heading">
-                <span class="eyebrow">01 // Live media feed</span>
-                <div class="telemetry" aria-hidden="true">
-                    <span class="telemetry-item">Signal <strong>Nominal</strong></span>
-                    <span class="telemetry-item">Sync <strong>Realtime</strong></span>
+    <main class="app-shell">
+        <section class="player-section" aria-labelledby="watch-heading">
+            <header class="section-heading">
+                <div class="section-heading__copy">
+                    <span class="eyebrow">공유 플레이어</span>
+                    <h1 id="watch-heading">함께 보기</h1>
+                    <p class="section-description">
+                        재생, 일시정지와 탐색 위치가 현재 참여자에게 공유됩니다.
+                    </p>
                 </div>
-            </div>
+            </header>
+
             <div class="video-frame">
-                <div class="video-frame-label">LIVE // YT-STREAM</div>
                 <div class="video-wrapper">
-                    <!-- 유튜브 IFrame API가 로딩되면 여기에 삽입됨 -->
                     <div id="yt-player"></div>
                 </div>
             </div>
-            <div class="video-info">
-                <div class="signal-glyph" aria-hidden="true"></div>
+
+            <div class="video-info" aria-live="polite">
+                <span class="now-playing-indicator" aria-hidden="true"></span>
                 <div class="video-copy">
-                    <div id="current-video-title" class="video-title">대기열에서 영상을 선택하거나 추가해 주세요.</div>
-                    <div class="sync-note">
-                        현재 시청 상태가 실시간으로 동기화되고 있습니다.
-                    </div>
+                    <p id="current-video-title" class="video-title">
+                        대기열에서 영상을 선택하거나 추가해 주세요.
+                    </p>
+                    <p class="sync-note">
+                        영상 조작은 같은 시청방의 참여자에게 동기화됩니다.
+                    </p>
                 </div>
             </div>
         </section>
 
-        <!-- 오른쪽: 사이드바 -->
-        <section class="sidebar-section">
-            <!-- 1. 공유 재생 대기열 -->
-            <div class="card playlist-card" data-panel-code="QUEUE/01">
-                <div class="card-title">
-                    <span><span class="title-index">02 //</span>공유 재생 대기열</span>
-                </div>
-                
-                <!-- 동영상 추가 입력창 -->
+        <aside class="sidebar-section" aria-label="시청방 도구">
+            <section class="card playlist-card" aria-labelledby="playlist-heading">
+                <header class="panel-heading">
+                    <div>
+                        <h2 id="playlist-heading">재생 대기열</h2>
+                        <p class="panel-description">YouTube 영상을 추가하고 재생 순서를 확인합니다.</p>
+                    </div>
+                </header>
+
                 <div class="input-group">
-                    <input type="text" id="youtube-url-input" placeholder="YouTube 주소(URL) 입력 후 Enter">
-                    <button class="btn" id="add-video-btn">추가</button>
+                    <label class="visually-hidden" for="youtube-url-input">YouTube 영상 주소</label>
+                    <input
+                        type="url"
+                        id="youtube-url-input"
+                        inputmode="url"
+                        autocomplete="url"
+                        placeholder="YouTube 영상 주소"
+                    >
+                    <button class="btn" id="add-video-btn" type="button">추가</button>
                 </div>
 
-                <!-- 플레이리스트 항목 -->
-                <ul class="playlist-items" id="playlist-items-ul">
-                    <!-- JS에서 동적 추가 -->
-                </ul>
-            </div>
+                <ul
+                    class="playlist-items"
+                    id="playlist-items-ul"
+                    aria-label="공유 재생 대기열"
+                ></ul>
+            </section>
 
-            <!-- 2. 실시간 채팅 & 참여자 -->
-            <div class="card chat-card" data-panel-code="COMMS/02">
-                <div class="card-title" style="flex-direction: column; align-items: flex-start; gap: 8px;">
-                    <div><span class="title-index">03 //</span>실시간 대화</div>
-                    <div id="users-badge-list">
-                        <!-- 접속자 뱃지가 동적으로 삽입됨 -->
+            <section class="card chat-card" aria-labelledby="chat-heading">
+                <header class="panel-heading">
+                    <div>
+                        <h2 id="chat-heading">대화</h2>
+                        <p class="panel-description">시청방에 접속한 참여자와 메시지를 나눕니다.</p>
                     </div>
+                </header>
+
+                <div class="participants">
+                    <span class="participants__label">참여자</span>
+                    <div id="users-badge-list" aria-live="polite"></div>
                 </div>
 
-                <!-- 실시간 메시지 로그 -->
-                <div id="chat-messages">
-                    <!-- 일반 채팅 & 시스템 동기화 알림 적재 -->
-                </div>
+                <div
+                    id="chat-messages"
+                    role="log"
+                    aria-live="polite"
+                    aria-relevant="additions"
+                    aria-label="시청방 대화"
+                ></div>
 
-                <!-- 메시지 입력창 -->
-                <div class="input-group" style="margin-bottom: 0;">
-                    <input type="text" id="chat-input" placeholder="메시지를 입력하세요...">
-                    <button class="btn" id="send-chat-btn">전송</button>
+                <div class="input-group">
+                    <label class="visually-hidden" for="chat-input">메시지</label>
+                    <input
+                        type="text"
+                        id="chat-input"
+                        maxlength="500"
+                        autocomplete="off"
+                        placeholder="메시지 입력"
+                    >
+                    <button class="btn btn--secondary" id="send-chat-btn" type="button">전송</button>
                 </div>
-            </div>
-        </section>
+            </section>
+        </aside>
     </main>
 
-    <!-- 알림용 토스트 메신저 -->
-    <div id="toast-message" class="toast">알림 메시지</div>
+    <div
+        id="toast-message"
+        class="toast"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+    ></div>
 
     <!-- YouTube IFrame API 비동기 로드 -->
     <script src="https://www.youtube.com/iframe_api"></script>
@@ -1394,10 +449,7 @@
 
             if (playlist.length === 0) {
                 const emptyItem = document.createElement("li");
-                emptyItem.style.textAlign = "center";
-                emptyItem.style.fontSize = "0.85rem";
-                emptyItem.style.padding = "20px";
-                emptyItem.style.color = "#72767d";
+                emptyItem.className = "playlist-empty";
                 emptyItem.textContent = "대기열이 비어 있습니다.";
                 ul.appendChild(emptyItem);
                 return;
@@ -1417,13 +469,22 @@
                 thumbnailWrapper.className = "item-thumb-wrapper";
                 const thumbnail = document.createElement("img");
                 thumbnail.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-                thumbnail.alt = "thumbnail";
+                thumbnail.alt = `${item.video_title} 미리보기`;
                 thumbnailWrapper.appendChild(thumbnail);
 
                 const itemInfo = document.createElement("div");
                 itemInfo.className = "item-info";
+                itemInfo.tabIndex = 0;
+                itemInfo.setAttribute("role", "button");
+                itemInfo.setAttribute("aria-label", `${item.video_title} 재생`);
                 itemInfo.addEventListener("click", () => {
                     playPlaylistVideo(videoId);
+                });
+                itemInfo.addEventListener("keydown", (event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        playPlaylistVideo(videoId);
+                    }
                 });
 
                 const title = document.createElement("div");
@@ -1437,6 +498,8 @@
                 const removeButton = document.createElement("button");
                 removeButton.className = "btn-danger";
                 removeButton.textContent = "삭제";
+                removeButton.type = "button";
+                removeButton.setAttribute("aria-label", `${item.video_title} 대기열에서 삭제`);
                 removeButton.addEventListener("click", (event) => {
                     removeVideo(event, item.video_url);
                 });
@@ -1560,7 +623,13 @@
             const container = document.getElementById("chat-messages");
             const el = document.createElement("div");
             el.className = "chat-message";
-            el.innerHTML = `<span class="chat-user">${escapeHtml(sender)}:</span><span class="chat-text">${escapeHtml(text)}</span>`;
+            const user = document.createElement("span");
+            user.className = "chat-user";
+            user.textContent = `${sender}:`;
+            const message = document.createElement("span");
+            message.className = "chat-text";
+            message.textContent = text;
+            el.append(user, message);
             container.appendChild(el);
             container.scrollTop = container.scrollHeight;
         }
@@ -1577,19 +646,13 @@
         // 참여자 목록 갱신
         function updateUsersList(users) {
             const listEl = document.getElementById("users-badge-list");
-            listEl.innerHTML = "";
+            listEl.replaceChildren();
             users.forEach(user => {
                 const badge = document.createElement("span");
                 badge.className = "user-badge";
-                badge.innerText = user;
+                badge.textContent = user;
                 listEl.appendChild(badge);
             });
-        }
-
-        function escapeHtml(str) {
-            return str.replace(/[&<>'"]/g, 
-                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-            );
         }
 
         // 7. 유틸성 알림 메신저 (Toast)
