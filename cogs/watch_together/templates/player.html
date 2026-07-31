@@ -18,34 +18,17 @@
                 </div>
                 <div class="brand-copy">
                     <p class="brand-title">Watch Together</p>
-                    <p class="brand-subtitle">공유 미디어 세션</p>
+                    <p class="brand-subtitle">YouTube 동시 시청</p>
                 </div>
             </div>
-
-            <div class="session-summary" aria-label="현재 시청방 상태">
-                <div class="session-metric">
-                    <span class="session-metric__label">참여자</span>
-                    <strong id="session-participant-count" class="session-metric__value">0</strong>
-                </div>
-                <div class="session-metric">
-                    <span class="session-metric__label">대기열</span>
-                    <strong id="session-queue-count" class="session-metric__value">0</strong>
-                </div>
-                <div class="control-mode">
-                    <span class="control-mode__marker" aria-hidden="true"></span>
-                    <span>
-                        <strong>공동 제어</strong>
-                        <small>모든 참여자</small>
-                    </span>
-                </div>
+            <div class="status-container">
                 <div
                     id="connection-badge"
-                    class="connection-state"
-                    data-state="connecting"
+                    class="badge badge-ws disconnected"
                     role="status"
                     aria-live="polite"
                 >
-                    <span class="connection-state__line" aria-hidden="true"></span>
+                    <span class="dot" aria-hidden="true"></span>
                     <span id="ws-status-text">연결 대기 중</span>
                 </div>
             </div>
@@ -56,40 +39,17 @@
         <section class="player-section" aria-labelledby="watch-heading">
             <header class="section-heading">
                 <div class="section-heading__copy">
-                    <span class="eyebrow">공유 영상 피드</span>
-                    <h1 id="watch-heading">동시 시청</h1>
+                    <span class="eyebrow">공유 플레이어</span>
+                    <h1 id="watch-heading">함께 보기</h1>
                     <p class="section-description">
-                        참여자의 재생, 일시정지와 탐색 위치가 같은 세션에 공유됩니다.
+                        재생, 일시정지와 탐색 위치가 현재 참여자에게 공유됩니다.
                     </p>
                 </div>
             </header>
 
-            <div class="video-frame" data-playback-state="idle">
-                <span class="frame-corner frame-corner--primary" aria-hidden="true"></span>
-                <span class="frame-corner frame-corner--secondary" aria-hidden="true"></span>
+            <div class="video-frame">
                 <div class="video-wrapper">
                     <div id="yt-player"></div>
-                </div>
-                <div class="feed-status" aria-label="재생 및 동기화 상태">
-                    <div class="feed-status__item">
-                        <span class="feed-status__label">재생</span>
-                        <strong id="playback-status-text">대기 중</strong>
-                    </div>
-                    <div
-                        id="sync-status"
-                        class="feed-status__item feed-status__item--sync"
-                        data-state="waiting"
-                        role="status"
-                        aria-live="polite"
-                    >
-                        <span class="sync-indicator" aria-hidden="true"></span>
-                        <span class="feed-status__label">동기화</span>
-                        <strong id="sync-status-text">연결 대기</strong>
-                    </div>
-                    <div class="feed-status__item feed-status__item--control">
-                        <span class="feed-status__label">제어</span>
-                        <strong>공동</strong>
-                    </div>
                 </div>
             </div>
 
@@ -100,118 +60,73 @@
                         대기열에서 영상을 선택하거나 추가해 주세요.
                     </p>
                     <p class="sync-note">
-                        YouTube 기본 컨트롤을 사용하며 변경 사항은 참여자에게 전달됩니다.
+                        영상 조작은 같은 시청방의 참여자에게 동기화됩니다.
                     </p>
                 </div>
             </div>
         </section>
 
-        <aside class="sidebar-section" aria-label="세션 운영 패널">
-            <section class="participants-panel" aria-labelledby="participants-heading">
+        <aside class="sidebar-section" aria-label="시청방 도구">
+            <section class="card playlist-card" aria-labelledby="playlist-heading">
                 <header class="panel-heading">
                     <div>
-                        <span class="panel-kicker">연결 상태</span>
-                        <h2 id="participants-heading">참여자</h2>
+                        <h2 id="playlist-heading">재생 대기열</h2>
+                        <p class="panel-description">YouTube 영상을 추가하고 재생 순서를 확인합니다.</p>
                     </div>
-                    <span class="panel-count"><strong id="participant-panel-count">0</strong> 연결</span>
                 </header>
-                <div id="users-badge-list" class="participant-list" aria-live="polite"></div>
-            </section>
 
-            <div class="operations-panel">
-                <div class="operation-tabs" role="tablist" aria-label="세션 도구">
-                    <button
-                        id="queue-tab"
-                        class="operation-tab active"
-                        type="button"
-                        role="tab"
-                        aria-selected="true"
-                        aria-controls="queue-panel"
-                        data-panel-target="queue-panel"
+                <div class="input-group">
+                    <label class="visually-hidden" for="youtube-url-input">YouTube 영상 주소</label>
+                    <input
+                        type="url"
+                        id="youtube-url-input"
+                        inputmode="url"
+                        autocomplete="url"
+                        placeholder="YouTube 영상 주소"
                     >
-                        대기열
-                        <span id="queue-tab-count" class="operation-tab__count">0</span>
-                    </button>
-                    <button
-                        id="chat-tab"
-                        class="operation-tab"
-                        type="button"
-                        role="tab"
-                        aria-selected="false"
-                        aria-controls="chat-panel"
-                        data-panel-target="chat-panel"
-                    >
-                        대화
-                    </button>
+                    <button class="btn" id="add-video-btn" type="button">추가</button>
                 </div>
 
-                <section
-                    id="queue-panel"
-                    class="operation-content active"
-                    role="tabpanel"
-                    aria-labelledby="queue-tab"
-                >
-                    <header class="panel-heading panel-heading--compact">
-                        <div>
-                            <span class="panel-kicker">예정된 영상</span>
-                            <h2 id="playlist-heading">재생 대기열</h2>
-                        </div>
-                    </header>
+                <ul
+                    class="playlist-items"
+                    id="playlist-items-ul"
+                    aria-label="공유 재생 대기열"
+                ></ul>
+            </section>
 
-                    <div class="input-group">
-                        <label class="visually-hidden" for="youtube-url-input">YouTube 영상 주소</label>
-                        <input
-                            type="url"
-                            id="youtube-url-input"
-                            inputmode="url"
-                            autocomplete="url"
-                            placeholder="YouTube 영상 주소"
-                        >
-                        <button class="btn" id="add-video-btn" type="button">추가</button>
+            <section class="card chat-card" aria-labelledby="chat-heading">
+                <header class="panel-heading">
+                    <div>
+                        <h2 id="chat-heading">대화</h2>
+                        <p class="panel-description">시청방에 접속한 참여자와 메시지를 나눕니다.</p>
                     </div>
+                </header>
 
-                    <ul
-                        class="playlist-items"
-                        id="playlist-items-ul"
-                        aria-label="공유 재생 대기열"
-                    ></ul>
-                </section>
+                <div class="participants">
+                    <span class="participants__label">참여자</span>
+                    <div id="users-badge-list" aria-live="polite"></div>
+                </div>
 
-                <section
-                    id="chat-panel"
-                    class="operation-content"
-                    role="tabpanel"
-                    aria-labelledby="chat-tab"
-                    hidden
-                >
-                    <header class="panel-heading panel-heading--compact">
-                        <div>
-                            <span class="panel-kicker">세션 통신</span>
-                            <h2 id="chat-heading">대화</h2>
-                        </div>
-                    </header>
+                <div
+                    id="chat-messages"
+                    role="log"
+                    aria-live="polite"
+                    aria-relevant="additions"
+                    aria-label="시청방 대화"
+                ></div>
 
-                    <div
-                        id="chat-messages"
-                        role="log"
-                        aria-live="polite"
-                        aria-relevant="additions"
-                        aria-label="시청방 대화"
-                    ></div>
-
-                    <div class="input-group">
-                        <label class="visually-hidden" for="chat-input">메시지</label>
-                        <input
-                            type="text"
-                            id="chat-input"
-                            maxlength="500"
-                            autocomplete="off"
-                            placeholder="메시지 입력"
-                        >
-                        <button class="btn btn--secondary" id="send-chat-btn" type="button">전송</button>
-                    </div>
-                </section>
-            </div>
+                <div class="input-group">
+                    <label class="visually-hidden" for="chat-input">메시지</label>
+                    <input
+                        type="text"
+                        id="chat-input"
+                        maxlength="500"
+                        autocomplete="off"
+                        placeholder="메시지 입력"
+                    >
+                    <button class="btn btn--secondary" id="send-chat-btn" type="button">전송</button>
+                </div>
+            </section>
         </aside>
     </main>
 
@@ -244,81 +159,6 @@
         let isSyncing = false; // 동기화 패킷 처리 중 무한 루프 차단 플래그
         let lastReceivedTime = 0;
         let playlist = [];
-        let syncConfirmationTimer = null;
-
-        function setConnectionState(state, text) {
-            const badge = document.getElementById("connection-badge");
-            badge.dataset.state = state;
-            document.getElementById("ws-status-text").textContent = text;
-        }
-
-        function setPlaybackState(state, text) {
-            document.querySelector(".video-frame").dataset.playbackState = state;
-            document.getElementById("playback-status-text").textContent = text;
-        }
-
-        function setSyncState(state, text, confirm = false) {
-            const status = document.getElementById("sync-status");
-            status.dataset.state = state;
-            document.getElementById("sync-status-text").textContent = text;
-
-            if (confirm) {
-                status.classList.remove("state-confirmed");
-                void status.offsetWidth;
-                status.classList.add("state-confirmed");
-            }
-        }
-
-        function confirmSyncState(text = "동기화됨") {
-            if (syncConfirmationTimer) {
-                clearTimeout(syncConfirmationTimer);
-            }
-            syncConfirmationTimer = setTimeout(() => {
-                setSyncState("synced", text, true);
-            }, 320);
-        }
-
-        function updateParticipantCount(count) {
-            document.getElementById("session-participant-count").textContent = count;
-            document.getElementById("participant-panel-count").textContent = count;
-        }
-
-        function updateQueueCount(count) {
-            document.getElementById("session-queue-count").textContent = count;
-            document.getElementById("queue-tab-count").textContent = count;
-        }
-
-        function activateOperationPanel(targetId) {
-            document.querySelectorAll(".operation-tab").forEach(tab => {
-                const isActive = tab.dataset.panelTarget === targetId;
-                tab.classList.toggle("active", isActive);
-                tab.setAttribute("aria-selected", String(isActive));
-            });
-
-            document.querySelectorAll(".operation-content").forEach(panel => {
-                const isActive = panel.id === targetId;
-                panel.classList.toggle("active", isActive);
-                panel.hidden = !isActive;
-            });
-        }
-
-        const operationTabs = Array.from(document.querySelectorAll(".operation-tab"));
-        operationTabs.forEach((tab, index) => {
-            tab.addEventListener("click", () => {
-                activateOperationPanel(tab.dataset.panelTarget);
-            });
-            tab.addEventListener("keydown", event => {
-                if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
-                    return;
-                }
-                event.preventDefault();
-                const direction = event.key === "ArrowRight" ? 1 : -1;
-                const nextIndex = (index + direction + operationTabs.length) % operationTabs.length;
-                const nextTab = operationTabs[nextIndex];
-                activateOperationPanel(nextTab.dataset.panelTarget);
-                nextTab.focus();
-            });
-        });
 
         // 1. YouTube IFrame API 로드 성공 시 호출되는 콜백
         function onYouTubeIframeAPIReady() {
@@ -335,22 +175,14 @@
                 },
                 events: {
                     'onReady': onPlayerReady,
-                    'onStateChange': onPlayerStateChange,
-                    'onError': onPlayerError
+                    'onStateChange': onPlayerStateChange
                 }
             });
         }
 
         function onPlayerReady(event) {
-            setPlaybackState("idle", "대기 중");
             initWebSocket();
             fetchPlaylist();
-        }
-
-        function onPlayerError(event) {
-            setPlaybackState("error", "재생 불가");
-            setSyncState("waiting", "영상 오류");
-            showToast("YouTube 영상을 재생할 수 없습니다.");
         }
 
         // 사용자가 수동으로 조작했는지 확인하기 위한 플래그
@@ -358,42 +190,21 @@
 
         // 플레이어 상태 감지 및 서버 전송
         function onPlayerStateChange(event) {
-            if (event.data === YT.PlayerState.PLAYING) {
-                setPlaybackState("playing", "재생 중");
-            } else if (event.data === YT.PlayerState.PAUSED) {
-                setPlaybackState("paused", "일시정지");
-            } else if (event.data === YT.PlayerState.BUFFERING) {
-                setPlaybackState("loading", "불러오는 중");
-            } else if (event.data === YT.PlayerState.ENDED) {
-                setPlaybackState("ended", "재생 완료");
-            } else if (
-                event.data === YT.PlayerState.UNSTARTED ||
-                event.data === YT.PlayerState.CUED
-            ) {
-                setPlaybackState("idle", "재생 대기");
-            }
-
             if (isSyncing) return; // 동기화 패킷에 의한 상태 변경이면 무시
 
             const time = player.getCurrentTime();
             if (event.data === YT.PlayerState.PLAYING) {
-                const shared = sendWsMessage({
+                sendWsMessage({
                     type: "state_change",
                     state: "playing",
                     time: time
                 });
-                if (shared) {
-                    setSyncState("synced", "재생 상태 공유", true);
-                }
             } else if (event.data === YT.PlayerState.PAUSED) {
-                const shared = sendWsMessage({
+                sendWsMessage({
                     type: "state_change",
                     state: "paused",
                     time: time
                 });
-                if (shared) {
-                    setSyncState("synced", "일시정지 공유", true);
-                }
             } else if (event.data === YT.PlayerState.ENDED) {
                 // 영상 재생이 끝났을 때 자동 다음 비디오 재생
                 playNextVideo();
@@ -430,13 +241,10 @@
             if (state === YT.PlayerState.PLAYING) {
                 const diff = Math.abs(currTime - prevTime);
                 if (diff > 2.5) {
-                    const shared = sendWsMessage({
+                    sendWsMessage({
                         type: "seek",
                         time: currTime
                     });
-                    if (shared) {
-                        setSyncState("synced", "탐색 위치 공유", true);
-                    }
                 }
             }
             prevTime = currTime;
@@ -447,14 +255,15 @@
             const loc = window.location;
             const wsProto = loc.protocol === "https:" ? "wss:" : "ws:";
             const wsUrl = `${wsProto}//${loc.host}/ws/${sessionId}`;
-
-            setConnectionState("connecting", "연결 중");
-            setSyncState("waiting", "연결 대기");
+            
             ws = new WebSocket(wsUrl);
 
+            const badge = document.getElementById("connection-badge");
+            const badgeText = document.getElementById("ws-status-text");
+
             ws.onopen = () => {
-                setConnectionState("connected", "연결됨");
-                setSyncState("waiting", "상태 변경 대기");
+                badge.className = "badge badge-ws";
+                badgeText.innerText = "실시간 동기화 됨";
                 showToast("실시간 동기화가 활성화되었습니다.");
                 
                 // 닉네임을 서버에 보내 가입(Join)을 완료시킴
@@ -465,11 +274,8 @@
             };
 
             ws.onclose = () => {
-                if (syncConfirmationTimer) {
-                    clearTimeout(syncConfirmationTimer);
-                }
-                setConnectionState("reconnecting", "재연결 중");
-                setSyncState("offline", "연결 끊김");
+                badge.className = "badge badge-ws disconnected";
+                badgeText.innerText = "연결 끊김 (재시도 중)";
                 showToast("연결이 종료되었습니다. 3초 후 재연결을 시도합니다.");
                 setTimeout(initWebSocket, 3000);
             };
@@ -512,46 +318,34 @@
                         break;
 
                     case "state_change":
-                        setSyncState("syncing", "재생 상태 적용 중");
                         syncPlayerState(message.state, message.time);
                         appendSystemMessage(`ℹ️ 누군가 동영상을 ${message.state === 'playing' ? '재생' : '일시정지'}했습니다.`);
-                        confirmSyncState("재생 상태 동기화");
                         break;
 
                     case "seek":
-                        setSyncState("syncing", "탐색 위치 적용 중");
                         syncPlayerSeek(message.time);
                         appendSystemMessage(`ℹ️ 누군가 재생 구간을 건너뛰었습니다.`);
-                        confirmSyncState("탐색 위치 동기화");
                         break;
 
                     case "sync_request":
-                        setSyncState("syncing", "상태 요청 수신");
                         // 누군가 싱크를 요청할 때 내 상태 전송
                         if (player && player.getPlayerState() !== -1) {
-                            const responded = sendWsMessage({
+                            sendWsMessage({
                                 type: "sync_response",
                                 state: player.getPlayerState() === YT.PlayerState.PLAYING ? "playing" : "paused",
                                 time: player.getCurrentTime(),
                                 videoId: currentVideoId
                             });
-                            if (responded) {
-                                confirmSyncState("상태 응답 전송");
-                            }
-                        } else {
-                            setSyncState("waiting", "재생 상태 대기");
                         }
                         break;
 
                     case "sync_response":
-                        setSyncState("syncing", "공유 상태 적용 중");
                         // 받아온 타겟 비디오와 현재 비디오가 다르면 영상 변경
                         if (message.videoId && message.videoId !== currentVideoId) {
                             loadVideoById(message.videoId, false);
                         }
                         // 상태 및 시각 강제 동기화
                         syncPlayerState(message.state, message.time);
-                        confirmSyncState("공유 상태 동기화");
                         break;
 
                     case "playlist_change":
@@ -569,9 +363,7 @@
         function sendWsMessage(obj) {
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify(obj));
-                return true;
             }
-            return false;
         }
 
         // 3. 브라우저 비디오 컨트롤 동기화 실행 (역치 필터링 포함)
@@ -618,7 +410,6 @@
         function loadVideoById(videoId, triggerWs = true) {
             if (!player) return;
             currentVideoId = videoId;
-            setPlaybackState("loading", "영상 불러오는 중");
             player.loadVideoById(videoId);
             
             // 현재 대기열의 항목 이름으로 뷰 갱신
@@ -655,7 +446,6 @@
         function renderPlaylist() {
             const ul = document.getElementById("playlist-items-ul");
             ul.replaceChildren();
-            updateQueueCount(playlist.length);
 
             if (playlist.length === 0) {
                 const emptyItem = document.createElement("li");
@@ -857,30 +647,11 @@
         function updateUsersList(users) {
             const listEl = document.getElementById("users-badge-list");
             listEl.replaceChildren();
-            updateParticipantCount(users.length);
-
-            if (users.length === 0) {
-                const empty = document.createElement("span");
-                empty.className = "participant-empty";
-                empty.textContent = "연결된 참여자를 확인하는 중입니다.";
-                listEl.appendChild(empty);
-                return;
-            }
-
             users.forEach(user => {
-                const node = document.createElement("span");
-                node.className = "participant-node";
-
-                const state = document.createElement("span");
-                state.className = "participant-node__state";
-                state.setAttribute("aria-hidden", "true");
-
-                const name = document.createElement("span");
-                name.className = "participant-node__name";
-                name.textContent = user;
-
-                node.append(state, name);
-                listEl.appendChild(node);
+                const badge = document.createElement("span");
+                badge.className = "user-badge";
+                badge.textContent = user;
+                listEl.appendChild(badge);
             });
         }
 
@@ -893,8 +664,6 @@
                 toast.className = "toast";
             }, 3000);
         }
-
-        updateUsersList([]);
     </script>
 </body>
 </html>
