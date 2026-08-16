@@ -15,7 +15,8 @@ def test_only_ytdlp_is_force_upgraded() -> None:
     assert 'install -r "$candidate_requirements"' in script
     assert "install -U -r" not in script
     assert "install -U yt-dlp discord.py" not in script
-    assert 'install --upgrade yt-dlp' in script
+    assert "install --upgrade 'yt-dlp[default]'" in script
+    assert "git fetch --quiet origin main" in script
 
 
 def test_dependencies_are_prepared_before_code_is_deployed() -> None:

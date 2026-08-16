@@ -61,7 +61,7 @@ ensure_main_branch() {
         return 0
     fi
 
-    git fetch origin main >> "$LOG_FILE" 2>&1 || return 1
+    git fetch --quiet origin main >> "$LOG_FILE" 2>&1 || return 1
     if git show-ref --verify --quiet refs/heads/main; then
         git checkout main >> "$LOG_FILE" 2>&1
     else
@@ -82,8 +82,8 @@ prepare_runtime_dependencies() {
 
 
 update_ytdlp() {
-    # YouTube 변경 대응이 잦은 yt-dlp만 일일 최신화 대상으로 둡니다.
-    "$VENV_PIP" install --upgrade yt-dlp >> "$LOG_FILE" 2>&1
+    # yt-dlp와 버전이 맞는 EJS challenge solver를 함께 갱신합니다.
+    "$VENV_PIP" install --upgrade 'yt-dlp[default]' >> "$LOG_FILE" 2>&1
 }
 
 
@@ -171,7 +171,7 @@ main() {
         return 1
     fi
 
-    if ! git fetch origin main >> "$LOG_FILE" 2>&1; then
+    if ! git fetch --quiet origin main >> "$LOG_FILE" 2>&1; then
         mark_failure "원격 main 브랜치 조회에 실패했습니다."
         return 1
     fi

@@ -83,9 +83,29 @@ ssh os@botserver.local "echo SSH_KEY_OK"
 # 1. 우분투 시스템을 최신 상태로 업데이트
 sudo apt update && sudo apt upgrade -y
 
-# 2. 봇 구동에 필요한 필수 프로그램 설치 (파이썬, 깃, 멀티미디어 재생기 FFmpeg 등)
-sudo apt install git python3 python3-venv python3-pip ffmpeg sqlite3 ntfs-3g -y
+# 2. 봇 구동에 필요한 필수 프로그램 설치 (파이썬, 깃, FFmpeg, Deno 설치 도구 등)
+sudo apt install git python3 python3-venv python3-pip ffmpeg sqlite3 ntfs-3g curl unzip -y
 ```
+
+YouTube가 요구하는 JavaScript challenge를 처리하도록 공식 Deno ARM64 바이너리를
+검증한 뒤 `os` 사용자 전용 실행 경로에 설치합니다. 봇은 이 절대 경로를 yt-dlp에
+직접 전달하므로 systemd의 PATH나 시스템 디렉터리를 변경할 필요가 없습니다.
+
+```bash
+cd /tmp
+curl -fL https://github.com/denoland/deno/releases/latest/download/deno-aarch64-unknown-linux-gnu.zip -o deno-aarch64-unknown-linux-gnu.zip
+curl -fL https://github.com/denoland/deno/releases/latest/download/deno-aarch64-unknown-linux-gnu.zip.sha256sum -o deno-aarch64-unknown-linux-gnu.zip.sha256sum
+sha256sum -c deno-aarch64-unknown-linux-gnu.zip.sha256sum
+unzip -o deno-aarch64-unknown-linux-gnu.zip
+install -d -m 755 /home/os/.local/bin
+install -m 755 deno /home/os/.local/bin/deno
+rm deno deno-aarch64-unknown-linux-gnu.zip deno-aarch64-unknown-linux-gnu.zip.sha256sum
+/home/os/.local/bin/deno --version
+```
+
+`/home/os/.local/bin/deno --version`의 첫 줄이 2.0.0 이상이어야 합니다. Python 패키지 설치 단계의
+`yt-dlp[default]`는 현재 yt-dlp와 버전이 맞는 `yt-dlp-ejs` challenge solver를
+함께 설치합니다.
 
 ---
 
@@ -230,7 +250,7 @@ crontab -e
 # 1. [실시간 감지] GitHub 코드 변경 또는 이전 실패를 확인하고 재시도 (5분 주기)
 */5 * * * * /home/os/bot/scripts/auto_update.sh
 
-# 2. [일일 정기 점검] yt-dlp만 최신화하고 성공 시 봇 재시작 (매일 새벽 04:00)
+# 2. [일일 정기 점검] yt-dlp와 EJS를 함께 최신화하고 성공 시 봇 재시작 (매일 새벽 04:00)
 3 4 * * * /home/os/bot/scripts/auto_update.sh --daily
 
 # 3. [데이터 백업] 6시간마다 별도 비공개 저장소의 'db-backup' 브랜치로 단일 푸시 및 내부 최대 7일 롤백 저장 (0, 6, 12, 18시)
@@ -258,7 +278,8 @@ crontab -e
 > 맞춥니다. 새 코드로 서비스가 정상 재시작한 뒤에는 이번에 폐기한 음성 수신,
 > 음성 인식, 이전 YouTube 검색 및 옛 Gemini 패키지를 제거합니다. 제거 작업만
 > 실패한 경우 실행 중인 봇은 유지하고 경고를 기록합니다. `--daily`는 YouTube
-> 변경 대응이 필요한 `yt-dlp`만 최신화합니다.
+> 변경 대응이 필요한 `yt-dlp`와 그 버전에 맞는 `yt-dlp-ejs`만 함께
+> 최신화합니다.
 >
 > Git 조회, 패키지 설치 또는 서비스 재시작이 실패하면 성공 로그를 남기지 않으며
 > `data/update_pending`을 만들어 다음 5분 cron 실행에서 다시 시도합니다. 새 코드로

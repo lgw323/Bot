@@ -1,7 +1,9 @@
 import asyncio
+import io
 import logging
 import random
 import re
+import threading
 from collections import deque
 from typing import Optional
 from datetime import datetime, timedelta
@@ -19,11 +21,59 @@ except ImportError:
     logging.getLogger(__name__).warning("rapidfuzz 라이브러리를 찾을 수 없습니다.")
 
 from .music_utils import (
-    Song, LoopMode, ytdl, increment_play_count
+    Song, LoopMode, extract_info as extract_ytdlp_info,
+    increment_play_count,
 )
 from .music_ui import MusicPlayerView
 
 logger: logging.Logger = logging.getLogger(__name__)
+
+
+class FFmpegStderrCapture(io.RawIOBase):
+    """Keep a small sanitized tail of FFmpeg diagnostics for callbacks."""
+
+    def __init__(self, max_bytes: int = 8192) -> None:
+        super().__init__()
+        self.max_bytes = max_bytes
+        self._buffer = bytearray()
+        self._lock = threading.Lock()
+
+    def writable(self) -> bool:
+        return True
+
+    def write(self, data: bytes | bytearray) -> int:
+        chunk = bytes(data)
+        with self._lock:
+            self._buffer.extend(chunk)
+            if len(self._buffer) > self.max_bytes:
+                del self._buffer[:-self.max_bytes]
+        return len(chunk)
+
+    def summary(self) -> str:
+        with self._lock:
+            text = bytes(self._buffer).decode("utf-8", errors="replace")
+
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        important = [
+            line
+            for line in lines
+            if any(
+                marker in line.lower()
+                for marker in ("403", "forbidden", "error", "failed")
+            )
+        ]
+        selected = important[-4:] if important else lines[-2:]
+        summary = " | ".join(selected)
+        summary = re.sub(r"https?://\S+", "[URL 생략]", summary)
+        return summary[:800]
+
+
+class ErrorAwarePCMVolumeTransformer(discord.PCMVolumeTransformer):
+    """Expose the wrapped FFmpeg failure to discord.py's audio player."""
+
+    @property
+    def _current_error(self) -> Optional[Exception]:
+        return getattr(self.original, "_current_error", None)
 
 class MusicState:
     def __init__(self, bot: commands.Bot, cog: commands.Cog, guild: discord.Guild, initial_volume: float = 0.5) -> None:
@@ -46,6 +96,7 @@ class MusicState:
         self.autoplay_task: Optional[asyncio.Task] = None
         self.seek_time: int = 0
         self.consecutive_play_failures: int = 0
+        self.ffmpeg_stderr: Optional[FFmpegStderrCapture] = None
         self.is_tts_interrupting: bool = False
         self.update_lock: asyncio.Lock = asyncio.Lock()
         self.UI_UPDATE_COOLDOWN: float = 1.0 
@@ -108,7 +159,14 @@ class MusicState:
             logger.info(f"[{self.guild.name}] [Autoplay] 전략: {strategy} / 검색어: '{search_query}'")
             
             try:
-                data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False, process=True))
+                data = await self.bot.loop.run_in_executor(
+                    None,
+                    lambda: extract_ytdlp_info(
+                        search_query,
+                        download=False,
+                        process=True,
+                    ),
+                )
             except Exception as e:
                 logger.warning(f"[{self.guild.name}] [Autoplay] 검색 중 영상을 불러올 수 없습니다 (삭제/비공개 됨): {e}")
                 return
@@ -359,7 +417,13 @@ class MusicState:
                 await self.cog.cleanup_channel_messages(self)
             
             try:
-                data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(self.current_song.webpage_url, download=False))
+                data = await self.bot.loop.run_in_executor(
+                    None,
+                    lambda: extract_ytdlp_info(
+                        self.current_song.webpage_url,
+                        download=False,
+                    ),
+                )
                 stream_url = data.get('url')
                 if not stream_url:
                     if self.text_channel: await self.text_channel.send(f"❌ '{self.current_song.title}'을(를) 재생할 수 없습니다.", delete_after=20)
@@ -386,7 +450,16 @@ class MusicState:
                     'options': '-vn'
                 }
                 
-                source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(stream_url, **ffmpeg_options), volume=self.volume)
+                self.ffmpeg_stderr = FFmpegStderrCapture()
+                ffmpeg_source = discord.FFmpegPCMAudio(
+                    stream_url,
+                    stderr=self.ffmpeg_stderr,
+                    **ffmpeg_options,
+                )
+                source = ErrorAwarePCMVolumeTransformer(
+                    ffmpeg_source,
+                    volume=self.volume,
+                )
                 
                 if self.voice_client and self.voice_client.is_playing():
                     self.voice_client.stop()
@@ -397,7 +470,6 @@ class MusicState:
                 if self.current_song.webpage_url:
                     self.bot.loop.create_task(increment_play_count(self.guild.id, self.current_song.webpage_url, self.current_song.title))
                 
-                self.consecutive_play_failures = 0
                 self.playback_start_time = discord.utils.utcnow() - timedelta(seconds=self.seek_time)
                 self.pause_start_time = None
                 self.total_paused_duration = timedelta(seconds=0)
@@ -406,12 +478,6 @@ class MusicState:
                 await self.schedule_ui_update()
 
             except Exception as e:
-                self.consecutive_play_failures += 1
-                logger.error(f"'{self.current_song.title}' 재생 중 오류 발생", exc_info=True)
-                if self.consecutive_play_failures >= 3:
-                    if self.text_channel: await self.text_channel.send(f"🚨 **재생 오류**: '{self.current_song.title}' 곡을 재생하는 데 반복적으로 실패하여 대기열을 초기화합니다.", delete_after=30)
-                    self.queue.clear()
-                    self.current_song = None
                 self.handle_after_play(e)
                 continue
             
@@ -420,5 +486,77 @@ class MusicState:
 
     def handle_after_play(self, error: Optional[Exception]) -> None:
         if self.is_tts_interrupting: return
-        if error: logger.error(f"재생 후 콜백 오류: {error}")
-        self.bot.loop.call_soon_threadsafe(self.play_next_song.set)
+        stderr_summary = self.ffmpeg_stderr.summary() if self.ffmpeg_stderr else ""
+        self.bot.loop.call_soon_threadsafe(
+            lambda: self.bot.loop.create_task(
+                self._complete_playback(error, stderr_summary)
+            )
+        )
+
+    def _remove_song_from_queue(self, song: Song) -> None:
+        while True:
+            try:
+                self.queue.remove(song)
+            except ValueError:
+                return
+
+    async def _complete_playback(
+        self,
+        error: Optional[Exception],
+        stderr_summary: str = "",
+    ) -> None:
+        if error is None:
+            self.consecutive_play_failures = 0
+            self.ffmpeg_stderr = None
+            self.play_next_song.set()
+            return
+
+        self.consecutive_play_failures += 1
+        failure_count = self.consecutive_play_failures
+        song = self.current_song
+        error_name = type(error).__name__
+        details = stderr_summary or str(error)
+        details = re.sub(r"https?://\S+", "[URL 생략]", details)[:800]
+
+        if song is not None and failure_count < 3:
+            self._remove_song_from_queue(song)
+            if self.loop_mode != LoopMode.SONG:
+                self.queue.appendleft(song)
+
+            log_method = logger.error if failure_count == 1 else logger.info
+            log_method(
+                "[%s] 음악 스트림 재생 실패(%s, %s/3). "
+                "새 yt-dlp 세션으로 자동 재시도합니다. 상세: %s",
+                self.guild.name,
+                error_name,
+                failure_count,
+                details,
+            )
+        else:
+            if song is not None:
+                self._remove_song_from_queue(song)
+            self.current_song = None
+            self.consecutive_play_failures = 0
+            logger.error(
+                "[%s] 음악 스트림 재생이 3회 실패하여 현재 곡을 건너뜁니다. "
+                "마지막 오류(%s): %s",
+                self.guild.name,
+                error_name,
+                details,
+            )
+            if self.text_channel:
+                try:
+                    await self.text_channel.send(
+                        "🚨 **재생 오류**: YouTube 스트림 연결이 반복적으로 "
+                        "거부되어 현재 곡을 건너뜁니다.",
+                        delete_after=30,
+                    )
+                except discord.HTTPException as send_error:
+                    logger.warning(
+                        "[%s] 재생 오류 안내 전송 실패: %s",
+                        self.guild.name,
+                        send_error,
+                    )
+
+        self.ffmpeg_stderr = None
+        self.play_next_song.set()

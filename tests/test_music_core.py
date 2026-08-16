@@ -1,10 +1,15 @@
 import asyncio
+import logging
 from typing import Any
 
 import pytest
 import discord
 from unittest.mock import AsyncMock, MagicMock
-from cogs.music.music_core import MusicState
+from cogs.music.music_core import (
+    ErrorAwarePCMVolumeTransformer,
+    MusicState,
+)
+from cogs.music.music_utils import LoopMode
 
 @pytest.fixture
 def mock_guild() -> MagicMock:
@@ -49,6 +54,67 @@ def test_normalize_title(mock_bot: MagicMock, mock_cog: MagicMock, mock_guild: M
     assert state._normalize_title("Song Name 가사 영상") == "song name 영상"
     # 빈 값 확인
     assert state._normalize_title("") == ""
+
+
+def test_volume_transformer_exposes_wrapped_ffmpeg_error() -> None:
+    class FakeAudioSource(discord.AudioSource):
+        def read(self) -> bytes:
+            return b""
+
+    source = FakeAudioSource()
+    source._current_error = RuntimeError("FFmpeg exited with code 8")
+    transformer = ErrorAwarePCMVolumeTransformer(source, volume=0.5)
+
+    assert transformer._current_error is source._current_error
+
+
+@pytest.mark.asyncio
+async def test_playback_error_requeues_song_for_fresh_extraction(
+    mock_bot: MagicMock,
+    mock_cog: MagicMock,
+    mock_guild: MagicMock,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    state = MusicState(mock_bot, mock_cog, mock_guild)
+    song = MagicMock()
+    state.current_song = song
+    state.loop_mode = LoopMode.NONE
+
+    with caplog.at_level(logging.ERROR):
+        await state._complete_playback(
+            RuntimeError("FFmpeg exited with code 8"),
+            "HTTP error 403 Forbidden",
+        )
+
+    assert state.consecutive_play_failures == 1
+    assert list(state.queue) == [song]
+    assert state.play_next_song.is_set()
+    assert "자동 재시도" in caplog.text
+    assert "403 Forbidden" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_third_playback_error_skips_song_and_notifies_channel(
+    mock_bot: MagicMock,
+    mock_cog: MagicMock,
+    mock_guild: MagicMock,
+) -> None:
+    state = MusicState(mock_bot, mock_cog, mock_guild)
+    song = MagicMock()
+    state.current_song = song
+    state.queue.append(song)
+    state.consecutive_play_failures = 2
+    state.text_channel = AsyncMock()
+
+    await state._complete_playback(
+        RuntimeError("FFmpeg exited with code 8"),
+        "HTTP error 403 Forbidden",
+    )
+
+    assert state.current_song is None
+    assert list(state.queue) == []
+    assert state.consecutive_play_failures == 0
+    state.text_channel.send.assert_awaited_once()
 
 
 @pytest.mark.asyncio

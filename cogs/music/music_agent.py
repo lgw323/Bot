@@ -27,7 +27,8 @@ from .music_core import MusicState
 from .music_session_restorer import MusicSessionRestorer
 from .music_state_store import MusicStateStore
 from .music_utils import (
-    Song, LoopMode, ytdl, URL_REGEX, MUSIC_CHANNEL_ID, MASTER_USER_ID,
+    Song, LoopMode, extract_info as extract_ytdlp_info,
+    log_ytdlp_runtime_status, URL_REGEX, MUSIC_CHANNEL_ID, MASTER_USER_ID,
     load_favorites, add_favorite, remove_favorites, BOT_EMBED_COLOR,
     load_music_settings
 )
@@ -56,6 +57,7 @@ class MusicAgentCog(commands.Cog):
         self.initial_setup_done: bool = False
 
     async def cog_load(self) -> None:
+        log_ytdlp_runtime_status()
         self.update_progress_loop.start()
 
     async def cog_unload(self) -> None:
@@ -245,7 +247,10 @@ class MusicAgentCog(commands.Cog):
             is_playlist_url = 'list=' in query and is_url
             search_query = query if is_url else f"ytsearch3:{query}"
 
-            data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False))
+            data = await self.bot.loop.run_in_executor(
+                None,
+                lambda: extract_ytdlp_info(search_query, download=False),
+            )
 
             if is_playlist_url and 'entries' in data:
                 state.cancel_autoplay_task()
@@ -471,7 +476,13 @@ class MusicAgentCog(commands.Cog):
                         await state.set_task(f"❤️ 즐겨찾기 추가 중... ({i + 1}/{total_urls})")
 
                     # [삭제됨] 시간 측정 로직 제거
-                    data = await self.bot.loop.run_in_executor(None, lambda target_url=url: ytdl.extract_info(target_url, download=False))
+                    data = await self.bot.loop.run_in_executor(
+                        None,
+                        lambda target_url=url: extract_ytdlp_info(
+                            target_url,
+                            download=False,
+                        ),
+                    )
                     # [삭제됨] update_request_timing 호출 제거
                     state.queue.append(Song(data, interaction.user))
                     count += 1

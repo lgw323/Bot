@@ -1,8 +1,14 @@
 import pytest
 import discord
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
-from cogs.music.music_utils import Song, LoopMode, URL_REGEX
+from cogs.music.music_utils import (
+    Song,
+    LoopMode,
+    URL_REGEX,
+    extract_info,
+    log_ytdlp_runtime_status,
+)
 
 def test_url_regex() -> None:
     assert URL_REGEX.match("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
@@ -63,6 +69,43 @@ def test_loop_mode() -> None:
     assert LoopMode.NONE.value == 0
     assert LoopMode.SONG.value == 1
     assert LoopMode.QUEUE.value == 2
+
+
+@patch("cogs.music.music_utils.yt_dlp.YoutubeDL")
+def test_extract_info_uses_fresh_ytdlp_session(mock_youtube_dl) -> None:
+    first_downloader = MagicMock()
+    second_downloader = MagicMock()
+    first_downloader.__enter__.return_value = first_downloader
+    second_downloader.__enter__.return_value = second_downloader
+    first_downloader.extract_info.return_value = {"title": "first"}
+    second_downloader.extract_info.return_value = {"title": "second"}
+    mock_youtube_dl.side_effect = [first_downloader, second_downloader]
+
+    assert extract_info("first-query") == {"title": "first"}
+    assert extract_info("second-query") == {"title": "second"}
+
+    assert mock_youtube_dl.call_count == 2
+    first_downloader.extract_info.assert_called_once_with(
+        "first-query",
+        download=False,
+        process=True,
+    )
+    second_downloader.extract_info.assert_called_once_with(
+        "second-query",
+        download=False,
+        process=True,
+    )
+
+
+@patch("cogs.music.music_utils.version", return_value="1.2.3")
+@patch("cogs.music.music_utils._find_deno_path", return_value="/home/os/.local/bin/deno")
+def test_ytdlp_runtime_status_accepts_deno_and_ejs(
+    mock_find_deno,
+    mock_version,
+) -> None:
+    assert log_ytdlp_runtime_status() is True
+    mock_find_deno.assert_called_once_with()
+    mock_version.assert_called_once_with("yt-dlp-ejs")
 
 @pytest.mark.asyncio
 async def test_music_states_io(tmp_path) -> None:
