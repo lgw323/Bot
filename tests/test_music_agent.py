@@ -197,3 +197,32 @@ async def test_favorites_add_path_can_cancel_autoplay_without_error() -> None:
     assert result == (0, False)
     assert autoplay_task.cancelled()
     await music_state.cleanup(leave=True, update_ui=False)
+
+
+@pytest.mark.asyncio
+async def test_skip_cancels_pending_playback_retry_without_stopping_voice() -> None:
+    bot = MagicMock()
+    agent = MusicAgentCog(bot)
+    state = MagicMock()
+    state.current_song = MagicMock()
+    state.voice_client = MagicMock()
+    state.cancel_pending_playback_retry.return_value = True
+    state.schedule_ui_update = AsyncMock()
+    agent.get_music_state = AsyncMock(return_value=state)
+
+    interaction = MagicMock()
+    interaction.guild.id = 12345
+    interaction.user.display_name = "Tester"
+    interaction.channel.name = "Music"
+    interaction.response.send_message = AsyncMock()
+
+    await agent.handle_skip(interaction)
+
+    state.cancel_pending_playback_retry.assert_called_once_with()
+    state.voice_client.stop.assert_not_called()
+    state.schedule_ui_update.assert_awaited_once_with()
+    interaction.response.send_message.assert_awaited_once_with(
+        "⏭️ 현재 노래를 건너뛰었습니다.",
+        ephemeral=True,
+        delete_after=5,
+    )

@@ -374,7 +374,10 @@ class MusicAgentCog(commands.Cog):
     async def handle_skip(self, interaction: discord.Interaction) -> None:
         state = await self.get_music_state(interaction.guild.id) # type: ignore
         if state.current_song and state.voice_client:
-            state.voice_client.stop()
+            if state.cancel_pending_playback_retry():
+                await state.schedule_ui_update()
+            else:
+                state.voice_client.stop()
             await interaction.response.send_message("⏭️ 현재 노래를 건너뛰었습니다.", ephemeral=True, delete_after=5)
             command_logger.info(f"사용자 '{interaction.user.display_name}'가 '{interaction.channel.name}' 채널에서 노래를 스킵했습니다.") # type: ignore
         else: await interaction.response.send_message("건너뛸 노래가 없습니다.", ephemeral=True)

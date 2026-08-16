@@ -113,6 +113,8 @@ class ErrorAwarePCMVolumeTransformer(discord.PCMVolumeTransformer):
 
 
 class MusicState:
+    PLAYBACK_RETRY_DELAYS = (3.0, 8.0)
+
     def __init__(self, bot: commands.Bot, cog: commands.Cog, guild: discord.Guild, initial_volume: float = 0.5) -> None:
         self.bot: commands.Bot = bot
         self.cog: commands.Cog = cog
@@ -133,6 +135,9 @@ class MusicState:
         self.autoplay_task: Optional[asyncio.Task] = None
         self.seek_time: int = 0
         self.consecutive_play_failures: int = 0
+        self.playback_retry_song: Optional[Song] = None
+        self.playback_retry_not_before: float = 0.0
+        self.playback_retry_cancelled: asyncio.Event = asyncio.Event()
         self.ffmpeg_stderr: Optional[FFmpegStderrCapture] = None
         self.is_tts_interrupting: bool = False
         self.update_lock: asyncio.Lock = asyncio.Lock()
@@ -375,6 +380,9 @@ class MusicState:
         update_ui: bool = True,
     ) -> None:
         await self._stop_background_tasks()
+        self._clear_playback_retry()
+        self.playback_retry_cancelled.clear()
+        self.consecutive_play_failures = 0
         self.current_song = None
         self.queue.clear()
         if self.voice_client:
@@ -427,6 +435,62 @@ class MusicState:
         finally:
             self.last_update_time = time.monotonic()
 
+    def _clear_playback_retry(self) -> None:
+        self.playback_retry_song = None
+        self.playback_retry_not_before = 0.0
+        if self.current_task and self.current_task.startswith("🔄 음악 스트림"):
+            self.current_task = None
+
+    async def _wait_for_playback_retry(self, song: Song) -> bool:
+        if self.playback_retry_song is not song:
+            return True
+
+        remaining = max(
+            0.0,
+            self.playback_retry_not_before - time.monotonic(),
+        )
+        if remaining:
+            try:
+                await asyncio.wait_for(
+                    self.playback_retry_cancelled.wait(),
+                    timeout=remaining,
+                )
+            except TimeoutError:
+                pass
+            else:
+                return False
+
+        if self.playback_retry_song is not song:
+            return False
+
+        self._clear_playback_retry()
+        self.playback_retry_cancelled.clear()
+        await self.schedule_ui_update()
+        return True
+
+    def cancel_pending_playback_retry(self) -> bool:
+        song = self.playback_retry_song
+        if song is None:
+            return False
+
+        self._remove_song_from_queue(song)
+        if self.current_song is song:
+            self.current_song = None
+        self.consecutive_play_failures = 0
+        self._clear_playback_retry()
+        self.playback_retry_cancelled.set()
+        self.play_next_song.set()
+        return True
+
+    def _select_next_song(self) -> Optional[Song]:
+        if self.playback_retry_song is not None:
+            retry_song = self.playback_retry_song
+            self._remove_song_from_queue(retry_song)
+            return retry_song
+        if self.loop_mode == LoopMode.SONG and self.current_song:
+            return self.current_song
+        return self.queue.popleft() if self.queue else None
+
     async def play_song_loop(self) -> None:
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
@@ -451,14 +515,15 @@ class MusicState:
                     continue
 
             previous_song = self.current_song
-            
-            next_song = self.current_song if self.loop_mode == LoopMode.SONG and self.current_song else self.queue.popleft() if self.queue else None
-            self.current_song = next_song
+            self.current_song = self._select_next_song()
 
             if not self.current_song:
                 if self.auto_play_enabled and previous_song and not self.autoplay_task:
                     self.autoplay_task = self.bot.loop.create_task(self._prefetch_autoplay_song(previous_song))
                 if previous_song is not None: await self.schedule_ui_update()
+                continue
+
+            if not await self._wait_for_playback_retry(self.current_song):
                 continue
             
             if self.current_song != previous_song:
@@ -556,6 +621,8 @@ class MusicState:
     ) -> None:
         if error is None:
             self.consecutive_play_failures = 0
+            self._clear_playback_retry()
+            self.playback_retry_cancelled.clear()
             self.ffmpeg_stderr = None
             self.play_next_song.set()
             return
@@ -572,13 +639,23 @@ class MusicState:
             if self.loop_mode != LoopMode.SONG:
                 self.queue.appendleft(song)
 
+            retry_delay = self.PLAYBACK_RETRY_DELAYS[failure_count - 1]
+            self.playback_retry_song = song
+            self.playback_retry_not_before = time.monotonic() + retry_delay
+            self.playback_retry_cancelled.clear()
+            self.current_task = (
+                f"🔄 음악 스트림 재연결 대기 중... ({retry_delay:.0f}초)"
+            )
+            await self.schedule_ui_update()
+
             log_method = logger.error if failure_count == 1 else logger.info
             log_method(
                 "[%s] 음악 스트림 재생 실패(%s, %s/3). "
-                "새 yt-dlp 세션으로 자동 재시도합니다. 상세: %s",
+                "%.0f초 후 새 yt-dlp 세션으로 자동 재시도합니다. 상세: %s",
                 self.guild.name,
                 error_name,
                 failure_count,
+                retry_delay,
                 details,
             )
         else:
@@ -586,6 +663,8 @@ class MusicState:
                 self._remove_song_from_queue(song)
             self.current_song = None
             self.consecutive_play_failures = 0
+            self._clear_playback_retry()
+            self.playback_retry_cancelled.clear()
             logger.error(
                 "[%s] 음악 스트림 재생이 3회 실패하여 현재 곡을 건너뜁니다. "
                 "마지막 오류(%s): %s",

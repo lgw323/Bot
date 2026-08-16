@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import subprocess
+import time
 from typing import Any
 
 import pytest
@@ -145,11 +146,13 @@ async def test_playback_error_requeues_song_for_fresh_extraction(
     mock_cog: MagicMock,
     mock_guild: MagicMock,
     caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     state = MusicState(mock_bot, mock_cog, mock_guild)
     song = MagicMock()
     state.current_song = song
     state.loop_mode = LoopMode.NONE
+    monkeypatch.setattr("cogs.music.music_core.time.monotonic", lambda: 100.0)
 
     with caplog.at_level(logging.ERROR):
         await state._complete_playback(
@@ -160,8 +163,101 @@ async def test_playback_error_requeues_song_for_fresh_extraction(
     assert state.consecutive_play_failures == 1
     assert list(state.queue) == [song]
     assert state.play_next_song.is_set()
+    assert state.playback_retry_song is song
+    assert state.playback_retry_not_before == 103.0
+    assert "3초" in state.current_task
     assert "자동 재시도" in caplog.text
     assert "403 Forbidden" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_second_playback_failure_uses_longer_backoff(
+    mock_bot: MagicMock,
+    mock_cog: MagicMock,
+    mock_guild: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    state = MusicState(mock_bot, mock_cog, mock_guild)
+    song = MagicMock()
+    state.current_song = song
+    state.queue.append(song)
+    state.consecutive_play_failures = 1
+    monkeypatch.setattr("cogs.music.music_core.time.monotonic", lambda: 200.0)
+
+    await state._complete_playback(RuntimeError("code 8"), "403 Forbidden")
+
+    assert state.consecutive_play_failures == 2
+    assert state.playback_retry_song is song
+    assert state.playback_retry_not_before == 208.0
+    assert list(state.queue) == [song]
+    assert "8초" in state.current_task
+
+
+@pytest.mark.asyncio
+async def test_playback_loop_waits_for_retry_deadline(
+    mock_bot: MagicMock,
+    mock_cog: MagicMock,
+    mock_guild: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    state = MusicState(mock_bot, mock_cog, mock_guild)
+    song = MagicMock()
+    state.playback_retry_song = song
+    state.playback_retry_not_before = 103.0
+    monkeypatch.setattr("cogs.music.music_core.time.monotonic", lambda: 100.0)
+
+    async def timeout_after_delay(awaitable: Any, timeout: float) -> None:
+        awaitable.close()
+        assert timeout == 3.0
+        raise TimeoutError
+
+    monkeypatch.setattr(
+        "cogs.music.music_core.asyncio.wait_for",
+        timeout_after_delay,
+    )
+
+    assert await state._wait_for_playback_retry(song) is True
+    assert state.playback_retry_song is None
+    assert state.playback_retry_not_before == 0.0
+
+
+@pytest.mark.asyncio
+async def test_pending_retry_can_be_skipped_immediately(
+    mock_bot: MagicMock,
+    mock_cog: MagicMock,
+    mock_guild: MagicMock,
+) -> None:
+    state = MusicState(mock_bot, mock_cog, mock_guild)
+    song = MagicMock()
+    state.current_song = song
+    state.queue.append(song)
+    state.consecutive_play_failures = 1
+    state.playback_retry_song = song
+    state.playback_retry_not_before = time.monotonic() + 8.0
+
+    assert state.cancel_pending_playback_retry() is True
+    assert state.current_song is None
+    assert list(state.queue) == []
+    assert state.consecutive_play_failures == 0
+    assert state.playback_retry_cancelled.is_set()
+    assert state.play_next_song.is_set()
+
+
+def test_pending_retry_selection_ignores_loop_mode_changes(
+    mock_bot: MagicMock,
+    mock_cog: MagicMock,
+    mock_guild: MagicMock,
+) -> None:
+    state = MusicState(mock_bot, mock_cog, mock_guild)
+    retry_song = MagicMock()
+    another_song = MagicMock()
+    state.current_song = retry_song
+    state.queue.extend([retry_song, another_song])
+    state.playback_retry_song = retry_song
+    state.loop_mode = LoopMode.SONG
+
+    assert state._select_next_song() is retry_song
+    assert list(state.queue) == [another_song]
 
 
 @pytest.mark.asyncio
