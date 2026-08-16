@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import subprocess
 from typing import Any
 
 import pytest
@@ -66,6 +67,76 @@ def test_volume_transformer_exposes_wrapped_ffmpeg_error() -> None:
     transformer = ErrorAwarePCMVolumeTransformer(source, volume=0.5)
 
     assert transformer._current_error is source._current_error
+
+
+def test_volume_transformer_detects_delayed_ffmpeg_failure_at_eof() -> None:
+    class DelayedExitProcess:
+        def __init__(self) -> None:
+            self.wait_calls = 0
+
+        def wait(self, timeout: float) -> int:
+            self.wait_calls += 1
+            assert timeout > 0
+            return 8
+
+    class FakeFFmpegSource(discord.AudioSource):
+        def __init__(self) -> None:
+            self._current_error = None
+            self._stopped = False
+            self._process = DelayedExitProcess()
+
+        def read(self) -> bytes:
+            # FFmpeg stdout can reach EOF just before poll() observes its exit.
+            return b""
+
+    source = FakeFFmpegSource()
+    transformer = ErrorAwarePCMVolumeTransformer(source, volume=0.5)
+
+    assert transformer.read() == b""
+    assert source._process.wait_calls == 1
+    assert transformer._current_error is not None
+    assert "code 8" in str(transformer._current_error)
+
+
+def test_volume_transformer_does_not_fail_for_clean_ffmpeg_exit() -> None:
+    process = MagicMock()
+    process.wait.return_value = 0
+
+    class FakeFFmpegSource(discord.AudioSource):
+        def __init__(self) -> None:
+            self._current_error = None
+            self._stopped = False
+            self._process = process
+
+        def read(self) -> bytes:
+            return b""
+
+    source = FakeFFmpegSource()
+    transformer = ErrorAwarePCMVolumeTransformer(source, volume=0.5)
+
+    assert transformer.read() == b""
+    assert transformer._current_error is None
+
+
+def test_volume_transformer_treats_ffmpeg_eof_timeout_as_failure() -> None:
+    process = MagicMock()
+    process.wait.side_effect = subprocess.TimeoutExpired("ffmpeg", timeout=1.0)
+
+    class FakeFFmpegSource(discord.AudioSource):
+        def __init__(self) -> None:
+            self._current_error = None
+            self._stopped = False
+            self._process = process
+
+        def read(self) -> bytes:
+            return b""
+
+    source = FakeFFmpegSource()
+    transformer = ErrorAwarePCMVolumeTransformer(source, volume=0.5)
+
+    assert transformer.read() == b""
+    assert transformer._current_error is not None
+    assert "did not exit" in str(transformer._current_error)
 
 
 @pytest.mark.asyncio
@@ -166,6 +237,31 @@ async def test_cleanup_keeps_final_ui_update_for_user_disconnect(
     await state.cleanup(leave=True)
 
     state.schedule_ui_update.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
+async def test_ui_update_burst_is_coalesced(
+    mock_cog: MagicMock,
+    mock_guild: MagicMock,
+) -> None:
+    bot = MagicMock()
+    bot.loop = asyncio.get_running_loop()
+    bot.wait_until_ready = AsyncMock()
+    bot.is_closed.return_value = False
+    state = MusicState(bot=bot, cog=mock_cog, guild=mock_guild)
+    state.UI_UPDATE_COOLDOWN = 0.0
+    state._execute_ui_update = AsyncMock()
+
+    await state.schedule_ui_update()
+    await state.schedule_ui_update()
+    await state.schedule_ui_update()
+    update_task = state.ui_update_task
+    assert update_task is not None
+    await update_task
+
+    state._execute_ui_update.assert_awaited_once_with()
+    assert state.ui_update_task is None
+    await state.cleanup(leave=True, update_ui=False)
 
 
 @pytest.mark.asyncio

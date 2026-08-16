@@ -3,6 +3,7 @@ import io
 import logging
 import random
 import re
+import subprocess
 import threading
 from collections import deque
 from typing import Optional
@@ -71,9 +72,45 @@ class FFmpegStderrCapture(io.RawIOBase):
 class ErrorAwarePCMVolumeTransformer(discord.PCMVolumeTransformer):
     """Expose the wrapped FFmpeg failure to discord.py's audio player."""
 
+    FFMPEG_EXIT_WAIT_SECONDS = 1.0
+
+    def read(self) -> bytes:
+        data = super().read()
+        if data or self._current_error is not None:
+            return data
+
+        source = self.original
+        if getattr(source, "_stopped", False):
+            return data
+
+        process = getattr(source, "_process", None)
+        wait = getattr(process, "wait", None)
+        if not callable(wait):
+            return data
+
+        try:
+            return_code = wait(timeout=self.FFMPEG_EXIT_WAIT_SECONDS)
+        except subprocess.TimeoutExpired:
+            source._current_error = RuntimeError(  # type: ignore[attr-defined]
+                "FFmpeg output ended but the process did not exit within "
+                f"{self.FFMPEG_EXIT_WAIT_SECONDS:.1f}s"
+            )
+        except Exception as error:
+            source._current_error = RuntimeError(  # type: ignore[attr-defined]
+                f"Failed to read FFmpeg exit status: {error}"
+            )
+        else:
+            if return_code != 0:
+                source._current_error = RuntimeError(  # type: ignore[attr-defined]
+                    f"FFmpeg exited with code {return_code}"
+                )
+
+        return data
+
     @property
     def _current_error(self) -> Optional[Exception]:
         return getattr(self.original, "_current_error", None)
+
 
 class MusicState:
     def __init__(self, bot: commands.Bot, cog: commands.Cog, guild: discord.Guild, initial_volume: float = 0.5) -> None:
@@ -99,9 +136,10 @@ class MusicState:
         self.ffmpeg_stderr: Optional[FFmpegStderrCapture] = None
         self.is_tts_interrupting: bool = False
         self.update_lock: asyncio.Lock = asyncio.Lock()
-        self.UI_UPDATE_COOLDOWN: float = 1.0 
+        self.UI_UPDATE_COOLDOWN: float = 3.0
         self.last_update_time: float = 0.0
         self.ui_update_task: Optional[asyncio.Task] = None
+        self._ui_update_requested: bool = False
         self.current_task: Optional[str] = None
         self.main_task: Optional[asyncio.Task] = self.bot.loop.create_task(
             self.play_song_loop()
@@ -329,6 +367,7 @@ class MusicState:
         self.main_task = None
         self.autoplay_task = None
         self.ui_update_task = None
+        self._ui_update_requested = False
 
     async def cleanup(
         self,
@@ -348,18 +387,27 @@ class MusicState:
             await self.schedule_ui_update()
     
     async def schedule_ui_update(self) -> None:
+        self._ui_update_requested = True
         if self.ui_update_task and not self.ui_update_task.done():
-            self.ui_update_task.cancel()
+            return
 
         self.ui_update_task = self.bot.loop.create_task(self._delayed_ui_update())
 
     async def _delayed_ui_update(self) -> None:
         try:
-            await asyncio.sleep(self.UI_UPDATE_COOLDOWN)
-            async with self.update_lock:
-                await self._execute_ui_update()
+            while self._ui_update_requested:
+                self._ui_update_requested = False
+                elapsed = time.monotonic() - self.last_update_time
+                delay = max(0.0, self.UI_UPDATE_COOLDOWN - elapsed)
+                if delay:
+                    await asyncio.sleep(delay)
+                async with self.update_lock:
+                    await self._execute_ui_update()
         except asyncio.CancelledError:
-            pass
+            raise
+        finally:
+            if self.ui_update_task is asyncio.current_task():
+                self.ui_update_task = None
 
     async def _execute_ui_update(self) -> None:
         try:
@@ -371,12 +419,13 @@ class MusicState:
                 await self.now_playing_message.edit(embed=embed, view=view)
             elif self.text_channel:
                 self.now_playing_message = await self.text_channel.send(embed=embed, view=view)
-            self.last_update_time = time.time()
         except discord.HTTPException as e:
             if e.status != 429:
                 logger.error(f"[{self.guild.name}] Now Playing 메시지 업데이트/전송 실패: {e}")
         except Exception as e:
             logger.error(f"[{self.guild.name}] Now Playing 메시지 처리 중 예기치 않은 오류: {e}", exc_info=True)
+        finally:
+            self.last_update_time = time.monotonic()
 
     async def play_song_loop(self) -> None:
         await self.bot.wait_until_ready()
@@ -480,7 +529,7 @@ class MusicState:
             except Exception as e:
                 self.handle_after_play(e)
                 continue
-            
+
             if self.loop_mode == LoopMode.QUEUE and self.current_song:
                 self.queue.append(self.current_song)
 
