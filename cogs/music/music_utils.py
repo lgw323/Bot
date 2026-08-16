@@ -31,6 +31,8 @@ BOT_EMBED_COLOR: int = 0x2ECC71
 MUSIC_CHANNEL_ID: int = int(os.getenv("MUSIC_CHANNEL_ID", "0"))
 MASTER_USER_ID: int = int(os.getenv("MASTER_USER_ID", "0"))
 URL_REGEX: re.Pattern = re.compile(r'https?://(?:www\.)?(?:music\.youtube\.com|youtube\.com|youtu\.be)/.+')
+POT_PROVIDER_PACKAGE: str = "bgutil-ytdlp-pot-provider"
+POT_PROVIDER_VERSION: str = "1.3.1"
 
 # --- yt-dlp 및 FFmpeg 설정 ---
 def _find_deno_path() -> Optional[str]:
@@ -56,6 +58,9 @@ def _sanitize_ytdlp_message(message: str) -> str:
 class YtDlpLogBridge:
     """Route yt-dlp diagnostics through the bot logger without media URLs."""
 
+    def __init__(self) -> None:
+        self.po_token_failed: bool = False
+
     def debug(self, message: str) -> None:
         logger.debug("[yt-dlp] %s", _sanitize_ytdlp_message(message))
 
@@ -63,13 +68,17 @@ class YtDlpLogBridge:
         logger.info("[yt-dlp] %s", _sanitize_ytdlp_message(message))
 
     def warning(self, message: str) -> None:
+        lowered = message.lower()
+        if "[pot]" in lowered and "po token" in lowered and any(
+            marker in lowered
+            for marker in ("error", "failed", "not available", "not provided", "unable")
+        ):
+            self.po_token_failed = True
         logger.warning("[yt-dlp] %s", _sanitize_ytdlp_message(message))
 
     def error(self, message: str) -> None:
         logger.error("[yt-dlp] %s", _sanitize_ytdlp_message(message))
 
-
-_DENO_PATH = _find_deno_path()
 
 YTDL_OPTIONS: Dict[str, Any] = {
     'format': 'bestaudio[ext=opus]/bestaudio/best',
@@ -80,19 +89,75 @@ YTDL_OPTIONS: Dict[str, Any] = {
     'ignoreerrors': True,
     'default_search': 'auto',
     'source_address': '0.0.0.0',
-    'http_headers': {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.5',
-    },
-    'logger': YtDlpLogBridge(),
-    'js_runtimes': {
-        'deno': {'path': _DENO_PATH} if _DENO_PATH else {},
-    },
 }
 FFMPEG_OPTIONS: Dict[str, str] = {
     'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -nostdin',
     'options': '-vn'
 }
+
+def _get_pot_provider_home() -> Path:
+    configured_path = os.getenv("YTDLP_POT_PROVIDER_DIR")
+    if configured_path:
+        return Path(configured_path).expanduser()
+    return Path.home() / ".local" / "share" / POT_PROVIDER_PACKAGE / "server"
+
+
+def _get_package_version(package_name: str) -> Optional[str]:
+    try:
+        return version(package_name)
+    except PackageNotFoundError:
+        return None
+
+
+def _pot_provider_is_available() -> bool:
+    server_home = _get_pot_provider_home()
+    return bool(
+        _find_deno_path()
+        and _get_package_version(POT_PROVIDER_PACKAGE) == POT_PROVIDER_VERSION
+        and (server_home / "src" / "generate_once.ts").is_file()
+        and (server_home / "node_modules").is_dir()
+    )
+
+
+def build_ytdl_options(*, enable_po_token: bool = True) -> Dict[str, Any]:
+    """Build request-local yt-dlp options with an optional PO Token provider."""
+
+    options = copy.deepcopy(YTDL_OPTIONS)
+    deno_path = _find_deno_path()
+    options["logger"] = YtDlpLogBridge()
+    options["js_runtimes"] = {
+        "deno": {"path": deno_path} if deno_path else {},
+    }
+
+    if enable_po_token and _pot_provider_is_available():
+        server_home = _get_pot_provider_home()
+        options["extractor_args"] = {
+            "youtube": {"player_client": ["mweb"]},
+            "youtubepot-bgutilscript": {
+                "server_home": [str(server_home)],
+            },
+        }
+
+    return options
+
+
+def _extract_info_once(
+    query: str,
+    *,
+    download: bool = False,
+    process: bool = True,
+    enable_po_token: bool = True,
+) -> Tuple[Any, YtDlpLogBridge]:
+    options = build_ytdl_options(enable_po_token=enable_po_token)
+    log_bridge = options["logger"]
+    with yt_dlp.YoutubeDL(options) as downloader:
+        result = downloader.extract_info(
+            query,
+            download=download,
+            process=process,
+        )
+    return result, log_bridge
+
 
 def extract_info(
     query: str,
@@ -100,47 +165,72 @@ def extract_info(
     download: bool = False,
     process: bool = True,
 ) -> Any:
-    """Extract one request with a fresh YouTube session.
+    """Extract one request with a fresh YouTube session and safe POT fallback.
 
     Long-lived YoutubeDL instances keep visitor and challenge state that can
     become invalid while the bot remains online. A request-scoped instance
     avoids requiring a process restart when YouTube rotates that state.
     """
 
-    with yt_dlp.YoutubeDL(copy.deepcopy(YTDL_OPTIONS)) as downloader:
-        return downloader.extract_info(
+    use_po_token = _pot_provider_is_available()
+    result, log_bridge = _extract_info_once(
+        query,
+        download=download,
+        process=process,
+        enable_po_token=use_po_token,
+    )
+    if use_po_token and log_bridge.po_token_failed:
+        logger.warning(
+            "PO Token 생성에 실패하여 현재 yt-dlp 기본 추출 방식으로 폴백합니다."
+        )
+        result, _ = _extract_info_once(
             query,
             download=download,
             process=process,
+            enable_po_token=False,
         )
+    return result
 
 
 def log_ytdlp_runtime_status() -> bool:
     """Log whether the supported YouTube JavaScript runtime is complete."""
 
     deno_path = _find_deno_path()
-    try:
-        ejs_version = version("yt-dlp-ejs")
-    except PackageNotFoundError:
-        ejs_version = None
+    ejs_version = _get_package_version("yt-dlp-ejs")
+    pot_plugin_version = _get_package_version(POT_PROVIDER_PACKAGE)
+    server_home = _get_pot_provider_home()
+    pot_script = server_home / "src" / "generate_once.ts"
+    pot_dependencies = server_home / "node_modules"
 
-    if not deno_path or not ejs_version:
+    if (
+        not deno_path
+        or not ejs_version
+        or pot_plugin_version != POT_PROVIDER_VERSION
+        or not pot_script.is_file()
+        or not pot_dependencies.is_dir()
+    ):
         missing = []
         if not deno_path:
             missing.append("Deno")
         if not ejs_version:
             missing.append("yt-dlp-ejs")
+        if pot_plugin_version != POT_PROVIDER_VERSION:
+            missing.append(f"{POT_PROVIDER_PACKAGE} {POT_PROVIDER_VERSION}")
+        if not pot_script.is_file() or not pot_dependencies.is_dir():
+            missing.append("PO Token 생성 스크립트")
         logger.error(
             "YouTube 재생 런타임이 불완전합니다: %s 누락. "
-            "YouTube 스트림이 HTTP 403으로 종료될 수 있습니다.",
+            "PO Token 없이 기존 추출 방식으로 폴백하며 HTTP 403이 발생할 수 있습니다.",
             ", ".join(missing),
         )
         return False
 
     logger.info(
-        "YouTube 재생 런타임 확인 완료: Deno=%s, yt-dlp-ejs=%s",
+        "YouTube 재생 런타임 확인 완료: Deno=%s, yt-dlp-ejs=%s, "
+        "PO-Token=%s",
         deno_path,
         ejs_version,
+        pot_plugin_version,
     )
     return True
 

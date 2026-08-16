@@ -83,7 +83,14 @@ prepare_runtime_dependencies() {
 
 update_ytdlp() {
     # yt-dlp와 버전이 맞는 EJS challenge solver를 함께 갱신합니다.
-    "$VENV_PIP" install --upgrade 'yt-dlp[default]' >> "$LOG_FILE" 2>&1
+    "$VENV_PIP" install --upgrade \
+        'yt-dlp[default]' \
+        'bgutil-ytdlp-pot-provider==1.3.1' >> "$LOG_FILE" 2>&1
+}
+
+
+update_pot_provider() {
+    "$BOT_DIR/scripts/install_pot_provider.sh" >> "$LOG_FILE" 2>&1
 }
 
 
@@ -228,6 +235,17 @@ main() {
             return 1
         fi
         code_deployed="true"
+    fi
+
+    if [ "$code_deployed" = "true" ] || [ "$daily_requested" = "true" ]; then
+        if ! update_pot_provider; then
+            if [ "$code_deployed" = "true" ] && rollback_code "$previous_commit"; then
+                mark_failure "PO Token 제공자 설치 실패로 이전 코드 복구를 완료했습니다."
+            else
+                mark_failure "PO Token 제공자 설치에 실패했습니다."
+            fi
+            return 1
+        fi
     fi
 
     if ! restart_service "$reason"; then

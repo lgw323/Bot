@@ -8,14 +8,17 @@ def read_update_script() -> str:
     return SCRIPT_PATH.read_text(encoding="utf-8")
 
 
-def test_only_ytdlp_is_force_upgraded() -> None:
+def test_only_youtube_runtime_dependencies_are_force_upgraded() -> None:
     """일일 점검이 일반 라이브러리나 discord.py를 무조건 갱신하면 안 됩니다."""
     script = read_update_script()
 
     assert 'install -r "$candidate_requirements"' in script
     assert "install -U -r" not in script
     assert "install -U yt-dlp discord.py" not in script
-    assert "install --upgrade 'yt-dlp[default]'" in script
+    assert "install --upgrade" in script
+    assert "'yt-dlp[default]'" in script
+    assert "'bgutil-ytdlp-pot-provider==1.3.1'" in script
+    assert '"$BOT_DIR/scripts/install_pot_provider.sh"' in script
     assert "git fetch --quiet origin main" in script
 
 
@@ -30,6 +33,19 @@ def test_dependencies_are_prepared_before_code_is_deployed() -> None:
 
     assert prepare_index < deploy_index
     assert ytdlp_index < deploy_index
+
+
+def test_pot_provider_is_installed_after_deploy_and_before_restart() -> None:
+    """새 설치기는 배치된 뒤 실행하고, 실패하면 서비스 재시작 전에 중단합니다."""
+    script = read_update_script()
+    update_flow = script.split("main() {", 1)[1]
+
+    deploy_index = update_flow.index("deploy_code")
+    provider_index = update_flow.index("update_pot_provider")
+    restart_index = update_flow.index('restart_service "$reason"')
+
+    assert deploy_index < provider_index < restart_index
+    assert "PO Token 제공자 설치 실패로 이전 코드 복구" in script
 
 
 def test_failed_update_is_logged_and_marked_for_retry() -> None:

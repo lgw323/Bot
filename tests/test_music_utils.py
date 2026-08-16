@@ -1,6 +1,8 @@
 import pytest
 import discord
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
+
+import cogs.music.music_utils as music_utils
 
 from cogs.music.music_utils import (
     Song,
@@ -97,15 +99,120 @@ def test_extract_info_uses_fresh_ytdlp_session(mock_youtube_dl) -> None:
     )
 
 
-@patch("cogs.music.music_utils.version", return_value="1.2.3")
+def _create_pot_provider_tree(tmp_path):
+    server_home = tmp_path / "bgutil-ytdlp-pot-provider" / "server"
+    (server_home / "src").mkdir(parents=True)
+    (server_home / "src" / "generate_once.ts").write_text(
+        "// test provider",
+        encoding="utf-8",
+    )
+    (server_home / "node_modules").mkdir()
+    return server_home
+
+
+def _runtime_version(package_name: str) -> str:
+    versions = {
+        "yt-dlp-ejs": "0.8.0",
+        "bgutil-ytdlp-pot-provider": "1.3.1",
+    }
+    return versions[package_name]
+
+
+def test_ytdlp_options_use_mweb_po_token_provider_when_available(
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    server_home = _create_pot_provider_tree(tmp_path)
+    monkeypatch.setenv("YTDLP_POT_PROVIDER_DIR", str(server_home))
+    monkeypatch.setattr(
+        music_utils,
+        "_find_deno_path",
+        lambda: "/home/os/.local/bin/deno",
+    )
+    monkeypatch.setattr(music_utils, "version", _runtime_version)
+
+    options = music_utils.build_ytdl_options()
+
+    assert "http_headers" not in options
+    assert options["extractor_args"]["youtube"]["player_client"] == ["mweb"]
+    assert options["extractor_args"]["youtubepot-bgutilscript"][
+        "server_home"
+    ] == [str(server_home)]
+
+
+def test_ytdlp_options_fall_back_when_po_provider_files_are_missing(
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("YTDLP_POT_PROVIDER_DIR", str(tmp_path / "missing"))
+    monkeypatch.setattr(
+        music_utils,
+        "_find_deno_path",
+        lambda: "/home/os/.local/bin/deno",
+    )
+    monkeypatch.setattr(music_utils, "version", _runtime_version)
+
+    options = music_utils.build_ytdl_options()
+
+    assert "extractor_args" not in options
+    assert "http_headers" not in options
+
+
+@patch("cogs.music.music_utils.yt_dlp.YoutubeDL")
+def test_extract_info_falls_back_after_po_token_generation_failure(
+    mock_youtube_dl,
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    server_home = _create_pot_provider_tree(tmp_path)
+    monkeypatch.setenv("YTDLP_POT_PROVIDER_DIR", str(server_home))
+    monkeypatch.setattr(
+        music_utils,
+        "_find_deno_path",
+        lambda: "/home/os/.local/bin/deno",
+    )
+    monkeypatch.setattr(music_utils, "version", _runtime_version)
+
+    options_seen = []
+
+    def make_downloader(options):
+        options_seen.append(options)
+        downloader = MagicMock()
+        downloader.__enter__.return_value = downloader
+        if len(options_seen) == 1:
+            options["logger"].warning(
+                '[youtube] [pot] Error fetching PO Token from '
+                '"bgutil:script-deno" provider',
+            )
+            downloader.extract_info.return_value = {"title": "unsigned"}
+        else:
+            downloader.extract_info.return_value = {"title": "fallback"}
+        return downloader
+
+    mock_youtube_dl.side_effect = make_downloader
+
+    assert extract_info("test-query") == {"title": "fallback"}
+    assert "extractor_args" in options_seen[0]
+    assert "extractor_args" not in options_seen[1]
+
+
+@patch("cogs.music.music_utils.version", side_effect=_runtime_version)
 @patch("cogs.music.music_utils._find_deno_path", return_value="/home/os/.local/bin/deno")
 def test_ytdlp_runtime_status_accepts_deno_and_ejs(
     mock_find_deno,
     mock_version,
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    server_home = _create_pot_provider_tree(tmp_path)
+    monkeypatch.setenv("YTDLP_POT_PROVIDER_DIR", str(server_home))
+
     assert log_ytdlp_runtime_status() is True
     mock_find_deno.assert_called_once_with()
-    mock_version.assert_called_once_with("yt-dlp-ejs")
+    assert mock_version.call_args_list == [
+        call("yt-dlp-ejs"),
+        call("bgutil-ytdlp-pot-provider"),
+    ]
 
 @pytest.mark.asyncio
 async def test_music_states_io(tmp_path) -> None:

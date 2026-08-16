@@ -105,7 +105,8 @@ rm deno deno-aarch64-unknown-linux-gnu.zip deno-aarch64-unknown-linux-gnu.zip.sh
 
 `/home/os/.local/bin/deno --version`의 첫 줄이 2.0.0 이상이어야 합니다. Python 패키지 설치 단계의
 `yt-dlp[default]`는 현재 yt-dlp와 버전이 맞는 `yt-dlp-ejs` challenge solver를
-함께 설치합니다.
+함께 설치합니다. 곡별 PO Token 생성기는 코드를 받은 뒤 4단계의 전용 스크립트로
+설치합니다.
 
 ---
 
@@ -140,7 +141,11 @@ source bot_env/bin/activate
 # 3. 봇 실행에 필요한 모든 파이썬 라이브러리를 한 번에 설치합니다.
 pip install -r requirements.txt
 
-# 4. 실행 스크립트와 데이터 폴더에 필요한 최소 권한만 부여합니다.
+# 4. 계정 쿠키 없이 곡별 PO Token을 만드는 Deno 제공자를 설치합니다.
+chmod 755 scripts/install_pot_provider.sh
+scripts/install_pot_provider.sh
+
+# 5. 실행 스크립트와 데이터 폴더에 필요한 최소 권한만 부여합니다.
 chmod 755 scripts/auto_update.sh scripts/auto_backup.sh
 install -d -m 700 data data/logs
 ```
@@ -148,6 +153,12 @@ install -d -m 700 data data/logs
 `777`처럼 모든 사용자가 수정할 수 있는 권한은 사용하지 않습니다. 스크립트는
 소유자만 수정하고 다른 사용자는 읽고 실행만 할 수 있으며, 데이터 폴더는 `os`
 사용자만 접근할 수 있게 합니다.
+
+PO Token 제공자는 `/home/os/.local/share/bgutil-ytdlp-pot-provider`에 버전 고정으로
+설치됩니다. 상시 HTTP 포트를 열지 않고 음악 추출 요청 때만 Deno 스크립트를
+실행하며, 토큰 캐시는 권한 `700`인
+`/home/os/.cache/bgutil-ytdlp-pot-provider`에 둡니다. 설치는 임시 후보를 먼저
+검증한 뒤 교체하므로 실패하면 기존 제공자를 유지합니다.
 
 ---
 
@@ -250,7 +261,7 @@ crontab -e
 # 1. [실시간 감지] GitHub 코드 변경 또는 이전 실패를 확인하고 재시도 (5분 주기)
 */5 * * * * /home/os/bot/scripts/auto_update.sh
 
-# 2. [일일 정기 점검] yt-dlp와 EJS를 함께 최신화하고 성공 시 봇 재시작 (매일 새벽 04:00)
+# 2. [일일 정기 점검] yt-dlp·EJS·PO Token 제공자를 점검하고 성공 시 봇 재시작 (매일 새벽 04:00)
 3 4 * * * /home/os/bot/scripts/auto_update.sh --daily
 
 # 3. [데이터 백업] 6시간마다 별도 비공개 저장소의 'db-backup' 브랜치로 단일 푸시 및 내부 최대 7일 롤백 저장 (0, 6, 12, 18시)
@@ -278,8 +289,9 @@ crontab -e
 > 맞춥니다. 새 코드로 서비스가 정상 재시작한 뒤에는 이번에 폐기한 음성 수신,
 > 음성 인식, 이전 YouTube 검색 및 옛 Gemini 패키지를 제거합니다. 제거 작업만
 > 실패한 경우 실행 중인 봇은 유지하고 경고를 기록합니다. `--daily`는 YouTube
-> 변경 대응이 필요한 `yt-dlp`와 그 버전에 맞는 `yt-dlp-ejs`만 함께
-> 최신화합니다.
+> 변경 대응이 필요한 `yt-dlp`, 그 버전에 맞는 `yt-dlp-ejs`, 버전 고정된
+> PO Token 플러그인과 Deno 제공자를 함께 점검합니다. 제공자가 이미 같은 버전이면
+> 다시 내려받지 않습니다.
 >
 > Git 조회, 패키지 설치 또는 서비스 재시작이 실패하면 성공 로그를 남기지 않으며
 > `data/update_pending`을 만들어 다음 5분 cron 실행에서 다시 시도합니다. 새 코드로
