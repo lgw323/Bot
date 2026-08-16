@@ -98,8 +98,6 @@
 - `README.md`에는 기능 개요, 로컬 시작 방법과 문서 안내만 둡니다.
 - `docs/product-spec.md`에는 제품 의도, 유지할 동작과 알려진 위험을 기록합니다.
 - `docs/operations.md`에는 Raspberry Pi 설치·운영·복구 절차만 기록합니다.
-- `docs/archive/`에는 완료된 과거 작업의 시점별 보고서만 보관하며 현재 사양의
-  근거로 사용하지 않습니다.
 - 테스트 실행 방법은 `README.md`, 테스트 작업 원칙은 이 `AGENTS.md`, 기능별
   유지 계약은 `docs/product-spec.md`에서 관리합니다.
 - 이 `AGENTS.md`에는 코딩 에이전트의 작업 규칙만 두고 제품 설명을 중복해 늘리지 않습니다.
