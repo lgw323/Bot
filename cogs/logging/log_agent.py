@@ -4,9 +4,11 @@ import logging
 import traceback
 import asyncio
 import subprocess
+import re
+import time
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 
 import discord
 from discord.ext import commands
@@ -35,6 +37,19 @@ PROJECT_LOGGER_NAMES = (
     "WatchServer",
     "cogs",
 )
+TRANSIENT_NETWORK_KEYWORDS = (
+    "WSServerHandshakeError",
+    "ConnectionClosed",
+    "Invalid response status",
+    "WebSocket closed with 1006",
+    "Disconnected from voice",
+    "Attempting a reconnect",
+    "ClientConnectorError",
+    "gaierror",
+    "websockets.exceptions",
+    "discord.errors.ConnectionClosed",
+)
+DISCORD_LOG_DEDUP_SECONDS = 60.0
 
 
 class WatchSessionControlView(discord.ui.View):
@@ -103,13 +118,64 @@ class RestartControlView(discord.ui.View):
 
 class DiscordLogHandler(logging.Handler):
     """
-    [커스텀 핸들러]
-    ERROR 레벨 이상의 로그를 감지하면, 지정된 디스코드 채널로 비동기 전송합니다.
+    프로젝트 WARNING 이상과 모든 ERROR 로그를 관리자 채널로 전송합니다.
+
+    복구 가능한 일시적 네트워크 WARNING과 짧은 시간 안에 반복되는 동일 메시지는
+    억제하지만, ERROR는 원인 종류와 무관하게 전달합니다.
     """
     def __init__(self, bot: commands.Bot) -> None:
         super().__init__()
         self.bot: commands.Bot = bot
         self.target_channel: Optional[discord.TextChannel] = None
+        self._recent_records: Dict[str, float] = {}
+
+    def _is_project_record(self, record: logging.LogRecord) -> bool:
+        return any(
+            record.name == logger_name
+            or record.name.startswith(f"{logger_name}.")
+            for logger_name in PROJECT_LOGGER_NAMES
+        )
+
+    def _is_transient_network_record(
+        self,
+        record: logging.LogRecord,
+    ) -> bool:
+        message = record.getMessage()
+        exception_text = ""
+        if record.exc_info:
+            exception_text = "".join(
+                traceback.format_exception(*record.exc_info)
+            )
+        return any(
+            keyword in message or keyword in exception_text
+            for keyword in TRANSIENT_NETWORK_KEYWORDS
+        )
+
+    def should_emit(self, record: logging.LogRecord) -> bool:
+        if record.levelno < logging.WARNING:
+            return False
+        if record.levelno < logging.ERROR and not self._is_project_record(record):
+            return False
+        if (
+            record.levelno < logging.ERROR
+            and self._is_transient_network_record(record)
+        ):
+            return False
+
+        key = f"{record.levelno}:{record.name}:{record.getMessage()}"
+        now = time.monotonic()
+        previous = self._recent_records.get(key)
+        if previous is not None and now - previous < DISCORD_LOG_DEDUP_SECONDS:
+            return False
+        self._recent_records[key] = now
+
+        cutoff = now - DISCORD_LOG_DEDUP_SECONDS
+        self._recent_records = {
+            record_key: timestamp
+            for record_key, timestamp in self._recent_records.items()
+            if timestamp >= cutoff
+        }
+        return True
 
     def emit(self, record: logging.LogRecord) -> None:
         """
@@ -120,33 +186,14 @@ class DiscordLogHandler(logging.Handler):
             if LOG_CHANNEL_ID == 0 or not self.bot.is_ready():
                 return
 
-            # 2. ERROR 이상의 심각한 문제만 필터링 (INFO, DEBUG는 무시)
-            if record.levelno >= logging.ERROR:
-                # 3. 네트워크 관련 일시적/재연결성 오류 필터링 (디스코드 채널 스팸 방지)
-                msg = record.getMessage()
-                exc_text = ""
-                if record.exc_info:
-                    exc_text = "".join(traceback.format_exception(*record.exc_info))
+            if not self.should_emit(record):
+                return
 
-                # 디스코드 채널 전송에서 무시할 일시적 네트워크 관련 키워드
-                ignored_keywords = [
-                    "WSServerHandshakeError",
-                    "ConnectionClosed",
-                    "Invalid response status",
-                    "WebSocket closed with 1006",
-                    "Disconnected from voice",
-                    "Attempting a reconnect",
-                    "ClientConnectorError",
-                    "gaierror",
-                    "websockets.exceptions",
-                    "discord.errors.ConnectionClosed"
-                ]
-
-                if any(kw in msg or kw in exc_text for kw in ignored_keywords):
-                    return
-
-                # 다른 스레드에서 들어올 수 있으므로 run_coroutine_threadsafe를 사용합니다.
-                asyncio.run_coroutine_threadsafe(self._async_emit(record), self.bot.loop)
+            # 다른 스레드에서 들어올 수 있으므로 run_coroutine_threadsafe를 사용합니다.
+            asyncio.run_coroutine_threadsafe(
+                self._async_emit(record),
+                self.bot.loop,
+            )
         except Exception:
             # 재귀적인 예외 발생을 방지하기 위해 로거 대신 stderr에만 출력
             sys.stderr.write("[DiscordLogHandler] 로그 emit 중 내부 오류 발생\n")
@@ -165,16 +212,23 @@ class DiscordLogHandler(logging.Handler):
             if self.target_channel:
                 # 로그 메시지 포맷팅
                 msg: str = self.format(record)
+                msg = re.sub(r"https?://\S+", "[URL 생략]", msg)
+                msg = re.sub(r"\b\d{15,20}\b", "[ID 생략]", msg)
                 
                 # 디스코드 메시지 길이 제한(2000자) 처리
                 if len(msg) > 1900:
                     msg = msg[:1900] + "...(내용이 너무 길어 생략됨)"
                 
                 # 가독성을 위한 Embed 생성
+                is_error = record.levelno >= logging.ERROR
                 embed: discord.Embed = discord.Embed(
-                    title="🚨 시스템 오류 발생 (System Error)", 
+                    title=(
+                        "🚨 시스템 오류 발생 (System Error)"
+                        if is_error
+                        else "⚠️ 시스템 경고 발생 (System Warning)"
+                    ),
                     description=f"```log\\n{msg}\\n```",
-                    color=0xFF0000  # 빨간색
+                    color=0xFF0000 if is_error else 0xF1C40F,
                 )
                 
                 # 발생 위치 정보 (모듈명, 라인 번호)
@@ -183,12 +237,18 @@ class DiscordLogHandler(logging.Handler):
                 
                 await self.target_channel.send(embed=embed)
                 
-                if hasattr(self, 'cog') and getattr(self, 'cog'):
+                if (
+                    is_error
+                    and hasattr(self, 'cog')
+                    and getattr(self, 'cog')
+                ):
                     await self.cog.send_control_panel(self.target_channel)
 
-        except Exception:
-            # 재귀 에러 방지용 내부 try-except (디스코드 전송 실패 또는 예외 처리 시 조용히 무시)
-            pass
+        except Exception as error:
+            # 재귀 에러를 피하면서 전송 실패 자체는 systemd journal에 남깁니다.
+            sys.stderr.write(
+                f"[DiscordLogHandler] Discord 로그 전송 실패: {error}\n"
+            )
 
 class LogAgentCog(commands.Cog, name="LogAgent"):
     """

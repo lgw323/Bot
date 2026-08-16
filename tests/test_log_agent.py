@@ -11,6 +11,55 @@ from cogs.logging.log_agent import (
 )
 
 class TestLogAgent:
+
+    def test_discord_log_policy_reports_project_warning_and_all_errors(self):
+        handler = DiscordLogHandler(MagicMock())
+        project_warning = logging.LogRecord(
+            "cogs.music.music_core",
+            logging.WARNING,
+            "music_core.py",
+            1,
+            "stream retry",
+            (),
+            None,
+        )
+        external_warning = logging.LogRecord(
+            "discord.gateway",
+            logging.WARNING,
+            "gateway.py",
+            1,
+            "transient warning",
+            (),
+            None,
+        )
+        external_error = logging.LogRecord(
+            "discord.gateway",
+            logging.ERROR,
+            "gateway.py",
+            1,
+            "ConnectionClosed 1006",
+            (),
+            None,
+        )
+
+        assert handler.should_emit(project_warning) is True
+        assert handler.should_emit(external_warning) is False
+        assert handler.should_emit(external_error) is True
+
+    def test_discord_log_policy_deduplicates_identical_records(self):
+        handler = DiscordLogHandler(MagicMock())
+        record = logging.LogRecord(
+            "cogs.music.music_core",
+            logging.ERROR,
+            "music_core.py",
+            1,
+            "HTTP 403 Forbidden",
+            (),
+            None,
+        )
+
+        assert handler.should_emit(record) is True
+        assert handler.should_emit(record) is False
     
     @pytest.mark.asyncio
     @patch("cogs.logging.log_agent.LOG_CHANNEL_ID", 12345)
