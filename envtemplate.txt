@@ -33,6 +33,14 @@ LOG_CHANNEL_ID=censored
 # 음악 명령어를 사용할 채널 ID
 MUSIC_CHANNEL_ID=censored
 
+# 음악 재생 엔진: download(기본, 임시 cache 후 로컬 재생) / direct(롤백용)
+MUSIC_PLAYBACK_BACKEND=download
+
+# 음악 임시 cache 제한(선택, 아래는 기본값)
+MUSIC_CACHE_MAX_BYTES=536870912
+MUSIC_TRACK_MAX_BYTES=104857600
+MUSIC_CACHE_MAX_AGE_SECONDS=86400
+
 
 # ==========================================
 # [4. 요약 기능 설정 (Summary Agent)]

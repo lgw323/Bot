@@ -103,6 +103,8 @@ python -m pytest tests/ -W error::RuntimeWarning -W error::pytest.PytestUnraisab
 | --- | --- |
 | `README.md` | 기능 개요와 로컬 시작 방법 |
 | `docs/product-spec.md` | 제품 의도, 유지해야 할 동작과 알려진 위험 |
+| `docs/system-design.md` | 전체 기능의 유즈케이스, 구성요소와 실행 흐름 |
+| `docs/music-engine-rebuild-plan.md` | 음악 403 분석과 안전한 재생 엔진 교체 계획 |
 | `docs/operations.md` | Raspberry Pi 설치·운영·복구 절차 |
 | `AGENTS.md` | 이 저장소에서 작업하는 코딩 에이전트의 규칙 |
 | `CHANGELOG.md` | 실제로 완료된 변경 이력 |

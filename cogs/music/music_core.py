@@ -10,7 +10,6 @@ from typing import Optional
 from datetime import datetime, timedelta
 import time
 
-import shlex
 import discord
 from discord.ext import commands
 
@@ -22,8 +21,13 @@ except ImportError:
     logging.getLogger(__name__).warning("rapidfuzz 라이브러리를 찾을 수 없습니다.")
 
 from .music_utils import (
-    Song, LoopMode, extract_info as extract_ytdlp_info,
+    Song, LoopMode,
     increment_play_count,
+)
+from .music_playback import (
+    PlaybackBackend,
+    PlaybackPreparationCancelled,
+    create_playback_backend,
 )
 from .music_ui import MusicPlayerView
 
@@ -115,7 +119,14 @@ class ErrorAwarePCMVolumeTransformer(discord.PCMVolumeTransformer):
 class MusicState:
     PLAYBACK_RETRY_DELAYS = (3.0, 8.0)
 
-    def __init__(self, bot: commands.Bot, cog: commands.Cog, guild: discord.Guild, initial_volume: float = 0.5) -> None:
+    def __init__(
+        self,
+        bot: commands.Bot,
+        cog: commands.Cog,
+        guild: discord.Guild,
+        initial_volume: float = 0.5,
+        playback_backend: Optional[PlaybackBackend] = None,
+    ) -> None:
         self.bot: commands.Bot = bot
         self.cog: commands.Cog = cog
         self.guild: discord.Guild = guild
@@ -138,6 +149,11 @@ class MusicState:
         self.playback_retry_song: Optional[Song] = None
         self.playback_retry_not_before: float = 0.0
         self.playback_retry_cancelled: asyncio.Event = asyncio.Event()
+        self.playback_backend = playback_backend or create_playback_backend(
+            guild.id
+        )
+        self.preparing_song: Optional[Song] = None
+        self.preparation_skipped_song: Optional[Song] = None
         self.ffmpeg_stderr: Optional[FFmpegStderrCapture] = None
         self.is_tts_interrupting: bool = False
         self.update_lock: asyncio.Lock = asyncio.Lock()
@@ -391,6 +407,7 @@ class MusicState:
                 try: await self.voice_client.disconnect(force=True)
                 except Exception as e: logger.warning(f"[{self.guild.name}] 음성 채널 퇴장 중 오류: {e}")
                 self.voice_client = None
+        await self.playback_backend.close()
         if self.now_playing_message and update_ui:
             await self.schedule_ui_update()
     
@@ -482,6 +499,14 @@ class MusicState:
         self.play_next_song.set()
         return True
 
+    def cancel_active_preparation(self) -> bool:
+        song = self.preparing_song
+        if song is None:
+            return False
+        self.preparation_skipped_song = song
+        self.playback_backend.cancel_current()
+        return True
+
     def _select_next_song(self) -> Optional[Song]:
         if self.playback_retry_song is not None:
             retry_song = self.playback_retry_song
@@ -531,44 +556,26 @@ class MusicState:
                 await self.cog.cleanup_channel_messages(self)
             
             try:
-                data = await self.bot.loop.run_in_executor(
-                    None,
-                    lambda: extract_ytdlp_info(
-                        self.current_song.webpage_url,
-                        download=False,
-                    ),
+                self.preparing_song = self.current_song
+                await self.set_task("⬇️ 음악을 안전하게 준비하는 중...")
+                prepared = await self.playback_backend.prepare(
+                    self.current_song,
+                    self.seek_time,
                 )
-                stream_url = data.get('url')
-                if not stream_url:
-                    if self.text_channel: await self.text_channel.send(f"❌ '{self.current_song.title}'을(를) 재생할 수 없습니다.", delete_after=20)
-                    self.handle_after_play(ValueError("스트림 URL을 찾을 수 없음"))
+                if self.preparation_skipped_song is self.current_song:
+                    self.current_song = None
+                    self.preparation_skipped_song = None
+                    self.consecutive_play_failures = 0
+                    self.play_next_song.set()
                     continue
-                
-                self.current_song.stream_url = stream_url
-                
-                # 1. 기본 reconnect 및 stdin 옵션 구성
-                before_opts = '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -nostdin'
-                
-                # 2. 재생 시점에만 ss 탐색 옵션 동적 추가 (ss 0으로 인한 에러 방지)
-                if self.seek_time > 0:
-                    before_opts += f' -ss {self.seek_time}'
-                
-                # 3. HTTP 403 Forbidden 방지를 위해 yt-dlp의 http_headers 주입
-                headers = data.get('http_headers')
-                if headers:
-                    header_str = "".join(f"{k}: {v}\r\n" for k, v in headers.items())
-                    before_opts += f' -headers {shlex.quote(header_str)}'
-                
-                ffmpeg_options = {
-                    'before_options': before_opts,
-                    'options': '-vn'
-                }
-                
+
+                self.current_song.stream_url = prepared.stream_url
                 self.ffmpeg_stderr = FFmpegStderrCapture()
                 ffmpeg_source = discord.FFmpegPCMAudio(
-                    stream_url,
+                    prepared.source,
                     stderr=self.ffmpeg_stderr,
-                    **ffmpeg_options,
+                    before_options=prepared.before_options,
+                    options=prepared.options,
                 )
                 source = ErrorAwarePCMVolumeTransformer(
                     ffmpeg_source,
@@ -588,12 +595,20 @@ class MusicState:
                 self.pause_start_time = None
                 self.total_paused_duration = timedelta(seconds=0)
                 self.seek_time = 0
-                
+                await self.clear_task()
                 await self.schedule_ui_update()
 
+            except PlaybackPreparationCancelled:
+                self.current_song = None
+                self.preparation_skipped_song = None
+                self.consecutive_play_failures = 0
+                self.play_next_song.set()
+                continue
             except Exception as e:
                 self.handle_after_play(e)
                 continue
+            finally:
+                self.preparing_song = None
 
             if self.loop_mode == LoopMode.QUEUE and self.current_song:
                 self.queue.append(self.current_song)
@@ -630,6 +645,8 @@ class MusicState:
         self.consecutive_play_failures += 1
         failure_count = self.consecutive_play_failures
         song = self.current_song
+        if song is not None:
+            self.playback_backend.discard(song)
         error_name = type(error).__name__
         details = stderr_summary or str(error)
         details = re.sub(r"https?://\S+", "[URL 생략]", details)[:800]

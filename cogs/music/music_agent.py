@@ -376,6 +376,8 @@ class MusicAgentCog(commands.Cog):
         if state.current_song and state.voice_client:
             if state.cancel_pending_playback_retry():
                 await state.schedule_ui_update()
+            elif state.cancel_active_preparation():
+                await state.schedule_ui_update()
             else:
                 state.voice_client.stop()
             await interaction.response.send_message("⏭️ 현재 노래를 건너뛰었습니다.", ephemeral=True, delete_after=5)

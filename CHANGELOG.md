@@ -25,7 +25,18 @@
 - 관리자 Discord 로그는 프로젝트 WARNING 이상과 모든 ERROR를 전달하되,
   일시적 네트워크 WARNING과 60초 내 동일 메시지만 중복 억제하도록 조정했습니다.
 
+### Documentation
+- 현재 전체 기능의 유즈케이스, 구성요소, 상태와 데이터 흐름을 설명하는 시스템
+  설계 문서를 추가했습니다.
+- 음악 403의 확인된 실패 경계와 기존 동작을 보존하는 재생 엔진 단계적 교체 계획을
+  기록했습니다.
+
 ### Fixed
+- 최근 강제한 mweb Googlevideo URL이 일부 곡에서 768KB 이후 또는 FFmpeg의 열린
+  Range 요청을 HTTP 403으로 거부하던 문제를 수정했습니다. 기본 음악 엔진은
+  `web_embedded`와 `android_vr` client로 제한된 임시 cache에 완전히 받은 뒤 로컬
+  FFmpeg로 재생하며, 다운로드 중 건너뛰기·부분 파일 정리·실패 cache 폐기를
+  지원합니다. 기존 직접 URL 방식은 설정 기반 rollback 경로로 유지합니다.
 - 음악 UI와 재생목록·즐겨찾기·대기열 관리가 존재하지 않는
   `MusicState.cancel_autoplay_task()`를 호출해 중단되던 문제를 수정하고,
   진행 중인 추천 검색만 안전하게 취소하도록 했습니다.

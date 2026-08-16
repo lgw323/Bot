@@ -11,6 +11,7 @@ from cogs.music.music_core import (
     ErrorAwarePCMVolumeTransformer,
     MusicState,
 )
+from cogs.music.music_playback import PlaybackBackend, PreparedMedia
 from cogs.music.music_utils import LoopMode
 
 @pytest.fixture
@@ -148,7 +149,13 @@ async def test_playback_error_requeues_song_for_fresh_extraction(
     caplog: pytest.LogCaptureFixture,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    state = MusicState(mock_bot, mock_cog, mock_guild)
+    backend = MagicMock(spec=PlaybackBackend)
+    state = MusicState(
+        mock_bot,
+        mock_cog,
+        mock_guild,
+        playback_backend=backend,
+    )
     song = MagicMock()
     state.current_song = song
     state.loop_mode = LoopMode.NONE
@@ -168,6 +175,7 @@ async def test_playback_error_requeues_song_for_fresh_extraction(
     assert "3초" in state.current_task
     assert "자동 재시도" in caplog.text
     assert "403 Forbidden" in caplog.text
+    backend.discard.assert_called_once_with(song)
 
 
 @pytest.mark.asyncio
@@ -179,6 +187,7 @@ async def test_second_playback_failure_uses_longer_backoff(
 ) -> None:
     state = MusicState(mock_bot, mock_cog, mock_guild)
     song = MagicMock()
+    song.webpage_url = "https://example.invalid/second-failure"
     state.current_song = song
     state.queue.append(song)
     state.consecutive_play_failures = 1
@@ -260,6 +269,97 @@ def test_pending_retry_selection_ignores_loop_mode_changes(
     assert list(state.queue) == [another_song]
 
 
+def test_active_download_preparation_can_be_skipped(
+    mock_bot: MagicMock,
+    mock_cog: MagicMock,
+    mock_guild: MagicMock,
+) -> None:
+    backend = MagicMock(spec=PlaybackBackend)
+    state = MusicState(
+        mock_bot,
+        mock_cog,
+        mock_guild,
+        playback_backend=backend,
+    )
+    song = MagicMock()
+    state.current_song = song
+    state.preparing_song = song
+
+    assert state.cancel_active_preparation() is True
+    assert state.preparation_skipped_song is song
+    backend.cancel_current.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+async def test_play_loop_uses_prepared_backend_media(
+    mock_guild: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bot = MagicMock()
+    bot.loop = asyncio.get_running_loop()
+    bot.wait_until_ready = AsyncMock()
+    bot.is_closed.side_effect = [False, True]
+    cog = MagicMock()
+    cog.cleanup_channel_messages = AsyncMock()
+    backend = MagicMock(spec=PlaybackBackend)
+    backend.prepare = AsyncMock(
+        return_value=PreparedMedia(
+            source="/tmp/cached-track.webm",
+            before_options="-nostdin -ss 14",
+        )
+    )
+    backend.close = AsyncMock()
+    voice_client = MagicMock()
+    voice_client.is_connected.return_value = True
+    voice_client.is_playing.return_value = False
+    song = MagicMock()
+    song.webpage_url = "https://example.invalid/watch"
+    song.title = "Track"
+    fake_ffmpeg_source = MagicMock()
+    fake_volume_source = MagicMock()
+    ffmpeg_constructor = MagicMock(return_value=fake_ffmpeg_source)
+    volume_constructor = MagicMock(return_value=fake_volume_source)
+    increment_play_count = AsyncMock()
+    monkeypatch.setattr(
+        "cogs.music.music_core.discord.FFmpegPCMAudio",
+        ffmpeg_constructor,
+    )
+    monkeypatch.setattr(
+        "cogs.music.music_core.ErrorAwarePCMVolumeTransformer",
+        volume_constructor,
+    )
+    monkeypatch.setattr(
+        "cogs.music.music_core.increment_play_count",
+        increment_play_count,
+    )
+
+    state = MusicState(
+        bot,
+        cog,
+        mock_guild,
+        playback_backend=backend,
+    )
+    state.voice_client = voice_client
+    state.seek_time = 14
+    state.schedule_ui_update = AsyncMock()
+    state.queue.append(song)
+    await asyncio.sleep(0)
+    state.play_next_song.set()
+    assert state.main_task is not None
+    await state.main_task
+    await asyncio.sleep(0)
+
+    backend.prepare.assert_awaited_once_with(song, 14)
+    ffmpeg_constructor.assert_called_once_with(
+        "/tmp/cached-track.webm",
+        stderr=state.ffmpeg_stderr,
+        before_options="-nostdin -ss 14",
+        options="-vn",
+    )
+    voice_client.play.assert_called_once()
+    assert voice_client.play.call_args.args[0] is fake_volume_source
+
+
 @pytest.mark.asyncio
 async def test_third_playback_error_skips_song_and_notifies_channel(
     mock_bot: MagicMock,
@@ -268,6 +368,7 @@ async def test_third_playback_error_skips_song_and_notifies_channel(
 ) -> None:
     state = MusicState(mock_bot, mock_cog, mock_guild)
     song = MagicMock()
+    song.webpage_url = "https://example.invalid/third-failure"
     state.current_song = song
     state.queue.append(song)
     state.consecutive_play_failures = 2

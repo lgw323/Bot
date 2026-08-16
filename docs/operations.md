@@ -160,6 +160,28 @@ PO Token 제공자는 `/home/os/.local/share/bgutil-ytdlp-pot-provider`에 버�
 `/home/os/.cache/bgutil-ytdlp-pot-provider`에 둡니다. 설치는 임시 후보를 먼저
 검증한 뒤 교체하므로 실패하면 기존 제공자를 유지합니다.
 
+### 음악 재생 backend와 임시 cache
+
+기본값은 `MUSIC_PLAYBACK_BACKEND=download`입니다. yt-dlp가 먼저 곡을 OS 임시
+폴더의 guild별 cache에 완전히 받은 뒤 FFmpeg가 로컬 파일만 읽습니다. 기본 제한은
+곡당 100MB, 전체 512MB, 미사용 24시간이며 Cog 종료 시 cache를 정리합니다. URL과
+제목은 파일명에 넣지 않고 hash만 사용합니다.
+
+```dotenv
+MUSIC_PLAYBACK_BACKEND=download
+MUSIC_CACHE_MAX_BYTES=536870912
+MUSIC_TRACK_MAX_BYTES=104857600
+MUSIC_CACHE_MAX_AGE_SECONDS=86400
+```
+
+새 backend에 운영 문제가 생기면 `.env`에서 아래처럼 바꾸고 서비스를 재시작하면
+기존 직접 URL 재생 방식으로 즉시 rollback할 수 있습니다. `direct`는 일부 곡의
+Googlevideo HTTP 403이 다시 발생할 수 있으므로 임시 rollback 용도입니다.
+
+```dotenv
+MUSIC_PLAYBACK_BACKEND=direct
+```
+
 ---
 
 ## 🔑 5단계: 환경변수 설정 (.env 파일 옮기기)
