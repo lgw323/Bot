@@ -49,6 +49,9 @@
 | [23 Decision log](23-decision-log.md) | 승인된 architecture와 product decision ADR |
 | [24 Requirement/test trace](24-requirement-test-trace.md) | F001–F045 ↔ FR ↔ 현재/계획 test |
 | [25 Phase 0 baseline](25-phase-0-baseline.md) | 결정 closure, V1 test 결과, Pi 측정 계획과 Phase 1 gate |
+| [26 Phase 1 characterization contracts](26-characterization-contracts.md) | command/UI/music/engagement/Summary/Watch/DB의 PRESERVE·CORRECT 계약 |
+| [27 Concurrency and failure plan](27-concurrency-failure-plan.md) | deterministic race/fault scenario, invariant와 담당 Phase |
+| [28 Phase 1 characterization](28-phase-1-characterization.md) | PHASE 1 완료 결과, test/compatibility/risk와 PHASE 2 gate |
 
 ## 증거 표기
 

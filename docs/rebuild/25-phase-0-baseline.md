@@ -103,7 +103,8 @@ PHASE 0에서는 runtime bug를 수정하지 않았다. 다음 결함을 V2 요�
 
 ### Documentation Updated
 
-- `01-current-system-overview.md`: 실제 Pi model을 확인 전 확정하지 않도록 정정
+- `01-current-system-overview.md`: PHASE 0에서는 Pi model을 미확정으로 두었고, PHASE 1의
+  사용자 결정으로 Raspberry Pi 5/Ubuntu 24.04 ARM64/Ethernet target을 확정
 - `12-functional-requirements.md`: 승인된 master/guild/help/play-count/volume/Summary/XP/birthday 결정 반영
 - `22-open-questions.md`: BLOCKER 8개 closure와 deferred measurement gate 분리
 - `23-decision-log.md`: ADR-001–012 ACCEPTED, ADR-013–015 추가

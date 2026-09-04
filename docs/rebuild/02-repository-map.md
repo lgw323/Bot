@@ -97,7 +97,7 @@ Uvicorn 0.51.0, aiohttp 3.14.3, yt-dlp 2026.07.04다. 이는 로컬 관찰값이
 - Deno: YouTube challenge와 PO-token provider
 - Git: source update, private backup fetch/push
 - Bash, systemd, cron, curl, unzip, sqlite3: 운영 문서/스크립트
-- Cloudflare Tunnel: 문서에만 있으며 설정 파일은 저장소에 없음
+- 새 Watch Tunnel/DNS: 기존 Cloudflare 구성은 폐기됐고 새 설정 파일은 아직 저장소에 없음
 
 ## 환경 변수
 

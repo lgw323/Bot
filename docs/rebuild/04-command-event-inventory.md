@@ -7,7 +7,7 @@
 | `/요약` | 최근 `hours`시간 요약 | guild, 수집 자료; source channel ACL 검증 없음 | deque read, Gemini, 공개 embed | 자료 없음/AI 오류 메시지; long call은 defer |
 | `/재생` | URL 또는 검색어 재생 | 음악 정책에 맞는 voice/channel | yt-dlp, voice connect, queue mutation, 원문/log | route/Cog/metadata/voice 오류 응답 |
 | `/시청` | 공동 시청방 개설 | guild | Discord invite 먼저 전송, DB session insert, 관리 알림 | insert 실패 시 이미 응답한 interaction에 재응답 가능 |
-| `/내정보` | 본인 또는 `user` XP 조회 | guild | `users` read, 공개 profile | 사용자 자료 없음/DB 오류 |
+| `/내정보` | 본인 또는 `user` XP 조회 | guild | `users` read, ephemeral profile | 사용자 자료 없음/DB 오류 |
 | `/랭킹` | guild ranking, `ephemeral` 선택 | guild | `users` ranking query | DB 오류 메시지 |
 | `/생일등록` | `user month day` | `MASTER_USER_ID` | `users` upsert | month 1–12/day 1–31만 검사, defer 없음 |
 | `/생일삭제` | `user` | master | 생일 column null | 대상/DB 오류, defer 없음 |

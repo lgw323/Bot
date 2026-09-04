@@ -2,13 +2,51 @@
 
 ## Purpose and status vocabulary
 
-이 표는 2026-09-04 PHASE 0에서 V1 코드와 현재 130개 pytest를 직접 대조한 결과다.
+기존 F001–F045 표는 2026-09-04 PHASE 0에서 V1 코드와 당시 130개 pytest를 직접
+대조한 baseline이다.
 `COVERED`는 현재 자동 test가 핵심 사용자 계약을 검증한다는 뜻이고, `PARTIAL`은 helper나
 일부 경로만 검증한다는 뜻이다. `GAP`은 사용자 계약 수준의 test가 없으며,
 `CORRECT-GAP`은 현재 V1 bug를 golden behavior로 만들지 않고 수정 요구만 고정해야 한다.
 
+PHASE 1에서는 `tests/characterization/`을 추가했다. `CHARACTERIZED`는 V1 실행을 통해
+보존 계약이 통과한다는 뜻이고, `CORRECT-SPEC`은 승인된 정상 동작을 test로 표현했다는
+뜻이다. 그 test가 V1 결함 때문에 실패하는 경우 strict `xfail`로 표시하며, 향후 구현으로
+XPASS가 되면 suite가 실패하므로 marker와 trace를 함께 갱신해야 한다.
+
 각 PHASE 1 characterization test에는 `Feature ID`, `FR ID`, `PRESERVE/CORRECT/DECIDE`를
 test name 또는 marker/fixture metadata로 연결한다. 아래 파일명은 `tests/` 기준이다.
+
+## PHASE 1 mandatory-contract overlay
+
+이 표가 PHASE 1 필수 범위의 현재 상태에 대한 우선 근거다. 세부 동작은
+`26-characterization-contracts.md`, race/fault 후속 test는
+`27-concurrency-failure-plan.md`를 따른다.
+
+| Feature | FR | New executable evidence | PHASE 1 status |
+| --- | --- | --- | --- |
+| F001 | FR-001,046 | `test_database_recovery_contracts.py`: corrupt 보존/fail, zero-byte fail-closed spec | CHARACTERIZED + CORRECT-SPEC xfail |
+| F008 | FR-003,004,010,027,030 | `test_discord_contracts.py`, `test_summary_contracts.py`: signature/publicness/error/success/no-data; ACL/60s/active1/queue4/redaction specs | CHARACTERIZED + CORRECT-SPEC xfail |
+| F009/F010 | FR-028,029 | `test_component_contracts.py`: modal/refresh/topic select; >25 pagination spec | CHARACTERIZED + CORRECT-SPEC xfail |
+| F011/F013 | FR-011,012,021 | exact music player/search select/modal inventory; pagination spec | CHARACTERIZED + CORRECT-SPEC xfail |
+| F012 | FR-003,010,012 | `/재생` required string, private defer, unavailable text | CHARACTERIZED |
+| F018 | FR-015 | deterministic 3s/8s/third-skip state test | CHARACTERIZED |
+| F022/F023 | FR-016–018,021 | queue controls, selection and NONE/SONG/QUEUE transition; stable pagination spec | CHARACTERIZED + CORRECT-SPEC xfail |
+| F024 | FR-018,019 | injected provider success and local provider-failure test | CORRECT-SPEC executable success |
+| F025 | FR-020,021 | user-global favorite controls; pagination spec | CHARACTERIZED + CORRECT-SPEC xfail |
+| F028/F045 | FR-024,025 | exact snapshot shape/restore order/settings; legacy 0.5 default spec | CHARACTERIZED + CORRECT-SPEC xfail |
+| F029/F030 | FR-031,032 | text XP table, voice leave/move fake-clock | CHARACTERIZED |
+| F031/F032 | FR-003,032,033 | private profile, option-based ranking, completed-minute profile; ranking parity spec | CHARACTERIZED + CORRECT-SPEC xfail |
+| F033–F036 | FR-003,005,010,034–037 | master/register/delete/list, KST/leap fake-clock; valid date/non-leap policy specs | CHARACTERIZED + CORRECT-SPEC xfail |
+| F037 | FR-003,004,010,038 | `/시청` public/unavailable; durable-before-invite/single-responder specs | CHARACTERIZED + CORRECT-SPEC xfail |
+| F038/F040 | FR-039 | exact HTTP paths/add body plus existing endpoint/CRUD tests | CHARACTERIZED |
+| F039 | FR-040,041 | invalid close, join ordering, all 7 client relay types | CHARACTERIZED |
+| F041 | FR-042 | exact 30s creation + 5s empty fake-clock and disconnect scheduling | CHARACTERIZED |
+| F042 | FR-005,043 | admin button inventory plus existing close/auth/cleanup tests | CHARACTERIZED |
+| F044 | FR-007,010 | mention-only default help/public destination settings | CHARACTERIZED |
+
+8개 slash command 전체의 parameter는 하나의 exact matrix test가 검증한다. 공개성은 command
+또는 실제 handler를 호출해 검증하며, `/내정보`는 과거 inventory의 “공개” 주장이 아니라
+실제 V1의 ephemeral defer를 기준으로 정정했다.
 
 ## F001–F045 trace
 
@@ -60,7 +98,7 @@ test name 또는 marker/fixture metadata로 연결한다. 아래 파일명은 `t
 | F044 mention-prefix help | FR-007 | PRESERVE | none | GAP | mention-only prefix, help response and message-content intent contract |
 | F045 persisted volume | FR-025 | PRESERVE/CORRECT | DB volume CRUD, snapshot/restore values, MusicState explicit initialization | PARTIAL | one 0.5 default path, persisted value precedence, legacy snapshot missing-field behavior |
 
-## Coverage summary
+## PHASE 0 coverage summary (historical)
 
 | Status | Feature count | Meaning |
 | --- | ---: | --- |
@@ -69,6 +107,8 @@ test name 또는 marker/fixture metadata로 연결한다. 아래 파일명은 `t
 | GAP | 18 | 사용자 계약 수준 test가 없음 |
 | CORRECT-GAP | 1 | V1 bug를 복제하지 않는 수정 요구 test가 필요 |
 
-현재 숫자는 line coverage가 아니라 feature-contract trace다. PHASE 1 exit에서는 주요 사용자
-계약의 `PARTIAL/GAP`을 characterization 또는 명시적 future-phase proof로 연결하고, autoplay
-성공, corrupt/0-byte DB, 핵심 concurrency/failure 계획을 반드시 포함한다.
+이 숫자는 PHASE 0 당시 line coverage가 아니라 feature-contract trace다. PHASE 1 overlay는
+필수 `PARTIAL/GAP`을 실행 가능한 characterization 또는 strict corrective spec에 연결했다.
+autoplay success, corrupt/0-byte DB와 핵심 concurrency/failure 계획도 포함한다. 전체 F001–F045의
+모든 fault/race 구현 증명은 overlay와 `27-concurrency-failure-plan.md`의 담당 Phase에서 계속
+추적하며, `CORRECT-SPEC`을 구현 완료로 오해하지 않는다.

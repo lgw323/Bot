@@ -110,7 +110,7 @@ discord.py는 extension/Cog를 unload하므로 음악 snapshot 저장, 음악 ta
 
 - 실제 `.env` 값과 어떤 조건부 기능이 켜져 있는지
 - 실제 bot invite permission과 privileged intent 승인
-- 채널별 Discord ACL, Cloudflare Tunnel/방화벽 정책
+- 채널별 Discord ACL, 새 Watch Tunnel/DNS/TLS와 방화벽 정책
 - 운영 guild/user/session/queue의 최대·평균 부하
 - 현장 command latency, event-loop lag, RSS/CPU, DB lock wait
 - 최근 crash stack과 systemd restart 횟수
