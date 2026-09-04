@@ -4,6 +4,19 @@
 절차만 관리합니다. 제품 의도와 데이터 정책은 `product-spec.md`, 로컬 개발과
 기능 개요는 루트 `README.md`를 참고합니다.
 
+## 확정된 새 Production 기준
+
+- 장비는 Raspberry Pi 5, 운영체제는 **Ubuntu Server 24.04 LTS ARM64**다.
+- 주 네트워크는 Wi-Fi가 아니라 Ethernet/LAN이다. 고정 주소·DHCP reservation과
+  원격 관리 경로는 새 LAN 기준으로 staging에서 확인한다.
+- 이 장비의 용도는 Discord Bot V2, Watch Web, SQLite, 필요한 media/runtime
+  dependency와 운영 도구로 제한한다.
+- 과거 Pi의 WordPress와 CloudPanel은 설치하거나 runtime baseline으로 복원하지 않는다.
+- 기존 Cloudflare Tunnel/DNS 구성은 폐기된 상태다. Watch 공개 경로는 별도 승인된
+  새 Tunnel/DNS/TLS 설정으로 만들고, 이전 tunnel credential이나 route를 재사용하지 않는다.
+- 성능·자원 acceptance baseline은 이 깨끗한 환경을 구축한 뒤 staging에서 새로 측정한다.
+- 현재 단계에서는 production DB migration/cutover를 실행하지 않는다.
+
 ---
 
 ## 🚀 1단계: 라즈베리파이 우분투 OS 설치 (가장 처음)
@@ -12,14 +25,15 @@
 2. PC에 라즈베리파이용 SD카드(또는 USB/SSD)를 꽂습니다.
 3. Imager 프로그램에서 다음을 선택합니다.
    * **CHOOSE DEVICE (운영체제 장치 선택):** `Raspberry Pi 5`
-   * **CHOOSE OS (운영체제 선택):** `Other general-purpose OS` -> `Ubuntu` -> **`Ubuntu Server 24.04.1 LTS (64-bit)`** (Desktop 버전도 무방하나 Server 버전을 추천합니다.)
+   * **CHOOSE OS (운영체제 선택):** `Other general-purpose OS` -> `Ubuntu` -> **`Ubuntu Server 24.04 LTS (64-bit/ARM64)`**
    * **CHOOSE STORAGE (저장소 선택):** 연결한 SD카드/SSD 선택
 4. `NEXT (다음)` 버튼을 누르면 **설정 커스터마이징 편집(OS Customisation)** 창이 뜹니다. `EDIT SETTINGS (설정 편집)`를 눌러 아래와 같이 맞춥니다.
    * **Hostname (호스트 이름):** `bot-server` (자유롭게 지정)
    * **✅ 사용자 이름 및 비밀번호 설정 (매우 중요!!):**
      * **사용자 이름(User):** `os`  **(기존 서버 설정이 `os` 기준이므로 반드시 `os`로 만드세요!)**
      * **비밀번호(Password):** 접속에 사용할 비밀번호 설정
-   * **✅ 무선 LAN(Wi-Fi) 설정:** (공유기에 무선으로 연결할 거라면 와이파이 이름과 비밀번호 입력)
+   * **네트워크:** Ethernet cable을 연결하고 LAN을 주 연결로 사용합니다. Wi-Fi 설정은
+     장애 복구용으로 별도 승인한 경우가 아니면 생략합니다.
    * **✅ 서비스(SERVICES):** `SSH 활성화 (Enable SSH)` 체크 (원격 접속을 위해 필수) -> `비밀번호 인증 사용` 선택
 5. 저장을 누르고 `쓰기(YES)`를 눌러 설치를 완료합니다. 끝난 SD카드를 라즈베리파이5 에 꽂고 전원을 켭니다.
 

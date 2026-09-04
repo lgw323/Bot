@@ -61,8 +61,10 @@ PHASE 2 전까지 이 경계를 새 V2 feature code에 복제하지 않는다.
 
 ### Pi Impact
 
-실제 production Pi에는 접근하지 않았으며 model/RAM/storage/filesystem을 추측하지 않는다.
-PHASE 9 전 read-only baseline과 staging 부하 계획은 다음과 같다.
+PHASE 0 작성 뒤 사용자가 production target을 Raspberry Pi 5, Ubuntu Server 24.04 LTS
+ARM64, Ethernet/LAN으로 확정했다. 실제 RAM/storage/filesystem에는 아직 접근하지 않았으며
+추측하지 않는다. 과거 WordPress/CloudPanel 포함 host baseline은 폐기하고, 깨끗한 새 Pi의
+PHASE 9 staging에서 다음 read-only baseline과 부하 계획을 새로 측정한다.
 
 | Profile | Duration | Measure | Gate/use |
 | --- | --- | --- | --- |
@@ -113,10 +115,10 @@ PHASE 0에서는 runtime bug를 수정하지 않았다. 다음 결함을 V2 요�
 ```text
 Document: 01-current-system-overview.md
 Claim: production host는 Raspberry Pi 5다.
-Actual code/test: repository는 실제 host hardware를 검증하지 않는다. operations 문서는 Pi 5 설치 절차만 설명한다.
-Evidence: production inventory/metric artifact가 저장소에 없고 마스터 프롬프트는 model/RAM/storage 추측을 금지한다.
-Impact: 검증하지 않은 CPU/RAM/storage capacity를 architecture 전제로 사용할 수 있다.
-Resolution: Raspberry Pi target만 확정하고 실제 hardware/filesystem은 Phase 9 inventory 전 미확인으로 정정했다.
+Actual code/test: repository는 host hardware를 검증하지 않지만 사용자가 PHASE 1에서 장비와 OS/network target을 확정했다.
+Evidence: Raspberry Pi 5, Ubuntu Server 24.04 LTS ARM64, Ethernet/LAN이 승인됐고 RAM/storage/filesystem metric은 아직 없다.
+Impact: 장비 identity와 아직 측정하지 않은 capacity를 구분해야 한다.
+Resolution: 장비/OS/network는 확정값으로 갱신하고, 나머지 자원과 SLO는 clean Pi staging 측정 전 미확정으로 유지한다.
 ```
 
 그 외 핵심 감사 주장인 global DB lock/default executor 결합, partial startup, autoplay

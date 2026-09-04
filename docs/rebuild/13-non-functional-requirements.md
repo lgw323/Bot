@@ -67,5 +67,7 @@
 | NFR-036 | backup encryption key rotation과 old backup decrypt policy를 문서화하고 restore로 검증한다. |
 | NFR-037 | dependency와 release artifact는 version/provenance를 기록하고 critical vulnerability 처리 절차를 가진다. |
 
-수치는 production SLO 확정치가 아니라 baseline 전 설계 proposal이다. 하드웨어, 실제
-동시 사용자와 RPO/RTO 결정 뒤 ADR로 승인한다.
+수치는 production SLO 확정치가 아니라 baseline 전 설계 proposal이다. Raspberry Pi 5의
+깨끗한 Ubuntu Server 24.04 LTS ARM64 환경에서 Ethernet/LAN을 사용해 PHASE 9 staging
+부하·soak를 측정한 뒤 승인한다. 과거 WordPress/CloudPanel이 함께 있던 host의 수치는
+acceptance baseline으로 복원하거나 재사용하지 않는다.

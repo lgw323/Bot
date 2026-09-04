@@ -2,9 +2,11 @@
 
 ## 운영 맥락
 
-현재 시스템은 친구용 Discord 서버 1개와 개인 관리·로그 서버 1개를 Raspberry Pi의
-단일 Python 프로세스로 지원한다. 기존 운영 문서는 Raspberry Pi 5 설치를 설명하지만 실제
-production host의 model/RAM/storage/filesystem은 PHASE 9 inventory 전에는 확정값으로 사용하지 않는다.
+현재 V1은 친구용 Discord 서버 1개와 개인 관리·로그 서버 1개를 단일 Python 프로세스로
+지원한다. 새 production target은 Raspberry Pi 5와 Ubuntu Server 24.04 LTS ARM64이며,
+Ethernet/LAN을 주 연결로 사용한다. OS 재설치 뒤의 깨끗한 host에는 Discord Bot V2,
+Watch Web, SQLite, media/runtime dependency와 운영 도구만 둔다. RAM/storage/filesystem의
+실제 값과 acceptance baseline은 PHASE 9 staging inventory 전에는 확정값으로 사용하지 않는다.
 음악 주크박스에서 출발해 대화 요약, XP, 생일,
 Watch Together, 운영 자동화가 같은 bot에 추가됐다. 제품 의도는
 [`docs/product-spec.md`](../product-spec.md), 운영 절차는
@@ -19,7 +21,7 @@ flowchart TB
     CRON --> BK[auto_backup.sh]
     PY --> DG[Discord Gateway]
     PY --> HTTP[Uvicorn :8000]
-    HTTP --> CF[Cloudflare Tunnel - documented, config not in repo]
+    HTTP --> CF[New Watch Tunnel/DNS - to be provisioned]
     PY --> DB[(data/bot_database.db)]
     PY --> MS[data/music_state.json]
     PY --> TMP[OS temp: music/TTS cache]
@@ -32,9 +34,10 @@ flowchart TB
     UP --> GIT[origin/main + package indexes]
 ```
 
-systemd unit와 cron 정의는 저장소 파일이 아니라 문서의 수동 설정 예시다. 실제 Pi의
-unit, cron, tunnel, firewall, Discord application 설정은 이번 코드 감사에서 확인하지
-못했다.
+systemd unit와 cron 정의는 저장소 파일이 아니라 문서의 수동 설정 예시다. 기존
+Cloudflare Tunnel/DNS는 폐기됐고 새 Watch tunnel은 아직 구성하지 않았다. 새 Pi의 unit,
+cron, tunnel, firewall, Discord application 설정은 PHASE 8/9에서 검증한다. 과거
+WordPress/CloudPanel 환경은 목표 runtime이나 비교 baseline에 포함하지 않는다.
 
 ## 시작 순서
 

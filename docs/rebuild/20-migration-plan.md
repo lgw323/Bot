@@ -20,7 +20,7 @@ criteria, automated evidence, deploy flag, rollback point를 가진다. source/s
 | 6 Watch | separate process, session actor, compatibility protocol/internal control | HTTP/WS contract, races, security/load, admin close | old same-process route; DB compatibility |
 | 7 Music | guild actor, backend ports, UI adapter, snapshot | all controls/autoplay/retry/TTS/cache/restart/soak | route→old; snapshot dual-read |
 | 8 Operations | immutable releases, tracked units/timers, backup snapshot, readiness smoke | deploy+dependency rollback and restore drill | atomic prior release pointer |
-| 9 Staging | dedicated guild/token, sanitized data, Pi load/fault/soak | SLO/security/runbook/reconciliation approval | no production impact |
+| 9 Staging | dedicated guild/token, sanitized data, clean Raspberry Pi 5/Ubuntu 24.04 ARM64/Ethernet load·fault·soak, 새 Watch tunnel 검증 | SLO/security/runbook/reconciliation approval | no production impact |
 | 10 Production cutover | maintenance gate, final backup, one bot connection, flags in waves | health/SLO/data/user smoke, observation window | stop new, restore prior release/compatible data |
 | 11 Legacy removal | old routes/code/format reader 제거 | rollback window 종료, no Sev1, reconciliation and owner sign-off | archived release/data retained |
 
@@ -35,6 +35,8 @@ criteria, automated evidence, deploy flag, rollback point를 가진다. source/s
 
 ## Data migration
 
+- 현재 PHASE 1에서는 production DB migration/cutover를 실행하지 않는다. production data를
+  건드리는 단계는 PHASE 10 사용자 승인 gate 뒤에만 수행한다.
 - production DB를 개발/test에 복사하지 않는다. 운영 rehearsal은 제한된 operator 절차와
   암호화 snapshot을 사용한다.
 - expand-only schema → dual-compatible adapter → backfill/reconcile → new write → 관찰 → old

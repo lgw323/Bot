@@ -49,7 +49,7 @@
 | Q-M09 | DEFERRED-MEASURE | 모든 log/TTS/music cache는 bounded configuration을 갖는다. 정확한 byte/retention 값은 Phase 2/7/9에서 Pi disk와 privacy 측정 후 정한다. |
 | Q-M10 | ACCEPTED | 우선 Pi 내부의 bounded JSON log, Prometheus-compatible local metric, health/readiness를 사용한다. hosted platform은 기본 의존성이 아니다. |
 | Q-M11 | ACCEPTED | 첫 production runtime은 Python 3.12 계열로 pin한다. yt-dlp도 재현 가능한 pin을 기본으로 하고 provider breakage용 emergency update 절차를 별도로 둔다. |
-| Q-M12 | DEFERRED-MEASURE | 실제 Pi의 service account, restricted sudo, tunnel/firewall 설정은 추측하지 않는다. Phase 8/9에서 read-only inventory 후 runbook 값을 확정한다. |
+| Q-M12 | ACCEPTED/DEFERRED-MEASURE | Target은 Raspberry Pi 5, Ubuntu Server 24.04 LTS ARM64, Ethernet/LAN이다. Discord Bot V2·Watch Web·SQLite·필수 media/runtime·운영 도구만 설치하며 WordPress/CloudPanel과 기존 Cloudflare Tunnel/DNS는 복원하지 않는다. service account, RAM/storage/filesystem, 새 Watch tunnel/firewall 세부값과 capacity는 Phase 8/9에서 확정한다. |
 
 ## Legacy and presentation disposition
 
@@ -61,7 +61,8 @@
 
 ## Remaining gates, not blockers
 
-- 실제 Raspberry Pi model, RAM, storage, filesystem과 운영 baseline은 아직 확인하지 않았다.
+- Raspberry Pi 5와 Ubuntu Server 24.04 LTS ARM64, Ethernet/LAN은 확정됐다. RAM, storage,
+  filesystem과 capacity/SLO baseline은 깨끗한 새 Pi staging에서 아직 측정하지 않았다.
 - staging token/guild와 production secret은 저장소에 넣지 않으며 필요한 phase에서만 operator가 주입한다.
 - capacity와 SLO 제안값은 typed configuration의 초기값일 뿐 Phase 9 실측 전 production 확정치가 아니다.
-- production migration, service 중단, cutover, V1 삭제와 backup key 교체는 별도 사용자 승인 전 실행하지 않는다.
+- production DB migration, service 중단, cutover, V1 삭제와 backup key 교체는 별도 사용자 승인 전 실행하지 않는다.

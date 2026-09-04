@@ -153,3 +153,13 @@
 - **Reason:** 확인된 제품 계약은 지키면서 장애와 불일치를 요구사항으로 승격하지 않는다.
 - **Trade-off:** 일부 결함 의존 사용자가 있다면 characterization 결과와 수정 동작을 명시해야 한다.
 - **Consequence:** 각 test/fixture에 `PRESERVE`, `CORRECT`, `DECIDE` metadata를 연결하며 큰 제품 변경만 다시 승인받는다.
+
+## ADR-016 Clean Raspberry Pi 5 production baseline
+
+- **Status:** ACCEPTED (2026-09-04, user PHASE 1 direction)
+- **Context:** 기존 Pi OS를 재설치하며 과거 host에는 bot 외 WordPress, CloudPanel과 폐기된 Cloudflare Tunnel/DNS가 함께 있었다.
+- **Options:** 과거 전체 host 재현; bot 전용 clean host; 기존 host 수치를 그대로 acceptance baseline으로 사용.
+- **Decision:** Raspberry Pi 5에 Ubuntu Server 24.04 LTS ARM64를 설치하고 Ethernet/LAN을 주 연결로 사용한다. host 범위는 Discord Bot V2, Watch Web, SQLite, 필요한 media/runtime dependency와 운영 도구로 제한한다. WordPress/CloudPanel은 설치하지 않고 기존 Tunnel/DNS는 재사용하지 않으며 Watch tunnel을 새로 구성한다.
+- **Reason:** 폐기된 workload와 network 구성이 V2의 자원·보안·운영 기준을 왜곡하지 않게 한다.
+- **Trade-off:** 과거 수치와 직접 비교할 수 없고 새 tunnel 및 clean staging baseline 측정이 필요하다.
+- **Consequence:** PHASE 8/9에서 새 host inventory, Ethernet network, Watch tunnel/TLS와 부하·soak baseline을 기록한다. production DB migration/cutover는 PHASE 10 명시 승인 전 금지한다.

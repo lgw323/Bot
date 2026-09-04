@@ -16,7 +16,7 @@
 | Fernet key | backup confidentiality/integrity | single key, rotation metadata 없음 | secret store/file permission, key ID/rotation/old-key policy |
 | Deno/npm/PO provider | YouTube challenge | fixed provider 1.3.1, live install | release artifact에서 pin/probe/rollback |
 | systemd/cron/sudo/bash | process/schedule | docs-only config, overlapping jobs | tracked units/timers, restricted user, `flock`, deadlines |
-| Cloudflare Tunnel | Watch public URL 추정 | repo에 config/health 없음 | exposure/auth/TLS/firewall decision + managed health |
+| 새 Watch Tunnel/DNS | Watch public URL/TLS | 기존 Cloudflare Tunnel/DNS는 폐기; 새 구성은 아직 없음 | 새 credential/route, exposure/auth/TLS/firewall decision + managed health |
 
 ## Dependency policy
 
