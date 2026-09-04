@@ -26,6 +26,8 @@
   일시적 네트워크 WARNING과 60초 내 동일 메시지만 중복 억제하도록 조정했습니다.
 
 ### Documentation
+- DiscordBot V2 재구축 PHASE 0의 decision closure, 승인된 ADR, F001–F045 요구사항-테스트
+  trace, V1 baseline test 결과와 Raspberry Pi 측정 계획을 추가했습니다.
 - 현재 전체 기능의 유즈케이스, 구성요소, 상태와 데이터 흐름을 설명하는 시스템
   설계 문서를 추가했습니다.
 - 음악 403의 확인된 실패 경계와 기존 동작을 보존하는 재생 엔진 단계적 교체 계획을
