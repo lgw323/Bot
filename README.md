@@ -93,8 +93,9 @@ python -m pytest tests/ -W error::RuntimeWarning -W error::pytest.PytestUnraisab
 | `main_bot.py` | 프로그램 시작, Discord 연결과 기능 모듈 로드 |
 | `database_manager.py` | SQLite 스키마, 데이터 읽기·쓰기와 SQL 백업·복구 |
 | `cogs/` | 음악, 요약, 레벨링, 생일, 로깅, Watch Together 기능 |
+| `src/discordbot/` | 아직 V1 route에 연결하지 않은 V2 platform/composition skeleton |
 | `scripts/` | Pi 자동 업데이트와 DB 백업 |
-| `tests/` | 현재 동작과 회귀를 확인하는 pytest 테스트 |
+| `tests/` | V1 계약, V2 platform과 architecture 규칙을 확인하는 pytest 테스트 |
 | `docs/` | 제품 명세, 운영 절차와 과거 작업 기록 |
 
 ## 문서 안내
@@ -105,9 +106,11 @@ python -m pytest tests/ -W error::RuntimeWarning -W error::pytest.PytestUnraisab
 | `docs/product-spec.md` | 제품 의도, 유지해야 할 동작과 알려진 위험 |
 | `docs/system-design.md` | 전체 기능의 유즈케이스, 구성요소와 실행 흐름 |
 | `docs/music-engine-rebuild-plan.md` | 음악 403 분석과 안전한 재생 엔진 교체 계획 |
+| `docs/rebuild/README.md` | V2 요구사항, ADR, 단계별 구현·검증 보고서 |
 | `docs/operations.md` | Raspberry Pi 설치·운영·복구 절차 |
 | `AGENTS.md` | 이 저장소에서 작업하는 코딩 에이전트의 규칙 |
 | `CHANGELOG.md` | 실제로 완료된 변경 이력 |
 
-별도의 build, lint, formatting, type-checking 명령은 현재 저장소에 정의되어 있지
-않습니다.
+V2 `src` package의 Python 3.12/setuptools build metadata는 `pyproject.toml`에 정의되어
+있습니다. 별도의 lint, formatting, type-checking 명령과 production 설치 entrypoint는 아직
+정의하지 않았습니다.

@@ -9,6 +9,16 @@
 
 ## [Unreleased]
 
+### Added
+- DiscordBot V2 PHASE 2 platform skeleton을 `src/discordbot/`에 추가했습니다. typed immutable
+  config/error/context, bounded telemetry·metrics·executor, capability health와 TaskSupervisor를
+  포함하며 import만으로 DB/network/server/subprocess를 시작하지 않습니다.
+- Discord와 Watch가 독립 lifecycle/capacity를 소유할 수 있는 별도 composition root와
+  bounded startup/rollback/shutdown을 추가했습니다. 실제 Discord/Watch feature route와
+  production service는 연결하지 않았습니다.
+- domain/application/ports/adapters dependency 방향, vendor·SQLite adapter 격리, raw task와
+  executor 사용 위치, fresh-process import 안전성을 검사하는 architecture test를 추가했습니다.
+
 ### Changed
 - Watch Together 웹 플레이어를 어두운 전술 네트워크 콘솔과 주황색 상태 신호를
   중심으로 한 Watch Relay 테마로 개편했습니다. 기존 URL, HTTP endpoint,
@@ -34,6 +44,8 @@
 - PHASE 1에서 slash/help 공개성, Discord component와 pagination, 음악 상태·retry·autoplay,
   XP/생일, Summary ACL·timeout·capacity, Watch HTTP/WS·30초/5초 lifecycle, 손상 DB와
   concurrency/failure 계약을 test 및 trace 가능한 문서로 고정했습니다.
+- PHASE 2 platform 구현 상태, 자원 상한, ADR-017, architecture/reliability 검증과 PHASE 3
+  진입 gate를 재구축 문서에 기록했습니다.
 - 현재 전체 기능의 유즈케이스, 구성요소, 상태와 데이터 흐름을 설명하는 시스템
   설계 문서를 추가했습니다.
 - 음악 403의 확인된 실패 경계와 기존 동작을 보존하는 재생 엔진 단계적 교체 계획을

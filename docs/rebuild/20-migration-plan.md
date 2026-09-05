@@ -24,6 +24,16 @@ criteria, automated evidence, deploy flag, rollback point를 가진다. source/s
 | 10 Production cutover | maintenance gate, final backup, one bot connection, flags in waves | health/SLO/data/user smoke, observation window | stop new, restore prior release/compatible data |
 | 11 Legacy removal | old routes/code/format reader 제거 | rollback window 종료, no Sev1, reconciliation and owner sign-off | archived release/data retained |
 
+## 진행 상태 (2026-09-05)
+
+- PHASE 0 decision/baseline, PHASE 1 characterization, PHASE 2 skeleton/platform까지 완료했다.
+- PHASE 2 package는 V1 route나 production process에 연결하지 않았고 SQLite repository 구현,
+  schema 변경, data migration은 시작하지 않았다.
+- PHASE 3 Data compatibility는 사용자 지시 전 자동 진입하지 않는다. production DB
+  migration/cutover는 계속 PHASE 10 승인 gate 뒤에만 수행한다.
+- Raspberry Pi 설치·배포, Git clone 운영 설치, systemd, auto-update/auto-backup, Watch tunnel은
+  이번 진행 상태에 포함되지 않는다.
+
 ## Suggested feature priority
 
 1. platform/data safety/observability는 기능 migration보다 먼저다.

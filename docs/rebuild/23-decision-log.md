@@ -163,3 +163,22 @@
 - **Reason:** 폐기된 workload와 network 구성이 V2의 자원·보안·운영 기준을 왜곡하지 않게 한다.
 - **Trade-off:** 과거 수치와 직접 비교할 수 없고 새 tunnel 및 clean staging baseline 측정이 필요하다.
 - **Consequence:** PHASE 8/9에서 새 host inventory, Ethernet network, Watch tunnel/TLS와 부하·soak baseline을 기록한다. production DB migration/cutover는 PHASE 10 명시 승인 전 금지한다.
+
+## ADR-017 PHASE 2 platform ownership and bounds
+
+- **Status:** ACCEPTED/IMPLEMENTED (2026-09-05, user PHASE 2 direction)
+- **Context:** V2 feature를 옮기기 전에 import-safe composition, task ownership, typed failure,
+  health와 Raspberry Pi 5 자원 상한을 실행 가능한 규칙으로 만들어야 한다.
+- **Options:** feature별 ad-hoc task/log/config; 외부 DI/task/telemetry framework 선도입;
+  stdlib 중심의 작은 공통 platform과 explicit composition.
+- **Decision:** frozen dataclass config와 명시적 environment mapping loader, typed `AppError`,
+  `TaskSupervisor`, correlation/clock/ID, bounded telemetry/metrics/thread executor를 공통 platform으로
+  둔다. Discord와 Watch는 서로 다른 `ProcessRuntime` composition root를 가지며 실제 adapter는
+  후속 Phase에 주입한다.
+- **Reason:** 새 dependency나 service를 활성화하지 않고 ownership/backpressure/import 안전성을
+  unit·architecture test로 먼저 강제할 수 있다.
+- **Trade-off:** metric exporter, HTTP health adapter, feature capability, DB worker와 실제 process
+  entrypoint가 아직 없으며 초기 capacity는 clean Pi staging 전 보수적 가정이다.
+- **Consequence:** V2 raw task와 blocking dispatch는 각각 supervisor/bounded executor module 밖에서
+  금지된다. SQLite/vendor는 adapter boundary 뒤에만 둘 수 있고 production route/data/deploy는
+  후속 gate 전 연결하지 않는다.

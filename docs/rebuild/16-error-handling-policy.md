@@ -28,6 +28,12 @@
    넣지 않는다.
 5. log는 original exception chain과 typed code를 가지되 중앙 redaction 후 sink로 간다.
 
+PHASE 2는 이 taxonomy를 `src/discordbot/platform/errors.py`의 `AppError`와 typed subclass로
+구현했다. 내부 message/context와 사용자에게 노출 가능한 `safe_message`를 분리하고 context는
+read-only mapping으로 보관한다. `DeadlineExceededError`, `StartupError`, `ShutdownError`는
+platform lifecycle 경계를 명시한다. Discord/HTTP response mapping과 기존 한국어 UX 적용은
+각 inbound adapter migration Phase의 책임이며 이번 Phase에는 연결하지 않았다.
+
 ## Transaction and idempotency policy
 
 mutation은 `validate → authorize → reserve/admit → transaction/side effect → commit → respond`의

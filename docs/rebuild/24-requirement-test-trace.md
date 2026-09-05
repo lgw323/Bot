@@ -48,6 +48,25 @@ test name 또는 marker/fixture metadata로 연결한다. 아래 파일명은 `t
 또는 실제 handler를 호출해 검증하며, `/내정보`는 과거 inventory의 “공개” 주장이 아니라
 실제 V1의 ephemeral defer를 기준으로 정정했다.
 
+## PHASE 2 platform overlay
+
+이 표는 feature migration 완료가 아니라 후속 구현이 따라야 할 platform contract의 executable
+evidence다. 따라서 F001/F002/Watch 등의 사용자 기능 status나 PHASE 1 strict xfail을 완료로
+바꾸지 않는다.
+
+| Contract | Requirement | Executable evidence | PHASE 2 result |
+| --- | --- | --- | --- |
+| typed immutable/fail-fast config | FR-001; NFR-028,033 | `tests/unit/platform/test_config.py` | explicit mapping parse, production release gate, Pi limit validation |
+| typed cross-context errors/correlation | NFR-020,023 | `test_errors_context.py`, `test_telemetry.py` | safe/internal 분리, nested context, pre-sink redaction |
+| bounded tasks and blocking work | FR-009; NFR-003,005,013 | `test_tasks.py`, `test_executors.py` | metadata/deadline/restart/cancel/exception observation, admission cap |
+| liveness/readiness/capability | FR-002; NFR-004,022 | `test_health.py`, `test_runtime.py` | live/ready/dependency 분리, required capability와 startup rollback |
+| Discord/Watch process composition | NFR-002 | `test_runtime.py`, `tests/architecture/test_import_rules.py` | 독립 supervisor/capacity/composition, feature 미연결 |
+| inward dependency/import safety | NFR-019,025,027,028 | `tests/architecture/test_import_rules.py` | layer/vendor/SQLite/task/executor rule와 fresh-process no-side-effect import |
+
+SQLite repository 구현과 data compatibility는 PHASE 3, engagement/Summary/Watch/Music 기능은
+각 PHASE 4/5/6/7에 남아 있다. 현재 `ports/adapters` package와 SQLite adapter-only rule만
+repository boundary를 준비한다.
+
 ## F001–F045 trace
 
 | Feature | FR | Mode | Current automated evidence | Status | PHASE 1 characterization / planned proof |

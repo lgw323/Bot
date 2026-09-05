@@ -57,7 +57,10 @@ discordbot/
     └── operations/
 ```
 
-이 tree는 지금 만들 구현 지시가 아니라 승인 후 목표다.
+PHASE 2에서 `pyproject.toml`, `src/discordbot/{composition,platform}`과 각 bounded context의
+빈 layer boundary를 만들었다. 이 단계의 feature context package는 의도적으로 `__init__.py`
+외 실제 use case/domain/adapter 구현이 없다. `migrations/`, `deploy/`와 실제 persistence
+adapter는 각각 후속 Data compatibility/Operations Phase 전까지 만들거나 활성화하지 않는다.
 
 ## Dependency rules
 
@@ -75,6 +78,12 @@ platform(errors/types) may be used inward; vendor SDKs remain in adapters.
 - composition만 concrete implementation과 lifecycle 순서를 안다.
 - migration/deploy code는 application package import 시 실행되지 않는다.
 - architecture tests가 금지 import와 cycle을 CI에서 검사한다.
+
+PHASE 2 executable rule은 `tests/architecture/test_import_rules.py`에 있다. V2 source만 대상으로
+layer 역방향·cross-context import, adapter 밖 vendor/SQLite, supervisor 밖 task 생성,
+bounded executor 밖 blocking dispatch와 Discord/Watch composition 결합을 거부한다. 같은 test가
+fresh Python process에서 모든 V2 module을 import해 DB/network/server/subprocess/thread/logging
+side effect가 없는지도 확인한다.
 
 ## Public contracts
 

@@ -41,6 +41,20 @@ raw `asyncio.create_task`를 feature code에서 금지한다. supervisor registr
 shutdown phase를 요구한다. exception을 즉시 수집하고 active/age/result metric을 남긴다.
 fire-and-forget은 “응답을 기다리지 않음”일 뿐 owner 없는 task를 뜻하지 않는다.
 
+### PHASE 2 구현 상태
+
+`src/discordbot/platform/tasks.py`가 V2의 유일한 task 생성 지점이다. 등록 시 `name`, `owner`,
+guild/session/job을 나타내는 `work_id`, correlation ID, 최대 24시간의 deadline, criticality,
+cancellation behavior, 최대 3회의 typed transient restart, shutdown phase를 immutable spec으로
+요구한다. active task와 observation history는 각각 config capacity와 그 4배로 제한하며,
+완료·예외·deadline·취소 결과를 done callback에서 회수한다.
+
+`BoundedExecutor`는 실행 worker와 waiting slot 합계를 admission cap으로 사용한다. awaiter가
+취소되어도 실제 thread 함수가 끝나기 전에는 slot을 반환하지 않는다. Python thread는 강제
+종료할 수 없으므로 shutdown grace 뒤에도 남는 blocking work는 숨기지 않고 degraded shutdown
+결과로 보고한다. 기능별 queue/actor/subprocess 정책은 담당 Phase에서 이 platform contract
+위에 추가한다.
+
 ## Timeout and cancellation
 
 - interaction의 end-to-end deadline을 하위 call에 남은 시간으로 전파한다.

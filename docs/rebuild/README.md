@@ -1,8 +1,9 @@
 # DiscordBot 재구축 설계 문서
 
 이 디렉터리는 2026-09-04 시점의 `main` 브랜치(`8432fde`)를 기준으로 현행 시스템을
-역공학하고, 기존 구현과 독립적인 차기 시스템을 설계한 문서 묶음이다. 이 단계에서는
-소스 코드, 데이터베이스, 의존성, 배포 설정을 변경하지 않았다.
+역공학하고, 기존 구현과 독립적인 차기 시스템을 설계·단계적으로 검증하는 문서 묶음이다.
+PHASE 0은 문서만, PHASE 1은 characterization test만 변경했고, PHASE 2에서는 V1 route와
+production data에 연결하지 않은 `src/discordbot/` platform skeleton을 추가했다.
 
 ## 읽는 순서
 
@@ -52,6 +53,7 @@
 | [26 Phase 1 characterization contracts](26-characterization-contracts.md) | command/UI/music/engagement/Summary/Watch/DB의 PRESERVE·CORRECT 계약 |
 | [27 Concurrency and failure plan](27-concurrency-failure-plan.md) | deterministic race/fault scenario, invariant와 담당 Phase |
 | [28 Phase 1 characterization](28-phase-1-characterization.md) | PHASE 1 완료 결과, test/compatibility/risk와 PHASE 2 gate |
+| [29 Phase 2 platform](29-phase-2-platform.md) | PHASE 2 skeleton, architecture/reliability test, 자원 상한과 PHASE 3 gate |
 
 ## 증거 표기
 
