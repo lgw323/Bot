@@ -73,3 +73,14 @@ def test_invalid_config_fails_fast(
 ) -> None:
     with pytest.raises(ConfigurationError, match=expected_fragment):
         load_config(environment, service=ServiceKind.DISCORD_BOT)
+
+
+def test_direct_config_construction_rejects_wrong_runtime_types() -> None:
+    with pytest.raises(ConfigurationError, match="integer"):
+        ResourceLimits(task_capacity=1.5)  # type: ignore[arg-type]
+    with pytest.raises(ConfigurationError, match="ServiceKind"):
+        PlatformConfig(  # type: ignore[arg-type]
+            service="discord-bot",
+            environment=Environment.TEST,
+            release="unit",
+        )

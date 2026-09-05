@@ -211,3 +211,21 @@ def test_restart_and_task_metadata_are_bounded_and_validated() -> None:
             correlation_id="correlation",
             deadline_seconds=1,
         )
+
+
+def test_start_without_event_loop_fails_before_coroutine_construction() -> None:
+    supervisor = TaskSupervisor(
+        capacity=1,
+        history_capacity=4,
+        clock=SystemClock(),
+    )
+    factory_called = False
+
+    async def work() -> None:
+        nonlocal factory_called
+        factory_called = True
+
+    with pytest.raises(RuntimeError, match="running event loop"):
+        supervisor.start(_spec(), work)
+    assert factory_called is False
+    assert supervisor.snapshot().active == ()

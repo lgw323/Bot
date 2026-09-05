@@ -29,6 +29,14 @@ def _validate_range(name: str, value: int | float, minimum: float, maximum: floa
         )
 
 
+def _validate_integer_range(name: str, value: int, minimum: int, maximum: int) -> None:
+    if isinstance(value, bool) or not isinstance(value, int) or not minimum <= value <= maximum:
+        raise ConfigurationError(
+            f"{name} must be an integer between {minimum} and {maximum}",
+            context={"field": name, "minimum": minimum, "maximum": maximum},
+        )
+
+
 @dataclass(frozen=True, slots=True)
 class ResourceLimits:
     """Hard platform ceilings sized conservatively for Raspberry Pi 5."""
@@ -40,11 +48,26 @@ class ResourceLimits:
     executor_queue_capacity: int = 8
 
     def __post_init__(self) -> None:
-        _validate_range("task_capacity", self.task_capacity, 1, 256)
-        _validate_range("telemetry_queue_capacity", self.telemetry_queue_capacity, 1, 8192)
-        _validate_range("metrics_series_capacity", self.metrics_series_capacity, 1, 4096)
-        _validate_range("executor_workers", self.executor_workers, 1, 4)
-        _validate_range("executor_queue_capacity", self.executor_queue_capacity, 0, 64)
+        _validate_integer_range("task_capacity", self.task_capacity, 1, 256)
+        _validate_integer_range(
+            "telemetry_queue_capacity",
+            self.telemetry_queue_capacity,
+            1,
+            8192,
+        )
+        _validate_integer_range(
+            "metrics_series_capacity",
+            self.metrics_series_capacity,
+            1,
+            4096,
+        )
+        _validate_integer_range("executor_workers", self.executor_workers, 1, 4)
+        _validate_integer_range(
+            "executor_queue_capacity",
+            self.executor_queue_capacity,
+            0,
+            64,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,6 +89,16 @@ class PlatformConfig:
     runtime: RuntimePolicy = RuntimePolicy()
 
     def __post_init__(self) -> None:
+        if not isinstance(self.service, ServiceKind):
+            raise ConfigurationError("service must be a ServiceKind")
+        if not isinstance(self.environment, Environment):
+            raise ConfigurationError("environment must be an Environment")
+        if not isinstance(self.release, str):
+            raise ConfigurationError("APP_RELEASE must be a string")
+        if not isinstance(self.limits, ResourceLimits):
+            raise ConfigurationError("limits must be ResourceLimits")
+        if not isinstance(self.runtime, RuntimePolicy):
+            raise ConfigurationError("runtime must be RuntimePolicy")
         release = self.release.strip()
         if not release:
             raise ConfigurationError("APP_RELEASE must not be blank")

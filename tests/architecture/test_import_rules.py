@@ -156,9 +156,16 @@ def test_discord_and_watch_composition_modules_remain_separate() -> None:
     discord_imports = _imports(SOURCE_ROOT / "composition" / "discord_app.py")
     watch_imports = _imports(SOURCE_ROOT / "composition" / "watch_app.py")
 
-    assert all("watch_app" not in imported and ".watch." not in imported for imported in discord_imports)
     assert all(
-        "discord_app" not in imported and ".music." not in imported
+        "watch_app" not in imported and ".watch." not in imported
+        for imported in discord_imports
+    )
+    assert all(
+        "discord_app" not in imported
+        and not any(
+            f".{context}." in imported
+            for context in {"music", "summary", "engagement"}
+        )
         for imported in watch_imports
     )
 

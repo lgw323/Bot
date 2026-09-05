@@ -170,8 +170,9 @@ class TaskSupervisor:
                 context={"capacity": self._capacity},
             )
 
+        loop = asyncio.get_running_loop()
         started_at = self._clock.monotonic()
-        task = asyncio.create_task(
+        task = loop.create_task(
             self._run(spec, work_factory),
             name=f"{spec.owner}:{spec.work_id}:{spec.name}",
         )
