@@ -1,0 +1,1 @@
+"""Operations platform adapter boundary."""

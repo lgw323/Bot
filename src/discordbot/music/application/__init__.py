@@ -1,0 +1,1 @@
+"""Music use-case boundary."""
