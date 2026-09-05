@@ -46,6 +46,8 @@
   concurrency/failure 계약을 test 및 trace 가능한 문서로 고정했습니다.
 - PHASE 2 platform 구현 상태, 자원 상한, ADR-017, architecture/reliability 검증과 PHASE 3
   진입 gate를 재구축 문서에 기록했습니다.
+- 재구축 문서를 동결된 V1 `baseline/`, 계속 갱신하는 `current/`, Phase별 역사적 산출물인
+  `phases/phase-XX/`로 분리하고 내부 링크·필수 문서 구성을 검사하는 테스트를 추가했습니다.
 - 현재 전체 기능의 유즈케이스, 구성요소, 상태와 데이터 흐름을 설명하는 시스템
   설계 문서를 추가했습니다.
 - 음악 403의 확인된 실패 경계와 기존 동작을 보존하는 재생 엔진 단계적 교체 계획을

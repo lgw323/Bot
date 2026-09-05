@@ -81,4 +81,5 @@ application 수준에서 직렬화된다. cron backup은 별도 process라 이 l
 
 전환기 원칙은 expand/contract, old reader 호환, backup 선행, checksum을 가진 순차 migration,
 idempotent resume, row-count/semantic validation, rollback window 동안 구 schema read 가능이다.
-SQLite 유지/교체 결정은 [ADR-002](23-decision-log.md#adr-002-database)에 남긴다.
+SQLite 유지/교체 결정은
+[ADR-002](../current/architecture-decision-log.md#adr-002-database)에 남긴다.

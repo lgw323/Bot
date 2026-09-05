@@ -1,14 +1,17 @@
-# 25. PHASE 0 Baseline Report
+# PHASE 0 Baseline Report
 
 ## Phase 0 Complete
 
 ### Implemented
 
-- `docs/rebuild/`의 README와 00–23 문서를 원문 전체로 검토했다.
+- 현재 `docs/rebuild/baseline/`에 보존된 최초 분석 문서와 당시 00–23 문서를 원문 전체로
+  검토했다.
 - V1 entrypoint, DB/recovery, Discord command/event, Summary, Music, Watch, engagement와 현재
   pytest 구조를 실제 코드에서 대조했다.
-- 마스터 프롬프트의 확정 결정을 `22-open-questions.md`, FR mode와 ADR-001–ADR-015에 반영했다.
-- F001–F045 ↔ FR ↔ 현재 test/PHASE 1 proof를 `24-requirement-test-trace.md`로 작성했다.
+- 마스터 프롬프트의 확정 결정을 `docs/rebuild/current/open-questions.md`, FR mode와
+  ADR-001–ADR-015에 반영했다.
+- F001–F045 ↔ FR ↔ 현재 test/PHASE 1 proof를
+  `docs/rebuild/current/requirement-test-trace.md`로 작성했다.
 - 작업 branch를 `codex/rebuild-v2`로 분리했다. PHASE 0에서는 feature source와 V1 code를
   수정하거나 목표 `src/discordbot` skeleton을 조기에 만들지 않았다.
 
@@ -103,18 +106,18 @@ PHASE 0에서는 runtime bug를 수정하지 않았다. 다음 결함을 V2 요�
 
 ### Documentation Updated
 
-- `01-current-system-overview.md`: PHASE 0에서는 Pi model을 미확정으로 두었고, PHASE 1의
+- `docs/rebuild/baseline/01-current-system-overview.md`: PHASE 0에서는 Pi model을 미확정으로 두었고, PHASE 1의
   사용자 결정으로 Raspberry Pi 5/Ubuntu 24.04 ARM64/Ethernet target을 확정
-- `12-functional-requirements.md`: 승인된 master/guild/help/play-count/volume/Summary/XP/birthday 결정 반영
-- `22-open-questions.md`: BLOCKER 8개 closure와 deferred measurement gate 분리
-- `23-decision-log.md`: ADR-001–012 ACCEPTED, ADR-013–015 추가
-- `24-requirement-test-trace.md`: F001–F045 trace와 coverage gap
+- `docs/rebuild/baseline/12-functional-requirements.md`: 승인된 master/guild/help/play-count/volume/Summary/XP/birthday 결정 반영
+- `docs/rebuild/current/open-questions.md`: BLOCKER 8개 closure와 deferred measurement gate 분리
+- `docs/rebuild/current/architecture-decision-log.md`: ADR-001–012 ACCEPTED, ADR-013–015 추가
+- `docs/rebuild/current/requirement-test-trace.md`: F001–F045 trace와 coverage gap
 - `README.md`: PHASE 0 산출물 링크
 
 ### Documentation discrepancy
 
 ```text
-Document: 01-current-system-overview.md
+Document: docs/rebuild/baseline/01-current-system-overview.md
 Claim: production host는 Raspberry Pi 5다.
 Actual code/test: repository는 host hardware를 검증하지 않지만 사용자가 PHASE 1에서 장비와 OS/network target을 확정했다.
 Evidence: Raspberry Pi 5, Ubuntu Server 24.04 LTS ARM64, Ethernet/LAN이 승인됐고 RAM/storage/filesystem metric은 아직 없다.

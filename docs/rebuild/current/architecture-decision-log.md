@@ -1,4 +1,4 @@
-# 23. Architecture Decision Log
+# Architecture Decision Log
 
 2026-09-04 V2 구현 마스터 프롬프트와 승인된 PRD/architecture를 기준으로 ADR-001–ADR-015를
 `ACCEPTED`로 전환했다. 승인자는 이 저장소의 사용자이며, capacity/SLO처럼 실측이 필요한

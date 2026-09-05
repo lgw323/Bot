@@ -1,4 +1,4 @@
-# 26. PHASE 1 Characterization Contracts
+# PHASE 1 Characterization Contracts
 
 ## Scope and evidence rule
 

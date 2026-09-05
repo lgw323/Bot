@@ -1,4 +1,4 @@
-# 24. Requirement-to-Test Trace
+# Requirement-to-Test Trace
 
 ## Purpose and status vocabulary
 
@@ -19,8 +19,8 @@ test name 또는 marker/fixture metadata로 연결한다. 아래 파일명은 `t
 ## PHASE 1 mandatory-contract overlay
 
 이 표가 PHASE 1 필수 범위의 현재 상태에 대한 우선 근거다. 세부 동작은
-`26-characterization-contracts.md`, race/fault 후속 test는
-`27-concurrency-failure-plan.md`를 따른다.
+`../phases/phase-01/characterization-contracts.md`, race/fault 후속 test는
+`../phases/phase-01/concurrency-failure-plan.md`를 따른다.
 
 | Feature | FR | New executable evidence | PHASE 1 status |
 | --- | --- | --- | --- |
@@ -129,5 +129,6 @@ repository boundary를 준비한다.
 이 숫자는 PHASE 0 당시 line coverage가 아니라 feature-contract trace다. PHASE 1 overlay는
 필수 `PARTIAL/GAP`을 실행 가능한 characterization 또는 strict corrective spec에 연결했다.
 autoplay success, corrupt/0-byte DB와 핵심 concurrency/failure 계획도 포함한다. 전체 F001–F045의
-모든 fault/race 구현 증명은 overlay와 `27-concurrency-failure-plan.md`의 담당 Phase에서 계속
+모든 fault/race 구현 증명은 overlay와
+`../phases/phase-01/concurrency-failure-plan.md`의 담당 Phase에서 계속
 추적하며, `CORRECT-SPEC`을 구현 완료로 오해하지 않는다.

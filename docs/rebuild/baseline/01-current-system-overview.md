@@ -9,8 +9,8 @@ Watch Web, SQLite, media/runtime dependency와 운영 도구만 둔다. RAM/stor
 실제 값과 acceptance baseline은 PHASE 9 staging inventory 전에는 확정값으로 사용하지 않는다.
 음악 주크박스에서 출발해 대화 요약, XP, 생일,
 Watch Together, 운영 자동화가 같은 bot에 추가됐다. 제품 의도는
-[`docs/product-spec.md`](../product-spec.md), 운영 절차는
-[`docs/operations.md`](../operations.md)가 현재의 우선 근거다.
+[`docs/product-spec.md`](../../product-spec.md), 운영 절차는
+[`docs/operations.md`](../../operations.md)가 현재의 우선 근거다.
 
 ## 실행 배치
 
@@ -52,7 +52,7 @@ WordPress/CloudPanel 환경은 목표 runtime이나 비교 baseline에 포함하
 8. ready event 6개가 로그 panel, message preload, music dashboard/복원, voice XP 복원,
    stale Watch cleanup, presence 변경을 각각 수행한다.
 
-근거: [`main_bot.py`](../../main_bot.py#L37), 특히 Cog 목록 L41–49, DB 선행 L55–58,
+근거: [`main_bot.py`](../../../main_bot.py#L37), 특히 Cog 목록 L41–49, DB 선행 L55–58,
 Uvicorn L59–73, extension loop L76–100, sync L102–109이다.
 
 ## 종료 순서

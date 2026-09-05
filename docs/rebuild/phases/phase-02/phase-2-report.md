@@ -1,4 +1,4 @@
-# 29. PHASE 2 Platform Report
+# PHASE 2 Platform Report
 
 ## Phase 2 Complete
 

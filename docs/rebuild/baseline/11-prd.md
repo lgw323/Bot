@@ -97,7 +97,8 @@ structured telemetry, least privilege, compatible migration이다.
   compatibility를 가진다.
 - favorites는 user-global, XP/birthday/play counts는 승인된 guild scope를 유지한다.
 - snapshot은 atomic publish하고 실제 restore 성공 ack 전 삭제하지 않는다.
-- retention/RPO/RTO/key rotation은 [미결 질문](22-open-questions.md) 결정에 따른다.
+- retention/RPO/RTO/key rotation은
+  [미결 질문](../current/open-questions.md) 결정에 따른다.
 
 ## 12. Security
 

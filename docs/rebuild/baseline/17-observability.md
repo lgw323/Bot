@@ -47,19 +47,6 @@ label에 raw user/session/URL을 넣어 cardinality와 privacy를 폭발시키�
 - capability registry: `music`, `summary`, `engagement`, `birthday`, `watch`, `operations`별
   ready/degraded reason을 관리 panel과 deploy smoke가 함께 사용한다.
 
-### PHASE 2 구현 상태
-
-- `TelemetryBuffer`는 기본 512, config 최대 8192 event의 non-blocking FIFO이며 overflow를
-  `dropped_count`로 남긴다. JSON handler는 explicit factory 호출로만 생성되고 root logger를
-  import 시 변경하지 않는다.
-- `MetricRegistry`는 기본 256, 최대 4096 label series만 허용하며 새 cardinality 초과를
-  `CapacityError`와 drop counter로 표시한다. exporter/HTTP endpoint는 아직 연결하지 않았다.
-- `HealthRegistry`는 composition 시 선언된 capability만 받아 동적 cardinality를 막는다.
-  liveness, admission/readiness, `ok/degraded/down/unknown` dependency payload를 분리한다. 실제
-  `/live`, `/ready`, `/dependencies` HTTP adapter는 Watch migration/Operations Phase에서 붙인다.
-- telemetry field는 sink 전 key/inline secret redaction을 거친다. raw 사용자 ID나 URL을
-  metric label로 사용하지 않으며 feature별 pseudonymization은 adapter 구현 시 추가한다.
-
 ## Alert and runbook policy
 
 page 후보는 readiness 지속 실패, restart loop, DB integrity/data error, backup RPO 위반,

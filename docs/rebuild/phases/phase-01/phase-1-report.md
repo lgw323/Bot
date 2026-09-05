@@ -1,4 +1,4 @@
-# 28. PHASE 1 Characterization Report
+# PHASE 1 Characterization Report
 
 ## Phase 1 Complete
 
@@ -44,7 +44,7 @@ MusicState를 승인 architecture로 추인하지 않는다.
 - DB는 공통 isolated fixture와 per-test `tmp_path`만 사용했다.
 - 외부 Discord/Gemini/YouTube/oEmbed/network/subprocess를 모두 fake/mock 처리했다.
 - strict warning 실행으로 미정리 coroutine/unraisable exception이 없음을 확인했다.
-- 더 큰 race/fault/load 항목은 `27-concurrency-failure-plan.md`에 trigger, invariant와 담당
+- 더 큰 race/fault/load 항목은 `concurrency-failure-plan.md`에 trigger, invariant와 담당
   Phase를 기록했다.
 
 ### Pi Impact
@@ -82,10 +82,10 @@ PHASE 1에서는 runtime bug를 수정하지 않았다. 대신 다음을 golden 
 
 - `docs/operations.md`: clean Raspberry Pi 5/Ubuntu 24.04 ARM64/Ethernet 운영 범위
 - `01`, `02`, `07`, `13`, `20`, `22`, `25`: 새 production/tunnel/baseline/migration 가정
-- `23-decision-log.md`: ADR-016 accepted
-- `24-requirement-test-trace.md`: PHASE 1 mandatory overlay와 executable evidence
-- `26-characterization-contracts.md`: 기능별 golden/corrective contract
-- `27-concurrency-failure-plan.md`: 22개 deterministic concurrency/failure scenario
+- `../../current/architecture-decision-log.md`: ADR-016 accepted
+- `../../current/requirement-test-trace.md`: PHASE 1 mandatory overlay와 executable evidence
+- `characterization-contracts.md`: 기능별 golden/corrective contract
+- `concurrency-failure-plan.md`: 22개 deterministic concurrency/failure scenario
 - `README.md`, `CHANGELOG.md`: 산출물 링크와 변경 기록
 
 ### Remaining Risks

@@ -96,7 +96,7 @@ flowchart LR
 
 ## 남은 단계별 gate
 
-1. `22-open-questions.md`의 BLOCKER 결정 — 완료
+1. `../current/open-questions.md`의 BLOCKER 결정 — 완료
 2. PHASE 1: 8개 slash command, 암묵적 `help`, 모든 button의 golden behavior 확정
 3. PHASE 1: 추천재생을 포함한 누락 characterization/concurrency/failure test 구현
 4. PHASE 3: schema와 `music_state.json` 전환, backup/restore/7일 rollback proof

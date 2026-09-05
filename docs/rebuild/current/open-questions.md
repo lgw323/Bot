@@ -1,4 +1,4 @@
-# 22. Decision Closure
+# Current Open Questions and Decision Closure
 
 2026-09-04 V2 구현 마스터 프롬프트를 최상위 사용자 결정으로 반영했다. PHASE 0 기준
 미해결 `BLOCKER`는 **0개**다. 아래 `ACCEPTED`는 구현 기준이며, `DEFERRED-MEASURE`는
