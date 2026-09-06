@@ -23,7 +23,7 @@ async def test_migration_publishes_only_verified_new_copy_and_old_reader_still_w
     db = SqliteDatabase(DatabaseConfig(destination))
     try:
         report = await DataRecovery(db).migrated_copy(legacy_db, destination, request())
-        assert report.migration_version == 2
+        assert report.migration_version == 3
         assert hashlib.sha256(legacy_db.read_bytes()).hexdigest() == source_hash
         with pytest.raises(ConflictError):
             await DataRecovery(db).migrated_copy(legacy_db, legacy_db, request())

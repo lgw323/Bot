@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from typing import Callable
 
 from discordbot.platform.errors import DataIntegrityError
+from discordbot.storage.adapters.engagement_schema import ENGAGEMENT_DDL, ENGAGEMENT_TABLES
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,6 +38,7 @@ MIGRATIONS = (
         "CREATE INDEX v2_users_birthday ON users(guild_id,birth_month,birth_day)",
         "CREATE INDEX v2_watch_guild ON watch_sessions(guild_id,created_at,session_id)",
     )),
+    Migration(3, "engagement-event-ownership", ENGAGEMENT_DDL),
 )
 LEDGER_DDL = """CREATE TABLE IF NOT EXISTS v2_migrations (
     version INTEGER PRIMARY KEY,
@@ -53,10 +55,10 @@ def ordered(migrations: tuple[Migration, ...]) -> tuple[Migration, ...]:
             or len({m.identity for m in result}) != len(result)
             or any(not re.fullmatch(r"[a-z0-9-]{1,80}", m.identity) for m in result)):
         raise DataIntegrityError("invalid migration registry")
-    # Only the four approved nullable expansions and new legacy-table indexes.
+    # Only reviewed nullable/metadata expansions and legacy-table indexes.
     for migration in result:
         for statement in migration.statements:
-            if statement in MIGRATIONS[0].statements:
+            if statement in MIGRATIONS[0].statements or statement in ENGAGEMENT_DDL:
                 continue
             if not re.fullmatch(r"CREATE INDEX v2_[a-z_]+ ON (users|music_settings|music_play_counts|favorites|watch_sessions|watch_playlists)\([a-z_,]+\)", statement):
                 raise DataIntegrityError("migration is not an approved expansion")
@@ -66,12 +68,17 @@ def ordered(migrations: tuple[Migration, ...]) -> tuple[Migration, ...]:
 def validate_ledger(conn: sqlite3.Connection, migrations: tuple[Migration, ...] = MIGRATIONS) -> int:
     registry = ordered(migrations)
     if not conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='v2_migrations'").fetchone():
+        if {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")} & ENGAGEMENT_TABLES:
+            raise DataIntegrityError("engagement expansion has no migration ledger")
         return 0
     layout = tuple((r[1], r[2], r[5]) for r in conn.execute("PRAGMA table_info(v2_migrations)"))
     if layout != (("version", "INTEGER", 1), ("identity", "TEXT", 0), ("checksum", "TEXT", 0),
                   ("state", "TEXT", 0), ("applied_at", "TEXT", 0)):
         raise DataIntegrityError("invalid migration ledger layout")
     rows = conn.execute("SELECT version,identity,checksum,state,applied_at FROM v2_migrations ORDER BY version").fetchall()
+    extensions = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")} & ENGAGEMENT_TABLES
+    if extensions and not any(row[0] == 3 for row in rows):
+        raise DataIntegrityError("engagement expansion has no applied ledger step")
     if len(rows) > len(registry):
         raise DataIntegrityError("unknown migration ledger version")
     for row, migration in zip(rows, registry):
@@ -90,9 +97,10 @@ def validate_ledger(conn: sqlite3.Connection, migrations: tuple[Migration, ...] 
                     raise DataIntegrityError("applied expansion is missing")
             else:
                 name = statement.split()[2]
-                actual = conn.execute("SELECT sql FROM sqlite_master WHERE type='index' AND name=?", (name,)).fetchone()
+                kind = "table" if statement.startswith("CREATE TABLE") else "index"
+                actual = conn.execute("SELECT sql FROM sqlite_master WHERE type=? AND name=?", (kind, name)).fetchone()
                 if actual is None or actual[0] != statement:
-                    raise DataIntegrityError("applied index definition mismatch")
+                    raise DataIntegrityError("applied schema object definition mismatch")
     return len(rows)
 
 

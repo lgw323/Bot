@@ -58,7 +58,7 @@ def snapshot(source: Path, destination: Path, control: WorkControl,
             conn.backup(target, pages=16, progress=step, sleep=0.01)
             target.execute("PRAGMA journal_mode=DELETE")
             after = require_valid(checked_validation(target))
-            if (before.data_checksum, before.counts) != (after.data_checksum, after.counts):
+            if (before.data_checksum, before.metadata_checksum, before.counts) != (after.data_checksum, after.metadata_checksum, after.counts):
                 raise DataIntegrityError("snapshot reconciliation failed")
         return after
 
@@ -99,7 +99,7 @@ class DataRecovery:
                 with closing(connect(candidate, control, writable=True)) as conn:
                     apply_pending(conn, control.checkpoint)
                     after = require_valid(checked_validation(conn))
-                    if (before.data_checksum, before.counts) != (after.data_checksum, after.counts):
+                    if (before.data_checksum, before.metadata_checksum, before.counts) != (after.data_checksum, after.metadata_checksum, after.counts):
                         raise DataIntegrityError("migration semantic reconciliation failed")
                 control.checkpoint()
                 publish_new(candidate, destination)
@@ -173,7 +173,7 @@ class DataRecovery:
                     with closing(sqlite3.connect(verification, isolation_level=None)) as conn:
                         restore_script(conn, sql, legacy=legacy, key=key, control=control)
                         verified = require_valid(checked_validation(conn))
-                        if (report.data_checksum, report.counts, report.migration_version) != (verified.data_checksum, verified.counts, verified.migration_version):
+                        if (report.data_checksum, report.metadata_checksum, report.counts, report.migration_version) != (verified.data_checksum, verified.metadata_checksum, verified.counts, verified.migration_version):
                             raise DataIntegrityError("backup restore reconciliation failed")
                 with candidate_file(destination, ".encrypted") as encrypted:
                     encrypted.write_bytes(payload)

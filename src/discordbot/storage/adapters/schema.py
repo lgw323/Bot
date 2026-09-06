@@ -9,6 +9,7 @@ import sqlite3
 from datetime import date
 
 from discordbot.storage.ports.contracts import DatabaseState, ValidationReport
+from discordbot.storage.adapters.engagement_schema import ENGAGEMENT_DDL, ENGAGEMENT_TABLES
 
 # Fixed, reviewed identifiers only. No identifier is taken from user input.
 SCHEMA = {
@@ -94,7 +95,7 @@ def validate(conn: sqlite3.Connection) -> ValidationReport:
         return ValidationReport(DatabaseState.CORRUPT)
     objects = conn.execute("SELECT type,name FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'").fetchall()
     tables = {name for kind, name in objects if kind == "table"}
-    if (tables - {"v2_migrations"} != set(SCHEMA)
+    if (tables - {"v2_migrations"} - ENGAGEMENT_TABLES != set(SCHEMA)
             or any(kind not in {"table", "index"} for kind, _ in objects)
             or conn.execute("PRAGMA user_version").fetchone()[0] != 0):
         return ValidationReport(DatabaseState.WRONG_SCHEMA)
@@ -135,8 +136,41 @@ def validate(conn: sqlite3.Connection) -> ValidationReport:
     orphans = conn.execute("SELECT count(*) FROM watch_playlists p LEFT JOIN watch_sessions s ON s.session_id=p.session_id WHERE s.session_id IS NULL").fetchone()[0]
     if orphans:
         return ValidationReport(DatabaseState.INVALID_DATA)
+    metadata = hashlib.sha256()
+    has_metadata = False
+    if tables & ENGAGEMENT_TABLES:
+        for ddl in ENGAGEMENT_DDL:
+            name = ddl.split()[2]
+            actual = conn.execute("SELECT sql FROM sqlite_master WHERE name=?", (name,)).fetchone()
+            if actual != (ddl,):
+                return ValidationReport(DatabaseState.WRONG_SCHEMA)
+    for table in sorted(tables & ENGAGEMENT_TABLES):
+        info = conn.execute(f'PRAGMA table_info("{table}")').fetchall()
+        keys = ",".join(f'"{r[1]}"' for r in sorted(info, key=lambda r: r[5]) if r[5])
+        for row in conn.execute(f'SELECT * FROM "{table}" ORDER BY {keys}'):
+            if not _valid_metadata(table, row):
+                return ValidationReport(DatabaseState.INVALID_DATA)
+            has_metadata = True
+            metadata.update((table + json.dumps(row, separators=(",", ":"))).encode("utf-8"))
     return ValidationReport(
         DatabaseState.VALID, "legacy-pairs-absent:" + ",".join(old_pairs) if old_pairs else "legacy-current",
         counts=tuple(counts), data_checksum=digest.hexdigest(),
+        metadata_checksum=metadata.hexdigest() if has_metadata else "",
         warnings=(("legacy_global_users", globals_count), ("invalid_calendar_birthdays", invalid_dates)),
     )
+
+
+def _valid_metadata(table: str, row: tuple) -> bool:
+    if table.endswith("runtime"):
+        return row[0] == 1 and _text(row[1], True)
+    if table.endswith("events"):
+        return _integer(row[0], 1) and _text(row[1], True) and _number(row[2])
+    if table.endswith("voice"):
+        return (_integer(row[0], 1) and _integer(row[1], 1) and _text(row[2], True)
+                and _text(row[3], True) and _integer(row[4])
+                and (row[5] is None or _integer(row[5], 1)) and row[6] in (0, 1)
+                and _number(row[7]) and _number(row[8]))
+    try:
+        return _integer(row[0], 1) and date.fromisoformat(row[1]).isoformat() == row[1] and row[2] in {"claimed", "sent", "uncertain"}
+    except (TypeError, ValueError):
+        return False

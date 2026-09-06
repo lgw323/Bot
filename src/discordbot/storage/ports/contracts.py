@@ -80,6 +80,7 @@ class ValidationReport:
     counts: tuple[tuple[str, int], ...] = ()
     # An aggregate reconciliation digest is kept internal, never a row fixture.
     data_checksum: str = field(default="", repr=False)
+    metadata_checksum: str = field(default="", repr=False)
     warnings: tuple[tuple[str, int], ...] = ()
 
 

@@ -10,6 +10,7 @@ from cryptography.fernet import Fernet, InvalidToken
 from discordbot.platform.errors import ConfigurationError, DataIntegrityError
 from discordbot.storage.adapters.execution import WorkControl
 from discordbot.storage.adapters.schema import SCHEMA
+from discordbot.storage.adapters.engagement_schema import ENGAGEMENT_TABLES
 
 BACKUP_HEADER = b"DISCORDBOT_BACKUP_V2\n"
 
@@ -35,7 +36,7 @@ def decode(payload: bytes, key: bytes | None, maximum: int) -> tuple[str, bool]:
 
 
 def _authorizer(action: int, arg1: str | None, arg2: str | None, database: str | None, source: str | None) -> int:
-    tables = set(SCHEMA) | {"v2_migrations", "sqlite_master"}
+    tables = set(SCHEMA) | ENGAGEMENT_TABLES | {"v2_migrations", "sqlite_master"}
     allowed = False
     if source is not None or database not in {None, "main"}:
         return sqlite3.SQLITE_DENY
@@ -49,6 +50,10 @@ def _authorizer(action: int, arg1: str | None, arg2: str | None, database: str |
         allowed = arg1 in tables - {"sqlite_master"}
     elif action == sqlite3.SQLITE_CREATE_INDEX:
         allowed = arg2 in tables and bool(arg1) and arg1.startswith(("sqlite_autoindex_", "v2_"))
+    elif action == sqlite3.SQLITE_REINDEX:
+        # SQLite requests this action when restoring an index on populated rows.
+        # Limit it to the four reviewed migration indexes, never arbitrary objects.
+        allowed = arg1 in {"v2_users_guild", "v2_users_birthday", "v2_watch_guild", "v2_engagement_expiry"}
     return sqlite3.SQLITE_OK if allowed else sqlite3.SQLITE_DENY
 
 
