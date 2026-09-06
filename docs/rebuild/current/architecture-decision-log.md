@@ -182,3 +182,24 @@
 - **Consequence:** V2 raw task와 blocking dispatch는 각각 supervisor/bounded executor module 밖에서
   금지된다. SQLite/vendor는 adapter boundary 뒤에만 둘 수 있고 production route/data/deploy는
   후속 gate 전 연결하지 않는다.
+
+## ADR-018 PHASE 3 copy-only SQLite compatibility
+
+- **Status:** ACCEPTED/IMPLEMENTED (2026-09-05, user PHASE 3 direction)
+- **Context:** 실제 보관 DB를 보존하면서 legacy 의미와 migration/restore 안전성을 feature
+  migration 전에 증명해야 한다. PHASE 2에는 빈 repository package만 있었다.
+- **Decision:** context별 typed repository와 공통 `storage/ports`, `storage/adapters`를 둔다.
+  한 lifecycle resource가 전용 writer 1개와 reader 1개를 bounded executor로 소유한다.
+  startup은 read-only validation만 하며 bootstrap/restore/migration은 명시적인 candidate
+  operation이다. public migration/restore는 새 경로에만 게시하고 source를 교체하지 않는다.
+- **Reason:** 과도한 parallelism, process-global DB lock과 암묵적인 빈 DB 승격을 제거하면서
+  기존 six-table row/URL/XP/global favorite와 old reader를 보존할 수 있다.
+- **Trade-off:** 단일 reader를 backup과 공유하므로 backup 중 read admission이 밀릴 수 있다.
+  hard deadline/queue cap이 이를 제한한다. cancellation과 commit이 경합하면 caller는 결과를
+  재조회해야 하며 DB deadline은 자동 재시도 가능 오류로 표시하지 않는다.
+- **Consequence:** ledger version 1/2는 nullable expansion/조회 인덱스만 추가한다. 사용자 데이터
+  변환·삭제, JSON snapshot 교정, Watch writer, playback accounting, scheduler/remote publish와
+  Pi 설치는 후속 Phase에 남는다. 실제 source 사본으로 reconciliation/old-reader를 검증했고
+  원본 hash가 동일하다. 세부 계약과 증거는
+  [data contract](../phases/phase-03/data-compatibility-contract.md),
+  [rehearsal](../phases/phase-03/migration-rehearsal.md)을 따른다.

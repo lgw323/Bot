@@ -24,7 +24,7 @@ test name 또는 marker/fixture metadata로 연결한다. 아래 파일명은 `t
 
 | Feature | FR | New executable evidence | PHASE 1 status |
 | --- | --- | --- | --- |
-| F001 | FR-001,046 | `test_database_recovery_contracts.py`: corrupt 보존/fail, zero-byte fail-closed spec | CHARACTERIZED + CORRECT-SPEC xfail |
+| F001 | FR-001,046 | `test_database_recovery_contracts.py`: V1 corrupt 보존/fail, PHASE 3 V2 zero-byte fail-closed 구현 | CHARACTERIZED + CORRECT-IMPLEMENTED (V2) |
 | F008 | FR-003,004,010,027,030 | `test_discord_contracts.py`, `test_summary_contracts.py`: signature/publicness/error/success/no-data; ACL/60s/active1/queue4/redaction specs | CHARACTERIZED + CORRECT-SPEC xfail |
 | F009/F010 | FR-028,029 | `test_component_contracts.py`: modal/refresh/topic select; >25 pagination spec | CHARACTERIZED + CORRECT-SPEC xfail |
 | F011/F013 | FR-011,012,021 | exact music player/search select/modal inventory; pagination spec | CHARACTERIZED + CORRECT-SPEC xfail |
@@ -63,9 +63,34 @@ evidence다. 따라서 F001/F002/Watch 등의 사용자 기능 status나 PHASE 1
 | Discord/Watch process composition | NFR-002 | `test_runtime.py`, `tests/architecture/test_import_rules.py` | 독립 supervisor/capacity/composition, feature 미연결 |
 | inward dependency/import safety | NFR-019,025,027,028 | `tests/architecture/test_import_rules.py` | layer/vendor/SQLite/task/executor rule와 fresh-process no-side-effect import |
 
-SQLite repository 구현과 data compatibility는 PHASE 3, engagement/Summary/Watch/Music 기능은
-각 PHASE 4/5/6/7에 남아 있다. 현재 `ports/adapters` package와 SQLite adapter-only rule만
-repository boundary를 준비한다.
+PHASE 2 시점에는 빈 `ports/adapters` package와 SQLite adapter-only rule만 있었다. PHASE 3의
+현재 구현 증거는 다음 overlay에 있으며 engagement/Summary/Watch/Music 기능은 각 PHASE
+4/5/6/7에 남아 있다.
+
+## PHASE 3 data overlay
+
+모든 자동 test는 `tests/integration/data/`의 synthetic/임시 DB만 사용한다. 별도 actual DB
+working-copy rehearsal은 [보고서](../phases/phase-03/migration-rehearsal.md)에 기록한다.
+
+| Contract | Requirement / scenario | Executable evidence | Result / remaining owner |
+| --- | --- | --- | --- |
+| SQLite repository boundary | FR-006/020; NFR-019/025/027 | `test_repositories.py`, architecture import rules | IMPLEMENTED; immutable DTO, guild scope와 user-global favorite |
+| bounded DB ownership/deadline/cancel | NFR-003/005/011/013; CF-07/20 | `test_concurrency.py`, `test_lifecycle.py` | IMPLEMENTED; read/write 독립 cap, cooperative rollback, bounded observation |
+| legacy schema/semantic compatibility | FR-006/031/032/045; CF-21 | `test_schema_contract.py`, `test_failure_validation.py`, `test_repositories.py` | IMPLEMENTED; global rows/소수 초/잘못된 legacy 생일/URL/history 보존 |
+| expand-only ledger/idempotent resume | ADR-010; FR-050 | `test_migration_ledger.py`, `test_migrations.py` | IMPLEMENTED; version/identity/checksum/time, step rollback/restart, old reader |
+| explicit bootstrap/fail-closed startup | FR-001/046; F001 | `test_recovery.py`, `test_lifecycle.py`, zero-byte characterization | CORRECT-IMPLEMENTED for V2; V1 runtime 미변경 |
+| encrypted V2 + legacy backup | FR-045/046; F005 | `test_recovery.py`, `test_failure_validation.py` | IMPLEMENTED data primitives; remote transport/key rotation/retention PHASE 8 |
+| point-in-time validated backup | FR-047; CF-14 | `test_concurrency.py::test_snapshot_during_atomic_cross_table_write_is_one_point_in_time` | IMPLEMENTED data side; scheduling/RPO/RTO/real Pi fault PHASE 8/9 |
+| actual copy reconciliation/rollback reader | ADR-010/014; user PHASE 3 | `scripts/rehearse_v2_data.py` | PASS; 원본 unchanged, six-table counts/semantic equality |
+
+Strict xfail은 13 → 12다. PHASE 3 소유 zero-byte spec만 V1 호출에서 구현된 V2 startup gate로
+전환했다. 단순 marker 제거가 아니며 bytes 보존과 closed executor도 확인한다. 기존 V1 corrupt
+test는 계속 통과한다. PHASE 1의 PRESERVE test는 변경하지 않았다.
+
+PHASE 1의 `legacy snapshot 0.5/default/version/ACK` 공동 owner 표기(3/7)는 이번 사용자 지시의
+정확한 SQLite 범위에 따라 PHASE 7로 남긴다. 해당 marker와 나머지 PHASE 4–7 strict xfail은
+유지한다. 이 overlay는 F001/F005 전체 운영 기능 또는 engagement/Watch/Music migration 완료를
+뜻하지 않는다.
 
 ## F001–F045 trace
 

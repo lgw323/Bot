@@ -93,9 +93,9 @@ python -m pytest tests/ -W error::RuntimeWarning -W error::pytest.PytestUnraisab
 | `main_bot.py` | 프로그램 시작, Discord 연결과 기능 모듈 로드 |
 | `database_manager.py` | SQLite 스키마, 데이터 읽기·쓰기와 SQL 백업·복구 |
 | `cogs/` | 음악, 요약, 레벨링, 생일, 로깅, Watch Together 기능 |
-| `src/discordbot/` | 아직 V1 route에 연결하지 않은 V2 platform/composition skeleton |
-| `scripts/` | Pi 자동 업데이트와 DB 백업 |
-| `tests/` | V1 계약, V2 platform과 architecture 규칙을 확인하는 pytest 테스트 |
+| `src/discordbot/` | 아직 V1 route에 연결하지 않은 V2 platform과 SQLite 데이터 호환 계층 |
+| `scripts/` | Pi 자동 업데이트·DB 백업과 V2 데이터 사본 검증 도구 |
+| `tests/` | V1 계약, V2 platform·데이터 호환성과 architecture 규칙을 확인하는 pytest 테스트 |
 | `docs/` | 제품 명세, 운영 절차와 과거 작업 기록 |
 
 ## 문서 안내

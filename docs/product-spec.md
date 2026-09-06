@@ -115,6 +115,12 @@ DB 연결 설정은 봇 전용 연결 함수에서만 적용하며 Python 표준
 
 ## 4. 데이터와 백업의 현재 상태
 
+아래 운영 설명은 V1 기준입니다. 아직 운영 경로에 연결하지 않은 V2의 PHASE 3에는
+explicit bootstrap, fail-closed validation, SQLite compatibility repository와 copy-only migration/
+restore가 구현됐습니다. 범위와 검증은
+[V2 데이터 계약](rebuild/phases/phase-03/data-compatibility-contract.md)에 기록합니다.
+기존 운영 파일과 사용자 기능은 이 추가만으로 전환되지 않습니다.
+
 ### 저장소 분리
 
 - 공개 코드 저장소는 [`lgw323/Bot`](https://github.com/lgw323/Bot)이며

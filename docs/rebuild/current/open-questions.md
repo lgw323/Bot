@@ -61,6 +61,15 @@
 
 ## Remaining gates, not blockers
 
+- PHASE 3에서 Q-B01의 V2 fail-closed startup/explicit bootstrap과 Q-B03의 copy-based old-reader
+  검증을 구현했다. 세부 증거는
+  [data contract](../phases/phase-03/data-compatibility-contract.md),
+  [actual rehearsal](../phases/phase-03/migration-rehearsal.md)에 있다. V1 경로와 실제 운영 DB는
+  전환하지 않았다. legacy global row와 날짜 오류를 자동 정리하는 새 제품 결정은 없다.
+- actual DB의 Watch tables는 비어 있어 nonempty 동작은 synthetic test 증거만 있다. 실제 backup
+  key를 이용한 restore drill, live-path/WAL 교체 절차, hard-link/filesystem/power-loss 검증과
+  RPO/RTO 측정은 PHASE 8/9 gate에 남는다.
+
 - Raspberry Pi 5와 Ubuntu Server 24.04 LTS ARM64, Ethernet/LAN은 확정됐다. RAM, storage,
   filesystem과 capacity/SLO baseline은 깨끗한 새 Pi staging에서 아직 측정하지 않았다.
 - staging token/guild와 production secret은 저장소에 넣지 않으며 필요한 phase에서만 operator가 주입한다.

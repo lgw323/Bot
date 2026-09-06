@@ -10,6 +10,11 @@
 ## [Unreleased]
 
 ### Added
+- DiscordBot V2 PHASE 3의 typed SQLite repositories, 독립 bounded read/write execution,
+  expand-only migration ledger, explicit bootstrap와 fail-closed DB validation을 추가했습니다.
+- 한 시점의 snapshot과 전체 암호화 backup 검증, V2/legacy SQL restore-to-new-path,
+  실제 보관 DB의 copy-only rehearsal 도구와 synthetic concurrency/failure test를 추가했습니다.
+  V1 route, 원본 DB와 Pi 운영 설치에는 연결하지 않았습니다.
 - DiscordBot V2 PHASE 2 platform skeleton을 `src/discordbot/`에 추가했습니다. typed immutable
   config/error/context, bounded telemetry·metrics·executor, capability health와 TaskSupervisor를
   포함하며 import만으로 DB/network/server/subprocess를 시작하지 않습니다.
@@ -36,6 +41,8 @@
   일시적 네트워크 WARNING과 60초 내 동일 메시지만 중복 억제하도록 조정했습니다.
 
 ### Documentation
+- PHASE 3 데이터 계약, actual DB aggregate rehearsal 결과, 원본 hash 보존, requirement trace와
+  PHASE 4 사용자 지시 gate를 추가했습니다. 역사적 baseline과 이전 Phase 문서는 보존했습니다.
 - DiscordBot V2 재구축 PHASE 0의 decision closure, 승인된 ADR, F001–F045 요구사항-테스트
   trace, V1 baseline test 결과와 Raspberry Pi 측정 계획을 추가했습니다.
 - V2 production target을 Raspberry Pi 5, Ubuntu Server 24.04 LTS ARM64, Ethernet/LAN의

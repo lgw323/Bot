@@ -48,6 +48,7 @@ PHASE_DOCUMENTS = {
         "phase-1-report.md",
     },
     "phase-02": {"phase-2-report.md", "platform-contract.md"},
+    "phase-03": {"phase-3-report.md", "data-compatibility-contract.md", "migration-rehearsal.md"},
 }
 
 
