@@ -10,6 +10,11 @@
 ## [Unreleased]
 
 ### Added
+- DiscordBot V2 PHASE 4의 Engagement application과 Discord adapter를 추가했습니다. Jamo text XP,
+  completed-minute voice XP/profile/ranking, master birthday CRUD와 KST daily notification을
+  PHASE 3 repository와 supervised lifecycle에 연결했으며 V1 운영 경로는 변경하지 않았습니다.
+- 중복 message/voice event와 daily birthday claim을 위한 additive migration 3, metadata를 포함한
+  encrypted backup/restore 검증과 deterministic Engagement race/failure test를 추가했습니다.
 - DiscordBot V2 PHASE 3의 typed SQLite repositories, 독립 bounded read/write execution,
   expand-only migration ledger, explicit bootstrap와 fail-closed DB validation을 추가했습니다.
 - 한 시점의 snapshot과 전체 암호화 backup 검증, V2/legacy SQL restore-to-new-path,
@@ -41,6 +46,8 @@
   일시적 네트워크 WARNING과 60초 내 동일 메시지만 중복 억제하도록 조정했습니다.
 
 ### Documentation
+- PHASE 4 계약/완료 보고서와 current ADR-019/trace/다음 Phase gate를 추가했습니다. 보관된 실제
+  DB와 PHASE 0–3/baseline 문서는 변경하지 않았습니다.
 - PHASE 3 데이터 계약, actual DB aggregate rehearsal 결과, 원본 hash 보존, requirement trace와
   PHASE 4 사용자 지시 gate를 추가했습니다. 역사적 baseline과 이전 Phase 문서는 보존했습니다.
 - DiscordBot V2 재구축 PHASE 0의 decision closure, 승인된 ADR, F001–F045 요구사항-테스트

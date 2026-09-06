@@ -35,8 +35,8 @@ test name 또는 marker/fixture metadata로 연결한다. 아래 파일명은 `t
 | F025 | FR-020,021 | user-global favorite controls; pagination spec | CHARACTERIZED + CORRECT-SPEC xfail |
 | F028/F045 | FR-024,025 | exact snapshot shape/restore order/settings; legacy 0.5 default spec | CHARACTERIZED + CORRECT-SPEC xfail |
 | F029/F030 | FR-031,032 | text XP table, voice leave/move fake-clock | CHARACTERIZED |
-| F031/F032 | FR-003,032,033 | private profile, option-based ranking, completed-minute profile; ranking parity spec | CHARACTERIZED + CORRECT-SPEC xfail |
-| F033–F036 | FR-003,005,010,034–037 | master/register/delete/list, KST/leap fake-clock; valid date/non-leap policy specs | CHARACTERIZED + CORRECT-SPEC xfail |
+| F031/F032 | FR-003,032,033 | private profile, option-based ranking, completed-minute profile; V2 ranking parity | CHARACTERIZED + CORRECT-IMPLEMENTED (V2) |
+| F033–F036 | FR-003,005,010,034–037 | master/register/delete/list, KST/leap fake-clock; V2 valid date/non-leap policy | CHARACTERIZED + CORRECT-IMPLEMENTED (V2) |
 | F037 | FR-003,004,010,038 | `/시청` public/unavailable; durable-before-invite/single-responder specs | CHARACTERIZED + CORRECT-SPEC xfail |
 | F038/F040 | FR-039 | exact HTTP paths/add body plus existing endpoint/CRUD tests | CHARACTERIZED |
 | F039 | FR-040,041 | invalid close, join ordering, all 7 client relay types | CHARACTERIZED |
@@ -91,6 +91,26 @@ PHASE 1의 `legacy snapshot 0.5/default/version/ACK` 공동 owner 표기(3/7)는
 정확한 SQLite 범위에 따라 PHASE 7로 남긴다. 해당 marker와 나머지 PHASE 4–7 strict xfail은
 유지한다. 이 overlay는 F001/F005 전체 운영 기능 또는 engagement/Watch/Music migration 완료를
 뜻하지 않는다.
+
+## PHASE 4 engagement overlay
+
+아래 증거는 `tests/integration/engagement/`와 변경된 PHASE 4 CORRECT characterization에 있다.
+이전 Phase의 역사적 상태를 소급 수정하지 않는다.
+
+| Contract | Requirement / scenario | Executable evidence | Result |
+| --- | --- | --- | --- |
+| text formula/event dedupe | FR-031; CF-21 | `test_policy.py`, `test_events.py`, `test_failures.py` | IMPLEMENTED; all Hangul/Jamo, bot/DM, receipt+XP atomicity, replay/cancel |
+| voice session/rounding | FR-032; CF-17/20/21 | `test_events.py`, `test_failures.py`, `test_discord.py` | IMPLEMENTED; move/mute/deaf/leave/restart, guild/user ownership, observed-only failure recovery |
+| profile/ranking contract | FR-003/033; CF-19 | `test_discord.py`, `test_events.py`, ranking characterization | IMPLEMENTED; private/master-other, top ten, same completed-minute formula |
+| master/calendar CRUD | FR-034–036 | `test_birthday.py`, `test_policy.py`, `test_discord.py`, calendar characterization | IMPLEMENTED; exact master, valid date, deletion rowcount, scope/list bounds |
+| daily birthday | FR-037; CF-18 | `test_birthday.py`, `test_failures.py`, Feb-29 characterization | IMPLEMENTED; KST, durable daily claim, supervised lifecycle, uncertain-send no duplicate |
+| additive metadata/rollback | ADR-010/018/019 | `test_compatibility.py`, PHASE 3 data suite | IMPLEMENTED; copy-only expansion, old reader, metadata-encrypted-backup parity |
+| explicit Discord wiring | NFR-019/025/027; CF-19/20 | `test_discord.py`, architecture rules | IMPLEMENTED; five command signatures, lazy SDK, startup fail-closed, no login |
+
+PHASE 4에서 strict xfail은 12 → **9**다. ranking completed-minute, invalid calendar와 non-leap
+Feb-29 세 spec을 V2 repository/application/adapter 호출로 전환했다. V1 PRESERVE tests는 변경하지
+않았다. birthday fallback은 Feb 29만 대체 조회하는 것이 아니라 Feb 28과 함께 같은 daily claim으로
+보내는 것을 검증한다. PHASE 5 Summary, PHASE 6 Watch와 PHASE 7 Music 소유 marker는 유지한다.
 
 ## F001–F045 trace
 

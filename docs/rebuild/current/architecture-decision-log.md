@@ -203,3 +203,18 @@
   원본 hash가 동일하다. 세부 계약과 증거는
   [data contract](../phases/phase-03/data-compatibility-contract.md),
   [rehearsal](../phases/phase-03/migration-rehearsal.md)을 따른다.
+
+## ADR-019 Engagement event ownership and calendar delivery
+
+- **Status:** ACCEPTED/IMPLEMENTED (2026-09-06, user PHASE 4 direction)
+- **Decision:** 승인된 Jamo/XP/short-stay/master/command 의미를 domain/application/ports 뒤에서
+  구현한다. PHASE 3 writer transaction이 message receipt와 XP, voice state와 정산, daily birthday
+  claim을 소유한다. version 3은 additive metadata만 추가하며 기존 migration checksum은 보존한다.
+- **Reason:** Cog dictionary와 lock을 복제하지 않고 재전송·동시 update·multi-guild를 직렬화하며
+  completed-minute profile/ranking parity와 실제 calendar 정책을 한 곳에 둔다.
+- **Trade-off:** crash 전 미관찰 voice 구간은 추측하지 않는다. 불확실한 voice observation은
+  fail-closed한다. Discord send와 DB를 원자화할 수 없어 birthday는 durable claim 이후
+  at-most-once attempt이며 실패 시 누락 가능성을 남긴다. 같은 날 무조건 retry는 하지 않는다.
+- **Consequence:** explicit Discord composition/SDK loading과 supervised birthday task만 추가한다.
+  production entrypoint/login/migration은 하지 않는다. 세부 scope, bounded retention/cap,
+  Gateway cursor와 rollback은 [Engagement contract](../phases/phase-04/engagement-contract.md)를 따른다.

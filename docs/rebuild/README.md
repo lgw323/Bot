@@ -1,6 +1,6 @@
 # DiscordBot V2 Rebuild Documentation
 
-현재 상태는 **PHASE 3 완료 / PHASE 4 미진입**이다. Production DB migration/cutover와
+현재 상태는 **PHASE 4 완료 / PHASE 5 미진입**이다. Production DB migration/cutover와
 Raspberry Pi 운영 배포는 시작하지 않았다.
 
 | 위치 | 책임 | 변경 정책 |
@@ -27,6 +27,8 @@ Raspberry Pi 운영 배포는 시작하지 않았다.
 - [PHASE 3 report](phases/phase-03/phase-3-report.md),
   [data compatibility contract](phases/phase-03/data-compatibility-contract.md),
   [actual DB rehearsal](phases/phase-03/migration-rehearsal.md)
+- [PHASE 4 report](phases/phase-04/phase-4-report.md),
+  [engagement contract](phases/phase-04/engagement-contract.md)
 
 새 Phase 산출물은 `phases/phase-XX/`에 의미 있는 파일명으로 추가한다. 과거 분석과 달라진
 사실은 baseline을 고치지 않고 current ADR/trace/plan 또는 해당 Phase 보고서에 기록한다.

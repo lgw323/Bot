@@ -61,6 +61,11 @@
 
 ## Remaining gates, not blockers
 
+- PHASE 4는 Q-H02/06/10/11, Q-M05/06/07의 Engagement 범위를 구현했다. 근거는
+  [Engagement contract](../phases/phase-04/engagement-contract.md)다. 실제 Discord Gateway와 Pi
+  intent/channel/capacity 검증은 staging에 남는다. 생일 claim 이후 uncertain failure는 자동
+  재전송하지 않으며 voice observation failure는 restart reconciliation을 요구한다.
+
 - PHASE 3에서 Q-B01의 V2 fail-closed startup/explicit bootstrap과 Q-B03의 copy-based old-reader
   검증을 구현했다. 세부 증거는
   [data contract](../phases/phase-03/data-compatibility-contract.md),

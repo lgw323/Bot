@@ -121,6 +121,11 @@ restore가 구현됐습니다. 범위와 검증은
 [V2 데이터 계약](rebuild/phases/phase-03/data-compatibility-contract.md)에 기록합니다.
 기존 운영 파일과 사용자 기능은 이 추가만으로 전환되지 않습니다.
 
+V2 PHASE 4의 XP/profile/ranking/birthday와 Discord adapter도 별도 구성으로 구현했습니다.
+완료분 voice XP, calendar/Feb-29 정책과 중복 처리 경계는
+[Engagement 계약](rebuild/phases/phase-04/engagement-contract.md)을 따릅니다. 이 추가는 V1 운영
+봇의 동작이나 실제 DB를 변경하지 않습니다.
+
 ### 저장소 분리
 
 - 공개 코드 저장소는 [`lgw323/Bot`](https://github.com/lgw323/Bot)이며
