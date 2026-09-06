@@ -133,25 +133,29 @@ async def test_f031_fr032_fr033_preserve_profile_completed_minute_formula() -> N
     assert "🎙️ 음성: 5 XP" in fields["경험치 상세"]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="CORRECT contract: V1 ranking uses fractional voice minutes",
-)
 @pytest.mark.asyncio
-async def test_f032_fr032_fr033_correct_ranking_matches_profile_completed_minutes() -> None:
-    """Feature F032; FR-032/FR-033; CORRECT."""
-    guild_id = 98_765
-    user_id = 54_321
-    await database_manager.update_user_xp(
-        user_id,
-        guild_id,
-        xp_added=0,
-        vc_sec_added=119,
-    )
+async def test_f032_fr032_fr033_correct_ranking_matches_profile_completed_minutes(tmp_path) -> None:
+    """Feature F032; FR-032/FR-033; CORRECT implemented by the V2 repository."""
+    from discordbot.engagement.adapters.event_repository import SqliteEngagementEvents
+    from discordbot.engagement.adapters.sqlite_repository import SqliteEngagementRepository
+    from discordbot.engagement.domain.policy import Progress
+    from discordbot.storage.adapters.execution import SqliteDatabase
+    from discordbot.storage.adapters.recovery import DataRecovery
+    from discordbot.storage.ports.contracts import DatabaseConfig, DatabaseRequest
 
-    rows = await database_manager.get_top_users(guild_id)
-
-    assert rows[0]["total_xp"] == 5
+    db = SqliteDatabase(DatabaseConfig(tmp_path / "ranking.db"))
+    request = lambda: DatabaseRequest.within(5)
+    await DataRecovery(db).bootstrap(request())
+    await db.start()
+    try:
+        repository = SqliteEngagementRepository(db)
+        await repository.add_progress(98765, 54321, 0, 119, request())
+        rows = await SqliteEngagementEvents(db).ranking(98765, request())
+        profile = await repository.get_member(98765, 54321, request())
+        assert Progress(rows[0].xp, rows[0].total_vc_seconds).total == 5
+        assert Progress(profile.xp, profile.total_vc_seconds).total == 5
+    finally:
+        await db.stop()
 
 
 class _LeapDayClock(stdlib_datetime.datetime):
@@ -207,59 +211,47 @@ async def test_f036_fr037_preserve_kst_nine_oclock_fake_clock() -> None:
     assert "<@101>" in embed.description
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="CORRECT contract: V1 accepts calendar-impossible dates",
-)
+def _v2_engagement(clock):
+    from discordbot.engagement.adapters.authorization import MasterAuthorization
+    from discordbot.engagement.application.service import EngagementService
+    from discordbot.engagement.ports.events import EngagementConfig
+    return EngagementService(AsyncMock(), AsyncMock(), MasterAuthorization(42),
+                             EngagementConfig(42), clock, "synthetic-contract")
+
+
 @pytest.mark.asyncio
 async def test_f033_fr035_correct_rejects_invalid_calendar_date() -> None:
-    """Feature F033; FR-035; CORRECT."""
+    """Feature F033; FR-035; CORRECT implemented in V2 application and adapter."""
+    from discordbot.engagement.adapters.discord_ui import EngagementCog
+    from discordbot.platform.clock import SystemClock
+    app = _v2_engagement(SystemClock())
+    await app.start()
     interaction = MagicMock(spec=discord.Interaction)
     interaction.user.id = 42
-    interaction.guild_id = 202
+    interaction.guild.id = 202
+    interaction.response.is_done.return_value = False
     interaction.response.send_message = AsyncMock()
-    user = _member()
-    with patch.object(birthday_core, "SUMMARY_CHANNEL_ID", 0), patch.object(
-        birthday_core,
-        "MASTER_USER_ID",
-        42,
-    ):
-        cog = BirthdayCoreCog(MagicMock())
-        with patch(
-            "cogs.birthday.birthday_core.add_birthday",
-            new=AsyncMock(),
-        ) as add_birthday:
-            await BirthdayCoreCog.register_birthday.callback(
-                cog,
-                interaction,
-                user=user,
-                month=2,
-                day=30,
-            )
-
-    add_birthday.assert_not_awaited()
+    cog = EngagementCog(app)
+    await cog.register_birthday.callback(cog, interaction, user=_member(), month=2, day=30)
+    app.repository.set_birthday.assert_not_awaited()
     interaction.response.send_message.assert_awaited_once_with(
-        "올바른 날짜를 입력해주세요.",
-        ephemeral=True,
+        "올바른 날짜를 입력해주세요.", ephemeral=True,
     )
+    await app.stop()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="CORRECT contract: non-leap Feb 28 must also query Feb 29 birthdays",
-)
 @pytest.mark.asyncio
 async def test_f036_fr035_fr037_correct_non_leap_feb29_fallback_fake_clock() -> None:
-    """Feature F036; FR-035/FR-037; CORRECT."""
-    cog, guild, _channel = _birthday_cog()
-    with patch.object(birthday_core, "SUMMARY_CHANNEL_ID", 303), patch.object(
-        birthday_core.datetime,
-        "datetime",
-        _NonLeapFeb28Clock,
-    ), patch(
-        "cogs.birthday.birthday_core.get_birthdays_today",
-        new=AsyncMock(return_value=[]),
-    ) as birthdays_today:
-        await BirthdayCoreCog.birthday_loop.coro(cog)
-
-    birthdays_today.assert_awaited_once_with(guild.id, 2, 29)
+    """Feature F036; FR-035/FR-037; CORRECT includes Feb 28 AND Feb 29 birthdays."""
+    from discordbot.engagement.ports.repository import MemberData
+    clock = SimpleNamespace(now=lambda: _NonLeapFeb28Clock.now(stdlib_datetime.timezone(stdlib_datetime.timedelta(hours=9))), monotonic=lambda: 0)
+    app = _v2_engagement(clock)
+    app.events.birthdays.return_value = (
+        MemberData(101, 202, 0, 1, 0, 2, 29), MemberData(102, 202, 0, 1, 0, 2, 28),
+    )
+    app.events.claim_birthday.return_value = True
+    delivery = AsyncMock()
+    await app.start()
+    await app.notify_guild(202, 303, delivery)
+    delivery.send.assert_awaited_once_with(202, 303, (101, 102))
+    await app.stop()
