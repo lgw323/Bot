@@ -11,6 +11,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE_ROOT = ROOT / "src" / "discordbot"
 FEATURE_CONTEXTS = {"music", "summary", "engagement", "watch", "operations"}
+INFRASTRUCTURE_CONTEXTS = {"storage"}
 LAYERS = {"domain", "application", "ports", "adapters"}
 ALLOWED_LAYERS = {
     "domain": {"domain"},
@@ -23,6 +24,7 @@ VENDOR_MODULES = {
     "discord",
     "fastapi",
     "google",
+    "cryptography",
     "pydantic",
     "sqlite3",
     "uvicorn",
@@ -51,7 +53,7 @@ def _feature_layer(path: Path) -> tuple[str, str] | None:
     if len(relative.parts) < 3:
         return None
     context, layer = relative.parts[:2]
-    if context in FEATURE_CONTEXTS and layer in LAYERS:
+    if context in FEATURE_CONTEXTS | INFRASTRUCTURE_CONTEXTS and layer in LAYERS:
         return context, layer
     return None
 
@@ -68,6 +70,12 @@ def test_context_dependency_direction_is_enforced() -> None:
             if len(parts) < 2 or parts[0] != "discordbot":
                 continue
             imported_context = parts[1]
+            if imported_context in INFRASTRUCTURE_CONTEXTS:
+                target_layer = parts[2] if len(parts) >= 3 else ""
+                permitted = {"ports"} if source_layer in {"ports", "application"} else {"ports", "adapters"} if source_layer == "adapters" else set()
+                if target_layer not in permitted:
+                    violations.append(f"{path}: storage access violates layer boundary: {imported}")
+                continue
             if imported_context not in FEATURE_CONTEXTS:
                 continue
             if imported_context != source_context:
@@ -99,9 +107,22 @@ def test_composition_may_only_reach_feature_adapters() -> None:
     for path in sorted((SOURCE_ROOT / "composition").rglob("*.py")):
         for imported in _imports(path):
             parts = imported.split(".")
-            if len(parts) >= 2 and parts[:1] == ["discordbot"] and parts[1] in FEATURE_CONTEXTS:
+            if len(parts) >= 2 and parts[:1] == ["discordbot"] and parts[1] in FEATURE_CONTEXTS | INFRASTRUCTURE_CONTEXTS:
                 if len(parts) < 3 or parts[2] != "adapters":
                     violations.append(f"{path}: composition import must target adapters: {imported}")
+    assert violations == []
+
+
+def test_inward_layers_cannot_dispatch_storage_or_import_legacy_runtime() -> None:
+    violations = []
+    for path in _python_files():
+        source = _feature_layer(path)
+        for imported in _imports(path):
+            if imported == "database_manager" or imported.startswith("cogs."):
+                violations.append(f"{path}: legacy runtime dependency")
+            if source and source[1] in {"domain", "ports", "application"}:
+                if imported in {"discordbot.platform.executors", "discordbot.composition"} or imported.startswith("discordbot.composition."):
+                    violations.append(f"{path}: inward layer dispatch/composition dependency")
     assert violations == []
 
 
