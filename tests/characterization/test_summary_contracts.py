@@ -96,161 +96,122 @@ async def test_f008_fr010_fr027_preserve_summary_empty_and_failure_are_private()
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="CORRECT contract: V1 does not verify requester access to the source channel",
-)
+# PHASE 5 CORRECT contracts now execute the V2 application/Discord boundary.
+from characterization.summary_support import harness, interaction as v2_interaction, settled
+from discordbot.platform.errors import AuthorizationError, CapacityError, DeadlineExceededError
+from discordbot.summary.adapters.discord_ui import SummaryController
+from discordbot.summary.domain.models import MalformedSummary, Query, Summary, Topic
+
+
 @pytest.mark.asyncio
 async def test_f008_fr030_correct_summary_denies_requester_without_source_acl() -> None:
-    """Feature F008; FR-030; CORRECT."""
-    cog, channel = _summary_cog()
-    channel.permissions_for.return_value = SimpleNamespace(
-        view_channel=False,
-        read_message_history=False,
-    )
-    interaction = _interaction()
-    summarize = AsyncMock(return_value=("raw", 1))
-    with patch.object(summary_listeners, "SUMMARY_CHANNEL_ID", 999), patch(
-        "cogs.summary.summary_listeners.gemini_summarize",
-        new=summarize,
-    ), patch(
-        "cogs.summary.summary_listeners.parse_summary_to_structured_data",
-        return_value={"overall_summary": "x", "topics": [{"title": "x"}]},
-    ):
-        await cog.execute_summary(interaction, 1.0)
-
-    summarize.assert_not_awaited()
-    assert interaction.followup.send.call_args.kwargs["ephemeral"] is True
+    """Feature F008; FR-030; CORRECT; V2 ACL precedes extraction and Gemini."""
+    fixture = harness()
+    fixture.authorization.require.side_effect = AuthorizationError("synthetic denied")
+    controller = SummaryController(fixture.service)
+    request = v2_interaction()
+    try:
+        await controller.execute(request, Query())
+        fixture.provider.generate.assert_not_awaited()
+        assert request.followup.send.call_args.kwargs["ephemeral"] is True
+    finally:
+        controller.close()
+        await fixture.service.stop()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="CORRECT contract: V1 has no bounded Gemini total timeout",
-)
 @pytest.mark.asyncio
 async def test_f008_fr030_correct_summary_total_timeout_is_bounded() -> None:
-    """Feature F008; FR-030; CORRECT; accepted total timeout is 60 seconds."""
-    cog, _channel = _summary_cog()
-    interaction = _interaction()
-    never = asyncio.Event()
+    """Feature F008; FR-030; CORRECT; accepted total deadline is exactly 60 seconds."""
+    fixture = harness()
+    entered = asyncio.Event()
+    async def stall(*args, **kwargs):
+        entered.set()
+        await asyncio.Event().wait()
+    fixture.provider.generate.side_effect = stall
+    controller = SummaryController(fixture.service)
+    request = v2_interaction()
+    task = asyncio.create_task(controller.execute(request, Query()))
+    try:
+        await entered.wait()
+        assert fixture.service.deadline_seconds == 60
+        assert all(value == 60 for value in fixture.timers.durations)
+        fixture.timers.expire(0)
+        await task
+        request.followup.send.assert_awaited_once()
+        assert request.followup.send.call_args.kwargs["ephemeral"] is True
+        await settled()
+        assert not fixture.supervisor.snapshot().active
+    finally:
+        controller.close()
+        await fixture.service.stop()
 
-    async def stalled_summary(*_args: object, **_kwargs: object) -> tuple[str, int]:
-        await never.wait()
-        return "unreachable", 0
 
-    with patch.object(summary_listeners, "SUMMARY_CHANNEL_ID", 999), patch(
-        "cogs.summary.summary_listeners.gemini_summarize",
-        new=stalled_summary,
-    ):
-        await asyncio.wait_for(cog.execute_summary(interaction, 1.0), timeout=0.05)
-
-    assert interaction.followup.send.call_args.kwargs["ephemeral"] is True
-
-
-@pytest.mark.xfail(
-    strict=True,
-    reason="CORRECT contract: V1 allows concurrent Gemini calls instead of active=1, queue=4",
-)
 @pytest.mark.asyncio
 async def test_f008_fr030_correct_summary_concurrency_is_one() -> None:
-    """Feature F008; FR-030; CORRECT; accepted concurrency=1 and queue capacity=4."""
-    cog, _channel = _summary_cog()
-    active = 0
-    maximum_active = 0
-    release = asyncio.Event()
-
-    async def measured_summary(*_args: object, **_kwargs: object) -> tuple[str, int]:
-        nonlocal active, maximum_active
+    """Feature F008; FR-030; CORRECT; V2 admission serializes actual provider calls."""
+    fixture = harness()
+    entered, release = asyncio.Event(), asyncio.Event()
+    active = peak = 0
+    async def provider(*args, **kwargs):
+        nonlocal active, peak
         active += 1
-        maximum_active = max(maximum_active, active)
+        peak = max(active, peak)
+        entered.set()
         try:
             await release.wait()
-            return "raw", 1
+            return Summary("overall", (Topic("topic"),))
         finally:
             active -= 1
-
-    interactions = [_interaction(), _interaction()]
-    with patch.object(summary_listeners, "SUMMARY_CHANNEL_ID", 999), patch(
-        "cogs.summary.summary_listeners.gemini_summarize",
-        new=measured_summary,
-    ), patch(
-        "cogs.summary.summary_listeners.parse_summary_to_structured_data",
-        return_value={"overall_summary": "x", "topics": [{"title": "x"}]},
-    ):
-        tasks = [
-            asyncio.create_task(cog.execute_summary(interaction, 1.0))
-            for interaction in interactions
-        ]
-        await asyncio.sleep(0)
-        await asyncio.sleep(0)
+    fixture.provider.generate.side_effect = provider
+    tasks = [fixture.service.submit(100, 300, 200, Query()) for _ in range(2)]
+    try:
+        await entered.wait()
+        assert fixture.service.waiting == 1
         release.set()
         await asyncio.gather(*tasks)
+        assert peak == 1 and active == 0
+    finally:
+        await fixture.service.stop()
 
-    assert maximum_active == 1
 
-
-@pytest.mark.xfail(
-    strict=True,
-    reason="CORRECT contract: parse failures must not publish raw provider output",
-)
 @pytest.mark.asyncio
 async def test_f008_fr010_fr030_correct_summary_parse_error_is_private_and_redacted() -> None:
-    """Feature F008; FR-010/FR-030; CORRECT."""
-    cog, _channel = _summary_cog()
-    interaction = _interaction()
-    sensitive_text = "private source material"
-    with patch.object(summary_listeners, "SUMMARY_CHANNEL_ID", 999), patch(
-        "cogs.summary.summary_listeners.gemini_summarize",
-        new=AsyncMock(return_value=(sensitive_text, 1)),
-    ), patch(
-        "cogs.summary.summary_listeners.parse_summary_to_structured_data",
-        return_value={},
-    ):
-        await cog.execute_summary(interaction, 1.0)
-
-    args, kwargs = interaction.followup.send.call_args
-    assert sensitive_text not in args[0]
-    assert kwargs["ephemeral"] is True
+    """Feature F008; FR-010/FR-030; CORRECT; V2 never sends/logs raw malformed output."""
+    fixture = harness()
+    fixture.provider.generate.side_effect = MalformedSummary("private source material SECRET")
+    controller = SummaryController(fixture.service)
+    request = v2_interaction()
+    try:
+        await controller.execute(request, Query())
+        kwargs = request.followup.send.call_args.kwargs
+        assert kwargs["ephemeral"] is True
+        assert "private source material" not in kwargs["content"]
+        assert "SECRET" not in repr(fixture.buffer.drain())
+    finally:
+        controller.close()
+        await fixture.service.stop()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="CORRECT contract: V1 has no four-request Summary waiting queue",
-)
 @pytest.mark.asyncio
 async def test_f008_fr030_correct_summary_waiting_queue_capacity_is_four() -> None:
-    """Feature F008; FR-030; CORRECT; one active plus four waiting requests."""
-    cog, _channel = _summary_cog()
-    release = asyncio.Event()
-    provider_calls = 0
-
-    async def queued_summary(*_args: object, **_kwargs: object) -> tuple[str, int]:
-        nonlocal provider_calls
-        provider_calls += 1
+    """Feature F008; FR-030; CORRECT; V2 active one plus four waiting, sixth rejected."""
+    fixture = harness()
+    entered, release = asyncio.Event(), asyncio.Event()
+    async def provider(*args, **kwargs):
+        entered.set()
         await release.wait()
-        return "raw", 1
-
-    interactions = [_interaction() for _ in range(6)]
-    with patch.object(summary_listeners, "SUMMARY_CHANNEL_ID", 999), patch(
-        "cogs.summary.summary_listeners.gemini_summarize",
-        new=queued_summary,
-    ), patch(
-        "cogs.summary.summary_listeners.parse_summary_to_structured_data",
-        return_value={"overall_summary": "x", "topics": [{"title": "x"}]},
-    ):
-        tasks = [
-            asyncio.create_task(cog.execute_summary(interaction, 1.0))
-            for interaction in interactions
-        ]
-        await asyncio.sleep(0)
-        await asyncio.sleep(0)
+        return Summary("overall", (Topic("topic"),))
+    fixture.provider.generate.side_effect = provider
+    tasks = [fixture.service.submit(100, 300, 200, Query()) for _ in range(5)]
+    try:
+        await entered.wait()
+        with pytest.raises(CapacityError):
+            fixture.service.submit(100, 300, 200, Query())
+        assert fixture.service.active == 1 and fixture.service.waiting == 4
         release.set()
         await asyncio.gather(*tasks)
-
-    assert provider_calls == 5
-    overloads = [
-        interaction
-        for interaction in interactions
-        if interaction.followup.send.call_args.kwargs.get("ephemeral") is True
-    ]
-    assert len(overloads) == 1
+        assert fixture.provider.generate.await_count == 5
+        await settled()
+        assert fixture.service.active == fixture.service.waiting == 0
+    finally:
+        await fixture.service.stop()

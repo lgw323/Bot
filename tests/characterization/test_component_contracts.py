@@ -169,3 +169,32 @@ def test_f010_f013_f022_f025_fr021_correct_components_paginate_without_data_loss
 
     assert len(queue.songs) == 26
     assert any(item.label == "다음" for item in queue.children)
+
+
+@pytest.mark.asyncio
+async def test_f010_fr029_correct_summary_topics_paginate_with_stable_ids() -> None:
+    """Feature F010; FR-029; CORRECT; Summary owner split from remaining PHASE 7 spec."""
+    from characterization.summary_support import harness, interaction
+    from discordbot.summary.adapters.discord_ui import SummaryController
+    from discordbot.summary.domain.models import Query
+
+    fixture = harness(topics=26)
+    controller = SummaryController(fixture.service)
+    try:
+        first = interaction()
+        await controller.execute(first, Query())
+        result = next(iter(fixture.service._results.values()))
+        navigation = interaction()
+        view = first.followup.send.call_args.kwargs["view"]
+        await next(item for item in view.children if getattr(item, "label", "") == "다음").callback(navigation)
+        second_page = navigation.response.edit_message.call_args.kwargs["view"]
+        assert [option.value for option in second_page.children[2].options] == [f"{result.id}:25"]
+        detail = interaction()
+        detail.data["values"] = [f"{result.id}:25"]
+        await second_page.children[2].callback(detail)
+        assert detail.response.send_message.call_args.kwargs["ephemeral"] is True
+        assert "26" in detail.response.send_message.call_args.kwargs["embed"].title
+        assert len(result.summary.topics) == 26
+    finally:
+        controller.close()
+        await fixture.service.stop()
