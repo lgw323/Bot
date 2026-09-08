@@ -10,6 +10,10 @@
 ## [Unreleased]
 
 ### Added
+- DiscordBot V2 PHASE 5 Summary를 추가했습니다. message-ID capture/preload, bounded retention,
+  source ACL과 privacy, 60초 전체 deadline, active 1/waiting 4, Gemini async boundary와
+  기본·고급·refresh·topic pagination을 fake 기반 테스트로 검증했습니다. V1 운영 route, 실제 DB와
+  Pi에는 연결하지 않았으며 Watch/Music migration은 후속 Phase에 남깁니다.
 - DiscordBot V2 PHASE 4의 Engagement application과 Discord adapter를 추가했습니다. Jamo text XP,
   completed-minute voice XP/profile/ranking, master birthday CRUD와 KST daily notification을
   PHASE 3 repository와 supervised lifecycle에 연결했으며 V1 운영 경로는 변경하지 않았습니다.

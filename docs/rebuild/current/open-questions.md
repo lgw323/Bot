@@ -61,6 +61,10 @@
 
 ## Remaining gates, not blockers
 
+- PHASE 5는 Q-H01/03/04/11, Q-M04/07과 Q-L02의 Summary 범위를 구현했다.
+  [Summary contract](../phases/phase-05/summary-contract.md)는 request ACL, public result visibility,
+  retention/cap, provider cancellation과 staging 한계를 명시한다. 새로운 제품 결정은 없다.
+
 - PHASE 4는 Q-H02/06/10/11, Q-M05/06/07의 Engagement 범위를 구현했다. 근거는
   [Engagement contract](../phases/phase-04/engagement-contract.md)다. 실제 Discord Gateway와 Pi
   intent/channel/capacity 검증은 staging에 남는다. 생일 claim 이후 uncertain failure는 자동

@@ -218,3 +218,18 @@
 - **Consequence:** explicit Discord composition/SDK loading과 supervised birthday task만 추가한다.
   production entrypoint/login/migration은 하지 않는다. 세부 scope, bounded retention/cap,
   Gateway cursor와 rollback은 [Engagement contract](../phases/phase-04/engagement-contract.md)를 따른다.
+
+## ADR-020 Summary scoped capture and bounded requests
+
+- **Status:** ACCEPTED/IMPLEMENTED (2026-09-08, user PHASE 5 direction)
+- **Decision:** in-memory message-ID capture와 per-source reconciliation readiness, 중앙 source ACL,
+  immutable prompt/result, 60초 absolute deadline과 active 1/waiting 4를 application이 소유한다.
+  Gemini REST/Discord UI는 lazy adapter이며 request/background supervisor와 state cap을 분리한다.
+- **Reason:** V1 preload/live gap, unbounded Gemini 호출, requester ACL 누락과 raw parse 출력 위험을
+  승인된 CORRECT 요구에 따라 교정하면서 공개 결과·비공개 상세·세 필드 modal 의미를 보존한다.
+- **Trade-off:** retention/count 밖 이력과 이미 삭제된 원문은 복원하지 않는다. retry는 0회이며
+  불확실한 Discord delivery는 재전송하지 않는다. public result의 실제 channel ACL, Gemini 품질과
+  Pi capacity는 staging에서 확인한다. runtime DB schema와 운영 route는 변경하지 않는다.
+- **Consequence:** Summary strict xfail 5개를 V2 호출로 전환하고 26-topic pagination proof를 분리했다.
+  Watch 2/Music 2 xfail과 후속 Phase gate는 유지한다.
+  [Summary contract](../phases/phase-05/summary-contract.md), [report](../phases/phase-05/phase-5-report.md).

@@ -225,3 +225,11 @@ Python 환경까지 완전히 원자적으로 되돌리는 구조는 아닙니�
 음악의 장기 재생·자동재생·UI 작업은 상태 정리 시 취소 완료까지 기다립니다. Cog
 종료 중에는 새 UI 작업을 만들지 않습니다. 요약 메시지 정리 작업은 객체 생성만으로
 시작하지 않고 Discord가 Cog를 로드할 때 시작하며, 언로드할 때 취소합니다.
+
+## V2 Summary 구현 상태
+
+PHASE 5의 capture/retention, source ACL/privacy, bounded Gemini와 Discord Summary adapter는
+별도 opt-in 구성으로 구현했습니다. 공개 기본·고급·refresh, 비공개 topic detail을 유지하며
+60초 전체 deadline과 active 1/waiting 4, 25개 초과 topic pagination을 적용합니다. 세부 한도와
+기존 V1 의미 차이는 [Summary 계약](rebuild/phases/phase-05/summary-contract.md)에 기록합니다.
+V1 운영 route와 실제 DB·외부 API·Pi에는 연결하지 않았습니다.

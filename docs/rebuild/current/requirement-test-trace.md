@@ -25,8 +25,8 @@ test name 또는 marker/fixture metadata로 연결한다. 아래 파일명은 `t
 | Feature | FR | New executable evidence | PHASE 1 status |
 | --- | --- | --- | --- |
 | F001 | FR-001,046 | `test_database_recovery_contracts.py`: V1 corrupt 보존/fail, PHASE 3 V2 zero-byte fail-closed 구현 | CHARACTERIZED + CORRECT-IMPLEMENTED (V2) |
-| F008 | FR-003,004,010,027,030 | `test_discord_contracts.py`, `test_summary_contracts.py`: signature/publicness/error/success/no-data; ACL/60s/active1/queue4/redaction specs | CHARACTERIZED + CORRECT-SPEC xfail |
-| F009/F010 | FR-028,029 | `test_component_contracts.py`: modal/refresh/topic select; >25 pagination spec | CHARACTERIZED + CORRECT-SPEC xfail |
+| F008 | FR-003,004,010,027,030 | `test_discord_contracts.py`, `test_summary_contracts.py`: signature/publicness/error/success/no-data; V2 ACL/60s/active1/queue4/redaction | CHARACTERIZED + CORRECT-IMPLEMENTED (V2) |
+| F009/F010 | FR-028,029 | `test_component_contracts.py`: modal/refresh/topic select; V2 Summary >25 pagination | CHARACTERIZED + CORRECT-IMPLEMENTED (V2) |
 | F011/F013 | FR-011,012,021 | exact music player/search select/modal inventory; pagination spec | CHARACTERIZED + CORRECT-SPEC xfail |
 | F012 | FR-003,010,012 | `/재생` required string, private defer, unavailable text | CHARACTERIZED |
 | F018 | FR-015 | deterministic 3s/8s/third-skip state test | CHARACTERIZED |
@@ -111,6 +111,26 @@ PHASE 4에서 strict xfail은 12 → **9**다. ranking completed-minute, invalid
 Feb-29 세 spec을 V2 repository/application/adapter 호출로 전환했다. V1 PRESERVE tests는 변경하지
 않았다. birthday fallback은 Feb 29만 대체 조회하는 것이 아니라 Feb 28과 함께 같은 daily claim으로
 보내는 것을 검증한다. PHASE 5 Summary, PHASE 6 Watch와 PHASE 7 Music 소유 marker는 유지한다.
+
+## PHASE 5 Summary overlay
+
+최신 Summary 증거는 `tests/integration/summary/`, V2로 전환한 Summary characterization과
+[PHASE 5 report](../phases/phase-05/phase-5-report.md)에 있다. 아래의 PHASE 0 표는 역사적 비교다.
+
+| Contract | Requirement / scenario | Executable evidence | Result |
+| --- | --- | --- | --- |
+| capture/preload/reconnect | FR-026; CF-16 | `test_capture.py`, `test_lifecycle.py` | IMPLEMENTED; message-ID cursor, live merge, dedupe, retry, ready/resumed coalescing |
+| retention and isolation | FR-026; Q-H11 | `test_capture.py`, `test_requests.py` | IMPLEMENTED; age/count/config bounds, disabled idle, per-source readiness |
+| basic/advanced Summary | FR-027/028; CF-19 | `test_discord.py`, `test_requests.py` | IMPLEMENTED; signature/public/private, filter/range, modal and prompt separation |
+| refresh/topic/pagination | FR-029; Q-M04 | `test_discord.py`, `test_lifecycle.py`, Summary component characterization | IMPLEMENTED; 26th topic accessible, stable IDs, stale/context validation, bounded views/modal |
+| ACL/privacy/Gemini | FR-030; CF-09 | `test_requests.py`, `test_gemini.py`, `test_discord.py` | IMPLEMENTED; pre-extraction ACL, no raw sink data, safe typed provider/parse failures |
+| concurrency/deadline/cancel | FR-030; CF-08/09/19/20 | `test_requests.py`, `test_discord.py` | IMPLEMENTED; active 1/queue 4/sixth overload, FIFO recovery, queue-inclusive 60s, handoff cancel |
+| explicit lifecycle/architecture | NFR-019/025/027; CF-16/20 | `test_lifecycle.py`, architecture import rules | IMPLEMENTED; supervised bounded work, lazy vendors, clean stop, no production wiring |
+
+PHASE 5에서 strict xfail은 9 → **4**다. Summary 소유 ACL/60s/concurrency/queue/redaction
+5개를 실제 V2 경로로 전환했고 PRESERVE 본문은 유지했다. 공동 component xfail의 Music 본문과
+marker는 그대로 두고 Summary pagination을 별도 V2 callback spec으로 구현했다.
+남은 owner는 PHASE 6 Watch 2개, PHASE 7 Music 2개다. 실제 Discord/Gemini/Pi 검증은 staging gate다.
 
 ## F001–F045 trace
 
