@@ -12,6 +12,7 @@ from typing import Callable
 
 from discordbot.platform.errors import DataIntegrityError
 from discordbot.storage.adapters.engagement_schema import ENGAGEMENT_DDL, ENGAGEMENT_TABLES
+from discordbot.storage.adapters.watch_schema import WATCH_DDL, WATCH_TABLES
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,6 +40,7 @@ MIGRATIONS = (
         "CREATE INDEX v2_watch_guild ON watch_sessions(guild_id,created_at,session_id)",
     )),
     Migration(3, "engagement-event-ownership", ENGAGEMENT_DDL),
+    Migration(4, "watch-process-ownership", WATCH_DDL),
 )
 LEDGER_DDL = """CREATE TABLE IF NOT EXISTS v2_migrations (
     version INTEGER PRIMARY KEY,
@@ -58,7 +60,7 @@ def ordered(migrations: tuple[Migration, ...]) -> tuple[Migration, ...]:
     # Only reviewed nullable/metadata expansions and legacy-table indexes.
     for migration in result:
         for statement in migration.statements:
-            if statement in MIGRATIONS[0].statements or statement in ENGAGEMENT_DDL:
+            if statement in MIGRATIONS[0].statements or statement in ENGAGEMENT_DDL or statement in WATCH_DDL:
                 continue
             if not re.fullmatch(r"CREATE INDEX v2_[a-z_]+ ON (users|music_settings|music_play_counts|favorites|watch_sessions|watch_playlists)\([a-z_,]+\)", statement):
                 raise DataIntegrityError("migration is not an approved expansion")
@@ -68,7 +70,7 @@ def ordered(migrations: tuple[Migration, ...]) -> tuple[Migration, ...]:
 def validate_ledger(conn: sqlite3.Connection, migrations: tuple[Migration, ...] = MIGRATIONS) -> int:
     registry = ordered(migrations)
     if not conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='v2_migrations'").fetchone():
-        if {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")} & ENGAGEMENT_TABLES:
+        if {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")} & (ENGAGEMENT_TABLES | WATCH_TABLES):
             raise DataIntegrityError("engagement expansion has no migration ledger")
         return 0
     layout = tuple((r[1], r[2], r[5]) for r in conn.execute("PRAGMA table_info(v2_migrations)"))
@@ -79,6 +81,9 @@ def validate_ledger(conn: sqlite3.Connection, migrations: tuple[Migration, ...] 
     extensions = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")} & ENGAGEMENT_TABLES
     if extensions and not any(row[0] == 3 for row in rows):
         raise DataIntegrityError("engagement expansion has no applied ledger step")
+    watch = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")} & WATCH_TABLES
+    if watch and not any(row[0] == 4 for row in rows):
+        raise DataIntegrityError("Watch expansion has no applied ledger step")
     if len(rows) > len(registry):
         raise DataIntegrityError("unknown migration ledger version")
     for row, migration in zip(rows, registry):

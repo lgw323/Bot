@@ -21,9 +21,9 @@ def test_step_failure_rolls_back_ddl_and_ledger_then_resumes(legacy_db):
         assert conn.execute("SELECT name FROM sqlite_master WHERE name='v2_users_guild'").fetchone() is None
     # Fresh connection represents retry/restart, not an in-memory resume flag.
     with closing(sqlite3.connect(legacy_db, isolation_level=None)) as conn:
-        assert apply_pending(conn, lambda: None) == 3
+        assert apply_pending(conn, lambda: None) == 4
         rows = conn.execute("SELECT * FROM v2_migrations").fetchall()
-        assert apply_pending(conn, lambda: None, tuple(reversed(MIGRATIONS))) == 3
+        assert apply_pending(conn, lambda: None, tuple(reversed(MIGRATIONS))) == 4
         assert conn.execute("SELECT * FROM v2_migrations").fetchall() == rows
         after = validate(conn)
         assert (after.counts, after.data_checksum) == (before.counts, before.data_checksum)
