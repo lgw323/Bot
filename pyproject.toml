@@ -11,6 +11,9 @@ requires-python = ">=3.12,<3.13"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+"discordbot.watch.adapters" = ["templates/*.html"]
+
 [tool.pytest.ini_options]
 pythonpath = ["src", "."]
 asyncio_mode = "strict"
