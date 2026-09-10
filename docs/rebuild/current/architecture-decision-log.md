@@ -233,3 +233,22 @@
 - **Consequence:** Summary strict xfail 5개를 V2 호출로 전환하고 26-topic pagination proof를 분리했다.
   Watch 2/Music 2 xfail과 후속 Phase gate는 유지한다.
   [Summary contract](../phases/phase-05/summary-contract.md), [report](../phases/phase-05/phase-5-report.md).
+
+## ADR-021 Watch process ownership and authenticated control
+
+- **Status:** ACCEPTED/IMPLEMENTED (2026-09-10, user PHASE 6 direction)
+- **Decision:** Discord는 독립 Watch client/Cog/cleanup supervisor를, watch-web은 session mailbox,
+  peer send pump와 Phase 3 SQLite writer를 소유한다. 공개 HTTP/WS와 서명된 loopback control은
+  별도 ASGI 앱·loopback port이며 production activation은 후속 Phase에 남긴다.
+- **Reason:** durable-before-invite, single responder, ordered close와 bounded slow-peer 처리를
+  보장하고 web 장애가 Gateway liveness를 직접 중단하지 않도록 한다. 로그인/방장 권한은 추가하지 않는다.
+- **Decision detail:** additive migration 4의 owner lease/intent/cleanup receipt, digest-only capability,
+  issued-time idempotency, abort tombstone과 readiness-before-stale-cleanup을 사용한다. 승인된
+  최초 30초 보호 뒤 5초 empty grace를 보존한다. Origin/CSRF/CSP/size/rate/cap을 적용한다.
+- **Trade-off:** Discord와 SQLite 사이 원자적 전송은 불가능하다. 응답 유실 시 bounded abort와
+  known-message cleanup을 수행하고 성공으로 보고하지 않는다. 모르는 message ID는 자동 복구할 수
+  없으며, web process 교체는 기존 capability를 종료한다. lease clock jump와 Pi capacity는 staging 검증 대상이다.
+- **Consequence:** Watch CORRECT 2개는 실제 V2 signed HTTP/DB/Discord adapter 경로에서 pass다.
+  Music strict xfail 2개, PHASE 7 사용자 지시 gate와 PHASE 10 운영 cutover 승인 gate는 유지한다.
+  [Watch contract](../phases/phase-06/watch-contract.md),
+  [loopback contract](../phases/phase-06/loopback-contract.md), [report](../phases/phase-06/phase-6-report.md).

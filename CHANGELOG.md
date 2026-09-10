@@ -10,6 +10,11 @@
 ## [Unreleased]
 
 ### Added
+- DiscordBot V2 PHASE 6 Watch를 독립 web runtime과 Discord loopback client로 이전했습니다.
+  durable-before-invite, single responder, 세션별 순서·종료, 느린 접속자 제한, capability와
+  Origin/CSRF/CSP 방어, 30초+5초 lifecycle, 관리자 메시지 정리를 synthetic 테스트로 검증했습니다.
+  additive migration 4와 기존 reader/암호화 backup 호환성을 추가했으며 실제 DB·Pi·Cloudflare와
+  운영 route는 변경하지 않았습니다. Music migration은 PHASE 7 사용자 지시를 기다립니다.
 - DiscordBot V2 PHASE 5 Summary를 추가했습니다. message-ID capture/preload, bounded retention,
   source ACL과 privacy, 60초 전체 deadline, active 1/waiting 4, Gemini async boundary와
   기본·고급·refresh·topic pagination을 fake 기반 테스트로 검증했습니다. V1 운영 route, 실제 DB와

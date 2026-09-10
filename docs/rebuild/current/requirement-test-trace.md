@@ -37,7 +37,7 @@ test name 또는 marker/fixture metadata로 연결한다. 아래 파일명은 `t
 | F029/F030 | FR-031,032 | text XP table, voice leave/move fake-clock | CHARACTERIZED |
 | F031/F032 | FR-003,032,033 | private profile, option-based ranking, completed-minute profile; V2 ranking parity | CHARACTERIZED + CORRECT-IMPLEMENTED (V2) |
 | F033–F036 | FR-003,005,010,034–037 | master/register/delete/list, KST/leap fake-clock; V2 valid date/non-leap policy | CHARACTERIZED + CORRECT-IMPLEMENTED (V2) |
-| F037 | FR-003,004,010,038 | `/시청` public/unavailable; durable-before-invite/single-responder specs | CHARACTERIZED + CORRECT-SPEC xfail |
+| F037 | FR-003,004,010,038 | `/시청` public/unavailable; durable-before-invite/single-responder V2 signed HTTP path | CHARACTERIZED + CORRECT IMPLEMENTED (PHASE 6) |
 | F038/F040 | FR-039 | exact HTTP paths/add body plus existing endpoint/CRUD tests | CHARACTERIZED |
 | F039 | FR-040,041 | invalid close, join ordering, all 7 client relay types | CHARACTERIZED |
 | F041 | FR-042 | exact 30s creation + 5s empty fake-clock and disconnect scheduling | CHARACTERIZED |
@@ -130,7 +130,27 @@ Feb-29 세 spec을 V2 repository/application/adapter 호출로 전환했다. V1 
 PHASE 5에서 strict xfail은 9 → **4**다. Summary 소유 ACL/60s/concurrency/queue/redaction
 5개를 실제 V2 경로로 전환했고 PRESERVE 본문은 유지했다. 공동 component xfail의 Music 본문과
 marker는 그대로 두고 Summary pagination을 별도 V2 callback spec으로 구현했다.
-남은 owner는 PHASE 6 Watch 2개, PHASE 7 Music 2개다. 실제 Discord/Gemini/Pi 검증은 staging gate다.
+PHASE 5 종료 당시 남은 owner는 PHASE 6 Watch 2개, PHASE 7 Music 2개였다. 실제 Discord/Gemini/Pi 검증은 staging gate다.
+
+## PHASE 6 Watch overlay
+
+현재 Watch 구현 증거는 `tests/integration/watch/`와
+[PHASE 6 report](../phases/phase-06/phase-6-report.md)에 있다. 아래 PHASE 0 표는 역사적 비교다.
+
+| Feature / contract | V2 executable evidence | Current status |
+| --- | --- | --- |
+| F037 / FR-003,004,010,038 | `test_discord.py`, `characterization/test_watch_contracts.py`: durable intent, public invite, one responder, failure/cancel/duplicate compensation | IMPLEMENTED; Watch CORRECT 2 pass |
+| F038 / FR-039,041 | `test_transports.py`: preserved routes, HTML 404, CSP/Origin/CSRF/body/schema/terminal | IMPLEMENTED; real browser staging remains |
+| F039 / FR-040,041 / CF-10 | `test_runtime.py`, `test_transports.py`: all seven types, ASGI handshake, revisions, malformed/rate/slow peer | IMPLEMENTED |
+| F040 / FR-039,040 / CF-12 | `test_data.py`, `test_runtime.py`, `test_metadata_security.py`, `test_lifecycle.py`: ordering/duplicates, add/remove/close, bounded oEmbed | IMPLEMENTED |
+| F041 / FR-042 / CF-11 | `test_lifecycle.py`, `test_runtime.py`: 30+5 grace, reconnect boundary, absolute expiry, cancellation | IMPLEMENTED |
+| F042 / FR-005,043 | `test_discord.py`: master-only/duplicate close, signed abort, invite/admin cleanup receipt | IMPLEMENTED |
+| F043 / FR-044 / CF-13,16 | `test_lifecycle.py`, `test_processes.py`: lease ownership, stale cleanup barrier, old-owner rejection, idempotent maintenance | IMPLEMENTED |
+| Process/security/shutdown / CF-19,20 | `test_processes.py`, `test_metadata_security.py`, `test_discord.py`: transitive import isolation, separate health, replay, capacity, bounded stop | IMPLEMENTED; actual OS process/proxy/Pi staging remains |
+
+Strict xfail은 4 → **2**다. 남은 두 개는 PHASE 7 Music 소유다. Watch PRESERVE 함수 7개의
+AST(파라미터화 포함)는 PHASE 5 기준선과 동일하다. migration 4는 additive metadata이며 기존
+1–3 checksum과 V1 reader를 보존한다. 원본 DB, 운영 entrypoint, Gateway/API/Pi에는 연결하지 않았다.
 
 ## F001–F045 trace
 

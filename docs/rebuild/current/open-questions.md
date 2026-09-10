@@ -28,7 +28,7 @@
 | Q-H05 | ACCEPTED | music play count는 실제 playback이 성공적으로 시작될 때 session당 한 번 증가한다. retry와 TTS resume은 중복 증가시키지 않는다. |
 | Q-H06 | ACCEPTED | voice XP는 완료된 분 단위의 기존 공식을 한 곳에서 적용하며 profile과 ranking이 같은 값을 사용한다. |
 | Q-H07 | ACCEPTED | music state는 graceful restart뿐 아니라 process crash에서도 의미 있는 transition과 coarse periodic checkpoint로 복구한다. 정확한 sample position보다 queue/session 일관성을 우선한다. |
-| Q-H08 | ACCEPTED | 모든 Watch workload를 typed configuration의 hard cap으로 제한한다. session actor mailbox 100은 초기 제안값이며 participant/playlist/frame/rate/client-send 값은 Phase 6 Pi 부하 측정으로 조정한다. |
+| Q-H08 | ACCEPTED | 모든 Watch workload를 typed configuration의 hard cap으로 제한한다. Phase 6에서 session actor mailbox 100과 participant/playlist/frame/rate/client-send 상한을 구현했으며 Phase 9 Pi 부하 측정으로 조정한다. |
 | Q-H09 | ACCEPTED | Watch는 login/host 없이 참여자가 공동 제어하는 현재 모델을 유지한다. abuse 방어는 capability, validation, rate/cap, audit로 한다. |
 | Q-H10 | ACCEPTED | 실제 calendar에 존재하는 생일만 허용하며 2월 29일은 비윤년에 2월 28일 알림을 보낸다. |
 | Q-H11 | ACCEPTED | summary/music/log/birthday channel과 feature flag는 guild-specific configuration으로 표현한다. 특정 guild/channel을 business logic에 하드코딩하지 않는다. |
@@ -60,6 +60,11 @@
 | Q-L03 | DEFERRED-ADAPTER | 운영 dashboard의 언어·표현은 adapter 세부사항이다. 필수 health/metric과 기존 사용자 동작을 먼저 구현한다. |
 
 ## Remaining gates, not blockers
+
+- PHASE 6은 Q-B04/05, Q-H01/02/08/09의 Watch 범위를 구현했다. 독립 process composition,
+  signed loopback, durable-before-invite, lease/stale readiness, capability/limits와 bounded peer를
+  synthetic 환경에서 검증했다. [Watch contract](../phases/phase-06/watch-contract.md)에 전송 불확실성과
+  실제 browser/dual-process/Pi/Cloudflare 검증 한계를 기록했다. 실제 원본 DB는 이번 Phase에서 사용하지 않았다.
 
 - PHASE 5는 Q-H01/03/04/11, Q-M04/07과 Q-L02의 Summary 범위를 구현했다.
   [Summary contract](../phases/phase-05/summary-contract.md)는 request ACL, public result visibility,
