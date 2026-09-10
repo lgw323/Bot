@@ -1,0 +1,19 @@
+"""Discord UI boundary; only JSON control requests cross to watch-web."""
+
+from typing import Protocol
+
+
+class Interaction(Protocol):
+    guild: int
+    user: int
+    operation: str
+    issued: int
+    async def acknowledge(self) -> None: ...
+    async def invite(self, capability: str) -> tuple[int, int]: ...
+    async def failure(self) -> None: ...
+    async def retract(self) -> None: ...
+
+
+class AdminMessages(Protocol):
+    async def create(self, session_id: str, guild: int, user: int) -> tuple[int, int]: ...
+    async def delete(self, channel: int, message: int) -> None: ...

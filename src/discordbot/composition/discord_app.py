@@ -4,6 +4,7 @@ from discordbot.composition.config import PlatformConfig, ServiceKind
 from discordbot.composition.runtime import ManagedResource, ProcessRuntime
 from discordbot.platform.clock import Clock
 from discordbot.platform.errors import ConfigurationError
+from discordbot.watch.adapters.discord_runtime import DiscordWatchResource
 
 
 def build_discord_runtime(
@@ -11,7 +12,8 @@ def build_discord_runtime(
     *,
     resources: tuple[ManagedResource, ...] = (),
     clock: Clock | None = None,
+    watch: DiscordWatchResource | None = None,
 ) -> ProcessRuntime:
     if config.service is not ServiceKind.DISCORD_BOT:
         raise ConfigurationError("discord composition requires discord-bot service config")
-    return ProcessRuntime(config=config, resources=resources, clock=clock)
+    return ProcessRuntime(config=config, resources=resources + ((watch,) if watch else ()), clock=clock)

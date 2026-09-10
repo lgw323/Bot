@@ -217,68 +217,45 @@ def test_f041_fr042_preserve_last_disconnect_schedules_five_second_grace() -> No
     assert "session" not in manager.active_connections
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="CORRECT contract: V1 sends the invite before durable session creation",
-)
 @pytest.mark.asyncio
-async def test_f037_fr004_fr038_correct_watch_commits_before_invite() -> None:
-    """Feature F037; FR-004/FR-038; CORRECT."""
-    events: list[str] = []
-    bot = MagicMock()
-    bot.get_cog.return_value = None
-    cog = WatchAgentCog(bot)
-    interaction = MagicMock(spec=discord.Interaction)
-    interaction.guild_id = 123
-    interaction.user.id = 456
-    interaction.user.mention = "<@456>"
-    interaction.response.send_message = AsyncMock(
-        side_effect=lambda **_kwargs: events.append("invite")
-    )
-    interaction.original_response = AsyncMock(
-        return_value=SimpleNamespace(id=789, channel=SimpleNamespace(id=987))
-    )
+async def test_f037_fr004_fr038_correct_watch_commits_before_invite(tmp_path) -> None:
+    """Feature F037; FR-004/FR-038; CORRECT through the actual V2 process contract."""
+    from characterization.watch_support import harness, interaction
+    from discordbot.watch.adapters.discord_io import DiscordInteraction
 
-    async def durable(*_args: object, **_kwargs: object) -> None:
-        events.append("durable")
+    async with harness(tmp_path) as h:
+        events = []
+        durable_create = h.writer.create
 
-    with patch(
-        "cogs.watch_together.watch_agent.add_watch_session",
-        new=durable,
-    ), patch.object(watch_server.manager, "schedule_self_destruct"):
-        await cog.handle_watch_together(interaction)
+        async def durable(*args, **kwargs):
+            result = await durable_create(*args, **kwargs)
+            events.append("durable")
+            return result
 
-    assert events == ["durable", "invite"]
+        h.writer.create = durable
+        request = interaction(h.clock)
+        message = SimpleNamespace(id=500, channel=SimpleNamespace(id=1000))
+        async def invite(**kwargs):
+            events.append("invite")
+            return message
+        request.edit_original_response.side_effect = invite
+        await h.controller.request(DiscordInteraction(request, "https://watch.example.test"))
+        assert events == ["durable", "invite"]
+        assert len(h.service.sessions) == 1
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="CORRECT contract: post-ACK persistence failure must use followup, not a second response",
-)
 @pytest.mark.asyncio
-async def test_f037_fr004_fr010_correct_watch_failure_uses_single_responder() -> None:
-    """Feature F037; FR-004/FR-010; CORRECT."""
-    bot = MagicMock()
-    bot.get_cog.return_value = None
-    cog = WatchAgentCog(bot)
-    interaction = MagicMock(spec=discord.Interaction)
-    interaction.guild_id = 123
-    interaction.user.id = 456
-    interaction.user.mention = "<@456>"
-    interaction.response.send_message = AsyncMock()
-    interaction.response.is_done.return_value = True
-    interaction.followup.send = AsyncMock()
-    interaction.original_response = AsyncMock(
-        return_value=SimpleNamespace(id=789, channel=SimpleNamespace(id=987))
-    )
-    with patch(
-        "cogs.watch_together.watch_agent.add_watch_session",
-        new=AsyncMock(side_effect=RuntimeError("db unavailable")),
-    ):
-        await cog.handle_watch_together(interaction)
+async def test_f037_fr004_fr010_correct_watch_failure_uses_single_responder(tmp_path) -> None:
+    """Feature F037; FR-004/FR-010; CORRECT through the actual V2 process contract."""
+    from characterization.watch_support import harness, interaction
+    from discordbot.platform.errors import DatabaseUnavailableError
+    from discordbot.watch.adapters.discord_io import DiscordInteraction, FAILURE
 
-    assert interaction.response.send_message.await_count == 1
-    interaction.followup.send.assert_awaited_once_with(
-        "❌ 시청 세션 방을 개설하는 동안 에러가 발생했습니다. 로그를 확인해 주세요.",
-        ephemeral=True,
-    )
+    async with harness(tmp_path) as h:
+        request = interaction(h.clock)
+        h.writer.create = AsyncMock(side_effect=DatabaseUnavailableError("synthetic failure"))
+        await h.controller.request(DiscordInteraction(request, "https://watch.example.test"))
+        request.response.defer.assert_awaited_once_with(thinking=True, ephemeral=False)
+        request.response.send_message.assert_not_awaited()
+        request.edit_original_response.assert_not_awaited()
+        request.followup.send.assert_awaited_once_with(FAILURE, ephemeral=True)
