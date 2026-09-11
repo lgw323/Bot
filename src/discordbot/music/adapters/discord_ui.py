@@ -158,6 +158,25 @@ class MusicController:
             if len(values) < 100: break
         return SongPages(guild, user, self.clock.monotonic()+180, tuple(tracks))
 
+    async def add_favorites(self, actor: Any, tracks: tuple[Track, ...], user: int, request_id: str) -> int:
+        """Keep successful entries in order; bound the whole partial batch."""
+        if len(tracks) > 50:
+            raise CapacityError("favorite batch exceeds fifty songs")
+        added = 0
+        try:
+            async with asyncio.timeout(60):
+                for song in tracks:
+                    try:
+                        future = await actor.ask("lookup", query=song.url, requester_id=user,
+                                                 request_id=request_id+song.item_id, enqueue=True)
+                        added += len(await future)
+                    except AppError:
+                        continue
+        except TimeoutError:
+            # Cancellation of the awaited result prevents a late enqueue.
+            return added
+        return added
+
     async def action(self, interaction: Any, action: str, state: Any) -> None:
         responder = Responder(interaction)
         try:
@@ -320,12 +339,10 @@ def build_song_view(controller: MusicController, pages: SongPages, kind: str) ->
                         await controller.voice(actor, interaction.user)
                         if kind == "search":
                             await actor.ask("enqueue", tracks=tuple(replace(song, item_id=uuid4().hex) for song in selected), request_id=str(interaction.id))
+                            added = len(selected)
                         else:
-                            for song in selected:
-                                future = await actor.ask("lookup", query=song.url, requester_id=interaction.user.id,
-                                                         request_id=str(interaction.id)+song.item_id, enqueue=True)
-                                await future
-                        await responder.send(f"✅ 대기열에 {len(selected)}개의 노래를 추가했습니다.", ephemeral=True, delete_after=5)
+                            added = await controller.add_favorites(actor, selected, interaction.user.id, str(interaction.id))
+                        await responder.send(f"✅ 대기열에 {added}개의 노래를 추가했습니다.", ephemeral=True, delete_after=5)
                     self.stop()
             except AppError as error:
                 await responder.send(error.safe_message, ephemeral=True)

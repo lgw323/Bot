@@ -475,6 +475,9 @@ class MusicActor:
     async def _result(self, name: str, value: Any, error: str | None) -> bool:
         if name == "lookup":
             receipt, _, _, enqueue, future = self._requests.popleft()
+            if future.cancelled():
+                self._next_request()
+                return True
             try:
                 if error:
                     safe = {"PremiumOnly": "⚠️ YouTube Music Premium 전용 음원(또는 멤버십 전용 영상)이라 재생할 수 없습니다.",

@@ -203,3 +203,19 @@ async def test_checkpoint_during_tts_keeps_paused_session_intent(rig, tmp_path):
         await settle(lambda: restored.projection().status == "paused")
         assert restored.projection().session_id == first.session_id
     finally: await executor.close(grace_seconds=2)
+
+
+async def test_cancelled_lookup_result_never_enqueues_late_favorite(rig):
+    actor = rig[0]()
+    entered, release = asyncio.Event(), asyncio.Event()
+    async def lookup(*args, **kwargs):
+        entered.set()
+        await release.wait()
+        return (song(),)
+    rig[5].lookup.side_effect = lookup
+    future = await actor.ask("lookup", request_id="cancelled-batch", query="query", requester_id=10)
+    await entered.wait()
+    future.cancel()
+    release.set()
+    await settle(lambda: not actor._requests)
+    assert not actor.projection().current and not actor.projection().queue

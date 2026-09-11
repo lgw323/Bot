@@ -143,3 +143,16 @@ async def test_responder_concurrent_sends_only_once():
     responder = Responder(request)
     await asyncio.gather(responder.send("one", ephemeral=True), responder.send("two", ephemeral=True))
     assert request.response.send_message.await_count == 1
+
+
+async def test_favorite_batch_keeps_partial_success_in_original_order(rig):
+    control, actor = controller(rig)
+    async def lookup(query, user, **kwargs):
+        if query.endswith("/2"): raise TimeoutError("synthetic missing favorite")
+        return (song(1 if query.endswith("/1") else 3),)
+    rig[5].lookup.side_effect = lookup
+    try:
+        assert await control.add_favorites(actor, (song(), song(2), song(3)), 10, "batch") == 2
+        assert actor.projection().current.item_id == "1"
+        assert [song.item_id for song in actor.projection().queue] == ["3"]
+    finally: control.close()
