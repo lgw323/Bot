@@ -239,28 +239,21 @@ async def test_f028_fr024_preserve_restore_order_and_session_settings() -> None:
     assert [song.title for song in state.queue] == ["current", "next"]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="CORRECT contract: legacy snapshots without volume must use the single 0.5 default",
-)
 @pytest.mark.asyncio
 async def test_f045_fr025_correct_legacy_snapshot_uses_half_volume_default() -> None:
-    """Feature F045; FR-025; CORRECT."""
-    bot = MagicMock()
-    bot.get_channel.return_value = None
-    guild = MagicMock(spec=discord.Guild)
-    guild.name = "테스트 서버"
-    state = SimpleNamespace(
-        volume=0.5,
-        loop_mode=LoopMode.NONE,
-        auto_play_enabled=False,
-        seek_time=0,
-        text_channel=None,
-        queue=deque(),
-        voice_client=None,
-        play_next_song=asyncio.Event(),
-    )
+    """Feature F045; FR-025; CORRECT; actual V2 actor restore path."""
+    from unittest.mock import AsyncMock
+    from discordbot.music.application.actor import MusicActor
+    from discordbot.platform.clock import SystemClock
+    from discordbot.platform.tasks import TaskSupervisor
 
-    await MusicSessionRestorer(bot).restore(guild, state, {})
-
-    assert state.volume == 0.5
+    clock = SystemClock()
+    supervisor = TaskSupervisor(capacity=16, history_capacity=32, clock=clock)
+    actor = MusicActor(100, supervisor=supervisor, clock=clock, sleeper=AsyncMock(),
+                      provider=AsyncMock(), library=AsyncMock(), audio=AsyncMock(), repository=AsyncMock())
+    try:
+        await actor.ask("restore", identity="synthetic-legacy", data={})
+        assert actor.projection().volume == 0.5
+    finally:
+        await actor.close()
+        await supervisor.shutdown(grace_seconds=0)
