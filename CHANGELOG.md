@@ -10,6 +10,11 @@
 ## [Unreleased]
 
 ### Added
+- DiscordBot V2 PHASE 7 Music을 per-guild actor, bounded media/TTS cache와 FFmpeg process,
+  stable paginated Discord UI, legacy-compatible checkpoint/restore로 이전했습니다.
+  additive migration 5의 logical playback receipt로 count 중복을 방지하고 missing-volume 0.5와
+  25개 이후 pagination CORRECT specs를 V2 경로로 해결했습니다. V1 운영 경로와 실제 DB/Pi는
+  변경하지 않았습니다. 상세 증거와 후속 gate는 `docs/rebuild/phases/phase-07/phase-7-report.md`에 기록합니다.
 - DiscordBot V2 PHASE 6 Watch를 독립 web runtime과 Discord loopback client로 이전했습니다.
   durable-before-invite, single responder, 세션별 순서·종료, 느린 접속자 제한, capability와
   Origin/CSRF/CSP 방어, 30초+5초 lifecycle, 관리자 메시지 정리를 synthetic 테스트로 검증했습니다.

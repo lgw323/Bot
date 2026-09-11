@@ -36,5 +36,10 @@ Raspberry Pi 운영 배포는 시작하지 않았다.
   [Watch contract](phases/phase-06/watch-contract.md),
   [loopback contract](phases/phase-06/loopback-contract.md)
 
+- [PHASE 7 report](phases/phase-07/phase-7-report.md),
+  [Music contract](phases/phase-07/music-contract.md),
+  [MusicActor contract](phases/phase-07/music-actor-contract.md),
+  [media/cache contract](phases/phase-07/media-cache-contract.md)
+
 새 Phase 산출물은 `phases/phase-XX/`에 의미 있는 파일명으로 추가한다. 과거 분석과 달라진
 사실은 baseline을 고치지 않고 current ADR/trace/plan 또는 해당 Phase 보고서에 기록한다.

@@ -18,7 +18,7 @@ test name 또는 marker/fixture metadata로 연결한다. 아래 파일명은 `t
 
 ## PHASE 1 mandatory-contract overlay
 
-이 표가 PHASE 1 필수 범위의 현재 상태에 대한 우선 근거다. 세부 동작은
+이 표는 PHASE 1 당시 필수 범위의 기록이다. 현재 구현/xfail 상태는 아래 PHASE별 최신 overlay가 우선한다. 세부 동작은
 `../phases/phase-01/characterization-contracts.md`, race/fault 후속 test는
 `../phases/phase-01/concurrency-failure-plan.md`를 따른다.
 
@@ -152,6 +152,25 @@ Strict xfail은 4 → **2**다. 남은 두 개는 PHASE 7 Music 소유다. Watch
 AST(파라미터화 포함)는 PHASE 5 기준선과 동일하다. migration 4는 additive metadata이며 기존
 1–3 checksum과 V1 reader를 보존한다. 원본 DB, 운영 entrypoint, Gateway/API/Pi에는 연결하지 않았다.
 
+## PHASE 7 Music implementation overlay (2026-09-11)
+
+PHASE 6 baseline `504 passed, 2 xfailed`를 확인했다. 남은 Music CORRECT 두 개는 실제 V2
+actor restore와 paginated UI 경로로 전환되어 xfail이 0이다. PRESERVE 32개 함수 AST와
+migration 1–4 정의는 동일하다. 최신 전체/반복 검증은
+[PHASE 7 report](../phases/phase-07/phase-7-report.md)를 참조한다.
+
+| 요구사항/feature | 실행 근거 (`tests/integration/music/`) | 상태 |
+| --- | --- | --- |
+| F011–F016 / FR-003,011–013,021 | `test_discord.py`, `test_lifecycle.py`, playlist `test_resources.py` | IMPLEMENTED; commands, channel, voice, pagination, FIFO/50 cap |
+| F017–F023 / FR-014–018 | `test_actor.py`, `test_resources.py`, `test_lifecycle.py`, `test_failures.py` | IMPLEMENTED; bounded ownership, PCM, retries, pause, skip, queue, loop |
+| F024 / FR-019 | `test_actor.py`, `test_failures.py` | IMPLEMENTED; successful recommendations and stale/failure isolation |
+| F025/F026 / FR-020–022 | `test_discord.py`, `test_data.py` | IMPLEMENTED; user-global favorites, guild/session receipt/count and encrypted recovery |
+| F027/F028/F045 / FR-023–025 | `test_actor.py`, `test_failures.py`, `test_resources.py`, `test_lifecycle.py` | IMPLEMENTED; TTS, atomic ACK/legacy restore and persisted/default volume |
+| CF-01–06,15,16,19–21 | report concurrency matrix and repeat results | EXECUTABLE; fake clock/barrier/local child, no production services |
+
+상한은 Pi 실측 SLO가 아니다. 실제 Discord/Voice/provider와 Pi 검증, Operations, deployment,
+production DB/cutover는 후속 gate에 남긴다. V1 route와 frozen baseline은 유지한다.
+
 ## F001–F045 trace
 
 | Feature | FR | Mode | Current automated evidence | Status | PHASE 1 characterization / planned proof |
@@ -166,24 +185,24 @@ AST(파라미터화 포함)는 PHASE 5 기준선과 동일하다. migration 4는
 | F008 basic `/요약` | FR-003, FR-010, FR-027, FR-030 | PRESERVE/CORRECT | slash routing/defer, no-data result, Gemini happy path | PARTIAL | command signature/public result/golden embed, ACL, timeout/error mapping |
 | F009 advanced Summary | FR-003, FR-010, FR-028, FR-030 | PRESERVE/CORRECT | none at user-contract level | GAP | modal fields, filtering/range validation, public result, prompt separation |
 | F010 Summary refresh/topic | FR-010, FR-029 | PRESERVE/CORRECT | none at callback-contract level | GAP | refresh semantics, ephemeral detail, stale/invalid selection, >25 pagination |
-| F011 music dashboard/channel cleanup | FR-011 | PRESERVE | `test_music_ui.py::test_music_player_view_initialization` | PARTIAL | single dashboard across reconnect, message delete exceptions/timing, exact controls |
-| F012 URL play request | FR-003, FR-012, FR-013, FR-014 | PRESERVE | slash routing, URL regex, prepared backend playback | PARTIAL | command/message paths, voice/channel policy, response text/publicness, ordering |
-| F013 search/select | FR-012, FR-021 | PRESERVE/CORRECT | `test_music_ui.py::test_search_select_initialization` | PARTIAL | modal/select custom IDs, result expiry, stable selection, pagination |
-| F014 playlist expansion | FR-012 | PRESERVE | yt-dlp option contains `playlistend=50`, no contract test | GAP | 0/1/50/>50/malformed entries and request-order preservation |
-| F015 music-channel URL/delete | FR-011, FR-012 | PRESERVE | none | GAP | designated channel only, message deletion/failure, public cleanup timing |
-| F016 voice connection/move/master policy | FR-005, FR-006, FR-013 | PRESERVE/CORRECT | restore connect timeout only | GAP | requester/master matrix, connect/move/reconnect, cross-guild denial |
-| F017 audio acquire/play/cache | FR-014 | PRESERVE/CORRECT | `test_music_playback.py::*` and prepared-media playback test | PARTIAL | partial/oversize/disk-full/timeout/kill-reap/global-cap and cache corruption |
-| F018 playback retry/skip | FR-015 | PRESERVE | 3s/8s/third-failure and cancel tests in `test_music_core.py` | COVERED | add Feature/FR/mode metadata and deterministic callback-race coverage |
-| F019 pause/resume | FR-016 | PRESERVE | none | GAP | button response, elapsed/paused duration, invalid/stale state |
-| F020 skip/cancel | FR-016 | PRESERVE/CORRECT | pending-retry and active-preparation skip tests | PARTIAL | normal FFmpeg skip, simultaneous skip/after, response contract |
-| F021 leave/reconnect/empty leave | FR-013 | PRESERVE/CORRECT | none at policy level | GAP | button leave, 8s reconnect, empty-channel check, move semantics, cleanup |
-| F022 queue view/edit | FR-016, FR-017, FR-021 | PRESERVE/CORRECT | view construction only | GAP | stable item IDs, move/remove/shuffle/clear, confirm/cancel, stale UI, pagination |
-| F023 loop modes | FR-018 | PRESERVE | enum values only | GAP | off→one→all button cycle and queue/song end-state transitions |
-| F024 autoplay | FR-018, FR-019 | CORRECT | cancellation tests only; V1 success path references an unimported symbol | CORRECT-GAP | successful recommendation, dedupe, provider failure, cancel/retry race; do not golden `NameError` |
-| F025 global favorites | FR-020, FR-021 | PRESERVE/CORRECT | DB cross-guild sharing and limited agent cancellation tests | PARTIAL | all UI actions, >25 pagination, stable IDs, concurrent add/delete |
-| F026 popular songs/play count | FR-022 | CORRECT | DB counter/top query tests | PARTIAL | playback-session start exactly once; no retry/TTS/resume duplicate; guild isolation |
-| F027 join TTS | FR-023 | PRESERVE/CORRECT | path/cache helper initialization only | GAP | enabled/disabled, timeout/failure recovery, simultaneous join and track-complete races |
-| F028 music snapshot/restore | FR-024 | PRESERVE/CORRECT | atomic-write preservation, JSON contract, invalid JSON, full restore tests | PARTIAL | version/revision/checksum, restore-ack-before-consume, partial guild failure, process-crash/coarse checkpoint |
+| F011 music dashboard/channel cleanup | FR-011 | PRESERVE | `integration/music/test_discord.py / test_lifecycle.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
+| F012 URL play request | FR-003, FR-012, FR-013, FR-014 | PRESERVE | `integration/music/test_discord.py / test_actor.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
+| F013 search/select | FR-012, FR-021 | PRESERVE/CORRECT | `integration/music/test_discord.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
+| F014 playlist expansion | FR-012 | PRESERVE | `integration/music/test_resources.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
+| F015 music-channel URL/delete | FR-011, FR-012 | PRESERVE | `integration/music/test_discord.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
+| F016 voice connection/move/master policy | FR-005, FR-006, FR-013 | PRESERVE/CORRECT | `integration/music/test_discord.py / test_actor.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
+| F017 audio acquire/play/cache | FR-014 | PRESERVE/CORRECT | `integration/music/test_resources.py / test_lifecycle.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
+| F018 playback retry/skip | FR-015 | PRESERVE | `integration/music/test_actor.py / test_failures.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
+| F019 pause/resume | FR-016 | PRESERVE | `integration/music/test_actor.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
+| F020 skip/cancel | FR-016 | PRESERVE/CORRECT | `integration/music/test_actor.py / test_failures.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
+| F021 leave/reconnect/empty leave | FR-013 | PRESERVE/CORRECT | `integration/music/test_actor.py / test_lifecycle.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
+| F022 queue view/edit | FR-016, FR-017, FR-021 | PRESERVE/CORRECT | `integration/music/test_actor.py / test_discord.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
+| F023 loop modes | FR-018 | PRESERVE | `integration/music/test_actor.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
+| F024 autoplay | FR-018, FR-019 | CORRECT | `integration/music/test_actor.py / test_failures.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
+| F025 global favorites | FR-020, FR-021 | PRESERVE/CORRECT | `integration/music/test_discord.py / test_data.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
+| F026 popular songs/play count | FR-022 | CORRECT | `integration/music/test_data.py / test_lifecycle.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
+| F027 join TTS | FR-023 | PRESERVE/CORRECT | `integration/music/test_actor.py / test_failures.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
+| F028 music snapshot/restore | FR-024 | PRESERVE/CORRECT | `integration/music/test_resources.py / test_lifecycle.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
 | F029 text XP | FR-031 | PRESERVE | jamo formula and one `on_message` path; repository CRUD | PARTIAL | complete character table, bot/DM/guild cases, duplicate event and multi-guild isolation |
 | F030 voice XP | FR-032 | PRESERVE/CORRECT | repository seconds math only | GAP | join/mute/move/leave/restart fake clock, completed-minute formula, guild/user key |
 | F031 `/내정보` | FR-003, FR-010, FR-033 | PRESERVE | no command contract test | GAP | signature, self/master-other behavior, embed/publicness and formula parity |
@@ -200,7 +219,7 @@ AST(파라미터화 포함)는 PHASE 5 기준선과 동일하다. migration 4는
 | F042 Watch master close | FR-005, FR-043 | PRESERVE/CORRECT | websocket/state/DB cleanup and non-master/master button tests | PARTIAL | duplicate/racing close idempotency, invite-delete failure compensation, loopback auth |
 | F043 stale Watch cleanup | FR-044 | CORRECT | startup cleanup once and active-session preservation test | PARTIAL | readiness admission barrier and old-browser reconnect race |
 | F044 mention-prefix help | FR-007 | PRESERVE | none | GAP | mention-only prefix, help response and message-content intent contract |
-| F045 persisted volume | FR-025 | PRESERVE/CORRECT | DB volume CRUD, snapshot/restore values, MusicState explicit initialization | PARTIAL | one 0.5 default path, persisted value precedence, legacy snapshot missing-field behavior |
+| F045 persisted volume | FR-025 | PRESERVE/CORRECT | `integration/music/test_actor.py / test_failures.py` | IMPLEMENTED | PHASE 7 overlay; real Discord/provider/Pi verification remains staged |
 
 ## PHASE 0 coverage summary (historical)
 

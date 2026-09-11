@@ -252,3 +252,22 @@
   Music strict xfail 2개, PHASE 7 사용자 지시 gate와 PHASE 10 운영 cutover 승인 gate는 유지한다.
   [Watch contract](../phases/phase-06/watch-contract.md),
   [loopback contract](../phases/phase-06/loopback-contract.md), [report](../phases/phase-06/phase-6-report.md).
+
+## ADR-022 Music single-owner playback and bounded media
+
+- **Status:** ACCEPTED/IMPLEMENTED (2026-09-11, user PHASE 7 direction)
+- **Decision:** guild MusicActor serializes authoritative state; immutable projection/stable selection,
+  logical session/attempt/work identity separate UI and provider callbacks from mutation ownership.
+  Music owns a bounded supervisor, global media/TTS cache and explicit child-process lifecycle.
+- **Data:** additive migration 5 atomically records guild/session start and legacy count. Migration 1–4
+  and six legacy tables remain unchanged. Snapshot keeps eight legacy fields and adds checksummed
+  version/revision/session/paused metadata, consumed only after actor restore acknowledgement.
+- **Compatibility:** command/visibility/voice timing, 3s/8s retries, NONE/SONG/QUEUE, user-global favorites,
+  saved volume and old-reader rollback remain. Direct compatibility is an explicit ≤7-day window.
+  Music CORRECT xfails are implemented through V2 paths; all remaining strict xfails are zero.
+- **Trade-off:** first PCM/voice acceptance and SQLite are separate systems; hard-kill observation gaps
+  and last coarse-checkpoint position remain staging risks. Filesystem ownership is retained through
+  atomic writes; a kernel stall cannot be certified away by fake tests. Limits are Phase 9 proposals.
+- **Consequence:** V1 production route stays unchanged. PHASE 8 needs a new user instruction;
+  production data/cutover remains separately gated. [Music contract](../phases/phase-07/music-contract.md),
+  [actor/cache details](../phases/phase-07/music-actor-contract.md), [report](../phases/phase-07/phase-7-report.md).
