@@ -99,6 +99,7 @@ class Projection:
     voice_channel_id: int | None
     retry_at: float | None
     error: str | None
+    paused: bool
 
     def legacy(self) -> dict[str, Any]:
         return {"text_channel_id": self.text_channel_id, "voice_channel_id": self.voice_channel_id,

@@ -103,7 +103,7 @@ class SnapshotStore:
                 raise DataIntegrityError("too many Music snapshot guilds")
             legacy = projection.legacy()
             metadata = {"version": 2, "revision": projection.revision, "identity": uuid4().hex,
-                        "session_id": projection.session_id, "paused": projection.status == "paused"}
+                        "session_id": projection.session_id, "paused": projection.paused}
             metadata["checksum"] = digest({"state": legacy, "metadata": metadata})
             records[guild] = {**legacy, "_v2": metadata}
             await self.executor.run_retained(self._write, records)

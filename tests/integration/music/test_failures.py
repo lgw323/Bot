@@ -182,3 +182,24 @@ async def test_snapshot_ack_rejects_changed_source(rig, tmp_path):
         with pytest.raises(ConflictError): await store.acknowledge(records[0])
         assert json.loads(store.path.read_text())["100"]["current_song"]["title"] == "Track 1"
     finally: await executor.close(grace_seconds=2)
+
+
+async def test_checkpoint_during_tts_keeps_paused_session_intent(rig, tmp_path):
+    actor = rig[0]()
+    first = await playing(actor)
+    await actor.ask("pause", session_id=first.session_id)
+    await actor.ask("tts", text="입장")
+    await settle(lambda: actor.projection().status == "tts")
+    executor = BoundedExecutor(workers=1, queue_capacity=4, name="paused-checkpoint")
+    store = SnapshotStore(tmp_path/"synthetic-paused.json", executor)
+    try:
+        await store.save(actor.projection())
+        records, _ = await store.records()
+        assert records[0].paused and records[0].session_id == first.session_id
+        restored = rig[0](200)
+        await restored.ask("restore", identity=records[0].identity, data=records[0].data,
+                           session_id=records[0].session_id, paused=records[0].paused)
+        await restored.ask("connect", channel_id=123)
+        await settle(lambda: restored.projection().status == "paused")
+        assert restored.projection().session_id == first.session_id
+    finally: await executor.close(grace_seconds=2)

@@ -100,7 +100,7 @@ class MusicActor:
                           self._session, self._attempt, self._status,
                           int(min(elapsed, self._current.duration)) if self._current else 0,
                           self._volume, self._loop, self._autoplay, self._text_channel, self._voice_channel,
-                          self._retry_at, self._error)
+                          self._retry_at, self._error, self._status == "paused" or self._resume_paused)
 
     async def _pump(self) -> None:
         try:
