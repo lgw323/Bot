@@ -157,18 +157,22 @@ def test_f022_fr016_preserve_clear_confirmation_components() -> None:
     assert [item.label for item in view.children] == ["확인", "취소"]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="CORRECT contract: V1 truncates or rejects data beyond Discord's 25-option limit",
-)
 def test_f010_f013_f022_f025_fr021_correct_components_paginate_without_data_loss() -> None:
-    """Features F010/F013/F022/F025; FR-021/FR-029; CORRECT."""
-    state = MagicMock()
-    state.queue = [_song(i) for i in range(26)]
-    queue = QueueManagementView(MagicMock(), state)
+    """Features F010/F013/F022/F025; FR-021/FR-029; CORRECT; actual V2 Music UI path."""
+    from discordbot.music.adapters.discord_ui import build_song_view
+    from discordbot.music.domain.model import Track
+    from discordbot.music.domain.pages import SongPages
 
-    assert len(queue.songs) == 26
-    assert any(item.label == "다음" for item in queue.children)
+    songs = tuple(Track(str(i), f"https://example.invalid/{i}", "Duplicate", 200, 10) for i in range(26))
+    pages = SongPages(100, 10, 999, songs)
+    queue = build_song_view(MagicMock(), pages, "queue")
+    try:
+        assert len(queue.songs) == 26
+        assert any(getattr(item, "label", None) == "다음" for item in queue.children)
+        assert pages.page(1)[0].item_id == "25"
+        assert pages.select(("25",), 100, 10, 1)[0] == songs[25]
+    finally:
+        queue.stop()
 
 
 @pytest.mark.asyncio
