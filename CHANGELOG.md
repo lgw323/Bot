@@ -10,6 +10,9 @@
 ## [Unreleased]
 
 ### Added
+- V2 Operations에 exclusive deployment lock, release별 immutable code/venv manifest와
+  offline wheel hash 검증, atomic activation, 두 서비스 readiness/rollback gate를 추가했습니다.
+  운영 명령은 synthetic tests와 fake runner로 검증하며 실제 Pi/production 경로는 실행하지 않습니다.
 - DiscordBot V2 PHASE 7 Music을 per-guild actor, bounded media/TTS cache와 FFmpeg process,
   stable paginated Discord UI, legacy-compatible checkpoint/restore로 이전했습니다.
   additive migration 5의 logical playback receipt로 count 중복을 방지하고 missing-volume 0.5와
