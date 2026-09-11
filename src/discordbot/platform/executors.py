@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import threading
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from functools import partial
 from typing import Callable, TypeVar
 
@@ -39,6 +39,24 @@ class BoundedExecutor:
             return self._admitted
 
     async def run(self, function: Callable[..., T], /, *args: object) -> T:
+        return await asyncio.wrap_future(self._submit(function, *args))
+
+    async def run_retained(self, function: Callable[..., T], /, *args: object) -> T:
+        """Finish one admitted atomic file operation even if its owner cancels.
+
+        Use only for bounded local file operations whose result transfers a file
+        or handle. The caller must subsequently close/release that result. This
+        does not change ordinary ``run`` cancellation or create another task.
+        """
+        future = asyncio.wrap_future(self._submit(function, *args))
+        while True:
+            try:
+                return await asyncio.shield(future)
+            except asyncio.CancelledError:
+                if future.done():
+                    return future.result()
+
+    def _submit(self, function: Callable[..., T], /, *args: object) -> Future[T]:
         with self._lock:
             if self._closed:
                 raise ConflictError("executor is closed")
@@ -60,7 +78,7 @@ class BoundedExecutor:
                 self._admitted -= 1
 
         concurrent_future.add_done_callback(release_admission)
-        return await asyncio.wrap_future(concurrent_future)
+        return concurrent_future
 
     async def close(self, *, grace_seconds: float = 0.0) -> None:
         if grace_seconds < 0:
