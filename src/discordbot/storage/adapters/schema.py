@@ -11,6 +11,7 @@ from datetime import date
 from discordbot.storage.ports.contracts import DatabaseState, ValidationReport
 from discordbot.storage.adapters.engagement_schema import ENGAGEMENT_DDL, ENGAGEMENT_TABLES
 from discordbot.storage.adapters.watch_schema import WATCH_DDL, WATCH_TABLES
+from discordbot.storage.adapters.music_schema import MUSIC_DDL, MUSIC_TABLES
 
 # Fixed, reviewed identifiers only. No identifier is taken from user input.
 SCHEMA = {
@@ -96,7 +97,7 @@ def validate(conn: sqlite3.Connection) -> ValidationReport:
         return ValidationReport(DatabaseState.CORRUPT)
     objects = conn.execute("SELECT type,name FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'").fetchall()
     tables = {name for kind, name in objects if kind == "table"}
-    if (tables - {"v2_migrations"} - ENGAGEMENT_TABLES - WATCH_TABLES != set(SCHEMA)
+    if (tables - {"v2_migrations"} - ENGAGEMENT_TABLES - WATCH_TABLES - MUSIC_TABLES != set(SCHEMA)
             or any(kind not in {"table", "index"} for kind, _ in objects)
             or conn.execute("PRAGMA user_version").fetchone()[0] != 0):
         return ValidationReport(DatabaseState.WRONG_SCHEMA)
@@ -139,7 +140,7 @@ def validate(conn: sqlite3.Connection) -> ValidationReport:
         return ValidationReport(DatabaseState.INVALID_DATA)
     metadata = hashlib.sha256()
     has_metadata = False
-    for extension_tables, definitions in ((ENGAGEMENT_TABLES, ENGAGEMENT_DDL), (WATCH_TABLES, WATCH_DDL)):
+    for extension_tables, definitions in ((ENGAGEMENT_TABLES, ENGAGEMENT_DDL), (WATCH_TABLES, WATCH_DDL), (MUSIC_TABLES, MUSIC_DDL)):
         if not tables & extension_tables:
             continue
         for ddl in definitions:
@@ -147,7 +148,7 @@ def validate(conn: sqlite3.Connection) -> ValidationReport:
             actual = conn.execute("SELECT sql FROM sqlite_master WHERE name=?", (name,)).fetchone()
             if actual != (ddl,):
                 return ValidationReport(DatabaseState.WRONG_SCHEMA)
-    for table in sorted(tables & (ENGAGEMENT_TABLES | WATCH_TABLES)):
+    for table in sorted(tables & (ENGAGEMENT_TABLES | WATCH_TABLES | MUSIC_TABLES)):
         info = conn.execute(f'PRAGMA table_info("{table}")').fetchall()
         keys = ",".join(f'"{r[1]}"' for r in sorted(info, key=lambda r: r[5]) if r[5])
         for row in conn.execute(f'SELECT * FROM "{table}" ORDER BY {keys}'):
@@ -164,6 +165,8 @@ def validate(conn: sqlite3.Connection) -> ValidationReport:
 
 
 def _valid_metadata(table: str, row: tuple) -> bool:
+    if table == "v2_music_starts":
+        return _integer(row[0], 1) and _text(row[1], True)
     if table == "v2_watch_owner":
         return row[0] == 1 and _text(row[1], True) and _number(row[2])
     if table == "v2_watch_intents":

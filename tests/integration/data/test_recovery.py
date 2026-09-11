@@ -46,7 +46,7 @@ async def test_explicit_bootstrap_only_creates_absent_target(tmp_path):
     db = SqliteDatabase(DatabaseConfig(path))
     try:
         report = await DataRecovery(db).bootstrap(request())
-        assert report.state is DatabaseState.VALID and report.migration_version == 4
+        assert report.state is DatabaseState.VALID and report.migration_version == 5
         assert all(count == 0 for _, count in report.counts)
         before = path.read_bytes()
         with pytest.raises(ConflictError):

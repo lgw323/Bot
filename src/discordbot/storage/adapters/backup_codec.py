@@ -12,6 +12,7 @@ from discordbot.storage.adapters.execution import WorkControl
 from discordbot.storage.adapters.schema import SCHEMA
 from discordbot.storage.adapters.engagement_schema import ENGAGEMENT_TABLES
 from discordbot.storage.adapters.watch_schema import WATCH_TABLES
+from discordbot.storage.adapters.music_schema import MUSIC_TABLES
 
 BACKUP_HEADER = b"DISCORDBOT_BACKUP_V2\n"
 
@@ -37,7 +38,7 @@ def decode(payload: bytes, key: bytes | None, maximum: int) -> tuple[str, bool]:
 
 
 def _authorizer(action: int, arg1: str | None, arg2: str | None, database: str | None, source: str | None) -> int:
-    tables = set(SCHEMA) | ENGAGEMENT_TABLES | WATCH_TABLES | {"v2_migrations", "sqlite_master"}
+    tables = set(SCHEMA) | ENGAGEMENT_TABLES | WATCH_TABLES | MUSIC_TABLES | {"v2_migrations", "sqlite_master"}
     allowed = False
     if source is not None or database not in {None, "main"}:
         return sqlite3.SQLITE_DENY

@@ -1,4 +1,4 @@
-"""No canonical URL conversion, history trimming or playback accounting here."""
+"""Raw legacy readers plus atomic logical-session start accounting."""
 
 import sqlite3
 
@@ -11,6 +11,21 @@ from discordbot.storage.ports.contracts import DatabaseRequest, require_page
 class SqliteMusicRepository:
     def __init__(self, database: SqliteDatabase) -> None:
         self._db = database
+
+    async def record_start(self, guild_id: int, session_id: str, url: str, title: str, request: DatabaseRequest) -> bool:
+        identifier(guild_id)
+        for value in (session_id, url, title):
+            text_value(value, nonempty=True)
+
+        def mutation(conn: sqlite3.Connection) -> bool:
+            inserted = conn.execute("INSERT OR IGNORE INTO v2_music_starts VALUES (?,?)", (guild_id, session_id)).rowcount
+            if inserted:
+                conn.execute("INSERT INTO music_play_counts (guild_id,url,title,play_count) VALUES (?,?,?,1) "
+                             "ON CONFLICT(guild_id,url) DO UPDATE SET play_count=play_count+1,title=excluded.title",
+                             (guild_id, url, title))
+            return bool(inserted)
+
+        return await self._db.write(request, mutation)
 
     async def list_favorites(self, user_id: int, request: DatabaseRequest, *, limit: int = 100, offset: int = 0) -> tuple[Favorite, ...]:
         identifier(user_id)

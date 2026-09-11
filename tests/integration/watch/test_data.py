@@ -28,7 +28,7 @@ async def test_additive_migration_checksum_and_legacy_watch_reader(tmp_path, mon
     worker = SqliteDatabase(DatabaseConfig(tmp_path / "unused.db"))
     try:
         report = await DataRecovery(worker).migrated_copy(source, target, DatabaseRequest.within(5))
-        assert report.migration_version == 4
+        assert report.migration_version == 5
         assert hashlib.sha256(source.read_bytes()).hexdigest() == before
         with closing(sqlite3.connect(target)) as conn:
             assert conn.execute("SELECT * FROM v2_migrations WHERE version<=3").fetchall() == ledger

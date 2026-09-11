@@ -25,7 +25,7 @@ async def test_phase3_copy_expands_without_touching_source_and_v1_reads_new_fact
     target = tmp_path / "phase4.db"
     try:
         report = await DataRecovery(worker).migrated_copy(source, target, DatabaseRequest.within(5))
-        assert report.migration_version == 4
+        assert report.migration_version == 5
         assert hashlib.sha256(source.read_bytes()).hexdigest() == before
         monkeypatch.setattr(database_manager, "DB_PATH", target)
         assert (await database_manager.get_user_data(10, 100))["total_vc_seconds"] == 119.5
