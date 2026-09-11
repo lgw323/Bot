@@ -10,6 +10,8 @@
 ## [Unreleased]
 
 ### Added
+- PHASE 3 snapshot/encryption primitives에 검증된 backup archive, bounded retention,
+  isolated restore/fallback, 명시적 offline promotion과 durable audit를 연결했습니다.
 - V2 Operations에 exclusive deployment lock, release별 immutable code/venv manifest와
   offline wheel hash 검증, atomic activation, 두 서비스 readiness/rollback gate를 추가했습니다.
   운영 명령은 synthetic tests와 fake runner로 검증하며 실제 Pi/production 경로는 실행하지 않습니다.
