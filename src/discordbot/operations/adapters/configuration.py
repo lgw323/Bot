@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import os
 import stat
+import struct
 from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -48,9 +49,21 @@ class Settings:
     secrets: Secrets = field(repr=False)
 
 
-def private_mode(mode: int, owner: int, permitted_owner: int) -> None:
-    if not stat.S_ISREG(mode) or mode & 0o077 or owner not in {0, permitted_owner}:
+def private_mode(mode: int, owner: int, permitted_owner: int, acl: bytes | None = None) -> None:
+    if not stat.S_ISREG(mode) or owner not in {0, permitted_owner}:
         raise ConfigurationError("secret file ownership or permissions invalid")
+    if not mode & 0o077:
+        return
+    # systemd 255 uses root:root 0440 with a named-service-user ACL. The mode's
+    # group bits represent the ACL mask, not actual owning-group access. Accept
+    # only this exact read-only shape; broad groups/other users remain forbidden.
+    undefined = 0xFFFFFFFF
+    expected = [(1, 4, undefined), (2, 4, permitted_owner), (4, 0, undefined),
+                (16, 4, undefined), (32, 0, undefined)]
+    if (owner != 0 or stat.S_IMODE(mode) != 0o440 or acl is None or len(acl) != 44
+            or acl[:4] != struct.pack("<I", 2)
+            or list(struct.iter_unpack("<HHI", acl[4:])) != expected):
+        raise ConfigurationError("secret file ACL permits unexpected access")
 
 
 def read_secret(root: Path, name: str) -> str:
@@ -61,7 +74,15 @@ def read_secret(root: Path, name: str) -> str:
         with os.fdopen(fd, "rb") as stream:
             info = os.fstat(stream.fileno())
             if os.name != "nt":
-                private_mode(info.st_mode, info.st_uid, os.geteuid())
+                acl = None
+                if info.st_mode & 0o077 and hasattr(os, "getxattr"):
+                    try:
+                        # Inspect the already opened descriptor; no path race or
+                        # credential content is needed for this metadata check.
+                        acl = os.getxattr(stream.fileno(), "system.posix_acl_access")
+                    except OSError:
+                        acl = None  # private_mode rejects broad access without proof.
+                private_mode(info.st_mode, info.st_uid, os.geteuid(), acl)
             value = stream.read(4097).decode().strip()
         if not value or len(value) > 4096 or any(c.isspace() for c in value):
             raise ValueError
