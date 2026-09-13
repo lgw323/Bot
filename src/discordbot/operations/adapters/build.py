@@ -22,6 +22,16 @@ class Runner(Protocol):
     def read(self, args: list[str], cwd: Path, timeout: float) -> str: ...
 
 
+def immutable_mode(mode: int, *, directory: bool) -> int:
+    """Dedicated runtime group can read/traverse; nobody can mutate a release.
+
+    Atomic metadata starts private (0600), and deploy units use umask 0077.
+    Merely removing write bits would prevent the separate runtime user reading
+    manifests and venv files. The release layout supplies the dedicated group.
+    """
+    return 0o550 if directory or mode & 0o111 else 0o440
+
+
 class CommandRunner:
     def read(self, args: list[str], cwd: Path, timeout: float) -> str:
         # Only fixed small local Git/systemd queries use this API. Never keys,
@@ -207,5 +217,5 @@ class Builder:
         self.store.validate(identity)
         if os.name != "nt":
             for node in path.rglob("*"):
-                node.chmod(node.stat().st_mode & ~0o222)
-            path.chmod(0o555)
+                node.chmod(immutable_mode(node.stat().st_mode, directory=node.is_dir()))
+            path.chmod(immutable_mode(path.stat().st_mode, directory=True))

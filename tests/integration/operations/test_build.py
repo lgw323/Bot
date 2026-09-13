@@ -4,9 +4,17 @@ from pathlib import Path
 
 import pytest
 
-from discordbot.operations.adapters.build import Builder, seal_wheels, verify_wheels
+from discordbot.operations.adapters.build import Builder, seal_wheels, verify_wheels, immutable_mode
 from discordbot.operations.adapters.filesystem import ReleaseStore, read_json, atomic_json
 from discordbot.platform.errors import DataIntegrityError
+
+
+@pytest.mark.parametrize("mode,directory,expected", [(0o600, False, 0o440), (0o700, False, 0o550),
+                                                  (0o644, False, 0o440), (0o700, True, 0o550)])
+def test_published_private_artifacts_are_readable_by_runtime_group(mode, directory, expected):
+    result = immutable_mode(mode, directory=directory)
+    assert result == expected
+    assert not result & 0o227  # no write permission, no unrelated-user access
 
 
 class Runner:
