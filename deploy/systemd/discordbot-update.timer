@@ -1,0 +1,11 @@
+[Unit]
+Description=Conservative daily immutable candidate check
+
+[Timer]
+OnCalendar=*-*-* 18:00:00 UTC
+RandomizedDelaySec=30m
+Persistent=true
+Unit=discordbot-update.service
+
+[Install]
+WantedBy=timers.target

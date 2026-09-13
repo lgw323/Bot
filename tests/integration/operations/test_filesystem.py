@@ -67,6 +67,34 @@ def test_stale_pid_metadata_does_not_block_or_steal_kernel_lock(tmp_path):
                 pytest.fail("stolen")
 
 
+def test_first_open_does_not_write_until_kernel_ownership(tmp_path, monkeypatch):
+    owned = False
+    if os.name == "nt":
+        import msvcrt as locking
+        attribute, unlock = "locking", locking.LK_UNLCK
+    else:
+        import fcntl as locking
+        attribute, unlock = "flock", locking.LOCK_UN
+    original_lock = getattr(locking, attribute)
+    original_open = os.fdopen
+    def kernel_lock(fd, operation, *args):
+        nonlocal owned
+        result = original_lock(fd, operation, *args)
+        owned = operation != unlock
+        return result
+    class GuardedStream:
+        def __init__(self, stream): self.stream = stream
+        def __getattr__(self, name): return getattr(self.stream, name)
+        def write(self, value):
+            assert owned, "lock initialization must not write before kernel ownership"
+            return self.stream.write(value)
+    monkeypatch.setattr(locking, attribute, kernel_lock)
+    monkeypatch.setattr(os, "fdopen", lambda *args, **kwargs: GuardedStream(original_open(*args, **kwargs)))
+    with ExclusiveLock(tmp_path / "new.lock").acquire():
+        assert owned
+    assert not owned
+
+
 def test_atomic_pointer_and_protected_cleanup(tmp_path):
     store = release(tmp_path, "old")
     release(tmp_path, "new")

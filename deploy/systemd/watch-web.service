@@ -1,0 +1,33 @@
+[Unit]
+Description=DiscordBot V2 Watch public and internal listeners
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=discordbot
+Group=discordbot
+WorkingDirectory=/var/lib/discordbot
+ExecStart=/opt/discordbot/current/.venv/bin/python -I /opt/discordbot/current/app/deploy/launch.py watch-web --config /etc/discordbot/config.json --credentials %d
+LoadCredential=capability_key:/etc/discordbot/secrets/capability_key
+LoadCredential=control_key:/etc/discordbot/secrets/control_key
+Environment=PYTHON_DOTENV_DISABLED=1 PYTHONDONTWRITEBYTECODE=1
+UMask=0077
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=70
+TimeoutStopSec=90
+KillMode=control-group
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/discordbot/data
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

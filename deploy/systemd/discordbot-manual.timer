@@ -1,0 +1,11 @@
+[Unit]
+Description=Local request inbox check without remote polling
+
+[Timer]
+OnBootSec=60
+OnUnitInactiveSec=60
+AccuracySec=1s
+Unit=discordbot-manual.service
+
+[Install]
+WantedBy=timers.target

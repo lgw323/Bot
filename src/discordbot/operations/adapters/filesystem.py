@@ -111,8 +111,9 @@ class ExclusiveLock:
         acquired = False
         end = time.monotonic() + self.timeout
         try:
-            if os.fstat(fd).st_size == 0:
-                stream.write(b" ")
+            # Both flock and Windows byte locks cover an empty file. Never
+            # initialize before ownership: two first-open contenders can race
+            # a write against the winner's mandatory Windows byte lock.
             while True:
                 try:
                     stream.seek(0)
@@ -128,7 +129,8 @@ class ExclusiveLock:
                     if time.monotonic() >= end:
                         raise ConflictError("another operation owns the lock") from None
                     time.sleep(min(0.05, max(0, end - time.monotonic())))
-            stream.seek(1)
+            stream.seek(0)
+            stream.write(b" ")
             stream.write(json.dumps({"owner": uuid.uuid4().hex, "pid": os.getpid()}).encode())
             stream.truncate()
             os.fsync(fd)

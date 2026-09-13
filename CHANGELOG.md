@@ -10,6 +10,9 @@
 ## [Unreleased]
 
 ### Added
+- V2 Discord/Watch executable composition, OS-managed credential/config loader, local health/metrics,
+  signal shutdown, manual operation inbox와 systemd service/timer 자산을 추가했습니다.
+  실제 서비스 활성화와 ARM64 wheel 설치는 후속 staging gate에 남깁니다.
 - PHASE 3 snapshot/encryption primitives에 검증된 backup archive, bounded retention,
   isolated restore/fallback, 명시적 offline promotion과 durable audit를 연결했습니다.
 - V2 Operations에 exclusive deployment lock, release별 immutable code/venv manifest와
