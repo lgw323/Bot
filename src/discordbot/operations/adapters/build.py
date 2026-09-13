@@ -104,9 +104,9 @@ def verify_wheels(root: Path, pins: Path) -> tuple[str, str]:
         if path.parent != root or digest(path) != item["sha256"]:
             raise DataIntegrityError("wheel checksum mismatch")
         rows.append(f'{name}=={item["version"]} --hash=sha256:{item["sha256"]}')
-    expected = {re.sub(r"[-_.]+", "-", line.split("==")[0]).lower() for line in pins.read_text().splitlines()
-                if line.strip() and not line.startswith("#")}
-    if expected != set(value["wheels"]):
+    expected = {re.sub(r"[-_.]+", "-", line.split("==")[0]).lower(): line.split("==")[1]
+                for line in pins.read_text().splitlines() if line.strip() and not line.startswith("#")}
+    if expected != {name: item["version"] for name, item in value["wheels"].items()}:
         raise DataIntegrityError("incomplete wheel lock")
     return "\n".join(rows) + "\n", digest(root / "wheel-lock.json")
 
@@ -137,7 +137,9 @@ class Builder:
         identity = "r-" + commit[:16] + "-" + lock_hash[:16]
         path = self.store.path(identity)
         if path.exists():
-            self.store.validate(identity)
+            existing = self.store.validate(identity)
+            if existing["commit"] != commit or existing["dependency_hash"] != lock_hash:
+                raise DataIntegrityError("release identity collision")
             return identity
         if sum(1 for p in self.store.releases.iterdir() if p.is_dir()) >= 16:
             raise DataIntegrityError("release capacity reached; retain rollback evidence before cleanup")

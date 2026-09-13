@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from discordbot.operations.adapters.build import Builder, seal_wheels, verify_wheels
-from discordbot.operations.adapters.filesystem import ReleaseStore
+from discordbot.operations.adapters.filesystem import ReleaseStore, read_json, atomic_json
 from discordbot.platform.errors import DataIntegrityError
 
 
@@ -68,6 +68,24 @@ def test_missing_transitive_wheel_is_not_resolved_online(builder):
     pins.write_text("example==1.0\nmissing==2.0\n")
     with pytest.raises(DataIntegrityError): seal_wheels(builder.wheels, pins)
     with pytest.raises(DataIntegrityError): verify_wheels(builder.wheels, pins)
+
+
+def test_lock_cannot_change_reviewed_pin_version(builder):
+    path = builder.wheels / "wheel-lock.json"
+    lock = read_json(path)
+    lock["wheels"]["example"]["version"] = "2.0"
+    atomic_json(path, lock)
+    with pytest.raises(DataIntegrityError):
+        builder.build("a" * 40)
+    assert not builder.runner.calls
+
+
+def test_truncated_release_id_collision_never_reuses_other_commit(builder):
+    identity = builder.build("a" * 40)
+    builder.publish(identity)
+    with pytest.raises(DataIntegrityError, match="collision"):
+        builder.build("a" * 16 + "b" * 24)
+    assert builder.store.validate(identity)["commit"] == "a" * 40
 
 
 def test_candidate_changed_after_tests_cannot_publish(builder):
