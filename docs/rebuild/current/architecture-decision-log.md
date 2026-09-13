@@ -271,3 +271,22 @@
 - **Consequence:** V1 production route stays unchanged. PHASE 8 needs a new user instruction;
   production data/cutover remains separately gated. [Music contract](../phases/phase-07/music-contract.md),
   [actor/cache details](../phases/phase-07/music-actor-contract.md), [report](../phases/phase-07/phase-7-report.md).
+
+## ADR-023 Immutable operations transactions and isolated recovery
+
+- **Status:** ACCEPTED/IMPLEMENTED (2026-09-13, user PHASE 8 direction)
+- **Decision:** release별 code/venv/checksum manifest와 atomic current, kernel operation lock,
+  compatibility/backup/readiness gate와 한 번의 검증된 rollback을 운영 application/adapter로 구현한다.
+  Discord/Watch는 독립 systemd process이며 secret은 OS-managed scoped credential로 주입한다.
+- **Recovery:** PHASE 3 snapshot/encryption 검증을 archive/latest/retention/audit에 연결한다.
+  restore는 격리 candidate가 기본이고 canonical promotion은 stopped services, 재검증 digest와
+  명시적 operator flag를 요구한다. unknown migration, missing DB와 down-migration은 fail-closed다.
+- **Bounds:** backup 4시간, daily update+30분 jitter와 manual inbox 60초 timer는 설치 전 검토용
+  초기값이다. current/rollback와 7일 release를 보존하고 16개 admission cap을 적용한다. remote
+  backup은 port만 제공하며 off-host durability와 production cadence는 후속 승인/검증 대상이다.
+- **Trade-off:** Windows symlink test model, fake service/command와 synthetic DB가 동작 계약을
+  검증한다. Linux ownership/credential mounts/power-loss, ARM64 wheel ABI와 live API/Pi SLO는
+  증명하지 않는다. uncertain mutation/audit와 interrupted inbox는 operator reconciliation을 요구한다.
+- **Consequence:** V1 운영·기능·schema 5와 frozen baseline을 변경하지 않았다. PHASE 9 사용자 지시와
+  PHASE 10 production gate를 유지한다. [deployment](../phases/phase-08/deployment-contract.md),
+  [recovery](../phases/phase-08/backup-restore-contract.md), [operations](../phases/phase-08/operations-contract.md).

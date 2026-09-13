@@ -95,6 +95,7 @@ python -m pytest tests/ -W error::RuntimeWarning -W error::pytest.PytestUnraisab
 | `cogs/` | 음악, 요약, 레벨링, 생일, 로깅, Watch Together 기능 |
 | `src/discordbot/` | V2 platform·SQLite 호환 계층, Engagement·Summary·Music과 분리된 Watch process 구성; V1 운영 경로는 미전환 |
 | `scripts/` | Pi 자동 업데이트·DB 백업과 V2 데이터 사본 검증 도구 |
+| `deploy/` | V2 immutable release 도구, systemd 자산과 PHASE 9 검토용 운영 절차 |
 | `tests/` | V1 계약, V2 platform·데이터 호환성과 architecture 규칙을 확인하는 pytest 테스트 |
 | `docs/` | 제품 명세, 운영 절차와 과거 작업 기록 |
 
@@ -112,5 +113,6 @@ python -m pytest tests/ -W error::RuntimeWarning -W error::pytest.PytestUnraisab
 | `CHANGELOG.md` | 실제로 완료된 변경 이력 |
 
 V2 `src` package의 Python 3.12/setuptools build metadata는 `pyproject.toml`에 정의되어
-있습니다. 별도의 lint, formatting, type-checking 명령과 production 설치 entrypoint는 아직
-정의하지 않았습니다.
+있습니다. V2 실행·배포 entrypoint와 systemd 자산은 구현됐으며, 실제 설치 전
+[운영 절차](deploy/runbooks/README.md)와 [PHASE 8 보고서](docs/rebuild/phases/phase-08/phase-8-report.md)를
+검토합니다. V1 운영 경로는 유지합니다. 별도의 lint, formatting, type-checking 명령은 없습니다.

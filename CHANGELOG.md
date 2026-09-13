@@ -10,6 +10,8 @@
 ## [Unreleased]
 
 ### Added
+- PHASE 8 배포·복구·운영 계약, 완료 보고서와 13개 staging 검토용 runbook을 추가했습니다.
+  상세 검증과 PHASE 9 gate는 `docs/rebuild/phases/phase-08/phase-8-report.md`를 따릅니다.
 - V2 Discord/Watch executable composition, OS-managed credential/config loader, local health/metrics,
   signal shutdown, manual operation inbox와 systemd service/timer 자산을 추가했습니다.
   실제 서비스 활성화와 ARM64 wheel 설치는 후속 staging gate에 남깁니다.

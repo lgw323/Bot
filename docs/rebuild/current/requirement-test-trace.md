@@ -236,3 +236,25 @@ autoplay success, corrupt/0-byte DB와 핵심 concurrency/failure 계획도 포�
 모든 fault/race 구현 증명은 overlay와
 `../phases/phase-01/concurrency-failure-plan.md`의 담당 Phase에서 계속
 추적하며, `CORRECT-SPEC`을 구현 완료로 오해하지 않는다.
+
+## PHASE 8 operations implementation overlay
+
+Earlier rows are historical coverage snapshots. This overlay implements the operations scope;
+it does not claim live host/Discord administration-panel migration or production deployment.
+
+| Scope | Executable evidence under tests/integration/operations/ | Status and staging limit |
+| --- | --- | --- |
+| F001 startup; F003–F005 master/control boundary | test_runtime.py, test_assets.py; existing characterization | Config/login gate, signals, checkpoint, one ephemeral response; live admin panel unwired |
+| F002 logs/observability | test_runtime.py; existing platform telemetry tests | JSON journald/local health/metrics; live Discord log UI migration not claimed |
+| FR-045–FR-050 operations/recovery scope | test_deployment.py, test_pipeline.py, test_recovery.py, test_assets.py | Update, backup, restore and timers; actual host actions gated |
+| Atomic activation, rollback, two-process identity | test_deployment.py, test_filesystem.py, test_pipeline.py, test_runtime.py | Failure/cancel/recovery; Linux symlink/fsync pending |
+| Lock/timer overlap, audit, cleanup | test_filesystem.py, test_runtime.py, test_retention.py, test_deployment.py | Kernel lock/repeated races, stale metadata, protected cleanup, audit failure |
+| Dependency identity | test_build.py, test_assets.py | Pins, fake sealed wheels, full identity collision rejection; ARM64 artifacts not downloaded |
+| Backup/data integrity | test_recovery.py; existing storage integration tests | Synthetic snapshot/key/corruption/schema/semantic/fallback/promotion; real DB excluded |
+| Architecture | tests/architecture/ | Inward imports, task/executor/import safety; feature/domain/schema unchanged |
+
+Exact results, corrected failures and host limits are in the
+[PHASE 8 report](../phases/phase-08/phase-8-report.md). Contracts:
+[deployment](../phases/phase-08/deployment-contract.md),
+[backup/restore](../phases/phase-08/backup-restore-contract.md),
+[operations](../phases/phase-08/operations-contract.md).

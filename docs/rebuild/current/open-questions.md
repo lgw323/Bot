@@ -89,3 +89,15 @@
 - staging token/guild와 production secret은 저장소에 넣지 않으며 필요한 phase에서만 operator가 주입한다.
 - capacity와 SLO 제안값은 typed configuration의 초기값일 뿐 Phase 9 실측 전 production 확정치가 아니다.
 - production DB migration, service 중단, cutover, V1 삭제와 backup key 교체는 별도 사용자 승인 전 실행하지 않는다.
+
+## PHASE 8 implementation / remaining gates
+
+- 운영 도구·systemd 자산·13개 runbook과 synthetic backup/restore는 구현했다.
+  [PHASE 8 report](../phases/phase-08/phase-8-report.md)의 증거와 미검증 범위를 따른다.
+- Phase 9는 ARM64 pin/wheel availability, native ABI, actual systemd credential/polkit/group/WAL
+  권한, symlink/fsync, capacity와 RPO/RTO를 측정한다. staging token/guild와 host auth는 그때만 주입한다.
+- backup remote port에는 실제 destination/auth adapter가 없다. 새 외부 서비스나 기존 production
+  destination 변경은 별도 결정 대상이다. 현재 local-only 도구를 off-host 복구 완료로 보지 않는다.
+- daily update와 4시간 backup은 자산의 초기값이며 production timer 활성화/cadence는 staging 결과
+  검토 후 확정한다. Cloudflare public route 검증과 production cutover는 현재 미실행이다.
+- 이번 구현을 마무리하기 위한 추가 사용자 결정은 없다. PHASE 9는 새 지시 전 자동 시작하지 않는다.
