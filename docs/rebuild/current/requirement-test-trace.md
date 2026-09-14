@@ -258,3 +258,17 @@ Exact results, corrected failures and host limits are in the
 [deployment](../phases/phase-08/deployment-contract.md),
 [backup/restore](../phases/phase-08/backup-restore-contract.md),
 [operations](../phases/phase-08/operations-contract.md).
+
+## PHASE 9 actual ARM64 staging overlay
+
+Historical rows above remain unchanged. Actual host evidence and its limits are recorded in the
+[PHASE 9 report](../phases/phase-09/phase-9-report.md).
+
+| Scope | Actual evidence | Limit |
+| --- | --- | --- |
+| ARM64 dependency/release | 59 exact wheels, offline hashes/pip check, real immutable builds | Exercised ABI, no live Voice/provider proof |
+| Linux permissions | symlink/fsync/setgid/WAL/flock probe; runtime manifest and systemd ACL fixes | No power-loss simulation |
+| Pair lifecycle/deploy | real Watch + explicit synthetic peer; normal deploy, smoke-fault rollback, stop/start, reboot | Actual Discord assembly/Gateway remains blocked |
+| Backup/restore | installed oneshot, encrypted online snapshot, retention, isolated newest/fallback/rejection, stopped synthetic promotion | Small synthetic DB, local-only recovery |
+| Capacity/concurrency | 69 actual Pi tests: Summary, Watch caps, DB atomic snapshot under writes, Music multi-guild lifecycle | Fake providers, no live workload throughput |
+| Regression | Windows strict 688 passed; mode, ACL and isolated-entrypoint regressions | Pending observations remain explicit in report |
