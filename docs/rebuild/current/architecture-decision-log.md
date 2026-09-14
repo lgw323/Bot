@@ -290,3 +290,20 @@
 - **Consequence:** V1 운영·기능·schema 5와 frozen baseline을 변경하지 않았다. PHASE 9 사용자 지시와
   PHASE 10 production gate를 유지한다. [deployment](../phases/phase-08/deployment-contract.md),
   [recovery](../phases/phase-08/backup-restore-contract.md), [operations](../phases/phase-08/operations-contract.md).
+
+## ADR-024 Actual Linux staging permission corrections
+
+- **Status:** IMPLEMENTED / STAGING IN PROGRESS (2026-09-14, user PHASE 9 direction)
+- **Decision:** immutable releases grant dedicated group read/traverse: directories and executables
+  0550, ordinary files 0440. The runtime user must read deploy-owned manifests; no write bits or
+  other-user access are added. Existing immutable releases are rebuilt, never patched in place.
+- **Credentials:** systemd 255 root-owned 0440 credentials are accepted only with the exact POSIX ACL
+  granting the current service UID read and granting no owning-group/other access. ACL metadata comes
+  from the opened descriptor. Private owner-only files retain their previous validation path.
+- **Evidence:** actual Pi exposed both assumptions; mode/ACL regressions and real same-release process
+  readiness passed. `-I` ignores bytecode environment flags, so staging source entrypoints disable
+  bytecode before imports and use `-B` where isolated source loading is required.
+- **Boundary:** synthetic local peer replaces only unavailable external Discord integration in drills.
+  It is not the production Discord executable or proof of Gateway/Music/Gemini success. No production
+  DB, credentials, Cloudflare route or sudo/SSH policy changes. Details and remaining actual checks:
+  [PHASE 9 report](../phases/phase-09/phase-9-report.md).
