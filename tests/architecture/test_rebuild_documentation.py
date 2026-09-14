@@ -54,6 +54,7 @@ PHASE_DOCUMENTS = {
     "phase-06": {"phase-6-report.md", "watch-contract.md", "loopback-contract.md"},
     "phase-07": {"phase-7-report.md", "music-contract.md", "music-actor-contract.md", "media-cache-contract.md"},
     "phase-08": {"phase-8-report.md", "deployment-contract.md", "backup-restore-contract.md", "operations-contract.md"},
+    "phase-09": {"phase-9-report.md"},
 }
 
 
