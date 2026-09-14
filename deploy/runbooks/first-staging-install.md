@@ -70,7 +70,7 @@ for the clean staging host and uses the reviewed source/bootstrap environment:
 
 ```sh
 sudo -u discordbot-deploy env PYTHONPATH="$STAGING_SOURCE/src" PYTHON_DOTENV_DISABLED=1 \
-  /var/lib/discordbot/bootstrap/bin/python - <<'PY'
+  /var/lib/discordbot/bootstrap/bin/python -B - <<'PY'
 import asyncio
 import os
 from pathlib import Path
@@ -112,7 +112,7 @@ sudo systemd-run --wait --collect --unit=discordbot-bootstrap \
   --property=LoadCredential=db_key:/etc/discordbot/secrets/db_key \
   --property=RuntimeMaxSec=1800 --property=TimeoutStopSec=300 \
   --setenv="PYTHONPATH=$STAGING_SOURCE/src" --setenv=PYTHON_DOTENV_DISABLED=1 \
-  /var/lib/discordbot/bootstrap/bin/python -m discordbot.operations.adapters.cli deploy \
+  /var/lib/discordbot/bootstrap/bin/python -B -m discordbot.operations.adapters.cli deploy \
   --revision "$APPROVED_COMMIT" --config /etc/discordbot/config.json \
   --credentials /run/credentials/discordbot-bootstrap.service \
   --policy /etc/discordbot/update.json --wheels /var/lib/discordbot/wheels
@@ -126,3 +126,16 @@ Postcondition: both local readiness payloads match one release, synthetic backup
 staging Gateway connects. Measure cold start, shutdown, disk/RSS/CPU/temperature, lib64 materialization,
 Uvicorn lifecycle, polkit and real atomic symlink/fsync behavior. Enable reviewed timers only after
 their staging rehearsal. No production cutover is implied.
+
+Actual Pi staging found two Linux permission requirements: immutable publication must preserve
+dedicated-group read/traverse (0550 directories/executables, 0440 files), and systemd 255 credentials
+can use a root-owned 0440 file with a service-exclusive ACL. Use the corrected builder and credential
+loader; do not chmod an existing immutable release or relax credential access. Python `-I` ignores
+`PYTHONDONTWRITEBYTECODE`, so source-loading helpers also set `sys.dont_write_bytecode` before imports.
+See the [PHASE 9 evidence](../../docs/rebuild/phases/phase-09/phase-9-report.md).
+
+If staging Discord/Gemini credentials are unavailable, do not borrow PC `.env` values. The explicit
+`deploy/staging/local_discord.py` fixture can exercise local platform/DB/listeners with a visibly
+synthetic identity. This does not validate actual Discord composition, Gateway or Music restoration.
+Staging helpers refuse existing paths by default; resume only with verified source identity and
+recorded prior state. Never rerun initial bootstrap against an existing database.
