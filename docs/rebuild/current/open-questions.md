@@ -101,3 +101,15 @@
 - daily update와 4시간 backup은 자산의 초기값이며 production timer 활성화/cadence는 staging 결과
   검토 후 확정한다. Cloudflare public route 검증과 production cutover는 현재 미실행이다.
 - 이번 구현을 마무리하기 위한 추가 사용자 결정은 없다. PHASE 9는 새 지시 전 자동 시작하지 않는다.
+
+## PHASE 9 actual staging update (2026-09-14)
+
+- 사용자 지시로 Pi staging을 시작했다. ARM64 pins, actual release/permissions, local process pair,
+  deployment/rollback, encrypted synthetic recovery/promotion과 reboot 증거는
+  [PHASE 9 report](../phases/phase-09/phase-9-report.md)를 따른다. 앞의 Phase 8 상태는 당시 기록이다.
+- staging Discord/Gemini credentials와 guild/channel/origin은 준비되지 않았다. 기존 PC `.env`를
+  사용하지 않으며 live Gateway/command/Voice/provider smoke만 해당 gate로 남긴다.
+- 공개 코드 저장소는 읽기 가능하지만 `codex/rebuild-v2` remote ref는 없었다. 승인된 ref publication
+  및 update policy 없이 network auto-update를 활성화하지 않는다. SSH/source 인증은 새로 만들지 않았다.
+- Cloudflare public hostname/route와 off-host backup destination은 별도 선택이 필요하다.
+  짧은 synthetic 관찰을 production capacity, 장기 soak나 production RPO/RTO 증명으로 보지 않는다.
