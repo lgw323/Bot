@@ -1,7 +1,7 @@
 # DiscordBot V2 Rebuild Documentation
 
-현재 상태는 **PHASE 8 완료 / PHASE 9 미진입**이다. Production DB migration/cutover와
-Raspberry Pi 운영 배포는 시작하지 않았다.
+현재 상태는 **PHASE 9 로컬·synthetic Pi staging 검증 완료 / live·network gate 대기**다. Synthetic 데이터로
+검증하며 production DB migration/cutover는 시작하지 않았다.
 
 | 위치 | 책임 | 변경 정책 |
 | --- | --- | --- |
@@ -46,6 +46,8 @@ Raspberry Pi 운영 배포는 시작하지 않았다.
   [backup/restore contract](phases/phase-08/backup-restore-contract.md),
   [operations contract](phases/phase-08/operations-contract.md),
   [staging runbooks](../../deploy/runbooks/README.md)
+
+- [PHASE 9 staging evidence and remaining gates](phases/phase-09/phase-9-report.md)
 
 새 Phase 산출물은 `phases/phase-XX/`에 의미 있는 파일명으로 추가한다. 과거 분석과 달라진
 사실은 baseline을 고치지 않고 current ADR/trace/plan 또는 해당 Phase 보고서에 기록한다.
