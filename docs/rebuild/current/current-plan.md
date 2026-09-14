@@ -1,6 +1,6 @@
 # Current Rebuild Plan
 
-Updated: 2026-09-13
+Updated: 2026-09-14
 
 ## Current state
 
@@ -13,17 +13,23 @@ Updated: 2026-09-13
   [PHASE 8 report](../phases/phase-08/phase-8-report.md)에 기록한다.
   strict xfail은 0이며 architecture/import/task/executor 경계를 유지한다.
 - rebuild index의 오래된 PHASE 6 상태 표시를 실제 완료 상태와 맞췄다. 과거 Phase와 baseline은 동결했다.
-- 현재 단계는 **PHASE 8 완료 / PHASE 9 미진입**이다.
+- 현재 단계는 **PHASE 9 로컬·synthetic staging 검증 완료 / live·network gate 대기**다.
+  [검증 보고서](../phases/phase-09/phase-9-report.md)에 실제 실행 증거와 실패·미검증 항목을 구분한다.
 
 ## Next gate
 
-PHASE 9 clean Pi staging은 사용자 지시 전 자동 진입하지 않는다. ARM64 wheel 준비, OS credential/
-group/WAL 권한, systemd/polkit, 실제 symlink/fsync, Gateway/Voice/Watch/Tunnel smoke와 Pi 부하/soak,
-RPO/RTO 측정을 검증한다. 수치는 실측 SLO가 아닌 초기 hard ceiling이다.
+PHASE 9는 사용자 지시로 시작했다. 기존 SSH와 사용자 직접 interactive sudo를 사용하며 synthetic
+DB만 허용한다. ARM64 wheel과 Linux 파일시스템 테스트는 통과했고, 실제 systemd 서비스 검증에서
+발견한 권한 문제를 수정해 실제 배포, 로컬 readiness, lifecycle, encrypted backup/isolated restore와
+controlled smoke 실패 후 rollback을 검증했다. 전체 strict는 688 passed, 0 xfailed다.
+synthetic DB 승격, host reboot 복구, actual split-version 거부, manual inbox, namespace/polkit과
+bounded load/soak도 검증했다. 4시간 backup timer와 로컬 staging 두 서비스만 부팅 활성화했다.
+staging Discord/Gemini credential과 guild/channel/origin이
+없으므로 실제 외부 login/smoke는 보류한다. 기존 PC `.env`는 사용하지 않는다.
 
-Production DB migration/cutover는 PHASE 10의 별도 승인 gate 전까지 금지한다. Raspberry Pi
-설치·배포, systemd/timer 활성화, Watch tunnel, production login과 실제 데이터 사용은 이번
-Phase에서 수행하지 않았다. push/PR/deploy도 하지 않았다.
+Production DB migration/cutover와 V1 제거는 PHASE 10의 별도 승인 gate 전까지 금지한다.
+PHASE 9에서는 승인된 staging host 설치·로컬 서비스 검증만 수행하며 public hostname/DNS와
+production 데이터·자격 증명은 변경하지 않는다. PHASE 10은 자동 시작하지 않는다.
 
 전체 단계·rollback 설계는 frozen [migration plan](../baseline/20-migration-plan.md),
 최신 결정과 증거는 [Architecture Decision Log](architecture-decision-log.md),
