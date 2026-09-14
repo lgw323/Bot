@@ -10,6 +10,10 @@
 ## [Unreleased]
 
 ### Added
+- PHASE 9의 실제 Raspberry Pi ARM64 staging 준비·격리 설치·synthetic lifecycle/복구 검증 도구와
+  진행 보고서를 추가했습니다. production DB/cutover와 실제 외부 credential 사용은 포함하지 않습니다.
+- Pi에서 확인한 immutable release의 전용 그룹 읽기 권한과 systemd service-exclusive credential ACL
+  검증을 수정하고 regression test를 추가했습니다. 기존 immutable release와 secret 권한은 완화하지 않습니다.
 - PHASE 8 배포·복구·운영 계약, 완료 보고서와 13개 staging 검토용 runbook을 추가했습니다.
   상세 검증과 PHASE 9 gate는 `docs/rebuild/phases/phase-08/phase-8-report.md`를 따릅니다.
 - V2 Discord/Watch executable composition, OS-managed credential/config loader, local health/metrics,
