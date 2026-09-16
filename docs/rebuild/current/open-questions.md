@@ -113,3 +113,19 @@
   및 update policy 없이 network auto-update를 활성화하지 않는다. SSH/source 인증은 새로 만들지 않았다.
 - Cloudflare public hostname/route와 off-host backup destination은 별도 선택이 필요하다.
   짧은 synthetic 관찰을 production capacity, 장기 soak나 production RPO/RTO 증명으로 보지 않는다.
+
+## PHASE 10A update (2026-09-16)
+
+- Authoritative DB 확인 완료: operator가 preservation 이후 V1 실행 없으며 보존본이 최신이라고 확인했다.
+  실제 copy migration/semantic/V1 reader와 schema 0/5 encrypted restore PASS. 원본 및 Pi canonical 보존.
+- Public Watch origin 선택 완료: `https://watch.lgw323.com`; route는 기존 tunnel → loopback 9000만 계획한다.
+  public DNS/route 실행은 10B 최종 승인 전 금지한다. 내부 9001/9010/9011 공개 없음.
+- Config UX는 한국어 single-command setup으로 확정했다. 기존 3개 secret은 hidden double-entry,
+  Watch 키 2개는 자동 생성한다. 사용자에게 여러 파일 직접 편집을 요구하지 않는다.
+- 현재 blocker: 사용자 실제 candidate 입력, Pi scoped credential/backup restore 검증, final immutable release,
+  off-host destination 또는 명시적 local-only risk acceptance, approved source ref/update policy,
+  maintenance 및 V1 Music checkpoint 상태 확인. `.env` 자동 사용 금지.
+- 24h finite observer는 도구를 준비했지만 새 경로의 실제 samples는 미확인이다. 긴 soak PASS가 아니다.
+  기존 probe failure counter와 실제 long-run evidence의 한계는 [PHASE 10 report](../phases/phase-10/phase-10-report.md)에 남긴다.
+- 전환 가능한 상태가 되기 전 최종 10B 승인 질문을 올리지 않는다. 승인 후에도 V1/호환성/backup/역사는
+  보존하며 PHASE 11을 자동 시작하지 않는다.

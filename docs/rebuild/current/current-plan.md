@@ -1,6 +1,6 @@
 # Current Rebuild Plan
 
-Updated: 2026-09-14
+Updated: 2026-09-16
 
 ## Current state
 
@@ -13,8 +13,9 @@ Updated: 2026-09-14
   [PHASE 8 report](../phases/phase-08/phase-8-report.md)에 기록한다.
   strict xfail은 0이며 architecture/import/task/executor 경계를 유지한다.
 - rebuild index의 오래된 PHASE 6 상태 표시를 실제 완료 상태와 맞췄다. 과거 Phase와 baseline은 동결했다.
-- 현재 단계는 **PHASE 9 로컬·synthetic staging 검증 완료 / live·network gate 대기**다.
-  [검증 보고서](../phases/phase-09/phase-9-report.md)에 실제 실행 증거와 실패·미검증 항목을 구분한다.
+- PHASE 9 로컬·synthetic staging을 완료했고 사용자 지시로 **PHASE 10A production readiness**를 시작했다.
+  최신 진행 상태는 [PHASE 10 report](../phases/phase-10/phase-10-report.md), 과거 staging 증거는
+  [PHASE 9 report](../phases/phase-09/phase-9-report.md)를 따른다.
 
 ## Next gate
 
@@ -27,9 +28,15 @@ bounded load/soak도 검증했다. 4시간 backup timer와 로컬 staging 두 �
 staging Discord/Gemini credential과 guild/channel/origin이
 없으므로 실제 외부 login/smoke는 보류한다. 기존 PC `.env`는 사용하지 않는다.
 
-Production DB migration/cutover와 V1 제거는 PHASE 10의 별도 승인 gate 전까지 금지한다.
-PHASE 9에서는 승인된 staging host 설치·로컬 서비스 검증만 수행하며 public hostname/DNS와
-production 데이터·자격 증명은 변경하지 않는다. PHASE 10은 자동 시작하지 않는다.
+PHASE 10A에서 사용자 확인을 받은 최신 preservation DB의 별도 copy에만 migration 1–5를 적용했다.
+실제 schema 0/5 encrypted backup 및 isolated restore와 old-reader/semantic 검증이 통과했다.
+원본은 보존했고 Pi canonical은 synthetic이다. `.env`는 사용하지 않는다.
+한국어 single-command setup을 Pi에 준비했으며 production config/secret은 사용자 직접 입력을 기다린다.
+Watch origin은 `https://watch.lgw323.com`; DNS/route 생성은 아직 승인·실행하지 않았다.
+off-host destination 또는 explicit local-only risk acceptance, source ref/update policy, final ARM64 release,
+Pi credential/candidate 검증과 실제 longer soak가 남는다. [cutover runbook](../phases/phase-10/cutover-runbook.md)의
+준비 항목을 끝내고 명시적 최종 승인을 받은 뒤에만 10B DB promotion/login/production timer를 실행한다.
+PHASE 11 V1 제거는 별도 지시 전 시작하지 않는다.
 
 전체 단계·rollback 설계는 frozen [migration plan](../baseline/20-migration-plan.md),
 최신 결정과 증거는 [Architecture Decision Log](architecture-decision-log.md),
@@ -46,3 +53,11 @@ production 데이터·자격 증명은 변경하지 않는다. PHASE 10은 자�
 - [PHASE 6 report](../phases/phase-06/phase-6-report.md)
 - [PHASE 7 report](../phases/phase-07/phase-7-report.md)
 - [PHASE 8 report](../phases/phase-08/phase-8-report.md)
+- [PHASE 9 report](../phases/phase-09/phase-9-report.md)
+
+## Active phase
+
+- [PHASE 10A report](../phases/phase-10/phase-10-report.md)
+- [Production migration contract](../phases/phase-10/production-migration-contract.md)
+- [한 번 실행하는 config setup](../phases/phase-10/config-migration-guide.md)
+- [Cutover gate/runbook](../phases/phase-10/cutover-runbook.md)

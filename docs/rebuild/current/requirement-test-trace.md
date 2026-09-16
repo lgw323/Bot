@@ -272,3 +272,14 @@ Historical rows above remain unchanged. Actual host evidence and its limits are 
 | Backup/restore | installed oneshot, encrypted online snapshot, retention, isolated newest/fallback/rejection, stopped synthetic promotion | Small synthetic DB, local-only recovery |
 | Capacity/concurrency | 69 actual Pi tests: Summary, Watch caps, DB atomic snapshot under writes, Music multi-guild lifecycle | Fake providers, no live workload throughput |
 | Regression | Windows strict 688 passed; mode, ACL and isolated-entrypoint regressions | Pending observations remain explicit in report |
+
+## PHASE 10A readiness overlay
+
+| Scope | Evidence | Limit |
+| --- | --- | --- |
+| Copy-only production migration | `test_production_candidate.py`; actual count/checksum/old-reader rehearsal | No canonical promotion; tests use synthetic tmp DB only |
+| Recovery | Actual schema 0 preservation and schema 5 candidate encrypted restore | PC private evidence; Pi production archive/key/mount and off-host still pending |
+| Production startup gate | `test_production_configuration.py` | Placeholder/basic format only; no live token/resource authentication |
+| Direct operator config/secrets | `test_production_setup.py`, `test_production_tools.py`; Pi synthetic owner/mode/no-overwrite drill | Korean one-command wizard delivered; operator production input/mount probe not run |
+| Longer observation | `test_staging_observation.py`; finite allowlisted observer | Actual new-path samples not yet verified; 24h completion not claimed |
+| Production transition | Reviewed [cutover runbook](../phases/phase-10/cutover-runbook.md) | 10B final approval and live smoke still required |
