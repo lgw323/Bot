@@ -49,6 +49,11 @@ class Settings:
     secrets: Secrets = field(repr=False)
 
 
+def placeholder(value: str) -> bool:
+    lowered = value.lower()
+    return any(marker in lowered for marker in ("replace_with", "replace_me", "censored", "your_", "changeme", "placeholder"))
+
+
 def private_mode(mode: int, owner: int, permitted_owner: int, acl: bytes | None = None) -> None:
     if not stat.S_ISREG(mode) or owner not in {0, permitted_owner}:
         raise ConfigurationError("secret file ownership or permissions invalid")
@@ -149,11 +154,24 @@ def load_settings(path: Path, credentials: Path, service: str) -> Settings:
         identifier(value["key_id"])
         if not isinstance(value["gemini_model"], str) or not value["gemini_model"].strip():
             raise ValueError
+        if value["environment"] == "production":
+            # The shipped staging example must never become production merely by
+            # changing its environment label. Real resource existence remains a live gate.
+            ids = (value["master"], value["admin_channel"],
+                   *(item for pairs in channels.values() for pair in pairs for item in pair))
+            if (any(item in {1, 2, 3, 4, 5} for item in ids)
+                    or origin.hostname in {"localhost", "watch.yourdomain.com"}
+                    or origin.hostname.endswith((".invalid", ".example", ".localhost"))
+                    or any(placeholder(value[key]) for key in ("public_origin", "gemini_model", "key_id"))
+                    or value["key_id"].lower().startswith(("staging", "phase9-synthetic"))):
+                raise ConfigurationError("production placeholders must be replaced before startup")
         secret_values = {}
         names = {"discord-bot": ("discord_token", "gemini_key", "control_key"),
                  "watch-web": ("capability_key", "control_key"), "operations": ("db_key",)}[service]
         for name in names:
             text = read_secret(credentials, name)
+            if value["environment"] == "production" and (placeholder(text) or text.startswith("fake-")):
+                raise ConfigurationError("production secret placeholder refused")
             if name in {"control_key", "capability_key"} and len(text) < 32:
                 raise ValueError
             if name == "db_key":
