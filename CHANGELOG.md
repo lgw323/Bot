@@ -10,6 +10,9 @@
 ## [Unreleased]
 
 ### Added
+- PHASE 10A의 원본 보존 기반 production 후보 migration, 실제 암호화 backup/isolated restore 증거와
+  cutover 준비 문서를 추가했습니다. 한국어 한 번 입력 setup, scoped offline preflight, production placeholder
+  거부와 finite staging 관찰을 제공하며 실제 production 전환·로그인·DNS 변경은 포함하지 않습니다.
 - PHASE 9의 실제 Raspberry Pi ARM64 staging 준비·격리 설치·synthetic lifecycle/복구 검증 도구와
   진행 보고서를 추가했습니다. production DB/cutover와 실제 외부 credential 사용은 포함하지 않습니다.
 - Pi에서 확인한 immutable release의 전용 그룹 읽기 권한과 systemd service-exclusive credential ACL
