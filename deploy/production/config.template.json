@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "environment": "production",
+  "paths": {
+    "database": "/var/lib/discordbot/data/bot_database.db",
+    "state": "/var/lib/discordbot/state",
+    "cache": "/var/lib/discordbot/cache",
+    "backups": "/var/lib/discordbot/backups",
+    "audit": "/var/lib/discordbot/audit",
+    "release_root": "/opt/discordbot",
+    "operation_lock": "/var/lib/discordbot/operations.lock"
+  },
+  "master": "REPLACE_WITH_INTEGER_MASTER_USER_ID",
+  "admin_channel": "REPLACE_WITH_INTEGER_PRIVATE_ADMIN_CHANNEL_ID",
+  "main_channels": [["REPLACE_WITH_INTEGER_GUILD_ID", "REPLACE_WITH_INTEGER_MAIN_CHANNEL_ID"]],
+  "music_channels": [["REPLACE_WITH_INTEGER_GUILD_ID", "REPLACE_WITH_INTEGER_MUSIC_CHANNEL_ID"]],
+  "public_origin": "https://watch.lgw323.com",
+  "ports": {"public": 9000, "control": 9001, "discord_health": 9010, "watch_health": 9011},
+  "gemini_model": "gemini-flash-latest",
+  "key_id": "REPLACE_WITH_NONSECRET_KEY_ID",
+  "limits": {},
+  "backup_remote": null
+}
