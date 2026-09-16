@@ -55,6 +55,7 @@ PHASE_DOCUMENTS = {
     "phase-07": {"phase-7-report.md", "music-contract.md", "music-actor-contract.md", "media-cache-contract.md"},
     "phase-08": {"phase-8-report.md", "deployment-contract.md", "backup-restore-contract.md", "operations-contract.md"},
     "phase-09": {"phase-9-report.md"},
+    "phase-10": {"production-migration-contract.md", "cutover-runbook.md", "config-migration-guide.md", "phase-10-report.md"},
 }
 
 
