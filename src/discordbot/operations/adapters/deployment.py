@@ -183,7 +183,12 @@ async def backup_once(settings, audit, release):
     executor = BoundedExecutor(workers=1, queue_capacity=2, name="operations-files")
     try:
         await database.start()
-        return await Backups(database, settings.backups, settings.secrets.db_key, settings.key_id, executor, audit).create(release)
+        remote = None
+        if settings.backup_remote is not None:
+            from discordbot.operations.adapters.git_backup import GitRemoteBackup
+            remote = GitRemoteBackup(settings.backup_remote, executor)
+        return await Backups(database, settings.backups, settings.secrets.db_key, settings.key_id,
+                             executor, audit, remote=remote).create(release)
     finally:
         await database.stop()
-        await executor.close(grace_seconds=5)
+        await executor.close(grace_seconds=95 if settings.backup_remote is not None else 5)

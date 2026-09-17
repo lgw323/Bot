@@ -32,7 +32,7 @@ def test_real_local_pipeline_with_synthetic_db_and_fake_services(builder, tmp_pa
     asyncio.run(bootstrap())
     settings = SimpleNamespace(database=database_path, state=tmp_path / "state", cache=tmp_path / "cache",
         backups=tmp_path / "backups", audit=tmp_path / "audit", operation_lock=tmp_path / "lock",
-        secrets=SimpleNamespace(db_key=Fernet.generate_key()), key_id="synthetic")
+        secrets=SimpleNamespace(db_key=Fernet.generate_key()), key_id="synthetic", backup_remote=None)
     calls = []
     def ready(identity):
         calls.append("ready:" + identity)

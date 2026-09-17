@@ -1,7 +1,7 @@
 """Explicit, encrypted-only Git backup transport. Never checks out remote files.
 
-This adapter is not enabled by the runtime configuration. PHASE 10 first uses it
-in an isolated manual drill; production wiring requires verified remote recovery.
+Runtime configuration must explicitly opt in to the approved repository/ref.
+PHASE 10 validates it in an isolated manual drill before production activation.
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ from pathlib import Path
 import re
 import shlex
 import subprocess
+import time
 from tempfile import TemporaryDirectory
 
 from discordbot.operations.adapters.filesystem import contained, read_json
@@ -109,18 +110,40 @@ class GitTransport:
                             "GIT_SSH_VARIANT": "ssh", "GIT_AUTHOR_NAME": "DiscordBot Backup",
                             "GIT_AUTHOR_EMAIL": "backup@localhost", "GIT_COMMITTER_NAME": "DiscordBot Backup",
                             "GIT_COMMITTER_EMAIL": "backup@localhost"}
+        self.deadline = time.monotonic() + 90
 
     def run(self, root: Path, arguments: list[str], data: bytes | None = None) -> bytes:
+        remaining = self.deadline - time.monotonic()
+        if remaining <= 0:
+            raise ExternalTemporaryError("backup transport total deadline exceeded")
         try:
             result = subprocess.run(["git", "-c", "core.hooksPath=/dev/null", "-c", "protocol.allow=never",
                                      "-c", "protocol.ssh.allow=always", "-c", "commit.gpgsign=false", *arguments],
                                     cwd=root, input=data, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                                    env=self.environment, timeout=90)
+                                    env=self.environment, timeout=min(30, remaining))
         except (OSError, subprocess.TimeoutExpired):
             raise ExternalTemporaryError("backup Git transport unavailable or uncertain") from None
         if result.returncode:
             raise ExternalTemporaryError("backup Git operation failed or uncertain")
         return result.stdout
+
+
+class GitRemoteBackup:
+    """Bounded blocking transport behind the existing async RemoteBackup port."""
+
+    def __init__(self, settings, executor) -> None:
+        self.settings, self.executor = settings, executor
+
+    async def publish(self, artifact: Path, checksum: str, identity: str) -> None:
+        def transfer() -> None:
+            contained(self.settings.workspace.parent, self.settings.workspace)
+            self.settings.workspace.mkdir(mode=0o700, exist_ok=True)
+            transport = GitTransport(self.settings.key_file, self.settings.known_hosts_file)
+            GitBackupStore(transport, self.settings.workspace).publish(artifact, checksum, identity)
+        # Cancellation does not advance Backups.latest. The owner drains this
+        # bounded worker before releasing its operation lock; uncertain uploads
+        # require explicit readback/reconciliation, never a retry loop.
+        await self.executor.run(transfer)
 
 
 class GitBackupStore:

@@ -15,8 +15,12 @@ SCOPES = {"discord-bot": {"discord_token", "gemini_key", "control_key"},
 
 def check(config: Path, credentials: Path, service: str, mounted: bool) -> dict:
     from discordbot.operations.adapters.configuration import load_settings
+    from discordbot.operations.adapters.filesystem import read_json
 
-    if set(path.name for path in credentials.iterdir()) != SCOPES[service]:
+    scope = SCOPES[service]
+    if service == "operations" and read_json(config, 65536).get("backup_remote") is not None:
+        scope = scope | {"backup_ssh_key", "known_hosts"}
+    if set(path.name for path in credentials.iterdir()) != scope:
         raise ValueError("Credential scope differs")
     settings = load_settings(config, credentials, service)
     if settings.environment != "production":

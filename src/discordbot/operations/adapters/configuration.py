@@ -24,6 +24,13 @@ class Secrets:
 
 
 @dataclass(frozen=True, slots=True)
+class BackupRemoteSettings:
+    workspace: Path
+    key_file: Path = field(repr=False)
+    known_hosts_file: Path = field(repr=False)
+
+
+@dataclass(frozen=True, slots=True)
 class Settings:
     service: str
     environment: str
@@ -47,6 +54,7 @@ class Settings:
     key_id: str
     limits: tuple[tuple[str, int], ...]
     secrets: Secrets = field(repr=False)
+    backup_remote: BackupRemoteSettings | None = field(default=None, repr=False)
 
 
 def placeholder(value: str) -> bool:
@@ -105,10 +113,11 @@ def load_settings(path: Path, credentials: Path, service: str) -> Settings:
             raise ValueError
         if service not in {"discord-bot", "watch-web", "operations"}:
             raise ValueError
-        # A remote destination requires an explicitly installed adapter. Refuse
-        # a silently ignored destination or fallback to the public code remote.
-        if value["backup_remote"] is not None:
-            raise ConfigurationError("remote backup adapter must be explicitly configured")
+        # Opt-in for the one operator-approved repository/ref. No code-remote fallback.
+        remote = value["backup_remote"]
+        if remote is not None and remote != {"kind": "git-ssh", "repository": "git@github.com:lgw323/Bot-Data.git",
+                                            "ref": "refs/heads/db-backup"}:
+            raise ConfigurationError("unapproved remote backup configuration")
         paths = value["paths"]
         if set(paths) != {"database", "state", "cache", "backups", "audit", "release_root", "operation_lock"}:
             raise ValueError
@@ -180,11 +189,20 @@ def load_settings(path: Path, credentials: Path, service: str) -> Settings:
                 secret_values[name] = text.encode()
             else:
                 secret_values[name] = text
+        backup_remote = None
+        if remote is not None and service == "operations":
+            # Paths only: neither private key contents nor raw SSH output enter Settings.
+            from discordbot.operations.adapters.git_backup import GitTransport
+            key_file = contained(credentials, credentials / "backup_ssh_key")
+            known_hosts_file = contained(credentials, credentials / "known_hosts")
+            GitTransport(key_file, known_hosts_file)  # Metadata/ACL validation only; no subprocess/network.
+            workspace = contained(parsed["backups"], parsed["backups"] / "remote-work")
+            backup_remote = BackupRemoteSettings(workspace, key_file, known_hosts_file)
         return Settings(service, value["environment"], **parsed, master=value["master"], admin_channel=value["admin_channel"],
                         **channels, public_origin=value["public_origin"], public_port=ports["public"], control_port=ports["control"],
                         discord_health_port=ports["discord_health"], watch_health_port=ports["watch_health"],
                         gemini_model=value["gemini_model"], key_id=value["key_id"],
-                        limits=tuple(sorted(value["limits"].items())), secrets=Secrets(**secret_values))
+                        limits=tuple(sorted(value["limits"].items())), secrets=Secrets(**secret_values), backup_remote=backup_remote)
     except ConfigurationError:
         raise
     except (KeyError, ValueError, TypeError, OSError):
