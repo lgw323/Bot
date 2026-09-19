@@ -1,6 +1,6 @@
 # Current Rebuild Plan
 
-Updated: 2026-09-19
+Updated: 2026-09-20
 
 ## PHASE 10 reporting authority and current work
 
@@ -13,20 +13,25 @@ cutover/migration의 역사적 근거는 부모 보고서를 따른다. 부모�
 보고서 분리는 완료됐다. H1 검증은 유효하며 현재 full-sweep 결과·후속 수정 범위·승인 경계는 아래 최신 요약을 따른다.
 새 runtime production 적용 또는 새 push/pin이 필요할 때 정확한 검증 후보에 대한 승인을 받는다.
 
-**PHASE 10B INCOMPLETE — ECD FULL SWEEP / SOFT FAILS / STOPPED AND PRESERVED.**
-Current source `ecd391ff4548b7bda572ef916c30be296b714f94` / pin `r-ecd391ff4548b7bd-3dac82a792fad576`.
-승인된 HEAD99d80c6까지 일반 FF push/read-back 완료; main8432fdef… 불변.
-Windows978 PASS/Pi969 PASS+의도된 Node-less9 skip, 동일 Windows9 PASS 대조 유지.
-24.840초 readiness, H1 ACL/H2 DB safety PASS, 관찰1350.149초/65samples/HARD STOP0.
-30gates26 PASS/3 FAIL/1 NOT TESTED. Watch refresh/hydration/참여자 sync 결함과 별도 Music pause UI 결함;
-network drop/recovery 미시험. 상세 원인 미확정이며 최신 A–E matrix는 전용 보고서가 기준이다.
-Canonical **`e5661a0256c9873941db974019f30256c9ed9e3d2f2559cb2eecd06b259c2e52`**, schema5/integrity/fsync PASS, 새9번째 preservation과 기존8개 모두 보존.
-Newest preservation `/var/lib/discordbot/phase10-retry-ecd391ff4548b7bd-live-smoke-h2-full-sweep-20260919-01-guard-preservation`.
-Production/staging/ops/observer inactive, boot/timers disabled, auto-update OFF.
-Actual production backup/restore/enable/final observation 미진행. 이번 단일 승인 activation은 사용 완료됐다.
-현재 정지 유지. 다음은 통합 matrix 기반 격리 재현·최소 수정·strict Windows/Pi 검증이며,
-새 runtime push/pin/activation은 exact candidate 준비 후 새 승인이 필요하다. Old restore/replay/migration/V1 start 금지.
-Audit0–10/Integrated Audit/PHASE11/V1삭제를 시작하지 않는다.
+**PHASE 10B INCOMPLETE — A1/C1/C2 통합 수정, RELEASE CAPACITY 승인 경계.**
+Current production source `ecd391ff4548b7bda572ef916c30be296b714f94` /
+pin `r-ecd391ff4548b7bd-3dac82a792fad576` 그대로 정지.
+Canonical **`e5661a0256c9873941db974019f30256c9ed9e3d2f2559cb2eecd06b259c2e52`**,
+schema5/integrity 및 최신9번째 preservation/기존8개 보존. Config41edd03a… 불변.
+Production/staging/ops inactive, boot/backup/update/manual timers disabled/inactive, auto-update OFF.
+Local 통합 수정 source `de3aae30a82828433666c872b6789abfbb19648b`; Music pause/View/edit 순서와
+Watch 비동기 hydration/multi-client/recovery/reconnect 회귀 완료. Windows exact full strict1009 PASS.
+Pi exact source는 동일 dependency의 기존 ECD 환경에서979 PASS/30 intentional Node-less skip, 동일 Windows30 PASS 대조.
+새 immutable release의 venv/manifest/credential 검증 완료를 뜻하지 않는다.
+새 immutable candidate는 생성 전 release 상한16/16에 차단됨. 상한 완화·기존 release 정리·production activation을 하지 않는다.
+다음은 보존/rollback 정책에 맞는 명시적 capacity 조치 승인 후 동일 소스 immutable build·전체 검증 재개다.
+검증된 새 pin이 존재하기 전에는 push/pin/full-sweep 통합 승인을 요청하지 않는다. 원격99d80c6/main8432fdef… 불변.
+기존 ECD30gate26PASS/3FAIL/1NOTTESTED는 역사적 결과이며 새 release의 PASS가 아니다.
+다음 승인된 sweep는 실제 network disconnect/reconnect와 A1 한 클릭 audio/UI 및 실제 TTS/Chrome 확인을 포함한다.
+전30gate 및 A1 PASS 뒤 actual backup/publication/read-back/independent restore/reconciliation →
+boot/4h backup timer → bounded final observation을 완료해야 PHASE10B COMPLETE다.
+현재 actual finalization0. Old restore/replay/migration/V1 start/Audit0–10/Integrated Audit/PHASE11/V1삭제/legacy cleanup 금지.
+세부 근거와 현재 blocker는 전용 full-sweep 보고서 최상단 continuation이 기준이다.
 
 ## Historical 2c live retry
 

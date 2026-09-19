@@ -8,6 +8,202 @@
 과거 본문의 이전 보존 이력 참조는 부모 보고서에 남아 있다. 이후 상세 full-sweep 근거는 이 파일에만 추가한다.
 문서 분리는 production 상태 변경이나 새로운 runtime 활성화 승인이 아니다.
 
+## Continuation — A1 / C1 / C2 통합 수정 후보 검증 (2026-09-20)
+
+**PHASE 10B INCOMPLETE — 통합 수정·양 플랫폼 소스 검사 완료, RELEASE CAPACITY BLOCKED.**
+이번 범위는 사용자 첨부의 A1 Music pause + C1 refresh/hydration + C2 multi-client + reconnect 준비를
+하나의 묶음으로 처리하는 것이다. 이전 ECD 실행의 26 PASS/3 FAIL/1 NOT TESTED는 역사적 live 근거로 유지하며,
+새 runtime의 실제 Music/TTS 청취·PC Chrome·network drop PASS로 승계하지 않는다. Push/activation은 이번 세션에서 0회다.
+
+### 정지 baseline 및 데이터 보호
+
+- 작업 시작 전 새 sudo read-only `batch-stopped-baseline-20260920.json`이
+  `verified_stopped_preserved_integrity`를 반환했다. Current production source
+  `ecd391ff4548b7bda572ef916c30be296b714f94`, pin `r-ecd391ff4548b7bd-3dac82a792fad576` 유지.
+- Canonical/copy SHA256 **`e5661a0256c9873941db974019f30256c9ed9e3d2f2559cb2eecd06b259c2e52`**,
+  schema5/integrity PASS, favorites40/owners3, music_play_counts53/music_settings1/users15, Watch0/0.
+  WAL/SHM/journal sidecar 없음. 기존8개와 최신9번째 보존본 모두 유지한다.
+- Newest preservation은 `phase10-retry-ecd391ff4548b7bd-live-smoke-h2-full-sweep-20260919-01-guard-preservation`이며,
+  whole inventory `9f162d8825de2b468386505acaff935de77b5035f17edb332efb9a4bcc94b0d0`.
+  Current/copy data/state/cache/backups/audit/config inventory 일치·fsync 확인.
+  Config **`41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40`** 불변.
+- Production/staging/ops stopped, MainPID0, boot 및 backup/update/manual timers disabled/inactive, auto-update OFF.
+  새 runtime을 활성화하거나 V1을 시작하지 않았다. Candidate replay/old DB restore/remigration/down-migration/
+  기존 보존본 overwrite/production lock 재현/실사용 데이터 fixture는 모두 0회다.
+
+### 재현된 결함과 수정 범위
+
+| 항목 | 수정 전 결정적 재현 | 최소 수정과 검증 한계 |
+|---|---|---|
+| A1 Music pause | Frozen playing/paused View가 캡처한 상태로 pause/resume을 선택하면 현재 audio와 다른 intent 또는 반복 no-op 발생. 먼저 시작한 HTTP edit가 늦게 완료되면 최신 paused 화면을 덮음. 새4tests 중3FAIL/1PASS | 버튼은 session identity를 유지한 `toggle_pause` 1개를 actor mailbox에 전달. 현재 actor 상태에서 한 번 결정하고 audio 효과를 await한 뒤 상태를 변경. Guild별 dashboard 편집을 직렬화하고 최신 actor projection/게시 revision을 확인. 과거 live의 정확한 callback 시각이 없으므로 이 경로가 유일한 당시 원인이라고 확정하지 않음 |
+| C1 refresh/hydration | 비동기 iframe에서 load 후 즉시 seek/play/pause를 보내면 새 영상 로드보다 먼저 적용되어 위치0/준비 상태로 남음. iframe 준비 전 대기 시간과 이후 state/seek도 검증 | 최신 authoritative snapshot을 유지하고 playing 경과 시간을 반영. 영상과 startSeconds를 한 명령으로 load/cue. video ID·재생/일시정지 의도·위치가 맞는 iframe 상태 확인 전 완료 표시/peer echo 금지. 고정400ms suppression 제거 |
+| C2 multi-client protocol | 두 독립 JS VM에서 기존 stale/paused iframe이 user_joined/sync_request에 답하면 authoritative playing42를 paused0으로 덮음. 늦은 ACK도 기존400ms 뒤 user command로 되돌아옴 | 서버만 hydration snapshot을 제공하며 join/return 때 peer snapshot을 요청하지 않음. 기존 wire 형식/명시적 영상 선택 명령 유지. Presence/chat이 실제 사용자 pause 입력을 억제하지 않음. Stale revision·retired socket·다른 video의 늦은 ACK 거부 |
+| C2 autoplay/미확인 | 차단된 iframe을 모사하면 기존 화면은 socket 연결만으로 동기화 성공을 표시하고 무음에서 복구 수단이 없음 | `onAutoplayBlocked`/player error/5초 미확인 시 명시적 `재생 이어가기` 표시. 사용자 gesture만으로 최신 위치·의도 재적용, timer가 media 재시도하지 않음. 차단된 peer가 전체 방을 pause시키지 않음. 실제 친구 브라우저 실패가 autoplay 때문이었다는 증거는 없음 |
+| Gate24 reconnect | 이전 live는 시험 미수행이며 재현된 live bug로 분류하지 않음 | 살아 있는 방/다른 peer를 유지하고 recoverable socket 교체 후 playing 및 paused snapshot 복원. 중복 peer/socket 방지, retired socket 메시지 무시, 기존5회 bounded reconnect와 terminal4001/4002/4003 유지. 다음 실제 PC Chrome network drop/reconnect 필수 |
+
+A1 테스트는 한 클릭→실제 fake audio pause→paused/▶️ projection, 다음 한 클릭→audio resume→playing/⏸️,
+늦은 audio effect 전 UI 불변, old session 거부, 역순 HTTP 완료를 검사한다. TTS ordering/pause intent와
+queue/stop/disconnect/Favorites/SDK View lifecycle은 기존 Music suite 전체로 함께 검증했다.
+
+Watch 새 harness는 shipped inline JS를 독립 VM 두 개에서 실행하고 비동기 load/cue·자동재생 차단·fake clock을 사용한다.
+초기17회귀는 수정 전12FAIL/5PASS였다. 이후 video 교체 중 late ACK, 비동기 seek ACK,
+paused reconnect, CUED 시간0 반환을 추가해 새21개+기존9개 총30개다.
+서버 integration은 playing/paused late join·중복 join·다른 peer 유지 중 reconnect·authoritative return response를 추가했다.
+30초 creation/5초 empty grace, slow peer pump/capacity/terminal cleanup, Origin/CSRF/capability 검사는 유지했다.
+
+YouTube API의 `cueVideoById(startSeconds)`는 일시정지 의도로 영상을 준비하며 CUED에서 `seekTo`를 호출하면
+재생이 시작될 수 있다. 따라서 CUED의 시간0 반환을 잘못된 위치로 보고 자동 seek하지 않고 준비한 위치를 유지한다.
+자동재생 차단은 공식 event로 별도 표시한다. [YouTube IFrame API reference](https://developers.google.com/youtube/iframe_api_reference).
+이 API 계약과 합성 재현은 실제 public Chrome 복구 성공의 대체 증거가 아니다.
+
+### 통합 회귀와 exact candidate
+
+- Local responsibility commits: Music `998e2f2`, Watch `63a3ec6`, stopped verifier `de3aae3`.
+  마지막 verifier 변경은 최신 ECD/E566/9 preservation baseline과 정확한 Node-less30 allowlist뿐이다.
+  H1/H2 정책을 기능 검사를 통과시키기 위해 완화하지 않았다.
+- Focused Music154 PASS, 초기 Watch96 PASS, Music/Watch255 PASS,
+  Music/Watch/operations/data 통합630 PASS. CUED 추가 후 final focused Watch browser/server42 PASS.
+- **최종 exact archive Windows full strict 1009 PASS /0skip/0xfail/0fail/0error**, 71.16초.
+  RuntimeWarning·PytestUnraisableExceptionWarning는 error, xfail_strict=true. 기존 audioop deprecation warning1.
+  Pinned `windows-media-venv` 사용, dependency 설치/upgrade0. 전체 suite에 새 회귀 전부 포함.
+- 최종 Windows 내 Music154/Watch102/data127/operations248 PASS.
+  H1 credential ACL10+observer credential24, H2 data probe57+observer probe policy23,
+  full-sweep observer24를 포함한다. ECD 대비 storage/operations runtime, H1/H2 guard/preflight,
+  requirements/pyproject 경로 diff0. DB schema/journal/busy timeout/dependency 정책 변경0.
+- Runtime source **`de3aae30a82828433666c872b6789abfbb19648b`**.
+  Source archive SHA256 **`5e14d8a0a30680831e8825186ea4f21233ae95bedb4c0fb3f59ab0d712903ab7`**.
+  Dependency **`3dac82a792fad5769f4e6b32cdd0c294fbfbb4863500e8e232f85b47b3297cc6`** 그대로.
+
+- **Pi exact source full strict 979 PASS /30 intentional Node-less skip/0fail/0error/0xfail**, 75.798초.
+  이 검사는 archive 파일 전체 byte 대조를 마친 de3aae3 exported source를, 같은 dependency hash의
+  **기존 ECD venv**로 실행했다. Nonroot/private network/production data·state·cache·backups·audit·config
+  inaccessible unit이며 unit exit0. 새 immutable release의 venv/manifest 검증을 끝냈다는 뜻은 아니다.
+- Classname+testcase name으로 Pi skip30개 전부 최종 Windows1009 PASS와 정확히 대조했다.
+  전부 `pytest.skip`이며 unexpected skip0/xfail0. `batch-cross-platform.json`에 일대일 목록을 기록했다.
+  Stopped verifier도 prefix가 아닌 정확한30개 집합을 요구하며 추가·누락·중복 skip 거부 회귀4개 PASS.
+- 작업 후 canonical E566/config41ed/9개 preservation 및 data/state/cache/backups/audit 전체 protected inventory 불변.
+  서비스 시작0/activation0이며 immutable candidate 생성도0이다. 운영 정지 상태를 유지한다.
+
+아래는 **의도된 Pi skip 각각에 대응하는 Windows PASS** 목록이다. Classname은 기존9개가
+`tests.integration.watch.test_browser_client`, 새21개가 `tests.integration.watch.test_playback_browser`다.
+
+| Pi에서 skip된 testcase (각 Windows PASS) | 환경상 사유 |
+|---|---|
+| `test_shipped_watch_browser_client[iframe-independent-presence]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_browser_client[empty-player-protocol]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_browser_client[hydrate-before-player]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_browser_client[recoverable-return]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_browser_client[terminal-stays-closed]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_browser_client[page-lifecycle]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_browser_client[bounded-reconnect]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_browser_client[return-open-probe]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_browser_client[select-before-player]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[playing-refresh]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[paused-refresh]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[hydrate-before-ready]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[ready-before-hydrate]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[same-invite-return]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[latest-before-ready]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[late-iframe-ack]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[peer-cannot-overwrite-authority]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[multi-client-timing]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[autoplay-recovery]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[unacknowledged-playback]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[reconnect-hydration]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[video-change-before-ack]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[seek-ack-is-asynchronous]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[reconnect-paused]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[paused-cue-reports-zero]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[terminal-4001]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[terminal-4002]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[terminal-4003]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[stale-revision]` | Node.js 미설치; runtime dependency 추가 없음 |
+| `test_shipped_watch_playback_reconciliation[empty-session]` | Node.js 미설치; runtime dependency 추가 없음 |
+
+### Genuine blocker — release capacity / 보존 기한
+
+첫 exact candidate build는 `offline_build_full_strict` 단계에서 중단됐다. `build-result.json`/pytest.xml/
+새 candidate 디렉터리 모두 없었으므로 그 시도에서 Pi test가 실행됐다고 기록하지 않는다.
+Read-only diagnosis로 `/opt/discordbot/releases` **16개/상한16**을 확인했고, 후속 private/read-only unit에서
+동일 새 source의 실제 `Builder.build`가 dependency 검증 후 **release capacity guard**로 거부되는 것을
+결정적으로 재현했다. 다른 build 오류를 추측한 결론이 아니다.
+
+16개 모두 published이며 incomplete artifact0, 정상 retention eligible0이다. 현재/activation·rollback 참조/
+최신4개 보호 정책을 그대로 계산했고 모든 release가 최소7일 보존 기한 안에 있다.
+가장 오래된 release age는 검사 시533216.663초로 7일보다 짧다. 상한이나7일 정책을 변경하지 않았다.
+H1/H2 live HARD STOP이 새로 발생한 것은 아니며, production을 시작하지 않은 상태의 빌드 admission blocker다.
+
+**예상 identity `r-de3aae30a8282843-3dac82a792fad576`는 아직 존재하지 않는다.**
+새 candidate manifest hash/file count/schema range/credential preflight/immutable inventory 검증은 **NOT COMPLETED**.
+Source의 schema5 계약과 기존 credential 회귀 PASS를 이 미완료 항목의 PASS로 대체하지 않는다.
+
+명시적 승인 전에는 정상 retention을 우회하는 이동/삭제나 capacity 확대를 하지 않는다.
+즉시 계속하려면 아래 하나의 구체적 cold-archive 예외를 검토할 수 있다:
+
+- 대상: `/opt/discordbot/releases/r-c72428e7db42e6ab-3dac82a792fad576`.
+  과거 full-sweep 준비의 superseded 중간 후보이며 이 보고서의 이전 continuation도 미활성 후보로 기록한다.
+  현재·rollback/activation 참조·최신4개 보호 집합에 없음; published/files17410.
+  Manifest SHA256 `0a4d1d22e7c2561fcaab7c5906e92188e4bf6a309020773f21e9fee7e2ab6d2c`.
+- 제안 목적지: `/opt/discordbot/retained/releases/r-c72428e7db42e6ab-3dac82a792fad576`.
+  승인 후 직전 보호 집합/current/DB/config/9개 preservation 재검사와 전체 manifest inventory 검증을 먼저 수행한다.
+  동일 filesystem·목적지 미존재를 확인하고 원본 byte/권한을 유지하는 rename·부모 fsync·이동 후 inventory/hash 대조로
+  한 슬롯을 확보한다. 삭제/압축 손실/현재 pin 변경/DB 조작/V1 작업은 하지 않는다.
+  Cold archive는 실행 경로가 아니며 필요 시 같은 원래 경로로 되돌린 뒤 검증해야 한다. Venv 경로를 고치거나 실행하지 않는다.
+  이는7일 내 online release 위치에서 제외하는 **운영 보존 예외 제안**이며 아직 승인·실행되지 않았다.
+- 다른 방법은 정상 보존 기한이 지난 뒤 보호 집합과 정리 대상을 새로 검토하는 것이다. 자동 정리/예약은 만들지 않았다.
+
+사용자 첨부 §7의 “genuine safety blocker” 조항에 따라, 기능 하나만 수정하고 멈춘 것이 아니라
+A1/C1/C2/reconnect·full Windows·exact Pi 소스 검사를 모두 끝낸 뒤 이 보존/승인 경계에서 멈춘다.
+Capacity 해소 후에도 같은 source archive로 새 release build/full strict/credential/immutable/protected-state 검증이 필요하다.
+현재 failed build work/result는 unique 이력 경로에 그대로 보존한 뒤, exact verifier의 fresh-path 조건에 맞춰 재개한다.
+기존 실패 JSON을 덮어쓰거나 DB/preservation 경로를 옮기는 절차가 아니다.
+그 검증이 성공한 뒤에만 사용자가 요청한 **하나의 combined push/pin/live+conditional finalization 승인**을 제시할 수 있다.
+지금은 검증되지 않은 pin의 activation 승인을 미리 요청하지 않는다.
+
+Safe evidence: `batch-stopped-baseline-20260920.json`, `retry-build-de3aae30a828.json`,
+`batch-build-diagnosis-de3aae30a828.json`, `batch-exact-pi-tests-de3aae30a828.json`,
+local `batch-windows-de3aae30a828.xml`, `batch-cross-platform.json`, `batch-safety-regression.json`.
+
+
+### Git publication과 단일 승인 범위
+
+- Remote base **`99d80c6b5fc9aeddaf5ebd416539dfe7aa5a1ceb`**, main
+  **`8432fdef40cddc131176fa875e350660dc897e12`** read-only 재조회 불변.
+- Runtime까지 range `99d80c6b5fc9aeddaf5ebd416539dfe7aa5a1ceb..de3aae30a82828433666c872b6789abfbb19648b`:
+  4 commits/18new blobs 및 모든 새 commit tree/message 검사 finding0. 현재까지 push0.
+- 최종 publication 대상은 위 base부터 **이 continuation을 기록하는 docs-only HEAD**까지다.
+  Runtime 이후 허용 파일은 이 full-sweep report와 `docs/rebuild/current/current-plan.md` 두 개뿐이다.
+  최종 HEAD·commit/blob 수와 전체 range 재검사 결과는 commit 후 `batch-git-audit-<HEAD12>.json` 및 최종 응답에 기록한다.
+  Secret/token/private key 패턴과 .env/DB/SQL/backup/binary/운영 data/log/credential artifact 경로를 검사하며
+  user handoff/zip은 미추적 상태로 보존한다. Pattern scan은 모든 형태의 비밀 탐지를 보장하지 않으므로
+  새 코드·합성 fixture·문서 내용도 직접 검토했다. 실제 credential 값을 읽어 비교하지 않았다.
+
+사용자 첨부 §7/§11/§12에 따라 이번에는 runtime/client를 수정했으므로 **새 production activation을 하지 않는다**.
+검증된 runtime + 그 뒤 full-sweep-report/current-plan만 바꾸는 docs-only tail까지 `codex/rebuild-v2` 일반 FF push,
+exact immutable pin, 단일 bounded30-gate full-sweep, 전30PASS 때 조건부 finalization을 **하나의 승인**으로 요청한다.
+Push 직전에 remote/range/secret/artifact 및 runtime 이후 docs-only 여부를 다시 검사한다. Force/rebase/history rewrite 금지.
+
+### 다음 실행의 필수 범위와 종료 조건
+
+새 후보의 live gate1–30은 모두 **NOT TESTED — 새 push/pin 승인 대기**이며 ECD의 역사적 PASS를 승계하지 않는다.
+70초 readiness/Gateway/command sync → 내정보/랭킹/요약/Favorites/volume → Music URL/search/selection/queue/
+실제 청취/한 클릭 pause·resume/stop·퇴장 → 실제 들리는 join TTS/겹침 없음/이후 Music/연속TTS·pause intent →
+PC Chrome public Watch create/connect/presence/refresh/**실제 네트워크 단절·재연결**/tab return/playing·paused hydration/
+둘 이상의 참여자 play·pause·seek sync/normal close/private admin close/public path까지 단일 bounded sweep로 확인한다.
+Gate19의 기존 TTS pause intent와 추가 A1 버튼 검사를 각각 기록한다. Browser 차단 시 안내·직접 재생으로 복구되는지도 확인한다.
+
+일반 SOFT FAIL은 재시도하지 않고 가능한 독립 gate를 끝까지 수집한다. H1/H2를 포함한 진짜 HARD STOP은
+즉시 stop→new unique preservation→fsync/inventory 검증이며 기존9개를 덮어쓰거나 DB를 되돌리지 않는다.
+
+전30gate 및 A1 실제 동작이 PASS하면 이미 active인 후속 guard로 인계한 상태에서 다음을 이어간다:
+newest canonical encrypted production backup → private Bot-Data publication/read-back → independent download →
+decrypt/schema5/count/data/metadata/semantic/application isolated restore/open → canonical 불변 확인 →
+production pair boot enable/4시간 backup timer enable → 실제 bounded observation.
+Ready/live/NRestarts/DB probe/RSS/FD/threads/Music child·cache/Watch sessions·clients/backup age/audit/disk·journal/
+temperature·throttling을 실제 관찰 기간만큼 기록한다. Auto-update와 manual source polling은 OFF 유지.
+이 finalization까지 PASS한 경우에만 **PHASE 10B COMPLETE**로 기록한다. 지금은 actual backup/publication/restore/
+boot/timer/final observation0이며 PHASE10B INCOMPLETE다. Audit0–10/Integrated Audit/PHASE11/V1삭제/legacy cleanup 미착수.
+
 ## Continuation — ECD approved full sweep / functional failures / stopped and verified
 
 **PHASE 10B INCOMPLETE.** 2026-09-19 사용자의 exact ECD 통합 승인을 집행했다.
