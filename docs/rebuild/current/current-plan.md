@@ -10,24 +10,24 @@ PHASE 10이 진행 중이면 새 세션은 아래 두 보고서를 모두 읽는
 
 각 책임 범위에서 최상단 최신 continuation이 우선한다. 겹치는 full-sweep 세부 내용은 전용 보고서를,
 cutover/migration의 역사적 근거는 부모 보고서를 따른다. 부모에는 현재 production identity와 간결한 결과만 유지한다.
-문서 분리는 별도 커밋으로 검증하고 즉시 같은 세션에서 H1 조사·안전한 격리 재현·최소 수정·회귀/full strict/Pi 검증을 계속한다.
+보고서 분리는 완료됐다. H1 검증은 유효하며 현재 H2 상태·후보·승인 경계는 아래 최신 요약을 따른다.
 새 runtime production 적용 또는 새 push/pin이 필요할 때 정확한 검증 후보에 대한 승인을 받는다.
 
-**PHASE 10B INCOMPLETE — APPROVED H1 RETRY STOPPED / H2 DB PROBE HARD STOP.**
-Runtime92c25546af6b49044e17ed2a705a7cdf885532a0와 report/current-plan tail af37aa58…까지
-승인된 normal FF push/read-back 완료, main8432fdef… 불변. Current pin
-`r-92c25546af6b4904-3dac82a792fad576`/dependency3dac82a…/manifestfcc5d91f… 일치.
-Windows895 PASS/0 skip/0 xfail, Pi886 PASS/9 intentional skips/0 xfail 및 Windows 대응9 PASS 유지.
-단일 live retry readiness24.856초 PASS, H1 live ACL 검사 PASS 뒤 Watch DB probe의
-`database_unavailable` HARD STOP으로354.569초 부분 관찰에서 자동 정지·새 보존했다.
-Live matrix PASS3/BLOCKED27; 새 사용자 audible/Chrome PASS 없음. 세부 DB 원인은 telemetry로 미확정이다.
-최신 canonical/copy SHA256 `678e93ec4fd2d087d5ce20ba2239fb205b0daa130cb3e804e300dbd5183aef66`;
-새 eighth preservation/schema5/integrity/inventory/fsync/기존7개 보존본 불변 검증 PASS.
-Production/staging/operations stopped; boot·backup/update/manual timers disabled, auto-update OFF.
-이번 single activation 승인은 소진됐다. 임의 재시작·old restore/replay/remigration/down-migration/V1 start 금지.
-다음 조사는 안전한 하위 DB 오류 분류 및 synthetic 격리 재현부터 시작하고 검증 후보 없이 새 pin 승인을 요청하지 않는다.
-실제 backup/restore/boot/timer/final observation 미실행. 모든 상세 근거는 전용 full-sweep report 최상단이 기준이다.
-Audit0–10/Integrated Audit/PHASE11/V1삭제/legacy cleanup은 시작하지 않는다.
+**PHASE 10B INCOMPLETE — H2 REMEDIATION VERIFIED / NEW PUSH-PIN APPROVAL REQUIRED.**
+Current production source92c25546af6b49044e17ed2a705a7cdf885532a0/pin
+`r-92c25546af6b4904-3dac82a792fad576`, canonical `678e93ec4fd2d087d5ce20ba2239fb205b0daa130cb3e804e300dbd5183aef66` 불변.
+H1 live ACL PASS 유지. H2는 과거 하위 원인 미확정이며 synthetic BUSY/LOCKED/IO/permission/corruption 재현 후
+안전한 probe subtype 진단과 엄격한 bounded BUSY 정책을 검증했다. 상세 근거는 전용 보고서 최상단이 기준이다.
+최종 runtime **`ecd391ff4548b7bda572ef916c30be296b714f94`**, candidate **`r-ecd391ff4548b7bd-3dac82a792fad576`**,
+dependency3dac82a… 불변, manifest`f023b1fa6d412b81300a9dd64a1ed584b653fd3040513399d14e755421d8ea6a`/17416files/schema[5,5].
+Windows978 PASS/0 skip/0 xfail; Pi969 PASS/9 intentional Node-less skips/0 xfail,
+동일9 testcase Windows PASS 대조 완료. 세 credential scopes/root observer views PASS.
+Production/staging/operations stopped, boot·backup/update/manual timers disabled, auto-update OFF;
+current config/data/state/cache/backups/audit와 모든8개 preservation 불변. 새 push/activation0.
+Remote af37aa58…/main8432fdef… 불변. 다음은 final source+report/current-plan docs-only tail normal FF push와
+위 exact release의 단일 bounded full-sweep 통합 승인이다. 승인 전 production activation 금지.
+과거 live PASS3/BLOCKED27 유지; actual backup/restore/boot/timer/final observation 미완료.
+Old restore/replay/remigration/down-migration/V1 start 및 Audit0–10/Integrated Audit/PHASE11/V1삭제 금지.
 
 ## Historical 2c live retry
 

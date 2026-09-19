@@ -8,6 +8,170 @@
 과거 본문의 이전 보존 이력 참조는 부모 보고서에 남아 있다. 이후 상세 full-sweep 근거는 이 파일에만 추가한다.
 문서 분리는 production 상태 변경이나 새로운 runtime 활성화 승인이 아니다.
 
+## Continuation — H2 subtype remediation VERIFIED / exact push-pin approval required
+
+2026-09-19 첨부 지시에 따라 current plan·부모 보고서·최신 full-sweep continuation으로 상태를 재구성하고,
+정지 상태 재검증 →synthetic 재현 →최소 진단/정책 수정 →회귀 →exact Windows/Pi 검증을 완료했다.
+**PHASE 10B INCOMPLETE. 새 production activation0/push0/provider request0.**
+다음 승인 후보는 아래 **ecd391ff 단 하나**다. 기존 운영 H2의 실제 SQLite 하위 코드는 소급 확정하지 못했다.
+이번 결과는 가능한 BUSY 경로의 실제 재현 및 엄격한 subtype 처리·진단 보강을 검증한 것이며,
+과거 H2가 BUSY였거나 모든 live 문제가 해결됐다는 주장이 아니다.
+
+### Current production reconciliation and H1 boundary
+
+- Current source/pin `92c25546af6b49044e17ed2a705a7cdf885532a0` /
+  `r-92c25546af6b4904-3dac82a792fad576` 그대로. Dependency3dac82a…/config41edd03… 불변.
+- Fresh root read-only `h2-stopped-baseline.json`: **verified_stopped_preserved_integrity**;
+  canonical/copy **`678e93ec4fd2d087d5ce20ba2239fb205b0daa130cb3e804e300dbd5183aef66`**, schema5/integrity PASS.
+  Favorites40/owners3, music_play_counts53/music_settings1/users15, Watch sessions/playlists0.
+  Data checksum6c32578e…/metadata318a1331… 및 current/preservation inventory는 직전 H2 evidence와 같다.
+  최신8번째 preservation inventory `6cb75333b6e47812a28a7d1bc1284fc0a03768852b713dcc42782035e08cc0e8` 불변.
+- Production/staging/operations inactive/MainPID0, production/staging boot disabled,
+  backup/update/manual timers disabled/inactive, auto-update OFF, current Watch9000 route/internal route0 확인.
+  재현/빌드 전후 protected data/state/cache/backups/audit/config 및 모든8개 preservation 불변.
+  테스트는 canonical에 mutation/lock을 걸지 않았고 candidate replay/restore/remigration/down-migration/V1 start 없음.
+- H1은 직전 actual production ACL PASS가 유효하다. H1 구현을 재설계하거나 ACL 허용 범위를 바꾸지 않았다.
+  최종 후보에서도 세 credential scope와 root observer view의 exact/read-only/direct-source-denied 검증을 통과했다.
+
+### Concurrency review and what can cause the umbrella error
+
+1. Discord와 Watch는 같은 파일에 각각 독립적인 `SqliteDatabase`를 구성한다. 각 process는 reader1/writer1
+   bounded executor를 소유하며 worker가 매 요청의 connection을 열고 같은 thread에서 닫는다.
+   Process-global DB lock은 없고 cross-process 동시성은 SQLite가 관리한다.
+2. `connect`는 existing mode=ro/rw, busy100ms(남은 deadline 이하), synchronous=NORMAL/temp_store=MEMORY/
+   cache_size−2000/trusted_schema OFF, read query_only를 설정한다. Reader BEGIN, writer BEGIN IMMEDIATE;
+   callback은 동기 SQL transaction이고 DB transaction 안에서 provider/network await를 하지 않는다.
+3. 두 process의 health probe는 정상 주기5초마다2초 request budget으로 reader lane을 사용한다.
+   Watch writer는 owner lease heartbeat/receipt cleanup을 수행하고 Discord의 engagement/Music도 짧은 writer
+   transaction을 사용한다. 별도 reader lane이 다른 process나 같은 process writer의 SQLite 잠금을 없애지는 않는다.
+   장시간 transaction이 운영에서 실제 관찰됐다는 증거는 없다.
+4. Phase3 계약은 explicit bootstrap WAL, archive/restore DELETE, startup journal 유지 및 busy/I/O typed umbrella를
+   명시한다. WAL 전환 운영 절차를 Phase8로 넘겼지만 실제 promotion은 bytes를 보존하고 별도 WAL 전환을 하지 않는다.
+   이번 root verifier는 DB header format bytes18/19만 읽어 **rollback**을 확인했다. 초기 immutable URI의
+   `PRAGMA journal_mode` 결과만으로 mode를 확정하지 않고 header로 보완했다.
+   따라서 **live WAL 전환이라는 과거 계획이 실제 운영 경로에는 구현되지 않은 차이**를 기록한다.
+   Rollback 자체를 corruption으로 간주하지 않으며 이번 수정에서 journal/schema/DB 경로를 바꾸지 않았다.
+5. SQLite rollback EXCLUSIVE는 다른 reader와 공존할 수 없고, BUSY는 process 간 충돌에서 발생할 수 있다.
+   LOCKED는 같은 connection/shared-cache 상황을 구분한다. [SQLite locking](https://www.sqlite.org/lockingv3.html),
+   [SQLite result codes](https://www.sqlite.org/rescode.html)를 코드·실제 synthetic 결과와 함께 대조했다.
+   이 일반 규칙은 지난 H2의 실제 원인 확정 근거를 대신하지 않는다.
+
+기존 `database_recent_failures=2`는 같은 요청의 worker/awaiter observation 두 개이며 독립 실패2건이 아니다.
+지난354.569초/17 samples/Watch66 success+1 failure/ready snapshot 및 무결성 PASS는 그대로 유지한다.
+
+### Isolated reproduction and causal limits
+
+모든 재현은 fixture가 만든 임시 synthetic DB만 사용한다. Windows와 network-disabled Pi ARM64에서
+동일 test case를 실행했다. Production 데이터/원문 exception/SQL/user content/credential을 출력하지 않았다.
+
+| Condition | Reproduced evidence / classification |
+| --- | --- |
+| Separate process BEGIN / IMMEDIATE / EXCLUSIVE × DELETE / WAL | Pipe barrier로 writer 잠금을 확정한 뒤 실제 probe 실행. DELETE+EXCLUSIVE만 configure-stage SQLITE_BUSY5, connection_opened=true/close_succeeded=true. 나머지5조건 PASS. 기존 read+SELECT1 경로도 같은 BUSY umbrella 실패 재현. |
+| Short writer overlap | 별도 process EXCLUSIVE를 probe connection 생성 뒤 해제하여 같은 request가 성공. 테스트를 위한 명시적 barrier이며 runtime retry/sleep 추가 없음. |
+| SQLITE_LOCKED | Synthetic shared-cache schema lock에서 실제 extended LOCKED 재현. 현재 application은 shared cache를 켜지 않으므로 정상 process 간 transient로 허용하지 않음. |
+| Missing file/parent | Actual temporary missing path CANTOPEN, 자동 DB 생성 없음. CANTOPEN만으로 missing과 permission을 항상 구별할 수 있다는 주장은 하지 않음. |
+| Permission | Pi의 nonroot test worker에서 actual mode000 파일 접근 거부. Windows는 같은 PermissionError boundary 주입으로 대조; Windows POSIX chmod 검증이라 주장하지 않음. |
+| Read-only filesystem / I/O | EROFS/EIO/ENOSPC 및 SQLite extended IOERR의 안전한 boundary 주입. 실제 디스크 고장·filesystem remount를 하지 않음. |
+| Non-database / corruption | 임시 non-database bytes 및 SQLite 첫 B-tree page type 손상에서 실제 NOTADB/CORRUPT →data_integrity. |
+| Open/configure/begin/execute/fetch/commit/close | 각 단계의 BUSY/LOCKED/IOERR/CORRUPT/NOTADB fault injection으로 단계·family·숫자·close 결과 검증. 임의 sqlite_errorname/경로/원문 메시지 미출력. |
+| Cancellation / cleanup | Awaiting probe 취소 후 worker capacity를 조기 반환하지 않고 동일 reader lane barrier까지 drain·close 확인. Primary BUSY 뒤 close 실패는 cleanup_failed=true로 HARD; 원래 실패를 가리지 않음. |
+| Threshold / observer | BUSY1→healthy1→healthy2 회복,60초 내 재발,15초 만료,stale readiness,unknown/malformed subtype,LOCKED/extended BUSY/close failure,terminal deadline/capacity 모두 fail-closed 검사. 실제 observer loop가 BUSY 뒤 계속하고 다음 hard event에서 stop하는 회귀 포함. |
+
+처음 회귀는 새 `probe` 진단 API 부재로 실패했다. 이후 actual shared-cache test의 URI keyword 중복 문제를
+fixture에서 수정했고 해당 실패를 production failure로 분류하지 않았다. 최종 full strict에는 skip/xfail로 숨긴 H2 test가 없다.
+
+### Minimal repair and precise safety policy
+
+- **`5e1a8b8`**: 고정 `select1_probe`의 stage, exception family, numeric SQLite code, allowlisted SQLite/errno
+  family, connection_opened/close_succeeded/cleanup_failed만 기록한다. AppError context와 observer extraction에서
+  두 차례 allowlist를 적용하며 raw exception/SQL/path/row/임의 symbol을 내보내지 않는다.
+  `SqliteDatabase.probe`는 기존 connect/PRAGMA/busy deadline/reader executor를 공유하는 고정 read operation이다.
+  Application data transaction/API, journal, schema, dependency, credential/config 값은 변경하지 않았다.
+- **허용 조건 모두 일치해야 함**: database_unavailable + select1_probe + probe_configure +
+  sqlite_operational + exact numeric5 + family busy + connection_opened=true + close_succeeded=true + cleanup_failed=false.
+  Extended BUSY와 LOCKED도 허용하지 않는다. 재현한 subtype 이외 일반 DB 오류의 global downgrade는 없다.
+- 직전 readiness가 유효하고 pending recovery가 없으며 최근60초 동안 허용 BUSY가 없을 때만1회
+  `database.probe_contention`으로 기록한다. 실패 metric/history는 그대로 증가한다. 추가 요청/retry/backoff를
+  만들지 않고 기존5초 정기 probe에서 **15초 미만에 연속 정상2회**를 요구한다.
+- 회복 중 readiness가 사라지거나15초 만료/60초 내 두 번째 failure/정리 실패/다른 오류이면 HARD.
+  Terminal failure는 readiness를 latch하고 다음 probe scheduling을 중단한다. 임의 성공1회로 terminal 상태를 풀지 않는다.
+  Release/DB/schema/credential/writer/restart/resource/public-route 안전 조건은 계속 독립적으로 즉시 적용한다.
+- **`ecd391f`**: terminal probe의 deadline/capacity 등 최상위 code가 database_unavailable이 아닌 경우도
+  `database.probe_failed` event/count 자체로 HARD STOP을 유지한다. 최근 event tail에서 사라져도 누적 count가 보존한다.
+- **`1014a08`**: stopped verifier를 최신92 pin/678e93 DB/8개 preservation에 맞추고 boot/timer disabled,
+  header metadata 검증을 추가했다. H1 ACL 검사는 그대로 사용한다.
+
+### Exact final candidate and verification
+
+- Runtime source **`ecd391ff4548b7bda572ef916c30be296b714f94`**.
+- Source archive SHA256 **`6d75f95d151c954cc84b3ee309b085ae954896cdeaaede143f1c882fb68f3418`**.
+- 유일한 다음 승인 후보 immutable release **`r-ecd391ff4548b7bd-3dac82a792fad576`**.
+- Dependency **`3dac82a792fad5769f4e6b32cdd0c294fbfbb4863500e8e232f85b47b3297cc6`** 불변.
+- Manifest **`f023b1fa6d412b81300a9dd64a1ed584b653fd3040513399d14e755421d8ea6a`**;
+  **17416 files / schema range [5, 5] / immutable validation PASS**.
+- Focused data/operations363 PASS 후 verifier header3/terminal-error5 회귀를 추가했다.
+  최종 Windows 전체 strict **978 PASS/0 skip/0 xfail/0 fail/0 error**,79.62초,
+  RuntimeWarning/PytestUnraisableExceptionWarning error 및 xfail_strict, 기존 audioop deprecation1.
+  새 H2 test는 data57/policy23/header3 = **83개**, 최종 전체에 모두 포함됐다.
+- Exact-source Pi ARM64 **969 PASS/9 intentional skips/0 fail/0 error/0 xfail**,
+  build+strict+immutable verification 168.827초. PrivateNetwork/production paths inaccessible인 nonroot
+  격리 build/test service에서 승인된 기존 wheelhouse만 사용했다. 실제 운영 DB/서비스 요청 없음.
+- 최종 상태 **verified_not_activated**; 세 application credential scopes + 세 root observer views PASS,
+  readonly/exact/direct-source-denied, current pin/config/canonical/protected inventory/8개 preservation 불변 확인.
+- 중간1014 source도 Windows973/Pi964+9 skip으로 검증됐으나, terminal probe HARD 정책 보완 뒤 final ecd에서
+  두 플랫폼 full strict를 다시 실행했다. 중간 release는 **미활성·미승인 superseded build evidence**로 보존하며,
+  다음 activation 후보로 제시하거나 별도 pin 승인 대상으로 삼지 않는다.
+
+Pi Node-less browser skip9개는 아래 **동일 testcase 이름의 final Windows PASS와 일대일 대조**했다.
+이는 harness 검증이고 PC Chrome/public-path live PASS는 아니다.
+
+- `test_shipped_watch_browser_client[iframe-independent-presence]`
+- `test_shipped_watch_browser_client[empty-player-protocol]`
+- `test_shipped_watch_browser_client[hydrate-before-player]`
+- `test_shipped_watch_browser_client[recoverable-return]`
+- `test_shipped_watch_browser_client[terminal-stays-closed]`
+- `test_shipped_watch_browser_client[page-lifecycle]`
+- `test_shipped_watch_browser_client[bounded-reconnect]`
+- `test_shipped_watch_browser_client[return-open-probe]`
+- `test_shipped_watch_browser_client[select-before-player]`
+
+### Preservations and publication boundary
+
+아래 모든 path는 `/var/lib/discordbot/` 아래이며 DB SHA256 기준이다. 전체 directory inventory도 빌드 전후
+일치했다. Latest canonical은 마지막 행과 같고, 이 작업에서 어떤 보존본도 덮어쓰지 않았다.
+
+| Preservation | DB SHA256 |
+| --- | --- |
+| `phase10-precutover-63c7722/failed-attempt` | `52d2ef8813e72e0ab791d359c81a514f11622a1ca86a7165e2a211b1826cc1af` |
+| `phase10-retry-368c8ebf7cbf-favorites-failed-20260919T065256492640Z` | `fab61bdda1dd2c8b664c5fd19525d1cdd46f20c82d630a94ce2ed4caf6f5cc65` |
+| `phase10-retry-368c8ebf7cbff244-favorites-resume-guard-preservation` | `fdc1aca74b5bb65ce9ebd511e32b83a6b31e249246dffafd962c2c0eb15ece9f` |
+| `phase10-retry-49639828a3c2f181-operator-failed-20260919T092351777156Z` | `28291bf37128dd62815c818ac45865c8a504cc04a2b3dbb9a8a564d8226dab1d` |
+| `phase10-retry-d14eba80bdec9126-live-smoke-guard-preservation` | `1d871bed4ba8b8fe4fd9426cfa15c8b373f700baca2f548f5cea571570252363` |
+| `phase10-retry-2c768ec98d1fc8b1-live-smoke-guard-preservation` | `6270821c287a066533f89e4f59e4aa8a74b89c14dfb5c199601e1bba4817e099` |
+| `phase10-retry-787b3178908c08ff-live-smoke-full-sweep-20260919-01-guard-preservation` | `f47fbef36b7eded3e4b990f8179598b38b0e0bdbd818431eada33dab9aa89748` |
+| `phase10-retry-92c25546af6b4904-live-smoke-h1-full-sweep-20260919-01-guard-preservation` | `678e93ec4fd2d087d5ce20ba2239fb205b0daa130cb3e804e300dbd5183aef66` |
+
+원격 `codex/rebuild-v2=af37aa58a17753663ff33543e487da6455318cc9`,
+`main=8432fdef40cddc131176fa875e350660dc897e12` read-back 불변.
+미게시 source range **af37aa58…→ecd391ff…:4 commits/16 new blobs**(기존 live 결과 docs commit e15f062 포함).
+각 range commit tree/message/blob의 forbidden artifact/secret pattern 검사 finding0.
+이후 tail은 이 전용 보고서/current plan만 변경하는 docs-only 기록이며 최종 HEAD/range를 다시 검사한다.
+최종 docs-only tail을 포함한 게시 예정 범위는5 commits/18 new blobs다. 최종 검사 결과와 HEAD는
+`h2-git-audit-<HEAD>.json` 및 통합 승인 요청에 고정한다. 문서 구조·relative link2 PASS와 diff whitespace 검사도 통과했다.
+사용자 미추적 handoff/zip은 수정·추가하지 않았다. 새 runtime/safety code 변경 **있음**;
+dependency/config/schema/DB mode/location 변경 **없음**. Main/force/rebase/history rewrite 없음.
+
+안전한 evidence: `h2-stopped-baseline.json`, `h2-focused.xml`, `h2-windows-ecd391ff4548.xml`,
+`retry-build-ecd391ff4548.json`, `h2-cross-platform.json`, `h2-git-audit-*.json`.
+Production 상태/30-gate 판정은 바로 아래 H2 live continuation의 **PASS3/BLOCKED27** 그대로다.
+새 audible Music/TTS·Chrome/Watch·backup/restore/boot/timer/final-observation PASS는 없다.
+
+**다음 단계는 한 번의 통합 승인**: final ecd391ff runtime + 이후 report/current-plan docs-only tail의
+normal FF push, 위 exact immutable pin의 activation, newest678e93 canonical DB를 유지한 단일 bounded30-gate
+full-sweep. 승인 전 push/production activation은 하지 않는다. 단순 재시도 대신 subtype·stage·cleanup evidence를
+수집하며, generic DB failure와 검증 범위 밖 오류는 계속 HARD STOP/new preservation 대상으로 남긴다.
+Audit0–10/Integrated Audit/PHASE11/V1삭제/legacy cleanup은 시작하지 않는다.
+
 ## Continuation — approved H1 retry / H2 DB probe HARD STOP / preservation VERIFIED
 
 2026-09-19 exact candidate 승인에 따라 단일 bounded full-sweep을 실행했다.
