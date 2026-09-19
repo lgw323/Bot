@@ -32,6 +32,43 @@ def check_database(path):
     return {'integrity':'ok','schema':5}
 
 
+def check_credentials(credentials: Path, names: set[str], service_uid: int) -> None:
+    """Apply the application's exact ACL policy without reading credential bytes."""
+    from discordbot.operations.adapters.configuration import private_mode
+    from discordbot.platform.errors import ConfigurationError
+    if {p.name for p in credentials.iterdir()} != names:
+        raise RuntimeError('credential_scope')
+    try:
+        if credentials.is_symlink() or not os.statvfs(credentials).f_flag & os.ST_RDONLY:
+            raise RuntimeError('credential_permission')
+        for path in credentials.iterdir():
+            flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC
+            fd = os.open(path, flags)
+            try:
+                info = os.fstat(fd)
+                acl = None
+                if info.st_mode & 0o077:
+                    try:
+                        acl = os.getxattr(fd, 'system.posix_acl_access')
+                    except OSError:
+                        acl = None  # Shared validator rejects unproven broad permissions.
+                private_mode(info.st_mode, info.st_uid, service_uid, acl)
+                if not os.fstatvfs(fd).f_flag & os.ST_RDONLY:
+                    raise RuntimeError('credential_permission')
+            finally:
+                os.close(fd)
+    except (OSError, ConfigurationError):
+        raise RuntimeError('credential_permission') from None
+
+
+def credential_service_uid(pid: int) -> int:
+    import pwd
+    expected = pwd.getpwnam('discordbot').pw_uid
+    if (Path('/proc') / str(pid)).stat().st_uid != expected:
+        raise RuntimeError('credential_permission')
+    return expected
+
+
 def check(source,common,value,baseline):
     if Path('/opt/discordbot/current').resolve(strict=True)!=source.parent or identity(source)!=baseline:
         raise RuntimeError('release_or_config_identity')
@@ -53,11 +90,7 @@ def check(source,common,value,baseline):
         state=value['services'][unit]
         pid=int(state['MainPID']);owners.add(pid)
         credentials=Path('/proc')/str(pid)/'root/run/credentials'/unit
-        if {p.name for p in credentials.iterdir()}!=names:
-            raise RuntimeError('credential_scope')
-        for path in credentials.iterdir():
-            if not path.is_file() or path.is_symlink() or path.stat().st_mode & 0o077:
-                raise RuntimeError('credential_permission')
+        check_credentials(credentials,names,credential_service_uid(pid))
         limits=subprocess.run(['systemctl','show',unit,'-p','MemoryMax','-p','TasksMax'],
                               check=True,capture_output=True,text=True,timeout=5)
         props=dict(line.split('=',1) for line in limits.stdout.splitlines())

@@ -16,6 +16,9 @@
 ## [Unreleased]
 
 ### Fixed
+- Full-sweep credential 감시가 application과 같은 exact service-user ACL 정책을 사용하도록 정렬했습니다.
+  정상 systemd read-only ACL의 mode mask를 외부 접근으로 오판하지 않으며, 다른 사용자·group/other 접근,
+  writable mount·비정규 파일·symlink·잘못된 소유자는 계속 HARD STOP 처리합니다. Credential 값은 읽지 않습니다.
 - 요약 제공자의 HTTP 상태·통신 실패·시간 초과를 안전한 분류로 기록합니다. Live smoke 감시는
   요약의 외부 의존성·응답 전송 실패도 정지·보존 대상으로 처리하며 원문 응답이나 credential은 기록하지 않습니다.
 - 쥬크박스 화면 갱신 중 기존 버튼 처리를 유지하고, 갱신 실패 시에도 버튼 연결을 복구합니다.
