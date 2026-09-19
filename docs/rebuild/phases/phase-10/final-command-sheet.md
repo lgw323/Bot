@@ -1,9 +1,12 @@
 # PHASE 10B exact command / reconciliation sheet
 
-**10A preparation only — 10B NOT AUTHORIZED.** 아래 명령은 검토용이며 아직 실행하지 않았다.
+**10B AUTHORIZED (2026-09-19).** 사용자가 이 명령표의 정확한 대상·범위를 명시적으로 승인했다.
+재승인 질문은 하지 않는다. 단계별 실제 결과는 [보고서](phase-10-report.md)를 따르며 아래 명령 전체가 실행됐다는 뜻은 아니다.
 최종 승인 뒤 Codex가 단계별 결과를 확인하며 실행한다. 한꺼번에 붙여 넣는 자동 전환 스크립트가 아니다.
 사용자는 sudo 인증과 Discord/browser smoke 확인을 담당한다. 비밀번호·secret은 기록하지 않는다.
 모든 shell block은 **Pi의 Bash**용이다. Windows PowerShell에서 직접 실행하지 않는다.
+Windows에서 shell 파일로 전달할 때는 LF로 저장하고 Pi의 `bash -n`으로 문법을 확인한다.
+Private 보존 디렉터리는 부모의 setgid 상속까지 제거하고 실제0700인지 확인한다.
 예상 maintenance 30–60분은 계획값이며 실제 시작/종료 UTC를 별도로 기록한다.
 
 ## 0. Exact identities and writer gate
@@ -56,6 +59,9 @@ printf '%s  %s\n' 5f1f360a6be8d23e4217051902605f0360651cf72d8926efc10caf851557e3
 printf '%s  %s\n' 41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40 "$P/config.json" | sha256sum -c -
 printf '%s  %s\n' 8d17018f1927d91b9ea633700471a6cda7388633b175a560be36f4b904ae4e5b /var/lib/discordbot/phase10-recovery-20260916-01/restored/candidate.db | sha256sum -c -
 install -d -o root -g root -m 0700 "$R"
+chmod g-s "$R"
+chmod 0700 "$R"
+test "$(stat -c %a "$R")" = 700
 date -u +%FT%TZ > "$R/maintenance-start.txt"
 systemctl show discord-bot.service watch-web.service discordbot-staging-discord.service discordbot-backup.timer discordbot-update.timer discordbot-manual.timer -p Id -p ActiveState -p UnitFileState -p MainPID > "$R/unit-state-before.txt"
 systemctl disable --now discordbot-update.timer discordbot-manual.timer discordbot-backup.timer
