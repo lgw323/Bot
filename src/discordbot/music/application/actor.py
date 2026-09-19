@@ -197,7 +197,7 @@ class MusicActor:
                 await self.library.release(media, corrupt=corrupt)
 
     def _prepare(self) -> None:
-        if not self._current or not self._connected:
+        if not self._current or not self._connected or self._announcement_pending():
             return
         track = self._current
         self._status = "preparing"
@@ -305,6 +305,8 @@ class MusicActor:
             raise ConflictError("duplicate queue item identity")
         self._cancel("autoplay")
         self._queue.extend(tracks)
+        if self._announcement_pending():
+            return
         if self._current is None:
             self._advance()
         elif self._status == "idle":
@@ -351,7 +353,7 @@ class MusicActor:
             self._cancel("empty")
             if self._current and self._status in {"idle", "disconnected"}:
                 self._prepare()
-            elif self._current is None and self._queue:
+            elif self._current is None and self._queue and not self._announcement_pending():
                 self._advance()
         elif op == "started":
             if not p["tts"] and p["track"] is not None:
@@ -373,8 +375,8 @@ class MusicActor:
             previous = self._current
             await self._stop_audio(corrupt=p["failed"])
             if tts:
-                self._prepare()
-                self._start_tts_generation()
+                self._status = "idle"
+                self._continue_after_announcement()
             elif p["failed"]:
                 await self._failed()
             else:
@@ -516,6 +518,18 @@ class MusicActor:
             text = self._tts.popleft()
             self._work("tts", lambda: self.library.speech(text), 20)
 
+    def _announcement_pending(self) -> bool:
+        return self._status.startswith("tts") or "tts" in self._jobs
+
+    def _continue_after_announcement(self) -> None:
+        self._start_tts_generation()
+        if self._announcement_pending() or self._status != "idle":
+            return
+        if self._current:
+            self._prepare()
+        elif self._queue:
+            self._advance()
+
     async def _result(self, name: str, value: Any, error: str | None) -> bool:
         if error and self._smoke_enabled() and name in {'lookup', 'prepare', 'start', 'tts'}:
             await self._stop_for_smoke()
@@ -546,11 +560,12 @@ class MusicActor:
             if name in {"prepare", "start"}:
                 if self._status.startswith("tts"):
                     await self._stop_audio()
-                    self._prepare()
+                    self._status = "idle"
+                    self._continue_after_announcement()
                 else:
                     await self._failed()
             elif name == "tts":
-                self._start_tts_generation()
+                self._continue_after_announcement()
         elif name == "prepare":
             self._start(value)
         elif name == "retry":
