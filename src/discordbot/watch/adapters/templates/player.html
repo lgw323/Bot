@@ -1030,9 +1030,8 @@
                 <div class="signal-glyph" aria-hidden="true"></div>
                 <div class="video-copy">
                     <div id="current-video-title" class="video-title">대기열에서 영상을 선택하거나 추가해 주세요.</div>
-                    <div class="sync-note">
-                        현재 시청 상태가 실시간으로 동기화되고 있습니다.
-                    </div>
+                    <div id="playback-status" class="sync-note" role="status">영상 선택 대기 중</div>
+                    <button id="resume-playback-btn" class="btn" type="button" hidden>재생 이어가기</button>
                 </div>
             </div>
         </section>
@@ -1102,12 +1101,15 @@
         let ws;
         let currentVideoId = null;
         let isSyncing = false; // 동기화 패킷 처리 중 무한 루프 차단 플래그
-        let lastReceivedTime = 0;
         let playlist = [];
         let terminal = false;
         let playlistLoading = false;
         let playlistAgain = false;
-        let syncTimer;
+        let playbackTimer;
+        let playbackBlocked = false;
+        let alignmentRequested = false;
+        let awaitingHydration = true;
+        let cuedPlayback = null;
         let toastTimer;
         let playerReady = false;
         let pendingPlayback = null;
@@ -1131,7 +1133,9 @@
                 },
                 events: {
                     'onReady': onPlayerReady,
-                    'onStateChange': onPlayerStateChange
+                    'onStateChange': onPlayerStateChange,
+                    'onAutoplayBlocked': () => playbackNeedsGesture('브라우저에서 재생이 차단되었습니다. 재생 이어가기를 눌러 주세요.'),
+                    'onError': () => playbackNeedsGesture('영상을 재생하지 못했습니다. 재생 이어가기를 눌러 주세요.')
                 }
             });
         }
@@ -1139,35 +1143,25 @@
         function onPlayerReady(event) {
             playerReady = true;
             if (pendingPlayback) {
-                applyPlayback(pendingPlayback);
-                pendingPlayback = null;
+                applyPlayback();
             }
             initWebSocket();
             fetchPlaylist();
         }
 
-        // 사용자가 수동으로 조작했는지 확인하기 위한 플래그
-        let userAction = true;
-
-        // 플레이어 상태 감지 및 서버 전송
+        // A remote command is complete only when the iframe acknowledges the
+        // intended video and state. Transport/presence events are not media ACKs.
         function onPlayerStateChange(event) {
-            if (isSyncing) return; // 동기화 패킷에 의한 상태 변경이면 무시
-
+            if (!playerReady || terminal || !pendingPlayback) return;
+            if (isSyncing) { acknowledgePlayback(); return; }
+            if (!canPublishPlayback()) return;
             const time = player.getCurrentTime();
-            if (event.data === YT.PlayerState.PLAYING) {
-                sendWsMessage({
-                    type: "state_change",
-                    state: "playing",
-                    time: time
-                });
-            } else if (event.data === YT.PlayerState.PAUSED) {
-                sendWsMessage({
-                    type: "state_change",
-                    state: "paused",
-                    time: time
-                });
+            if ([YT.PlayerState.PLAYING, YT.PlayerState.PAUSED].includes(event.data)) {
+                const state = event.data === YT.PlayerState.PLAYING ? "playing" : "paused";
+                pendingPlayback = {...pendingPlayback, state, time, receivedAt: Date.now()};
+                prevTime = time;
+                sendWsMessage({type: "state_change", state, time});
             } else if (event.data === YT.PlayerState.ENDED) {
-                // 영상 재생이 끝났을 때 자동 다음 비디오 재생
                 playNextVideo();
             }
         }
@@ -1195,13 +1189,15 @@
         // 주기적인 재생 지점(Seek) 동기화 트리거
         let prevTime = 0;
         setInterval(() => {
-            if (!player || isSyncing || !player.getCurrentTime) return;
+            if (isSyncing) { acknowledgePlayback(); return; }
+            if (!canPublishPlayback()) return;
             const currTime = player.getCurrentTime();
             const state = player.getPlayerState();
 
             if (state === YT.PlayerState.PLAYING) {
                 const diff = Math.abs(currTime - prevTime);
                 if (diff > 2.5) {
+                    pendingPlayback = {...pendingPlayback, time: currTime, receivedAt: Date.now()};
                     sendWsMessage({
                         type: "seek",
                         time: currTime
@@ -1227,9 +1223,11 @@
 
             socket.onopen = () => {
                 if (socket !== ws || terminal || pageSuspended) { socket.close(1000); return; }
+                awaitingHydration = true;
+                if (pendingPlayback) isSyncing = true;
                 badge.className = "badge badge-ws";
-                badgeText.innerText = "실시간 동기화 됨";
-                showToast("실시간 동기화가 활성화되었습니다.");
+                badgeText.innerText = "연결됨";
+                showToast("시청방에 연결되었습니다.");
 
                 // 닉네임을 서버에 보내 가입(Join)을 완료시킴
                 sendWsMessage({
@@ -1277,7 +1275,6 @@
                 reconnectAttempts = 0;
                 clearTimeout(returnTimer);
 
-                isSyncing = true; // 무한 동기화 루프 방지 ON
 
                 switch (message.type) {
                     case "session_closed":
@@ -1286,8 +1283,6 @@
                     case "user_joined":
                         showToast(message.message);
                         appendSystemMessage(message.message);
-                        // 내가 방의 선구자(기존 플레이어)라면 신입에게 현재 플레이 상태를 전달
-                        sendPlayback();
                         break;
 
                     case "user_left":
@@ -1309,14 +1304,12 @@
                         break;
 
                     case "seek":
-                        if (playerReady) syncPlayerSeek(message.time);
-                        else if (pendingPlayback) pendingPlayback.time = message.time;
+                        receivePlayback(message);
                         appendSystemMessage(`ℹ️ 누군가 재생 구간을 건너뛰었습니다.`);
                         break;
 
                     case "sync_request":
-                        // 누군가 싱크를 요청할 때 내 상태 전송
-                        sendPlayback();
+                        // Hydration is owned by the server, never a stale peer iframe.
                         break;
 
                     case "sync_response":
@@ -1330,35 +1323,98 @@
                         break;
                 }
 
-                // 동기화 명령 처리 후 살짝 텀을 두고 플래그 해제
-                clearTimeout(syncTimer);
-                syncTimer = setTimeout(() => { isSyncing = false; }, 400);
             };
         }
 
-        function sendPlayback() {
-            if (!playerReady || !currentVideoId || !/^[A-Za-z0-9_-]{11}$/.test(currentVideoId)) return;
+        function canPublishPlayback() {
+            return playerReady && !terminal && !awaitingHydration && !playbackBlocked && currentVideoId &&
+                player.getVideoData().video_id === currentVideoId &&
+                ws && ws.readyState === WebSocket.OPEN;
+        }
+
+        function playbackTime() {
+            return pendingPlayback.time + (pendingPlayback.state === "playing" ?
+                Math.max(0, Date.now() - pendingPlayback.receivedAt) / 1000 : 0);
+        }
+
+        function playbackNeedsGesture(message) {
+            if (terminal || !pendingPlayback) return;
+            playbackBlocked = true;
+            isSyncing = true;
+            clearTimeout(playbackTimer);
+            document.getElementById("playback-status").innerText = message;
+            document.getElementById("resume-playback-btn").hidden = false;
+        }
+
+        function acknowledgePlayback() {
+            if (!playerReady || terminal || awaitingHydration || !pendingPlayback || playbackBlocked ||
+                player.getVideoData().video_id !== pendingPlayback.videoId) return;
             const state = player.getPlayerState();
-            if (![YT.PlayerState.PLAYING, YT.PlayerState.PAUSED].includes(state)) return;
-            sendWsMessage({type: "sync_response", state: state === YT.PlayerState.PLAYING ? "playing" : "paused",
-                time: player.getCurrentTime(), videoId: currentVideoId});
+            const matches = pendingPlayback.state === "playing" ? state === YT.PlayerState.PLAYING :
+                [YT.PlayerState.PAUSED, YT.PlayerState.CUED].includes(state);
+            if (!matches) return;
+            const target = playbackTime();
+            // CUED can report time zero until play. Its startSeconds is already
+            // queued; seekTo from CUED would start playback and break pause intent.
+            const cueMatches = state === YT.PlayerState.CUED &&
+                cuedPlayback?.videoId === pendingPlayback.videoId && cuedPlayback.time === target;
+            if (!cueMatches && Math.abs(player.getCurrentTime() - target) > 1.5) {
+                if (!alignmentRequested) {
+                    alignmentRequested = true;
+                    player.seekTo(target, true);
+                }
+                if (Math.abs(player.getCurrentTime() - target) > 1.5) return;
+            }
+            prevTime = player.getCurrentTime();
+            isSyncing = false;
+            clearTimeout(playbackTimer);
+            document.getElementById("playback-status").innerText = pendingPlayback.state === "playing" ?
+                "재생 동기화됨" : "일시정지 동기화됨";
+            document.getElementById("resume-playback-btn").hidden = true;
         }
 
         function receivePlayback(message) {
-            if (!playerReady) {
-                pendingPlayback = {...pendingPlayback, ...message};
-                return;
-            }
-            applyPlayback(message);
+            if (message.type === "sync_response") awaitingHydration = false;
+            const state = message.state ?? (typeof message.playing === "boolean" ?
+                (message.playing ? "playing" : "paused") : pendingPlayback?.state);
+            pendingPlayback = {...pendingPlayback, ...message, state, receivedAt: Date.now()};
+            if (playerReady) applyPlayback();
         }
 
-        function applyPlayback(message) {
+        function applyPlayback() {
+            if (!pendingPlayback?.videoId || terminal) return;
+            const target = playbackTime();
+            const videoId = pendingPlayback.videoId;
+            const wasSyncing = isSyncing;
+            alignmentRequested = false;
             isSyncing = true;
-            if (message.videoId && message.videoId !== currentVideoId) loadVideoById(message.videoId, false);
-            syncPlayerState(message.state ?? (message.playing ? "playing" : "paused"), message.time);
-            clearTimeout(syncTimer);
-            syncTimer = setTimeout(() => { isSyncing = false; }, 400);
+            clearTimeout(playbackTimer);
+            currentVideoId = videoId;
+            document.getElementById("playback-status").innerText = "재생 상태 확인 중";
+            playbackTimer = setTimeout(() => playbackNeedsGesture(
+                "재생을 확인하지 못했습니다. 재생 이어가기를 눌러 주세요."), 5000);
+            if (playbackBlocked) {
+                playbackNeedsGesture("재생 이어가기를 눌러 현재 위치에서 연결해 주세요.");
+                return;
+            }
+            if (player.getVideoData().video_id !== videoId ||
+                (wasSyncing && player.getPlayerState() === YT.PlayerState.UNSTARTED) ||
+                (pendingPlayback.state === "paused" && player.getPlayerState() === YT.PlayerState.CUED)) {
+                const media = {videoId, startSeconds: target};
+                cuedPlayback = pendingPlayback.state === "paused" ? {videoId, time: target} : null;
+                if (pendingPlayback.state === "playing") player.loadVideoById(media);
+                else player.cueVideoById(media);
+            } else {
+                syncPlayerState(pendingPlayback.state, target);
+            }
+            acknowledgePlayback();
         }
+
+        document.getElementById("resume-playback-btn").onclick = () => {
+            if (!playerReady || terminal || !ws || ws.readyState !== WebSocket.OPEN) return;
+            playbackBlocked = false;
+            applyPlayback();
+        };
 
         function returnToPage() {
             if (terminal || pageSuspended || document.visibilityState === "hidden") return;
@@ -1415,17 +1471,6 @@
             }
         }
 
-        function syncPlayerSeek(targetTime) {
-            if (!player) return;
-            const currTime = player.getCurrentTime();
-            const timeDiff = Math.abs(currTime - targetTime);
-
-            // 오차가 1.5초 이상 벌어질 때만 화면 튐(Seek) 적용
-            if (timeDiff > 1.5) {
-                player.seekTo(targetTime, true);
-            }
-        }
-
         // 4. 동영상 제어 유틸 함수
         function extractVideoId(url) {
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -1434,29 +1479,14 @@
         }
 
         function loadVideoById(videoId, triggerWs = true) {
-            if (!playerReady) {
-                pendingPlayback = {videoId, state: "playing", time: 0};
-                if (triggerWs) sendWsMessage({type: "sync_response", ...pendingPlayback});
-                return;
-            }
-            currentVideoId = videoId;
-            player.loadVideoById(videoId);
-
-            // 현재 대기열의 항목 이름으로 뷰 갱신
+            awaitingHydration = false;
+            receivePlayback({videoId, state: "playing", time: 0});
             const activeItem = playlist.find(item => extractVideoId(item.video_url) === videoId);
             if (activeItem) {
                 document.getElementById("current-video-title").innerText = activeItem.video_title;
                 highlightPlaylistItem(activeItem.video_url);
             }
-
-            if (triggerWs) {
-                sendWsMessage({
-                    type: "sync_response",
-                    state: "playing",
-                    time: 0,
-                    videoId: videoId
-                });
-            }
+            if (triggerWs) sendWsMessage({type: "sync_response", state: "playing", time: 0, videoId});
         }
 
         // 5. 플레이리스트 데이터 연동 API 호출

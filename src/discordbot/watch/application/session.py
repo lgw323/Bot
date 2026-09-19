@@ -198,7 +198,6 @@ class WatchSession:
                     "message": f"👉 {peer.name}님이 시청방에 입장하셨습니다."}, exclude=identity)
                 self.broadcast({"type": "user_list", "users": [p.name for p in self.peers.values() if p.name is not None]})
                 self.send_current(peer)
-                self.broadcast({"type": "sync_request"}, exclude=identity)
             else:
                 if kind == "chat":
                     value["username"] = peer.name or str(value.get("username", "임시유저"))
@@ -211,7 +210,8 @@ class WatchSession:
                     self.playback_at = self.clock.monotonic()
                 if kind == 'sync_request':
                     self.send_current(peer, presence=True)
-                self.broadcast(value, exclude=identity)
+                else:
+                    self.broadcast(value, exclude=identity)
             return None
         self.rate.take(self.clock.monotonic())
         if operation == "playlist":

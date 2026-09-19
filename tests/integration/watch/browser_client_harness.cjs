@@ -29,9 +29,11 @@ const window = {location: {search:'?session=synthetic-capability',protocol:'http
     stop() {}, addEventListener: on};
 let state = 5, time = 0, loaded = null;
 const player = {getPlayerState:()=>state, getCurrentTime:()=>time,
-    loadVideoById(id) {loaded=id;}, seekTo(value) {time=value;}, playVideo() {state=1;}, pauseVideo() {state=2;}};
+    getVideoData:()=>({video_id:loaded}),
+    loadVideoById(media) {loaded=media.videoId;time=media.startSeconds;state=1;},
+    cueVideoById(media) {loaded=media.videoId;time=media.startSeconds;state=5;}, seekTo(value) {time=value;}, playVideo() {state=1;}, pauseVideo() {state=2;}};
 const context = vm.createContext({window,document,URLSearchParams,WebSocket:Socket,console,
-    YT:{PlayerState:{UNSTARTED:-1,PLAYING:1,PAUSED:2,ENDED:0},Player:function(){return player;}},
+    YT:{PlayerState:{UNSTARTED:-1,PLAYING:1,PAUSED:2,ENDED:0,CUED:5},Player:function(){return player;}},
     setInterval:()=>0, setTimeout:(callback,delay)=>{timers.set(++sequence,{callback,delay});return sequence;},
     clearTimeout:id=>timers.delete(id), alert(){}, AbortSignal:{timeout:()=>undefined},
     fetch:async()=>({ok:true,status:200,json:async()=>({playlist:[]})})});
@@ -57,7 +59,7 @@ if (scenario==='iframe-independent-presence') {
     assert.equal(sockets.length,1,'socket must precede iframe');
     const ws=socket();
     ws.receive({type:'sync_response',state:'paused',time:17,videoId:'aaaaaaaaaaa',revision:2});
-    ready(); assert.equal(loaded,'aaaaaaaaaaa'); assert.equal(time,17); assert.equal(state,2);
+    ready(); assert.equal(loaded,'aaaaaaaaaaa'); assert.equal(time,17); assert.equal(state,5);
 } else if (scenario==='select-before-player') {
     const ws=socket();
     context.loadVideoById('aaaaaaaaaaa');

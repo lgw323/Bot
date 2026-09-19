@@ -56,7 +56,8 @@ async def test_seven_messages_order_and_session_isolation(service, invite, clock
     revisions = [m["revision"] for m in b.messages]
     assert revisions == sorted(set(revisions))
     assert next(m for m in b.messages if m["type"] == "chat")["username"] == "A"
-    assert {m["type"] for m in b.messages} >= {"user_list", "chat", "state_change", "seek", "sync_request", "sync_response", "playlist_change"}
+    assert {m["type"] for m in b.messages} >= {"user_list", "chat", "state_change", "seek", "sync_response", "playlist_change"}
+    assert not any(m["type"] == "sync_request" for m in b.messages)
     assert not other.messages
 
 
@@ -99,6 +100,39 @@ async def test_single_viewer_reload_hydrates_actor_playback(service, invite, clo
     await actor.call('message', replacement.id, {'type':'sync_request'})
     await asyncio.sleep(0)
     assert {m['type'] for m in socket.messages}=={'sync_response','user_list'}
+
+
+@pytest.mark.parametrize('state', ['playing', 'paused'])
+async def test_late_peer_and_reconnect_use_server_authority(service, invite, clock, state):
+    first_socket, late_socket = Socket(), Socket()
+    actor, first = await service.connect(invite.capability, first_socket)
+    await actor.call('message', first.id, {'type': 'join', 'username': 'First'})
+    await actor.call('message', first.id, {'type': 'sync_response', 'state': state,
+        'time': 42, 'videoId': 'aaaaaaaaaaa'})
+    clock.advance(2)
+    _, late = await service.connect(invite.capability, late_socket)
+    await actor.call('message', late.id, {'type': 'join', 'username': 'Late'})
+    await actor.call('message', late.id, {'type': 'join', 'username': 'Duplicate'})
+    await asyncio.sleep(0)
+    snapshots = [m for m in late_socket.messages if m['type'] == 'sync_response']
+    assert len(snapshots) == 1
+    assert snapshots[0]['state'] == state
+    assert snapshots[0]['time'] == (44 if state == 'playing' else 42)
+    assert not any(m['type'] == 'sync_request' for m in first_socket.messages)
+    # A peer remains connected during an actual transport replacement. No
+    # stale browser poll can race the authoritative late-join/return snapshot.
+    await actor.call('leave', late.id)
+    clock.advance(2)
+    replacement_socket = Socket()
+    _, replacement = await service.connect(invite.capability, replacement_socket)
+    await actor.call('message', replacement.id, {'type': 'join', 'username': 'Returned'})
+    await actor.call('message', replacement.id, {'type': 'sync_request'})
+    await asyncio.sleep(0)
+    snapshots = [m for m in replacement_socket.messages if m['type'] == 'sync_response']
+    assert len(snapshots) == 2
+    assert all(m['time'] == (46 if state == 'playing' else 42) for m in snapshots)
+    assert len(actor.peers) == 2
+    assert not any(m['type'] == 'sync_request' for m in first_socket.messages)
 
 
 async def test_playlist_duplicate_order_close_race(service, invite):
