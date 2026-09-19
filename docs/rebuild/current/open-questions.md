@@ -126,12 +126,13 @@
   `r-672694d3f0c5418e-d026a47ed4f4b38a` ARM64 후보도 offline build/tests/manifest를 통과했고 activation은 안 했다.
 - Pi isolated production backup decrypt/재backup/재restore/runtime UID open-close PASS.
   current release와 canonical inode 보존, stage `verified_not_promoted`; 실제 production timer는 미검증이다.
-- 현재 blocker: 로그 수정의 Pi 재검증과 최종 release/config/rollback command sheet,
+- 현재 blocker: 로그 수정의 서비스 적용·재관찰 및 새 pin 승인과 최종 release/config/rollback command sheet,
   maintenance와 관찰 이상 검토. `.env` 자동 사용 금지. d54ff36 publication/pin 및 자동 update 비활성화 정책은 승인됐다.
   전체 Git history 검사 후 해당 commit만 일반 push 완료, main 보존. 후속 commit은 별도 수동 승인 대상이다.
 - 사용자는 private Bot-Data/db-backup을 off-host 목적지로 선택하고 별도 write deploy key 등록을 완료했다.
   실제 upload/download/restore는 PASS다. opt-in runtime wiring과 stopped activation guard를 구현했고
   Windows full strict는 d54ff36 기준 732 passed다. 해당 source ARM64 build/실제 runtime backup 검증도 PASS다.
+  후속 로그 수정 63c7722도 Windows 735개와 Pi ARM64 build/운영 테스트/세 scope 검증을 통과했다.
   기존 force push/history rewrite는 재사용하지 않으며 production auto-backup은 아직 활성화하지 않았다.
 - V1 Music checkpoint는 operator가 없음으로 확인했다. active queue/voice 위치는 미이전이며
   기존 DB의 favorites/play counts/music settings 보존과 구분한다.

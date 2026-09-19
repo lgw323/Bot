@@ -147,10 +147,14 @@ server-maintenance/telemetry-drain/database-probe의 정상 started/succeeded였
 로그가 disk 증가에 기여하는 원인은 확인했지만 free-space 감소 전부를 byte 단위로 귀속하지 않았다.
 후속 로컬 수정 `63c77229d1a6e76a0edbc7d9249a8fceb5b0938c`는 세 주기 작업의 정상 lifecycle만 journal에서 제외하고 metrics/bounded task history와
 실패·취소·deadline/retry 기록은 유지한다. DB probe 실패는 message/context 없이 stable error code만
-추가한다. 기존 readiness 기준/주기/timeout은 유지한다. 수정본의 Pi 실행·효과 및 DB 실패 원인 재관찰은
-아직 미검증이다. allowlisted archive SHA256은
+추가한다. 기존 readiness 기준/주기/timeout은 유지한다. 수정본의 Pi build/운영 테스트/세 scope 검증도 138.196초에 PASS했다. 새 release는
+`r-63c77229d1a6e76a-d026a47ed4f4b38a`, schema [5,5]이며 current/staging config는 전후 동일하다.
+실제 서비스에 적용한 로그 감소 효과와 DB 실패 원인 재관찰은 아직 미검증이다. allowlisted archive SHA256은
 `8948ad0da780f81336d7bb30f7fc41fc3485602f5cd91c757d658221fb5cec69`이며 Pi로 전달했다.
-별도 `verify_candidate.py` interactive sudo 창을 열고 사용자 입력을 요청했다. 승인된 production pin을 임의 변경하지 않는다.
+별도 `verify_candidate.py`로 검증했으며 처음 잘못 지정한 run 경로는 실행 전 guard가 거부했다.
+수정한 경로로 성공했다. 이후 sudo 입력 완료 답변은 별도로 요구하지 않고 safe progress로 확인한다.
+63c7722 ancestry의 1,434 objects / 667 blobs를 검사했고 이전 7개 fixture/path 외 새 탐지는 없었다.
+해당 exact commit 일반 push/초기 production pin 변경을 별도로 요청했다. 아직 승인·push하지 않았다.
 **24h 관찰 완료와 무결점 soak PASS는 다르며**, production/provider 부하는 미검증이다.
 
 ## Live Integration / Watch / Cloudflare
@@ -161,6 +165,8 @@ Watch browser/public route 실제 smoke는 모두 NOT RUN. 최소 visible action
 사용자 선택 origin은 **`https://watch.lgw323.com`**. 제시 경로는 existing Cloudflare tunnel →
 `http://127.0.0.1:9000`; signed control 9001과 health 9010/9011은 public 금지.
 hostname 선택은 기록했고 DNS/public route 생성·변경은 10B final approval까지 실행하지 않는다.
+2026-09-19 read-only DNS 조회에서 해당 이름의 A/AAAA 응답이 이미 존재함을 확인했다.
+이 결과만으로 기존 Cloudflare tunnel/origin routing이 올바르다고 판단하지 않으며 dashboard route 검토가 남는다.
 
 ## Backup / Off-host Status
 
@@ -212,7 +218,7 @@ Pi previous immutable releases와 staging DB/config는 유지했다. code-only r
 없다고 확인했다. 기존 active queue/voice channel/재생 위치는 미이전이며 synthetic snapshot을 대신 사용하지 않는다.
 
 남은 위험/작업: 실제 API 인증/resources/permissions, 새 release pair activation, live providers 및 command UI,
-off-host durability, 24h 중 probe failures/HTTP 누락의 상세 원인, 로그 수정의 Pi 재검증,
+off-host durability, 24h 중 probe failures/HTTP 누락의 상세 원인, 로그 수정의 서비스 적용·재관찰 및 새 pin 승인,
 power-loss와 실부하 capacity, production RPO/RTO,
 미이전 V1 config overrides/log admin UI, maintenance/rollback operator 확인. 준비된 copy 성공은 이를 닫지 않는다.
 V1 code/scripts/env/legacy compatibility/history/backups/releases를 보존한다. PHASE 11은 별도 지시 전 시작하지 않는다.

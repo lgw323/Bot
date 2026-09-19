@@ -30,6 +30,11 @@ Pi 복구 결과와 새 encrypted backup identity는 [migration contract](produc
 placeholder가 남은 명령은 실행하지 않는다. 변경 가능한 변수들은 final approval sheet에 정확한 값과 digest로
 고정한다. 최종 gate 전 이 문서를 단순 copy/paste 실행 스크립트로 취급하지 않는다.
 
+관리자 작업은 operator가 SSH에서 직접 interactive sudo로 인증한다. passwordless sudo를 설정하거나
+비밀번호를 저장하지 않는다. 2026-09-19 사용자 요청에 따라 입력 뒤 “완료” 답변을 별도로 요구하지 않고,
+해당 commit의 안전한 progress 파일과 systemd 상태로 시작·완료를 확인한다. 진행 파일의 commit이 다르면
+이전 run 성공을 새 작업 성공으로 취급하지 않는다.
+
 ## Gate A: 전환 전에 마칠 준비
 
 1. 원본 시간 관계 확인은 완료했다. 전환 당일 V1이 그 뒤 재실행되지 않았는지 다시 확인한다.
@@ -43,8 +48,8 @@ placeholder가 남은 명령은 실행하지 않는다. 변경 가능한 변수�
 4. PHASE 10 commit을 sealed ARM64 wheels로 별도 immutable release에 build하고 manifest/inventory/tests를
    검증한다. 필요하면 synthetic pair로 Phase 9 방식의 activation/rollback을 재검증한다. production config를
    넣고 일반 deploy pipeline을 실행하면 조기 login이 일어나므로 그렇게 사용하지 않는다.
-   로그 수정 로컬 commit `63c77229d1a6e76a0edbc7d9249a8fceb5b0938c`는 별도 ARM64 검증 대기이며
-   승인된 production pin/published ref를 대체하지 않았다. 검증과 후속 pin 승인 전 최종 전환 sheet는 동결하지 않는다.
+   로그 수정 로컬 commit `63c77229d1a6e76a0edbc7d9249a8fceb5b0938c`는 별도 ARM64 build/운영 테스트/세 scope 검증을 통과했다.
+   release `r-63c77229d1a6e76a-d026a47ed4f4b38a`는 아직 승인된 production pin/published ref를 대체하지 않았다. 검증과 후속 pin 승인 전 최종 전환 sheet는 동결하지 않는다.
 5. 첫 synthetic observer의 24h/1,438개 samples를 회수했다. restart 0, backup RPO 초과 0이지만
    DB probe 실패 +12/+17, 9010 health 누락 1회, disk free 약 0.96GB 감소를 관찰했고 과도한 주기 작업 정상 로그가 기여함을 확인했다.
    throttling 1,438개 표본은 모두 0, health 누락은 status 미수집 HTTPError 1회다. [관찰 결과](phase-10-report.md)의 한계를 최종 승인 화면에 명시하고
@@ -126,7 +131,8 @@ placeholder가 남은 명령은 실행하지 않는다. 변경 가능한 변수�
     활성화한다. 초기 RPO는 <=6h, 자동 backup retention은 검증된 8개. 준비한 pre-cutover evidence는
     자동 retention 대상 밖에 최소 7일, PHASE 11 승인까지 보존한다. update/manual은 승인된 policy만 활성화한다.
 13. 기존 Cloudflare connector를 유지하며 **승인된** `watch.lgw323.com` route만 public loopback 9000에
-    연결한다. 기존 DNS/route가 있으면 내용을 검토하고 충돌 시 멈춘다. 9001/9010/9011은 공개 금지.
+    연결한다. 2026-09-19 DNS 조회에서 A/AAAA가 이미 존재했으므로 기존 tunnel/origin route를
+    먼저 읽어 검토하고 충돌 시 멈춘다. DNS 응답만으로 올바른 route라고 가정하지 않는다. 9001/9010/9011은 공개 금지.
     HTTPS/WSS/Origin/browser create-connect-close를 확인한다.
 14. post-cutover observation/audit와 운영자 확인 뒤 success 또는 rollback/stopped-reconciliation을 선언한다.
     실제 downtime은 첫 maintenance/서비스 중단부터 필수 smoke 성공까지 실측한다.
