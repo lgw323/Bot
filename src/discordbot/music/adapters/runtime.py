@@ -51,6 +51,8 @@ class MusicResource:
         self.actors: dict[int, MusicActor] = {}
         self.messages: dict[int, Any] = {}
         self.dashboard_views: dict[int, Any] = {}
+        self._dashboard_locks = {guild: asyncio.Lock() for guild in channels}
+        self._dashboard_revisions: dict[int, int] = {}
         self._cleaned_sessions: dict[int, str | None] = {}
         self._lock = asyncio.Lock()
         self._dirty: dict[int, Any] = {}
@@ -105,6 +107,16 @@ class MusicResource:
                 self._refresh_task = self._spawn("dashboard-checkpoint", self._refresh)
 
     async def dashboard(self, guild: int, state: Any) -> None:
+        async with self._dashboard_locks[guild]:
+            actor = self.actors.get(guild)
+            if actor is not None:
+                state = actor.projection()
+            if state.revision < self._dashboard_revisions.get(guild, -1):
+                return
+            await self._publish_dashboard(guild, state)
+            self._dashboard_revisions[guild] = state.revision
+
+    async def _publish_dashboard(self, guild: int, state: Any) -> None:
         channel = self.bot.get_channel(self.channels[guild])
         if channel is None or channel.guild.id != guild:
             raise ConflictError("Music dashboard channel unavailable")

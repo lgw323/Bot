@@ -16,6 +16,8 @@
 ## [Unreleased]
 
 ### Fixed
+- Music 일시정지 버튼은 클릭을 처리하는 시점의 actor 상태에서 한 번만 전환합니다.
+  오래된 View와 지연된 화면 편집이 실제 음성의 일시정지·재개 표시를 뒤집지 않도록 합니다.
 - DB health probe는 고정 SELECT-1 작업의 단계·SQLite 숫자 코드·허용된 오류 분류·연결 정리 결과만 기록합니다.
   재현된 configure-stage SQLITE_BUSY(5) 중 연결 정리가 확인된 1건만 bounded transient로 분리하며,
   15초 내 정기 probe 2회 성공을 요구합니다. 60초 내 재발·LOCKED·일반 DB 오류·정리 실패는 HARD STOP을

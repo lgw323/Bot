@@ -413,9 +413,11 @@ class MusicActor:
                 self._queue.append(previous)
             self._advance()
             return True
-        elif op in {"pause", "resume"}:
+        elif op in {"pause", "resume", "toggle_pause"}:
             if p.get("session_id") != self._session:
                 raise ConflictError("stale playback control")
+            if op == "toggle_pause":
+                op = "resume" if self._status == "paused" else "pause"
             if op == "pause" and self._status == "playing":
                 self._offset = self.projection().elapsed
                 await self.audio.pause()

@@ -252,7 +252,9 @@ class MusicController:
                 await responder.modal(self.own(build_search_modal(self)))
             elif action == "pause":
                 await responder.defer(ephemeral=False, thinking=False)
-                await actor.ask("resume" if state.status == "paused" else "pause", session_id=state.session_id)
+                # A displayed View remains dispatchable during HTTP edits. Decide
+                # the toggle inside the actor, not from that captured projection.
+                await actor.ask("toggle_pause", session_id=state.session_id)
             elif action == "loop":
                 await responder.defer(ephemeral=False, thinking=False)
                 await actor.ask("loop")
