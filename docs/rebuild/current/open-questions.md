@@ -148,7 +148,8 @@
 
 앞의 미완료 준비 항목은 후속 작업으로 닫았다.63 synthetic pair300.171초 관찰, failure logging 주입,
 Cloudflare current origin read-only 검토, 별도 install config digest와 exact activation/promotion/rollback sheet 완료.
-**10A COMPLETE / 10B NOT AUTHORIZED**이며 다음 결정은 최종 production cutover 승인이다.
+당시 상태는 **10A COMPLETE / 10B NOT AUTHORIZED**였다. 이후 승인된10B 실제 Music/Watch smoke가 실패해 서비스를 중지했으며
+최신 결과는 [PHASE10 보고서](../phases/phase-10/phase-10-report.md)의 execution status를 따른다.
 과거 probe/HTTP 오류 원인, live API/provider/권한, 장기용량/RPO/RTO 위험은
 [최종 보고서](../phases/phase-10/phase-10-report.md)에 남겨 승인 자료에 공개한다.
 원인을 모르는 과거 실패를 해결됐다고 주장하지 않는다. 기존off-host 복구검증은 반복하지 않았다.

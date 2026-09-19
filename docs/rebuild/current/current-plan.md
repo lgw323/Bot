@@ -2,6 +2,17 @@
 
 Updated: 2026-09-19
 
+## PHASE 10B execution override
+
+**10B FAILED LIVE SMOKE / SERVICES STOPPED.** 아래 PHASE8–10A 기록은 준비 단계의 이력이다.
+2026-09-19 사용자 최종 승인과 writer 최신성 재확인 후 승인된63c7722/schema5 candidate를
+production canonical로 승격했다. 양쪽 실제 서비스는24.827초 내 동일 release ready/live를 통과했다.
+사용자가 기존 Cloudflare Watch origin을127.0.0.1:9000으로 변경했고 공개 HTTPS ready를 확인했다.
+Engagement/Summary는 사용자 PASS, Music/즐겨찾기/Watch는 실패, TTS는 미검증이다.
+05:09:43Z pair를 정상 중지했으며 production backup/restore/timer 활성화는 실행하지 않았다.
+현재 상태·실패·실측 시간은 [PHASE10 실행 보고서](../phases/phase-10/phase-10-report.md)의 첫 절이 우선한다.
+10B 완료가 아니며 auto-update/manual polling은 비활성화 유지한다. Audit0/PHASE11은 별도 지시 전 금지다.
+
 ## Current state
 
 - PHASE 7 완료 commit `e0449c2`와 `592 passed, 0 xfailed` 기준선을 재확인했다.
@@ -73,7 +84,7 @@ PHASE11 V1 제거는 별도 지시 전 시작하지 않는다.
 
 ## Active phase
 
-- [PHASE 10A readiness report — COMPLETE / 10B 승인 대기](../phases/phase-10/phase-10-report.md)
+- [PHASE 10 report — 10A COMPLETE / 10B live 실패·정지](../phases/phase-10/phase-10-report.md)
 - [Production migration contract](../phases/phase-10/production-migration-contract.md)
 - [한 번 실행하는 config setup](../phases/phase-10/config-migration-guide.md)
 - [Cutover gate/runbook](../phases/phase-10/cutover-runbook.md)

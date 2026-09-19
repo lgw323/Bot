@@ -275,6 +275,10 @@ Historical rows above remain unchanged. Actual host evidence and its limits are 
 
 ## PHASE 10A readiness overlay
 
+아래 표는10A 종료 시점의 증거다. 이후10B는 명시적으로 승인되어 production promotion/first ready와
+사용자의 Cloudflare origin 변경까지 실행했다. 실제 기능·backup·timer 등의 최신 검증 상태는
+[PHASE10 실행 보고서](../phases/phase-10/phase-10-report.md)의 첫 절을 따른다.
+
 | Scope | Evidence | Limit |
 | --- | --- | --- |
 | Copy-only production migration | `test_production_candidate.py`; actual count/checksum/old-reader rehearsal | No canonical promotion; tests use synthetic tmp DB only |

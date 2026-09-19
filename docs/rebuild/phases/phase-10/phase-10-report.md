@@ -1,4 +1,115 @@
-# PHASE 10 Report — 10A Production Readiness
+# PHASE 10 Report — Production Cutover
+
+## PHASE 10B result — FAILED LIVE SMOKE / SERVICES STOPPED
+
+2026-09-19 사용자 명시적 승인으로10B를 실행했으나 실제 Music/Watch smoke가 실패했다.
+**PHASE 10 INCOMPLETE / 10B FAILED LIVE SMOKE**다. 두 production 서비스는05:09:43Z 정상 중지됐다.
+아래10A 완료 보고는 승인 전 증거로 보존하며, 현재 실행 상태는 이 절을 우선한다.
+
+### Actual live results and remaining gate
+
+| 검증 대상 | 실제 결과 |
+| --- | --- |
+| Discord Gateway / command sync | 양쪽 ready 통과. Discord ready 조건에 Gateway ready 및 완료된 command sync 포함. 아래 실제 명령 응답도 사용자 확인 |
+| Engagement | 사용자 `/내정보`·`/랭킹` PASS |
+| Summary / Gemini | 사용자 최소 범위 `/요약` PASS |
+| Music / Voice / provider | **FAIL**: 노래 추가 후 계속 로딩되다가 종료됨. 정상 재생·정지·voice lifecycle은 미확인 |
+| Favorites / volume | **FAIL**: 기존 즐겨찾기 조회 불가. 데이터 소실 여부나 원인은 미확정; volume 별도 결과 미확인 |
+| TTS | Music 실패로 사용자가 건너뜀. **NOT TESTED** |
+| Watch / public HTTPS-WSS | HTTPS/health 및 route는 PASS. **기능 FAIL**: 새로고침 문제, 실시간 사용자 표시 누락, YouTube 탭에서 돌아오면 연결 끊김. WSS 전체 정상·동기화 PASS로 간주하지 않음 |
+| Watch private admin | 사용자 세션 강제종료 성공 확인. 나머지 초대/정리 전체 경로는 미확정 |
+| Birthday | production start에서 scheduler 연결 코드 경로 확인. 독립 scheduler readiness 측정 미확정; 테스트 생일/XP 삽입 없음 |
+| Production backup / off-host / isolated restore | 주요 live smoke 실패로 **NOT RUN**.10A 복구 증거는 보존하되 이번 실제 writes의 백업 성공으로 대체하지 않음 |
+| Timer / boot | 이번 production boot enable/backup timer 활성화 **NOT RUN**, update/manual/backup timer inactive 유지 |
+| Final Audit gate | Audit0–10/통합 Audit 및 PHASE11 **NOT STARTED**. V1/env/원본/backup/release/history 삭제 없음 |
+
+Failure matrix에 따라05:09:42Z 감시를 먼저 중지하고 두 서비스를 정지했다.05:09:43Z 관련6개 service의
+MainPID0/ActiveState inactive/Result success, 두 production unit NRestarts0을 확인했다.
+05:11:16Z operation lock 아래 latest data/state/cache/backups/config/audit 전체를
+`/var/lib/discordbot/phase10-precutover-63c7722/failed-attempt/`에 보존했다(root:root0700).
+Canonical과 preserved DB SHA256은 모두 `52d2ef8813e72e0ab791d359c81a514f11622a1ca86a7165e2a211b1826cc1af`다.
+Graceful stop 후 WAL/SHM은 없었으며 agent가 삭제하지 않았다. Canonical은 그대로 남겨 두었다.
+Candidate8d17018f…와 hash가 달라졌으므로 startup/smoke 이후 writes를 보존해야 한다.
+보존본 자체의 추가 integrity/application 검사와 변경 의미 분석은 아직 하지 않았다.
+보존 시 production backup directory는 첫 backup 전 상태이며 이번 writes를 담은 off-host 복구본은 없다.
+기능 실패의 원인은 아직 확정하지 않았다. 안전한 journal 분류에서는 Watch 단발 database_unavailable1회 외
+원인을 결정할 예외 종류/코드 위치를 확보하지 못했다. 오류 문구를 삼키는 UI 경로가 있어 로그 부재는 정상 증거가 아니다.
+원본 candidate 자동 replay, schema down-migration, V1 시작, synthetic fallback, 운영 code 교체는 실행하지 않았다.
+Cloudflare origin은 사용자가 변경한9000 그대로이며 두 서비스 정지로 public Watch는 현재 서비스되지 않는다.
+새 운영 commit을 적용하려면 수정·검증 후 exact commit/release에 대한 별도 승인이 필요하다.
+
+### Maintenance timeline and bounded observation
+
+- Maintenance start04:44:21Z → first ready04:55:24.770327Z: **11분3.770초**.
+- First full successful live smoke: **없음**. Maintenance success end: **없음**.
+- 실패 후 안전 정지05:09:43Z까지 작업 구간: **25분22초**. 실제 운영 성공 downtime으로 보고하지 않는다.
+  V1은 이 작업 이전부터 정지했으므로 기존 V1 중단 시간까지 측정한 수치가 아니다.
+- 관찰04:59:45.637128Z–05:09:40.185469Z, **594.548초/114 samples**, 모든 표본 ready, unexpected restart0.
+  계획600초를 채우기 전에 실제 기능 실패 때문에 operator가 observer를 중지했다.
+  Summary JSON의 `observing`은 마지막 sample 상태이며 현재 worker가 실행 중이라는 뜻이 아니다.
+- Discord RSS82,148–85,736KiB/FD9–15/threads6–9, Watch RSS68,624–70,224KiB/FD9–13/threads4–5.
+  실사용 부하가 섞인 짧은 관찰이며 증가만으로 누수 여부를 확정하지 않는다.
+- 온도55.65–60.05°C, throttling samples0, disk free delta-692,224bytes.
+  Watch probe failed1→1/Discord0→0; 최초 Watch 오류는 관찰 시작 전04:59:35Z였다.
+  resource/ready 통과가 사용자 기능 성공을 보장하지 않았으며 post-cutover 안정성 PASS로 사용하지 않는다.
+
+### Execution and preservation evidence
+
+- Repository 문서/계약/Git 재확인: HEAD `53c79e7`, 시작 worktree clean. 운영 pin은63c7722 그대로다.
+- Writer 최종 확인: 사용자가 이후에도 V1 실행 없고 보존본이 최신이며 다른 token owner 없음을 재확인했다.
+  PC Python process0, Pi는 문서의 synthetic PID43017/43018 외 새로운 bot writer가 없었다.
+- 04:39:45Z precheck PASS: authoritative 원본 hash, Pi candidate hash, source/prepared/staging config hash,
+  기존 Pi encrypted recovery artifact hash,63c7722 release manifest/commit/schema identity 일치.
+  source 원본은 hash만 확인했으며 SQLite로 열지 않았다.
+- 단계별 실행: exact 명령표의 한 block씩 별도 SSH 명령으로 실행/검증한다. 전체 cutover 자동 실행 도구는 만들지 않는다.
+  사전 검사 evidence는 `/var/tmp/phase10b-00-precheck.txt` (`step_exit=0`).
+- **실제 production DB 승격 및 Discord/Watch 첫 시작 완료.** 아래 단계는 각각 결과를 확인한 뒤 다음 단계를 실행했다.
+- Maintenance 시작 **2026-09-19T04:44:21Z**, 전체 관련 서비스 중지 확인04:44:23Z.
+  Update/manual/backup timer와 synthetic peer는 중지·비활성화했다.
+- 04:45:20Z synthetic data/state/cache/backups/config/marker 보존 완료:
+  `/var/lib/discordbot/phase10-precutover-63c7722` (root:root2700,04:48:07Z에0700 확정).
+  두 mode 모두 root 외 접근 금지다. Audit/operation lock 보존, WAL/SHM 삭제 없음.
+- 04:48:07Z production config digest `41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40`
+  설치 및5개 secret·전용 backup SSH credential·backup drop-in 설치 완료. Source candidate는 그대로 보존했다.
+  Config root:discordbot0640, secret source root:root0600/부모0700, systemd-analyze verify PASS.
+- 04:49:01Z Discord/Watch/Operations의 설치 경로 scoped preflight3개 PASS. 네트워크 login/DB open 없이
+  형식·정확한 mount 이름·readonly mount 확인. Runtime/operations UID의 unmounted source 접근 거부 확인.
+- 04:51:22Z exact63 stopped activation PASS, 모든 writer 정지 유지.
+- 04:52:32Z 승인된 candidate → canonical `/var/lib/discordbot/data/bot_database.db` promotion PASS.
+  직후 SHA256 `8d17018f1927d91b9ea633700471a6cda7388633b175a560be36f4b904ae4e5b`, schema5와
+  runtime UID readonly application validation PASS. Staging marker는 private preservation으로 옮겼다.
+- First start **04:54:59.943605Z**, both ready/live **04:55:24.770327Z** (**24.827초**,70초 내).
+  Exact release `r-63c77229d1a6e76a-d026a47ed4f4b38a`, Discord PID47277/Watch PID47279, NRestarts0.
+  단계 전용 guard가70초 deadline과 restart/identity를 검사했으며 전체 전환 자동화는 아니다.
+  Production startup부터 실제 writes/Discord 외부 효과가 발생할 수 있으므로 원본 candidate 자동 replay 금지.
+- Cloudflare는 **사용자가 직접 변경 완료**를 확인했다. Connector의 최신 config event에서도
+  기존 `watch.lgw323.com` route1개 → `http://127.0.0.1:9000`, internal9001/9010/9011 route0 확인.
+  공개 HTTPS TLS 검증0(성공), HTTP200, `/health/ready`의 `ready=true` 확인.
+  Pi listener9000/9001/9010/9011은 모두127.0.0.1이었다. 이후 실제 Watch 기능 실패로 서비스를 중지했다.
+- 사용자 live smoke 결과는 위 표에 기록했다. Music/Watch 실패로 후속 성공 절차를 중단했다.
+- 04:59:45.637128Z부터10분 한정 maintenance 감시 시작. 실제 production 서비스 재시작/identity 불일치는 즉시,
+ 5초 간격3회 연속 ready 실패는 pair stop. 이 감시는 post-cutover 완료 후 관찰을 대체하지 않는다.
+- 04:59:35.433430Z Watch `database.probe_failed` / `database_unavailable`1회 기록. 후속 ready 회복,
+  05:01:15Z까지18 samples/ready failure0. SQLite busy/I/O 등 원인은 미확정이며 corruption으로 단정하지 않는다.
+- **Production backup / off-host publication / isolated restore / boot enable / backup timer는 아직 NOT RUN.**
+  최초 production backup 전 backup_age=-1은 예상 초기값이며 RPO PASS 증거가 아니다.
+- 성공한 maintenance end/full live smoke completion은 없다. V1의 기존 정지 기간과 이번 전환 시간은 구분한다.
+- 실행 중 오류2개는 production 설치 전 해결했다: (1) Windows CRLF로 `set -euo pipefail` 실패;
+  shell2행에서 종료되어 side effect 없음을 확인하고 LF 전송으로 수정. (2) preservation 부모의 setgid 상속으로
+  mode2700 검사 실패; 설치 전 정지, 별도 빈 경로에서 GNU chmod 동작 확인 후 `chmod g-s`로0700 확정했다.
+  실패 결과를 성공으로 덮어쓰지 않고 `03-install` 실패와 `03b-install` 성공을 별도 보존했다.
+- Evidence: Pi `/var/tmp/phase10b-00-precheck.txt`~`phase10b-07-start.txt` 단계별 결과,
+  `phase10b-start-gate-result.json`, `phase10b-live-monitor/`의 allowlisted 측정치. Secret/DB 내용/raw log는 보고하지 않는다.
+  실패 중지/보존은 `phase10b-09-failure-stop.txt`, `phase10b-10-preserve-failure.txt` (`step_exit=0`).
+- V1/source/env/schema0 원본/기존 encrypted backups/releases/history 보존. 운영 code pin 변경·새 push 없음.
+- 명령표의 LF 전송/보존권한 교정은 local docs commit `bca8df9`로 기록했다. Runtime/source63은 변경하지 않았다.
+- 이번 tracked 변경은 운영 결과 문서다. Staged diff/whitespace 검사를 수행했고 application 전체 test는
+  다시 실행하지 않았다. 실제 DB를 test fixture로 사용하지 않았다. 이전10A의746 passed 증거는 아래에 보존한다.
+- 사용자에게 즐겨찾기의 정확한 응답 유형, 음악 입력 방식, Watch 기기/브라우저를 요청했다.
+  이 정보와 격리 재현으로 원인을 좁혀야 하며 UI 실패를 token/Cloudflare/데이터 손실로 추측하지 않는다.
+- 종료 후 별도 Final Audit(Audit0–10 및 통합 Audit) 지시를 기다린다. Audit0/PHASE11 자동 시작 금지.
+
+## Preserved PHASE 10A completion evidence
 
 Updated: 2026-09-19. **10A COMPLETE / 10B NOT AUTHORIZED.**
 준비 단계의 완료이며 PHASE 10 전체 완료나 production 성공을 뜻하지 않는다.

@@ -1,8 +1,9 @@
 # DiscordBot V2 Rebuild Documentation
 
-현재 상태는 **PHASE 10A COMPLETE / 10B NOT AUTHORIZED**이다. Production 원본을
-보존한 별도 copy migration과 격리 backup/restore는 검증했으며 실제 production 전환은 실행하지 않았다.
-완료 증거와 남은 production 위험은 [PHASE 10A 보고서](phases/phase-10/phase-10-report.md)를 따른다.
+현재 상태는 **PHASE 10A COMPLETE / 10B FAILED LIVE SMOKE — 서비스 정지**다. Production 원본을
+보존한 candidate를 production DB로 승격했고 승인된63c7722의 실제 Discord/Watch 첫 ready 검증을 통과했다.
+실제 Music/Watch 기능 실패로 중지했으며 첫 production backup/timer는 활성화하지 않았다. PHASE10 완료가 아니다.
+실행 증거와 남은 production 위험은 [PHASE 10 보고서](phases/phase-10/phase-10-report.md)를 따른다.
 
 | 위치 | 책임 | 변경 정책 |
 | --- | --- | --- |

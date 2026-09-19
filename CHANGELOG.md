@@ -15,6 +15,9 @@
   readiness 기준은 유지하며 승인된63c7722를 Pi synthetic pair에서 검증했습니다. Production 전환은 별도 승인 대상입니다.
 
 ### Added
+- 사용자 승인에 따른 PHASE 10B 실제 DB 승격, production 첫 ready, 수동 Cloudflare 전환의 단계별
+  실행 기록을 추가했습니다. Music/Watch 실제 smoke 실패로 서비스를 정지했으며 production backup/timer는
+  활성화하지 않았습니다. Windows shell 전달의 LF와 private 보존 디렉터리 setgid 제거 절차를 명시했습니다.
 - PHASE 10A의 수정본 synthetic 재관찰, 민감값 없는 connector route 조회, 별도 최종 config 준비와
   exact cutover/rollback 명령표를 추가했습니다. 10A 준비 완료이며10B production 전환은 미승인입니다.
 - PHASE 10A에 private Bot-Data 전용 SSH key 준비와 암호화 artifact의 일반 Git push/read-back/격리 복구
