@@ -37,3 +37,11 @@ def test_retry_export_requires_exact_commit_and_allows_test_support():
         verifier().safe_archive(archive,'a'*40)
         with pytest.raises(ValueError,match='identity'):
             verifier().safe_archive(archive,'b'*40)
+
+
+def test_retry_preflight_uses_installed_production_credential_sources():
+    sources = verifier().CREDENTIAL_SOURCES
+    assert sources['backup_ssh_key'].as_posix()=='/etc/discordbot/backup-ssh/id_ed25519'
+    assert sources['known_hosts'].as_posix()=='/etc/discordbot/backup-ssh/known_hosts'
+    for name in ('db_key','discord_token','gemini_key','control_key','capability_key'):
+        assert sources[name].as_posix()=='/etc/discordbot/secrets/'+name

@@ -29,6 +29,9 @@ CONFIG_SHA = '41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40'
 SCOPES = {'discord-bot': ('discord_token', 'gemini_key', 'control_key'),
           'watch-web': ('capability_key', 'control_key'),
           'operations': ('db_key', 'backup_ssh_key', 'known_hosts')}
+CREDENTIAL_SOURCES = {name:CONFIG.parent/'secrets'/name for names in SCOPES.values() for name in names}
+CREDENTIAL_SOURCES.update(backup_ssh_key=CONFIG.parent/'backup-ssh/id_ed25519',
+                          known_hosts=CONFIG.parent/'backup-ssh/known_hosts')
 SOURCE_NAMES = {'src', 'tests', 'deploy', 'docs', 'scripts', 'cogs', 'database_manager.py',
                 'main_bot.py', 'pyproject.toml', 'requirements.txt', 'requirements-dev.txt',
                 'README.md', 'AGENTS.md', 'CHANGELOG.md', '.gitignore', 'envtemplate.txt'}
@@ -133,7 +136,7 @@ def credential_worker(run: Path, service: str, release: str) -> None:
     spec.loader.exec_module(module)
     credentials = Path(os.environ['CREDENTIALS_DIRECTORY'])
     result = module.check(CONFIG, credentials, service, True)
-    if any(os.access(CONFIG.parent/'secrets'/name, os.R_OK) for names in SCOPES.values() for name in names):
+    if any(os.access(path, os.R_OK) for path in CREDENTIAL_SOURCES.values()):
         raise ValueError('Source credential readable outside mount')
     result.update(direct_source_access='denied', effective_uid=os.geteuid())
     print(json.dumps(result))
@@ -191,7 +194,7 @@ def parent(run: Path, commit: str, checksum: str) -> int:
                 command = base+['--unit=discordbot-phase10-retry-'+service,'-p','RuntimeMaxSec=30',
                     '-p','User='+('discordbot-deploy' if service=='operations' else 'discordbot')]
                 for name in names:
-                    command += ['-p','LoadCredential='+name+':'+str(CONFIG.parent/'secrets'/name)]
+                    command += ['-p','LoadCredential='+name+':'+str(CREDENTIAL_SOURCES[name])]
                 command += [str(Path('/opt/discordbot/releases')/release/'.venv/bin/python'),'-I','-B',str(helper),
                             '--worker',service,'--release',release,'--commit',commit,'--run',str(run)]
                 evidence['credentials'][service] = json.loads(checked(command,45))
