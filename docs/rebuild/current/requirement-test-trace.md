@@ -278,8 +278,11 @@ Historical rows above remain unchanged. Actual host evidence and its limits are 
 | Scope | Evidence | Limit |
 | --- | --- | --- |
 | Copy-only production migration | `test_production_candidate.py`; actual count/checksum/old-reader rehearsal | No canonical promotion; tests use synthetic tmp DB only |
-| Recovery | Actual schema 0 preservation and schema 5 candidate encrypted restore | PC private evidence; Pi production archive/key/mount and off-host still pending |
+| Recovery | Actual PC schema 0/5 encrypted restore; Pi schema 5 decrypt/rebackup/restore/runtime UID open-close; actual Bot-Data upload/download/isolated decrypt | Isolated paths only; production timer cadence and sustained remote RPO remain unverified |
 | Production startup gate | `test_production_configuration.py` | Placeholder/basic format only; no live token/resource authentication |
-| Direct operator config/secrets | `test_production_setup.py`, `test_production_tools.py`; Pi synthetic owner/mode/no-overwrite drill | Korean one-command wizard delivered; operator production input/mount probe not run |
-| Longer observation | `test_staging_observation.py`; finite allowlisted observer | Actual new-path samples not yet verified; 24h completion not claimed |
-| Production transition | Reviewed [cutover runbook](../phases/phase-10/cutover-runbook.md) | 10B final approval and live smoke still required |
+| Direct operator config/secrets | `test_production_setup.py`, `test_production_tools.py`; operator input and Pi three-scope no-network mount/owner/mode probe PASS | Basic format/scope only; no API login or guild/channel permission validation |
+| ARM64 candidate | `test_candidate_verification.py`; offline build/tests/manifest for `r-672694d3f0c5418e-d026a47ed4f4b38a` PASS | Candidate not activated; running synthetic pair remains on previous release |
+| Off-host opt-in | `test_git_backup.py`, `test_offhost_wiring.py`; exact Bot-Data/db-backup, no force push, verified read-back, failure preserves previous latest | `d54ff36` ARM64 runtime backup/upload/download/decrypt/semantic PASS; production still inactive; Git history is retained, not physically pruned |
+| Longer observation | `test_staging_observation.py`; actual 24h/1,438 samples, restarts/RPO exceeded 0 | DB failures +12/+17, health missing 1, disk free -955,363,328 bytes with high periodic-task journal volume; all 1,438 throttling samples zero; synthetic workload only |
+| Production transition | `test_stopped_activation.py`; explicit approval flag, stopped writers/timers, exact current/manifest/schema/lock guard; [cutover runbook](../phases/phase-10/cutover-runbook.md) | No actual activation; final release/config sheet, 10B approval and live smoke required |
+| Operational telemetry follow-up | `test_operational_telemetry.py`; metrics/history retained, periodic success omitted, failures remain; probe errors code-only; diagnostic output allowlisted | New code not activated on Pi; historical DB failure cause unresolved |

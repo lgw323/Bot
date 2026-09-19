@@ -114,7 +114,7 @@
 - Cloudflare public hostname/route와 off-host backup destination은 별도 선택이 필요하다.
   짧은 synthetic 관찰을 production capacity, 장기 soak나 production RPO/RTO 증명으로 보지 않는다.
 
-## PHASE 10A update (2026-09-16)
+## PHASE 10A update (2026-09-19)
 
 - Authoritative DB 확인 완료: operator가 preservation 이후 V1 실행 없으며 보존본이 최신이라고 확인했다.
   실제 copy migration/semantic/V1 reader와 schema 0/5 encrypted restore PASS. 원본 및 Pi canonical 보존.
@@ -122,10 +122,22 @@
   public DNS/route 실행은 10B 최종 승인 전 금지한다. 내부 9001/9010/9011 공개 없음.
 - Config UX는 한국어 single-command setup으로 확정했다. 기존 3개 secret은 hidden double-entry,
   Watch 키 2개는 자동 생성한다. 사용자에게 여러 파일 직접 편집을 요구하지 않는다.
-- 현재 blocker: 사용자 실제 candidate 입력, Pi scoped credential/backup restore 검증, final immutable release,
-  off-host destination 또는 명시적 local-only risk acceptance, approved source ref/update policy,
-  maintenance 및 V1 Music checkpoint 상태 확인. `.env` 자동 사용 금지.
-- 24h finite observer는 도구를 준비했지만 새 경로의 실제 samples는 미확인이다. 긴 soak PASS가 아니다.
-  기존 probe failure counter와 실제 long-run evidence의 한계는 [PHASE 10 report](../phases/phase-10/phase-10-report.md)에 남긴다.
+- 사용자 실제 candidate 입력과 세 scope credential mount/basic config/owner/mode 검증을 완료했다.
+  `r-672694d3f0c5418e-d026a47ed4f4b38a` ARM64 후보도 offline build/tests/manifest를 통과했고 activation은 안 했다.
+- Pi isolated production backup decrypt/재backup/재restore/runtime UID open-close PASS.
+  current release와 canonical inode 보존, stage `verified_not_promoted`; 실제 production timer는 미검증이다.
+- 현재 blocker: 로그 수정의 Pi 재검증과 최종 release/config/rollback command sheet,
+  maintenance와 관찰 이상 검토. `.env` 자동 사용 금지. d54ff36 publication/pin 및 자동 update 비활성화 정책은 승인됐다.
+  전체 Git history 검사 후 해당 commit만 일반 push 완료, main 보존. 후속 commit은 별도 수동 승인 대상이다.
+- 사용자는 private Bot-Data/db-backup을 off-host 목적지로 선택하고 별도 write deploy key 등록을 완료했다.
+  실제 upload/download/restore는 PASS다. opt-in runtime wiring과 stopped activation guard를 구현했고
+  Windows full strict는 d54ff36 기준 732 passed다. 해당 source ARM64 build/실제 runtime backup 검증도 PASS다.
+  기존 force push/history rewrite는 재사용하지 않으며 production auto-backup은 아직 활성화하지 않았다.
+- V1 Music checkpoint는 operator가 없음으로 확인했다. active queue/voice 위치는 미이전이며
+  기존 DB의 favorites/play counts/music settings 보존과 구분한다.
+- 첫 observer의 24h/1,438 samples를 회수했다. restart 0, backup RPO 초과 0. DB probe 실패 +12/+17,
+  health 누락은 HTTPError 1회이며 status는 미수집이다. throttling 표본은 모두 0이다.
+  disk free 약 0.96GB 감소 중 과도한 정상 lifecycle 로그의 기여를 확인했다. 로그 수정 및 DB 실패 재관찰은 남는다.
+  관찰 완료를 무결점 soak PASS로 해석하지 않는다. [PHASE 10 report](../phases/phase-10/phase-10-report.md)에 근거를 남긴다.
 - 전환 가능한 상태가 되기 전 최종 10B 승인 질문을 올리지 않는다. 승인 후에도 V1/호환성/backup/역사는
   보존하며 PHASE 11을 자동 시작하지 않는다.

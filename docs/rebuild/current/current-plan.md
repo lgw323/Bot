@@ -1,6 +1,6 @@
 # Current Rebuild Plan
 
-Updated: 2026-09-16
+Updated: 2026-09-19
 
 ## Current state
 
@@ -31,10 +31,22 @@ staging Discord/Gemini credential과 guild/channel/origin이
 PHASE 10A에서 사용자 확인을 받은 최신 preservation DB의 별도 copy에만 migration 1–5를 적용했다.
 실제 schema 0/5 encrypted backup 및 isolated restore와 old-reader/semantic 검증이 통과했다.
 원본은 보존했고 Pi canonical은 synthetic이다. `.env`는 사용하지 않는다.
-한국어 single-command setup을 Pi에 준비했으며 production config/secret은 사용자 직접 입력을 기다린다.
+한국어 single-command setup으로 사용자 직접 입력을 완료했고, 세 서비스의 no-network credential mount/
+owner/mode/basic config 검증이 통과했다. commit `672694d`의 ARM64 immutable 후보 release도 별도
+build/operations strict/manifest 검증을 통과했다. current는 이전 synthetic release를 유지한다.
 Watch origin은 `https://watch.lgw323.com`; DNS/route 생성은 아직 승인·실행하지 않았다.
-off-host destination 또는 explicit local-only risk acceptance, source ref/update policy, final ARM64 release,
-Pi credential/candidate 검증과 실제 longer soak가 남는다. [cutover runbook](../phases/phase-10/cutover-runbook.md)의
+Pi candidate decrypt/재backup/재restore/runtime UID open-close도 통과했다. 첫 observer의 실제 24h/1,438개
+samples를 회수했고 restart/RPO 초과는 0이었다. DB probe 실패 +12/+17, health 누락 1회와 약 0.96GB
+disk free 감소에 주기 작업의 과도한 정상 lifecycle journal이 기여함을 확인했다. throttling 1,438개 표본은
+모두 0, health 누락은 HTTPError 1회였으며 DB 실패 상세 원인은 미확정이다.
+off-host는 private Bot-Data/db-backup과 별도 write deploy key로 실제 upload/download/restore를 통과했다.
+`d54ff36`의 ARM64 build/격리 runtime backup 검증도 PASS다. 사용자 승인 후 전체 Git ancestry의 비밀값/파일
+검사를 거쳐 2026-09-19 exact commit을 origin/codex/rebuild-v2로 일반 push했다. main은 동일하다.
+초기 production pin은 d54ff36, 자동 update는 비활성화하며 이후 commit은 수동 승인한다.
+후속 로컬 수정은 주기 작업의 정상 journal을 줄이고 DB 실패의 safe error code를 추가한다.
+수정본 Pi 검증·재관찰 및 pin 변경 승인은 별도다. V1 music_state는 없어 active queue/voice 위치는 미이전이다.
+관찰 이상 검토와 최종 release/config/rollback sheet를 마친 뒤
+[cutover runbook](../phases/phase-10/cutover-runbook.md)의
 준비 항목을 끝내고 명시적 최종 승인을 받은 뒤에만 10B DB promotion/login/production timer를 실행한다.
 PHASE 11 V1 제거는 별도 지시 전 시작하지 않는다.
 
