@@ -399,12 +399,14 @@ def build_dashboard(controller: MusicController, state: Any, top: tuple = ()) ->
                 ("보관함", "💾", "favorites", 1), ("노래 검색", "🔎", "search", 1))
     for label, emoji, action, row in controls:
         button = discord.ui.Button(label=label, emoji=emoji, row=row, custom_id="music:"+action,
+                                   style=discord.ButtonStyle.primary if action == 'search' else discord.ButtonStyle.danger if action == 'leave' else discord.ButtonStyle.secondary,
                                    disabled=(action in {"pause", "skip", "favorite"} and state.current is None))
         async def callback(interaction, action=action): await controller.action(interaction, action, state)
         button.callback = callback
         view.add_item(button)
     for index, song in enumerate(top[:3]):
         button = discord.ui.Button(label=f"[{('🏆 1위','🥈 2위','🥉 3위')[index]}] {song.title[:40]} ({song.count}회)"[:80],
+                                   style=discord.ButtonStyle.primary,
                                    row=index+2, custom_id="music:top:"+str(index))
         async def callback(interaction, song=song): await controller.request(interaction, song.url)
         button.callback = callback
@@ -414,9 +416,31 @@ def build_dashboard(controller: MusicController, state: Any, top: tuple = ()) ->
 
 def dashboard_embed(state: Any) -> Any:
     import discord
-    title = state.current.title if state.current else "재생 중인 노래가 없습니다."
-    embed = discord.Embed(title="🎵 음악 플레이어", description=title[:4096], color=0x5865F2)
+    # Retain V1's jukebox appearance using only the actor's immutable projection.
     if state.current:
-        embed.add_field(name="재생 시간", value=f"{state.elapsed//60}:{state.elapsed%60:02d} / {state.current.duration//60}:{state.current.duration%60:02d}")
-    embed.add_field(name=f"대기열 ({len(state.queue)}곡)", value="\n".join(song.title[:100] for song in state.queue[:10]) or "비어있음", inline=False)
+        song = state.current
+        embed = discord.Embed(title='**[ 💽 오디오_데이터_로드_완료 ]**', color=0x00FFFF, url=song.url)
+        if song.thumbnail:
+            embed.set_thumbnail(url=song.thumbnail)
+        progress = min(1, max(0, state.elapsed / song.duration)) if song.duration else 0
+        filled = int(12 * progress)
+        bar = '█' * filled + '▒' * (12-filled)
+        status = {'playing':'▶ 출력 중...', 'paused':'⏸ 일시 중단됨', 'preparing':'⏳ 준비 중...',
+                  'starting':'⏳ 준비 중...', 'retry':'⏳ 다시 준비 중...', 'disconnected':'🔌 연결 복구 중...',
+                  'tts':'🔊 음성 안내 중...', 'tts_starting':'🔊 음성 안내 준비 중...'}.get(state.status,'⏳ 대기 중...')
+        def label(value: str, length: int) -> str:
+            clean = value.replace('`', 'ˋ').replace('\n',' ').replace('\r',' ')
+            return clean[:length]+('...' if len(clean)>length else '')
+        embed.description = (f'```yaml\n제  목 : {label(song.title,25)}\n'
+            f'아티스트 : {label(song.uploader or "알 수 없는 아티스트",20)}\n상  태 : {status}\n'
+            f'버  퍼 : [{bar}] {int(progress*100)}%\n'
+            f'시  간 : {state.elapsed//60:02d}:{state.elapsed%60:02d} / {song.duration//60:02d}:{song.duration%60:02d}\n```')
+    else:
+        embed = discord.Embed(title='**[ 💤 시스템 대기 모드 ]**', color=0x36393F,
+            description='```\n대기열이 비어있습니다.\n/재생 또는 [보관함]으로 노래를 추가해 주세요.\n```')
+    loop = ('➡️ 반복 없음','🔂 한 곡 반복','🔁 전체 반복')[state.loop.value]
+    next_song = state.queue[0].title if state.queue else '없음'
+    next_song = next_song[:20]+('...' if len(next_song)>20 else '')
+    embed.set_footer(text=f'🔉 볼륨: {int(state.volume*100)}% | {loop} | 🤖 자동재생 {"ON" if state.autoplay else "OFF"}\n'
+                          f'다음 트랙: {next_song} | 대기열 {len(state.queue)}곡')
     return embed
