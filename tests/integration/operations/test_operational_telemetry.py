@@ -54,9 +54,9 @@ async def test_periodic_success_keeps_metrics_and_history_without_journal_churn(
 
 
 @pytest.mark.asyncio
-async def test_probe_failure_emits_safe_code_and_can_recover(monkeypatch):
+async def test_generic_probe_failure_emits_safe_code_and_latches_readiness(monkeypatch):
     runtime = ProcessRuntime(config=PlatformConfig(ServiceKind.WATCH_WEB, Environment.TEST, "synthetic"))
-    database = SimpleNamespace(read=AsyncMock(side_effect=DatabaseUnavailableError("private DB path", context={"path": "private"})))
+    database = SimpleNamespace(probe=AsyncMock(side_effect=DatabaseUnavailableError("private DB path", context={"path": "private"})))
     factories = []
     runtime.supervisor = SimpleNamespace(start=lambda spec, factory: factories.append(factory) or asyncio.get_running_loop().create_future())
     probe = Probe(database, runtime)
@@ -67,10 +67,10 @@ async def test_probe_failure_emits_safe_code_and_can_recover(monkeypatch):
         assert not probe.ready()
         events = runtime.telemetry_buffer.drain()
         assert len(events) == 1 and events[0].event == "database.probe_failed"
-        assert events[0].fields == {"error_code": "database_unavailable"}
-        database.read.side_effect = None
+        assert events[0].fields == {"error_code": "database_unavailable", "operation": "select1_probe", "probe_disposition": "hard"}
+        database.probe.side_effect = None
         await factories[0]()
-        assert probe.ready()
+        assert not probe.ready()  # A safety failure remains latched; no automatic recovery.
         assert not runtime.telemetry_buffer.drain()
     finally:
         await runtime.executor.close(grace_seconds=1)

@@ -18,6 +18,7 @@ from discordbot.platform.errors import (
 )
 from discordbot.platform.executors import BoundedExecutor
 from discordbot.storage.adapters.schema import validate
+from discordbot.storage.adapters.probe_diagnostics import ProbeTrace
 from discordbot.storage.ports.contracts import (
     DatabaseConfig, DatabaseDeadlineError, DatabaseObservation, DatabaseRequest, DatabaseState, ValidationReport,
 )
@@ -42,13 +43,17 @@ class WorkControl:
         return int(self.cancelled.is_set() or time.monotonic() >= self.request.deadline)
 
 
-def connect(path: Path, control: WorkControl, *, writable: bool, busy_seconds: float = 0.1) -> sqlite3.Connection:
+def connect(path: Path, control: WorkControl, *, writable: bool, busy_seconds: float = 0.1,
+            trace: ProbeTrace | None = None) -> sqlite3.Connection:
     control.checkpoint()
     conn = sqlite3.connect(
         path.as_uri() + ("?mode=rw" if writable else "?mode=ro"), uri=True,
         timeout=min(busy_seconds, max(0, control.request.deadline - time.monotonic())),
         isolation_level=None,
     )
+    if trace is not None:
+        trace.connection_opened = True
+        trace.stage = 'probe_configure'
     try:
         conn.set_progress_handler(control.progress, 1000)
         conn.execute("PRAGMA synchronous=NORMAL")
@@ -58,8 +63,13 @@ def connect(path: Path, control: WorkControl, *, writable: bool, busy_seconds: f
         if not writable:
             conn.execute("PRAGMA query_only=ON")
         return conn
-    except BaseException:
-        conn.close()
+    except BaseException as exc:
+        if trace is None:
+            conn.close()
+        else:
+            if isinstance(exc, Exception):
+                trace.capture(exc)
+            trace.close(conn)
         raise
 
 
@@ -222,6 +232,50 @@ class SqliteDatabase:
 
     async def read(self, request: DatabaseRequest, query: Callable[[sqlite3.Connection], T]) -> T:
         return await self._transaction(request, query, writable=False)
+
+    async def probe(self, request: DatabaseRequest) -> tuple[int]:
+        """Same bounded read lane/connection policy, with fixed-operation diagnostics."""
+        if not self._ready:
+            raise ConflictError("database is not ready")
+
+        def execute(control: WorkControl) -> tuple[int]:
+            trace = ProbeTrace()
+            conn = None
+            result = None
+            try:
+                conn = connect(self.config.path, control, writable=False,
+                               busy_seconds=self.config.busy_timeout_seconds, trace=trace)
+                trace.stage = 'probe_begin'
+                conn.execute('BEGIN')
+                trace.stage = 'probe_execute'
+                cursor = conn.execute('SELECT 1')
+                trace.stage = 'probe_fetch'
+                result = cursor.fetchone()
+                trace.stage = 'probe_commit'
+                control.checkpoint()
+                conn.commit()
+            except Exception as exc:
+                if isinstance(exc, sqlite3.Error):
+                    try:
+                        control.checkpoint()
+                    except AppError as interrupted:
+                        if trace.error is not None:
+                            trace.stage = str(trace.error.context.get('stage', 'probe_configure'))
+                            trace.error = None
+                        trace.capture(interrupted)
+                # connect() already recorded configuration failures before cleanup.
+                if trace.error is None:
+                    trace.capture(exc)
+            finally:
+                if conn is not None:
+                    # Read-only transaction; close rolls back after a failed read.
+                    trace.close(conn)
+            trace.raise_if_failed()
+            if result != (1,):
+                raise DataIntegrityError('Fixed database probe returned an invalid result')
+            return result
+
+        return await self._dispatch('read', request, execute)
 
     async def write(self, request: DatabaseRequest, mutation: Callable[[sqlite3.Connection], T]) -> T:
         return await self._transaction(request, mutation, writable=True)

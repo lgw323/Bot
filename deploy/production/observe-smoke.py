@@ -17,7 +17,7 @@ EVENTS={'music.request_received','music.ui_failed','music.command_failed','music
         'music.work_succeeded','music.voice_connected','music.enqueued','music.media_acquisition_started',
         'music.media_acquired','music.cache_leased','music.ffmpeg_started','music.first_pcm',
         'music.smoke_failed','music.playback_accepted','music.playback_ended','music.decoder_failed','database.probe_failed',
-        'task.failed','task.deadline_exceeded','task.retrying'}
+        'task.failed','task.deadline_exceeded','task.retrying', 'database.probe_contention','database.probe_recovered'}
 STAGES={'ui_request','request','message_request','action','selection','connect','enqueue','lookup','started','ended',
         'result','tts','leave','close','control','prepare','autoplay','retry','start','reconnect','empty','join-tts',
         'live_smoke','voice_connection','media_acquisition','cache_lease','ffmpeg_start','first_pcm','voice_playback_acceptance',
@@ -30,6 +30,35 @@ REASONS = {'executable_not_found','process_start_failure','process_io_failure','
     'auth_required','no_audio_format','download_failed','http_forbidden','timeout','invalid_output','empty_output',
     'cache_read_failure','cache_write_failure','cache_publish_failure','output_limit','js_runtime_missing',
     'http_rate_limited','http_server_error','http_rejected','transport_error'}
+
+def probe_metadata(event):
+    # Standalone system Python observer: explicit finite allowlist, no package import required.
+    result={}
+    options={
+        'operation':{'select1_probe'},
+        'stage':set('probe_open probe_configure probe_begin probe_execute probe_fetch probe_commit probe_close probe_admission'.split()),
+        'exception_family':set('sqlite_operational sqlite_integrity sqlite_database sqlite_other permission os deadline cancellation app unexpected'.split()),
+        'sqlite_family':set('busy locked io cantopen perm readonly full corrupt notadb constraint interrupt schema other'.split()),
+        'errno_category':set('access missing io readonly space capacity other'.split()),
+        'probe_disposition':{'bounded_busy','hard','recovery_expired'}}
+    for key,allowed in options.items():
+        if isinstance(event.get(key),str) and event[key] in allowed: result[key]=event[key]
+    for key in ('connection_opened','close_succeeded','cleanup_failed'):
+        if type(event.get(key)) is bool: result[key]=event[key]
+    code=event.get('sqlite_errorcode')
+    if type(code) is int and 0<=code<=0xFFFFFF: result['sqlite_errorcode']=code
+    if event.get('healthy_probes')==2: result['healthy_probes']=2
+    return result
+
+
+def bounded_probe_busy(event):
+    return (event.get('event')=='database.probe_contention' and event.get('error_code')=='database_unavailable'
+        and event.get('probe_disposition')=='bounded_busy' and event.get('operation')=='select1_probe'
+        and event.get('stage')=='probe_configure' and type(event.get('sqlite_errorcode')) is int
+        and event['sqlite_errorcode']==5 and event.get('sqlite_family')=='busy'
+        and event.get('exception_family')=='sqlite_operational' and event.get('connection_opened') is True
+        and event.get('close_succeeded') is True and event.get('cleanup_failed') is False)
+
 
 def diagnostics(since):
     result=subprocess.run(['journalctl','-u','discord-bot','-u','watch-web','--since=@'+str(int(since)),
@@ -56,7 +85,8 @@ def diagnostics(since):
             value={'event':name}
             if event.get('stage') in STAGES: value['stage']=event['stage']
             if event.get('error_code') in CODES:
-                value['error_code']=event['error_code'];codes[event['error_code']]+=1
+                value['error_code']=event['error_code']
+                if not bounded_probe_busy(event): codes[event['error_code']]+=1
             if event.get('result') in CODES | {'completed','failed','hit','published','success','delivery_failed','cancellation'}:
                 value['result']=event['result']
                 if event['result'] in {'data_integrity','database_unavailable'} and event.get('error_code')!=event['result']:
@@ -67,6 +97,7 @@ def diagnostics(since):
             if type(code) is int and -255<=code<=255: value['child_exit_code']=code
             status=event.get('http_status')
             if type(status) is int and 100<=status<=599: value['http_status']=status
+            if name.startswith('database.probe_'): value.update(probe_metadata(event))
             sequence.append(value)
         except (ValueError,TypeError,AttributeError):
             continue
@@ -100,6 +131,8 @@ def full_sweep_failures(diagnostic):
         hard=hard or 'automatic_retry_during_sweep'
     soft=[]
     for event in diagnostic.get('recent_stages',[]):
+        if bounded_probe_busy(event):
+            continue
         if event.get('error_code') in {'data_integrity','database_unavailable'} or event.get('result') in {'data_integrity','database_unavailable'}:
             hard=hard or 'data_integrity'
         elif event.get('event')=='task.retrying':
@@ -111,6 +144,9 @@ def full_sweep_failures(diagnostic):
 
 
 def health_trigger(value, first, release, bad):
+    if any(h.get('metrics',{}).get('database_probe_recovery_pending')==1 and not h.get('ready')
+           for h in value.get('health',{}).values()):
+        return 'probe_recovery_readiness_lost'
     for name in ('discord-bot.service','watch-web.service'):
         state=value.get('services',{}).get(name,{})
         initial=first.get('services',{}).get(name,{})
@@ -257,7 +293,8 @@ def main():
 
 
 def observe_loop(args, source, output, preservation, common, safety=None, full_sweep_active=None):
-    common.METRICS.update({'music_actors','music_cache_bytes','music_processes','watch_sessions','watch_clients'})
+    common.METRICS.update({'music_actors','music_cache_bytes','music_processes','watch_sessions','watch_clients',
+                           'database_probe_recovery_pending'})
     started=time.monotonic();since=args.since_unix or time.time();first=None;count=bad=0;status='observing';last_diagnostics={}
     sampled_at=-5
     soft_failures=[]
