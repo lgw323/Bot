@@ -140,3 +140,24 @@ async def test_queued_announcements_finish_before_pending_music(rig):
     assert rig[3].start.await_count == 3
     assert rig[4].release.await_count == 2
     assert rig[6].record_start.await_count == 1
+
+
+async def test_consecutive_announcements_preserve_paused_music_intent(rig):
+    actor = rig[0]()
+    await actor.ask('connect', channel_id=123)
+    await actor.ask('enqueue', tracks=(song(),))
+    await settle(lambda: actor.projection().status == 'playing')
+    original = actor.projection()
+    rig[1].value += 17
+    await actor.ask('pause', session_id=original.session_id)
+    await actor.ask('tts', text='첫 번째 안내')
+    await settle(lambda: actor.projection().status == 'tts')
+    first = actor.projection().attempt
+    await actor.ask('tts', text='두 번째 안내')
+    await actor.ask('ended', attempt=first, failed=False)
+    await settle(lambda: rig[4].speech.await_count == 2 and actor.projection().status == 'tts')
+    await actor.ask('ended', attempt=actor.projection().attempt, failed=False)
+    await settle(lambda: actor.projection().status in {'playing', 'paused'})
+    assert actor.projection().status == 'paused'
+    assert actor.projection().session_id == original.session_id
+    assert actor.projection().elapsed == 17

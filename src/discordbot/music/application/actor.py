@@ -590,7 +590,7 @@ class MusicActor:
         elif name in {"empty", "reconnect"}:
             await self._leave()
         elif name == "tts":
-            self._resume_paused = self._status == "paused"
+            self._resume_paused = self._resume_paused or self._status == "paused"
             await self._stop_audio()
             self._start(value, tts=True)
         return True
