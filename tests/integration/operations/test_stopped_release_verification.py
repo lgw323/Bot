@@ -45,3 +45,20 @@ def test_retry_preflight_uses_installed_production_credential_sources():
     assert sources['known_hosts'].as_posix()=='/etc/discordbot/backup-ssh/known_hosts'
     for name in ('db_key','discord_token','gemini_key','control_key','capability_key'):
         assert sources[name].as_posix()=='/etc/discordbot/secrets/'+name
+
+
+def test_protected_identity_detects_state_and_preservation_changes_without_content(tmp_path, monkeypatch):
+    module = verifier()
+    monkeypatch.setattr(module, 'ROOT', tmp_path/'root')
+    monkeypatch.setattr(module, 'CONFIG', tmp_path/'config/config.json')
+    monkeypatch.setattr(module, 'PRESERVED', {'old-failure':'synthetic-hash'})
+    for directory in [*(module.ROOT/name for name in ('data','state','cache','backups','audit','old-failure')), module.CONFIG.parent]:
+        directory.mkdir(parents=True)
+        (directory/'synthetic').write_text('private synthetic content')
+    before = module.protected_identity()
+    assert 'private synthetic content' not in str(before)
+    (module.ROOT/'state/synthetic').write_text('changed state')
+    assert module.protected_identity() != before
+    before = module.protected_identity()
+    (module.ROOT/'old-failure/synthetic').write_text('changed preservation')
+    assert module.protected_identity() != before

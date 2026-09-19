@@ -22,9 +22,14 @@ import zipfile
 
 ROOT = Path('/var/lib/discordbot')
 WORK = Path('/home/os/discordbot-phase10')
-OLD = Path('/opt/discordbot/releases/r-63c77229d1a6e76a-d026a47ed4f4b38a')
+OLD = Path('/opt/discordbot/releases/r-368c8ebf7cbff244-d026a47ed4f4b38a')
 CONFIG = Path('/etc/discordbot/config.json')
-DB_SHA = '52d2ef8813e72e0ab791d359c81a514f11622a1ca86a7165e2a211b1826cc1af'
+DB_SHA = 'fdc1aca74b5bb65ce9ebd511e32b83a6b31e249246dffafd962c2c0eb15ece9f'
+PRESERVED = {
+    'phase10-precutover-63c7722/failed-attempt': '52d2ef8813e72e0ab791d359c81a514f11622a1ca86a7165e2a211b1826cc1af',
+    'phase10-retry-368c8ebf7cbf-favorites-failed-20260919T065256492640Z': 'fab61bdda1dd2c8b664c5fd19525d1cdd46f20c82d630a94ce2ed4caf6f5cc65',
+    'phase10-retry-368c8ebf7cbff244-favorites-resume-guard-preservation': DB_SHA,
+}
 CONFIG_SHA = '41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40'
 SCOPES = {'discord-bot': ('discord_token', 'gemini_key', 'control_key'),
           'watch-web': ('capability_key', 'control_key'),
@@ -88,17 +93,28 @@ def unchanged() -> None:
             raise RuntimeError('Stopped timers required')
     if Path('/opt/discordbot/current').resolve(strict=True) != OLD or digest(CONFIG) != CONFIG_SHA:
         raise RuntimeError('Release or configuration changed')
-    for path in (ROOT/'data/bot_database.db', ROOT/'phase10-precutover-63c7722/failed-attempt/data/bot_database.db'):
-        if digest(path) != DB_SHA or any(Path(str(path)+suffix).exists() for suffix in ('-wal', '-shm', '-journal')):
+    for directory, expected in {'.':DB_SHA, **PRESERVED}.items():
+        path = ROOT/directory/'data/bot_database.db'
+        if digest(path) != expected or any(Path(str(path)+suffix).exists() for suffix in ('-wal', '-shm', '-journal')):
             raise RuntimeError('Production data changed; reconciliation required')
 
 
-def build_worker(run: Path, commit: str) -> None:
+def protected_identity() -> dict[str, str]:
+    """Compare every protected file without publishing names or content."""
+    result = {}
+    for directory in [*(ROOT/name for name in ('data','state','cache','backups','audit')), CONFIG.parent,
+                      *(ROOT/name for name in PRESERVED)]:
+        rows = [(str(path.relative_to(directory)), digest(path)) for path in sorted(directory.rglob('*')) if path.is_file()]
+        result[str(directory)] = hashlib.sha256(json.dumps(rows, separators=(',', ':')).encode()).hexdigest()
+    return result
+
+
+def build_worker(run: Path, commit: str, wheels: Path) -> None:
     from discordbot.operations.adapters.build import Builder, CommandRunner
     from discordbot.operations.adapters.filesystem import ReleaseStore
 
     store = ReleaseStore(Path('/opt/discordbot'))
-    builder = Builder(store, CommandRunner(), run/'source', ROOT/'wheels', python='/usr/bin/python3.12')
+    builder = Builder(store, CommandRunner(), run/'source', wheels, python='/usr/bin/python3.12')
     started = time.monotonic()
     release = builder.build(commit)
     python = store.path(release)/'.venv/bin/python'
@@ -142,7 +158,7 @@ def credential_worker(run: Path, service: str, release: str) -> None:
     print(json.dumps(result))
 
 
-def parent(run: Path, commit: str, checksum: str) -> int:
+def parent(run: Path, commit: str, checksum: str, wheels: Path) -> int:
     import grp
     import pwd
     from discordbot.operations.adapters.filesystem import ExclusiveLock
@@ -155,6 +171,7 @@ def parent(run: Path, commit: str, checksum: str) -> int:
             raise ValueError('New verification paths required')
         with ExclusiveLock(ROOT/'operations.lock').acquire():
             unchanged()
+            protected_before = protected_identity()
             archive = WORK/('source-'+commit+'.zip')
             if digest(archive) != checksum:
                 raise ValueError('Archive checksum differs')
@@ -182,7 +199,8 @@ def parent(run: Path, commit: str, checksum: str) -> int:
                 checked(base+['--unit=discordbot-phase10-retry-build','-p','User=discordbot-deploy',
                     '-p','RuntimeMaxSec=1500','-p','ReadWritePaths=/opt/discordbot/releases '+str(run),
                     '-p','InaccessiblePaths=/etc/discordbot /var/lib/discordbot/data /var/lib/discordbot/state /var/lib/discordbot/cache',
-                    str(OLD/'.venv/bin/python'),'-I','-B',str(helper),'--worker','build','--commit',commit,'--run',str(run)],1530)
+                    str(OLD/'.venv/bin/python'),'-I','-B',str(helper),'--worker','build','--commit',commit,'--run',str(run),
+                    '--wheels',str(wheels)],1530)
             finally:
                 if (run/'build-result.json').is_file():
                     evidence['build'] = json.loads((run/'build-result.json').read_text())
@@ -199,8 +217,11 @@ def parent(run: Path, commit: str, checksum: str) -> int:
                             '--worker',service,'--release',release,'--commit',commit,'--run',str(run)]
                 evidence['credentials'][service] = json.loads(checked(command,45))
             unchanged()
+            if protected_identity() != protected_before:
+                raise RuntimeError('Protected state changed during isolated verification')
             evidence.update(stage='verified_not_activated', canonical_sha256=DB_SHA, config_sha256=CONFIG_SHA,
-                            current_unchanged=True, services_stopped=True)
+                            current_unchanged=True, services_stopped=True, protected_state_unchanged=True,
+                            preservation_count=len(PRESERVED))
     except Exception as error:
         evidence.update(failed_stage=evidence['stage'],stage='failed',error_type=type(error).__name__)
     record(output,evidence)
@@ -215,9 +236,12 @@ def main() -> int:
     parser.add_argument('--run',type=Path,required=True)
     parser.add_argument('--worker',choices=('build',*SCOPES))
     parser.add_argument('--release')
+    parser.add_argument('--wheels',type=Path,default=ROOT/'wheels')
     args = parser.parse_args()
     if not re.fullmatch(r'[0-9a-f]{40}',args.commit) or args.run != ROOT/('phase10-retry-build-'+args.commit[:12]):
         raise SystemExit('Exact source and isolated path required')
+    if args.wheels.parent != ROOT or not re.fullmatch(r'(?:wheels|phase10-wheels-[a-z0-9-]+)',args.wheels.name) or args.wheels.is_symlink():
+        raise SystemExit('Reviewed local wheelhouse required')
     if args.worker and args.worker != 'build' and not re.fullmatch(r'r-[0-9a-f]{16}-[0-9a-f]{16}',args.release or ''):
         raise SystemExit('Exact release required')
     source = args.run/'source/src' if args.worker=='build' else OLD/'app/src'
@@ -225,7 +249,7 @@ def main() -> int:
         source = Path('/opt/discordbot/releases')/args.release/'app/src'
     sys.path.insert(0,str(source))
     if args.worker=='build':
-        build_worker(args.run,args.commit)
+        build_worker(args.run,args.commit,args.wheels)
         return 0
     if args.worker:
         credential_worker(args.run,args.worker,args.release)
@@ -234,7 +258,7 @@ def main() -> int:
         raise SystemExit('Reviewed archive checksum required')
     if os.geteuid()!=0:
         os.execvp('sudo',['sudo','--',str(OLD/'.venv/bin/python'),'-I','-B',str(Path(__file__).resolve()),*sys.argv[1:]])
-    return parent(args.run,args.commit,args.archive_sha256)
+    return parent(args.run,args.commit,args.archive_sha256,args.wheels)
 
 
 if __name__=='__main__':
