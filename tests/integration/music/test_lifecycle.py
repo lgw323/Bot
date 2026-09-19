@@ -23,7 +23,8 @@ def fake_bot():
     message = SimpleNamespace(id=500, edit=AsyncMock())
     channel = SimpleNamespace(id=55, guild=SimpleNamespace(id=100, me=object()), history=history,
         send=AsyncMock(return_value=message), permissions_for=lambda _: SimpleNamespace(manage_messages=False))
-    bot = SimpleNamespace(user=SimpleNamespace(id=88), get_channel=lambda _: channel, add_cog=AsyncMock(), remove_cog=AsyncMock())
+    bot = SimpleNamespace(user=SimpleNamespace(id=88), get_channel=lambda _: channel, add_cog=AsyncMock(),
+                          remove_cog=AsyncMock(), add_view=MagicMock())
     return bot, channel
 
 
@@ -113,6 +114,7 @@ async def test_dashboard_refresh_retains_real_discord_component_dispatch(rig, tm
 
     bot, channel = fake_bot()
     store = ViewStore(SimpleNamespace())
+    bot.add_view = lambda view, *, message_id: store.add_view(view, message_id)
     message = channel.send.return_value
 
     async def edit(**kwargs):

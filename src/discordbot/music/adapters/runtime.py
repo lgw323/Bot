@@ -109,6 +109,7 @@ class MusicResource:
         top = await self.repository.list_play_counts(guild, DatabaseRequest.within(3), limit=3)
         view = build_dashboard(self.controller, state, top)
         old_view = self.dashboard_views.get(guild)
+        previous_message = self.messages.get(guild)
         try:
             async with asyncio.timeout(5):
                 message = self.messages.get(guild)
@@ -117,11 +118,8 @@ class MusicResource:
                         if candidate.author.id == self.bot.user.id and candidate.embeds:
                             message = candidate
                             break
-                # discord.py indexes callbacks by message/custom_id. Retire
-                # the old registration before installing the replacement;
-                # stopping it afterwards would remove the new callbacks too.
-                if old_view:
-                    old_view.stop()
+                # Keep the displayed controls dispatchable during HTTP/rate-limit
+                # waits. The SDK installs replacement callbacks after delivery.
                 if message:
                     try:
                         await message.edit(embed=dashboard_embed(state), view=view)
@@ -133,6 +131,12 @@ class MusicResource:
                 new_dashboard = message is None
                 if message is None:
                     message = await channel.send(embed=dashboard_embed(state), view=view)
+                # Stopping the old view removes shared message/custom_id entries.
+                # Retire and re-register through the public SDK synchronously, so
+                # there is no event-loop turn without a live callback owner.
+                if old_view:
+                    old_view.stop()
+                self.bot.add_view(view, message_id=message.id)
                 self.messages[guild] = message
                 self.dashboard_views[guild] = view
                 # Preserve dashboard/pinned messages and bounded jukebox cleanup.
@@ -144,6 +148,8 @@ class MusicResource:
         finally:
             if self.dashboard_views.get(guild) is not view:
                 view.stop()
+                if old_view and not old_view.is_finished() and previous_message is not None:
+                    self.bot.add_view(old_view, message_id=previous_message.id)
 
     async def ready(self) -> None:
         if self.closed: return

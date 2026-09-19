@@ -134,6 +134,7 @@ async def test_sdk_favorites_to_sqlite_global_scope_paging_owner_and_expiry(rig,
 async def test_ready_storm_replacement_keeps_only_latest_dispatch(rig, tmp_path):
     bot, channel = fake_bot()
     store = ViewStore(SimpleNamespace())
+    bot.add_view = lambda view, *, message_id: store.add_view(view, message_id)
     message = channel.send.return_value
     versions = []
 
