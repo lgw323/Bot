@@ -1,5 +1,82 @@
 # PHASE 10 Report — Production Cutover
 
+## 10B retry investigation — IN PROGRESS / SERVICES STILL STOPPED
+
+2026-09-19 새 세션은 첨부된 재개 지시와 repository evidence로 상태를 재구성했다.
+시작 HEAD `5e2e57b`, branch `codex/rebuild-v2`, worktree clean. 아래 첫 실패 기록을 보존하며
+**PHASE10은 미완료**다. 수정본 push/새 production pin은 아직 승인 요청 전이다.
+
+- 05:26:42Z read-only Pi 검사 PASS. Production/staging/operations 6 services 모두 inactive,
+  MainPID0, backup/update/manual timers inactive/disabled. Current는 승인된63 release다.
+- Canonical과 failed-attempt copy SHA256 모두 `52d2ef8813e72e0ab791d359c81a514f11622a1ca86a7165e2a211b1826cc1af`,
+  각각143360 bytes, sidecar 없음, readonly immutable application validation/schema5 PASS.
+  검사 전후 hash 동일, canonical 열린 FD0. 검사 중 Python1은 검사 worker다.
+- Favorites40 rows/3 owners 유지; 모든40 항목이 V2 Track 검증을 통과했다. 소유자별 목록 UI는
+  10/17/13 항목으로 생성되고 비활성 control0. 원문/ID/title/URL은 evidence에 출력하지 않았다.
+  따라서 row 부재/전체 소실 가설은 배제한다. 실제 사용자 클릭 경로의 성공은 아직 재검증 전이다.
+- `music_play_counts`는 candidate50→current51 rows. 현재 semantic/metadata checksum은
+  `edbc7f07930dcde468583f5c86894f585944397e798a9603a24c3c1a0f2b26a4` /
+  `0fe3ded1a0ac86cfb52284f406a24c6d411bb296f910c28133c2bab2d809c91d`.
+  적어도 일부 playback-start write가 존재한다. 실제 audible audio 성공으로 해석하지 않는다.
+- Config canonical/preserved SHA256 `41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40` 동일.
+  Cloudflare current invocation config event: 기존 Watch hostname route1개, origin9000,
+  내부9001/9010/9011 route0. 해당 app listeners 없음. 재설정하지 않았다.
+- 사용자 추가 관찰: 즐겨찾기 버튼이 회색/비활성으로 보임, URL·검색어 모두 Music 실패,
+  Watch는 PC Chrome. V1보다 단순해진 jukebox UI에 대한 불만도 기록했다.
+- 수정 전 Windows full strict **746 passed**,58.62초. 새 SDK ViewStore 회귀 test에서
+  dashboard replacement 등록 뒤 old View.stop이 같은 message/custom_id의 새 callback까지 지우는
+  결함을 재현했다. stop 순서를 교정한 관련 lifecycle10 tests PASS. Live UI 복구는 미검증.
+- Watch shipped JS harness에서 iframe에 종속된 연결/presence, 빈 videoId 전송,
+  iframe 준비 전 state 수신 유실, browser return/page lifecycle 미처리를 재현했다.
+  서버 단독 viewer reload에서는 저장 playback hydration 누락을 playing/paused2 cases로 재현했다.
+  서버 hydration과 iframe 독립 연결, 유효한 video/state 전송, 최대5회 bounded reconnect,
+  visibility/page lifecycle 검사를 수정했다.4001/4002/4003은 terminal 유지,4008은 재연결 대상이다.
+  30초 create/5초 empty grace, capability/Origin/CSRF/CSP와 mailbox/peer pump는 유지한다.
+  Shipped JS harness9 cases와 playing/paused hydration2 cases를 추가했다. Public browser smoke는 미검증이다.
+- TTS child의 `-m discordbot...`는 immutable launcher의 parent sys.path를 상속하지 않아
+  다른 working directory에서 module import 실패함을 로컬 executable regression으로 재현했다.
+  standalone worker 절대경로와 isolated Python 실행으로 교정했다. 실제 production TTS는 여전히 NOT TESTED다.
+- 기존63의 isolated provider/PCM probe는 첫 고정 test URL metadata 단계에서
+  `external_permanent`로 실패했다(1.062초). 당시 분류만으로 vendor 원인 또는 기존 live 실패 원인을
+  확정할 수 없다. 다른 고정 public short clip으로 같은63 adapters를 검사한 두 번째 probe는
+  URL metadata1개/search3개, acquire309288bytes, FFmpeg first PCM3840bytes,
+  fake VoiceClient acceptance, real Opus encode96bytes, stop/reap(child0)를5.139초에 통과했다.
+  TTS import-only probe는 module missing(exit1)을 확인했다. 실제 Discord 음성 전달/청취 검증은 아니며,
+  첫 live Music 실패의 단일 원인은 아직 미확정이다.
+- Music request/enqueue/lookup/acquisition/cache lease/voice connect/FFmpeg/first PCM/accept/callback에
+  고정 stage/result, typed code와 생성 work ID를 기록한다. raw exception/context/title/URL/ID는
+  기록하지 않으며 synthetic 실패·cache hit/miss 회귀 검사로 확인한다.
+- 사용자 명시적 요청에 따라 jukebox의 V1 cyan/idle gray, thumbnail, 상태·진행 막대와 stored volume,
+  반복/자동재생/다음 곡 표시를 복원한다. 버튼 기능·배치와 사용자 공용 즐겨찾기 semantics는 유지한다.
+- Windows 수정 후 전체 strict769 passed/56.66초(후속 cache 진단1 test 추가 전), 관련181 passed/10.73초.
+  최종 코드 전체 strict **770 passed/56.82초**, skip0/xfail0. 기존 audioop deprecation warning1 외
+  RuntimeWarning/unraisable 없음. Pi exact-source build는 다음 gate다.
+- `verify-stopped-release.py`는 현재 DB/config/release와 모든 writer/timer stopped를 guard하고,
+  operation lock 아래 offline wheel build, 격리 full strict(operations/architecture 포함), immutable manifest,
+  설치된 production config의 세 credential scope를 검사한다. Source export에는 legacy test 지원만 포함하고
+  실제 data/env/backup/log/key는 제외한다. Node가 없는 Pi의 JS harness skip은 Windows 실행 결과와 구분한다.
+  이 도구는 pin/DB/config/service를 활성화하거나 변경하지 않는다.
+
+### Current-write encrypted local recovery
+
+`deploy/production/preserve-stopped-current.py`를 사용자 sudo 인증으로 실행했다.
+Stopped canonical의 byte copy만 새 private run에서 열고 암호화/복원했다. 원본·기존 preservation을
+read-write로 열거나 덮어쓰지 않았다. 서비스/pin/config/remote는 변경하지 않았다.
+
+- Run: `/var/lib/discordbot/phase10-retry-recovery-20260919-01/`.
+- Backup identity: `20260919T053045873783-7394973bc1d846738780e14e9a1092d3`.
+- Ciphertext SHA256: `d2642f1eec1d8e69c33f21db944621e839f5ff9e4eb70d8b08b4f5f8bb8125bd`.
+- Restored image SHA256: `3ec627743756665b0f20db53ce6bb141a813648a019044be5b03909dab1d062b`.
+- Schema5/count/data/metadata reconciliation and isolated application open/close PASS.
+- Canonical/preserved after SHA256 remains52d2ef… . Remote publication false.
+  이는 재시도 보호용 local recovery이며 first actual production off-host backup gate를 대체하지 않는다.
+
+Safe evidence: Pi `/home/os/discordbot-phase10/retry-inspection.json`, `retry-recovery.json`,
+`retry-media.json`, `retry-media2.json`. 자동 승인 검토가 safe metadata 회수를 차단하여 사용자에게 범위를 명시했고,
+사용자는 이번10B safe aggregates/identity/test/code/timing을 현재 작업과 phase10 문서에서 분석·기록하도록
+명시적으로 승인했다. Secret/raw row/raw log는 전송하지 않는다. sudo는 agent가 연 SSH 창에서
+사용자가 직접 입력한다. V1, original candidate, prior release/backup/history는 그대로 보존한다.
+
 ## PHASE 10B result — FAILED LIVE SMOKE / SERVICES STOPPED
 
 2026-09-19 사용자 명시적 승인으로10B를 실행했으나 실제 Music/Watch smoke가 실패했다.

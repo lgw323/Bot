@@ -10,11 +10,16 @@
 ## [Unreleased]
 
 ### Fixed
+- PHASE 10B 재시도에서 jukebox 갱신 시 새 버튼 callback까지 제거하던 순서와 immutable release의
+  TTS child 실행 경로를 수정했습니다. Watch는 iframe 준비와 독립된 참여자 연결, 단독 새로고침의
+  상태 복원 및 제한된 재연결을 지원합니다. 사용자 요청으로 V1 jukebox의 색상·썸네일·진행·볼륨 표시를 복원했습니다.
 - 반복되는 운영 작업의 정상 시작·종료 journal 기록을 줄였습니다. 작업 metric과 제한된 이력,
   실패·취소·deadline 기록은 유지하고 DB health probe 실패에는 비밀 내용 없는 오류 코드만 남깁니다.
   readiness 기준은 유지하며 승인된63c7722를 Pi synthetic pair에서 검증했습니다. Production 전환은 별도 승인 대상입니다.
 
 ### Added
+- Music 단계별 안전한 진단과 browser/SDK/child regression을 추가했습니다. 실제 writes가 있는 stopped DB의
+  별도 암호화 복구본과 offline retry release 검증 도구를 준비했습니다. 운영 재시도·완료 여부는 PHASE10 보고서를 따릅니다.
 - 사용자 승인에 따른 PHASE 10B 실제 DB 승격, production 첫 ready, 수동 Cloudflare 전환의 단계별
   실행 기록을 추가했습니다. Music/Watch 실제 smoke 실패로 서비스를 정지했으며 production backup/timer는
   활성화하지 않았습니다. Windows shell 전달의 LF와 private 보존 디렉터리 setgid 제거 절차를 명시했습니다.

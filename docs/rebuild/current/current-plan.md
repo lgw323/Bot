@@ -11,6 +11,10 @@ production canonical로 승격했다. 양쪽 실제 서비스는24.827초 내 �
 Engagement/Summary는 사용자 PASS, Music/즐겨찾기/Watch는 실패, TTS는 미검증이다.
 05:09:43Z pair를 정상 중지했으며 production backup/restore/timer 활성화는 실행하지 않았다.
 현재 상태·실패·실측 시간은 [PHASE10 실행 보고서](../phases/phase-10/phase-10-report.md)의 첫 절이 우선한다.
+재시도 조사에서는 current52d DB와 보존본 일치/schema5/favorites40을 확인하고, 현재 writes의 새 암호화
+local recovery roundtrip을 통과했다. Dashboard callback 등록, TTS child 경로와 Watch hydration/reconnect
+결함을 수정·검증 중이다. 사용자 요청으로 V1 jukebox 표시를 복원한다. 새 source의 Pi build와
+push/production pin 별도 승인, 실제 smoke/off-host backup/timer/관찰은 아직 남아 있다.
 10B 완료가 아니며 auto-update/manual polling은 비활성화 유지한다. Audit0/PHASE11은 별도 지시 전 금지다.
 
 ## Current state
