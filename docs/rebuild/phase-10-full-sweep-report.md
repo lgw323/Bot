@@ -8,6 +8,119 @@
 과거 본문의 이전 보존 이력 참조는 부모 보고서에 남아 있다. 이후 상세 full-sweep 근거는 이 파일에만 추가한다.
 문서 분리는 production 상태 변경이나 새로운 runtime 활성화 승인이 아니다.
 
+## Continuation — H1 ACL correction VERIFIED / new push-pin approval required
+
+2026-09-19 사용자 지시에 따라 보고서 분리 뒤 같은 세션에서 H1 조사·격리 재현·최소 수정·후보 검증을 계속했다.
+**PHASE 10B INCOMPLETE.** 이 continuation의 production activation/restart/provider request는0이다.
+Current source/pin은787b3178908c08ffa926f41c64ae73753c39799a /
+`r-787b3178908c08ff-3dac82a792fad576`, canonical DB는
+`f47fbef36b7eded3e4b990f8179598b38b0e0bdbd818431eada33dab9aa89748` 그대로다.
+기존 일곱 preservation·설정·data/state/cache/backups/audit의 전체 inventory 불변을 Pi 재현 전후 확인했다.
+Services stopped/boot·backup/update/manual timers disabled, auto-update OFF를 유지한다.
+마지막 실제 [30-gate matrix](#single-current-30-gate-live-matrix)는 PASS3/BLOCKED27/functional FAIL0이며
+새 준비 검사를 audible Music/TTS·Chrome PASS로 승계하지 않는다.
+
+### Reporting split and reconstruction
+
+- 별도 commit **`9829aa3`**에서 부모 보고서의 최신 full-sweep 두 절을 이 파일로 이동했다.
+  이동한 내용은 relative runbook link와 마지막 빈 줄 외에 그대로이고, 부모의 초기2c 이하 역사적 본문은 불변이다.
+  이동 대상 원문(normalized text) SHA256 `b2ea46bdf620c2fa2295f50c7c93feba74d2e124c82737c154dd2967ba991575`.
+- 부모는 실제 기존 위치 `phases/phase-10/phase-10-report.md`를 유지하고 current production 요약·이관 링크만 둔다.
+  새 전용 보고서는 요청한 `docs/rebuild/phase-10-full-sweep-report.md`다.
+  Current plan/README는 PHASE10에서 두 보고서를 모두 읽고 책임별 최신 continuation을 우선하도록 안내한다.
+  Tracked `master_prompt.txt`는 없어 별도 파일을 만들지 않았다.
+- 문서 구조 검사의 root 파일 목록을 새 보고서에 맞게 변경했다. Tracked archive 기반 구조·링크 **2 PASS**.
+  사용자 미추적 handoff/zip, evidence, DB, preservation, release, Git history를 제거하거나 수정하지 않았다.
+  보고서 분리 커밋은 production 동작 변경과 분리했다.
+
+### H1 evidence and classification
+
+현재 H1은 **observer/application-validator 정책 불일치로 재현된 운영 검증 결함**으로 분류한다.
+Credential 노출이 확인됐다는 의미는 아니다. 과거 정지된 mount 자체는 남아 있지 않으므로 당시 모든
+접근 권한을 소급 증명하지 않으며, 아래 실제 Pi 격리 재현과 당시 HARD STOP을 구분한다.
+
+- Pi **systemd255 (255.4-1ubuntu8.17)**에서 운영 Discord/Watch와 동일한 LoadCredential source binding을 typed D-Bus로 확인했다.
+  운영 pair는 정지한 채, 별도 bounded transient unit의 network를 차단하고 production data/state/cache/backups/audit를
+  접근 불가로 설정했다. Credential 내용은 읽지 않고 stat/ACL metadata 및 access 여부만 검사했다.
+- Discord3/Watch2/operations3 entries **모두 root-owned regular/non-symlink0440**,
+  exact service-user read-only ACL, read-only mount. Root와 해당 service UID 외 reader가 없는 ACL이며 service의 source 직접 접근은 거부됐다.
+  모든 entry에서 application `private_mode` PASS, 이전 observer의 `st_mode & 0o077` predicate FAIL을 재현했다.
+  안전한 결과 `h1-credential-reproduction-02.json`: **validator_policy_mismatch_reproduced**,
+  protected_state_unchanged=true, preservation_count7, production_started=false, DB/provider/network 요청0.
+- 첫 격리 도구는 `systemctl show LoadCredential`의 복합 속성을 단순 문자열로 비교하다 child 실행 전에 멈췄다.
+  이를 credential security 실패로 분류하지 않는다. D-Bus `a(ss)` 방식으로 source 일치를 확인한 후
+  새 경로02에서 재현했고01 evidence/run은 보존했다. Production 재시도나 provider blind retry가 아니다.
+- 로컬 회귀에서 기존 predicate가 exact named-service ACL을 거부하는 실패를 먼저 기록했다.
+  수정은 `private_mode`를 공유하여 같은 ACL 판정을 사용하며, credential bytes는 읽지 않는다.
+  Root observer의 UID 대신 실제 configured `discordbot` UID와 runtime process owner 일치를 요구한다.
+  Descriptor nofollow/nonblock/cloexec, 성공·실패 close, directory/file mount read-only를 검사한다.
+  다른 UID, owning group/other reader, extra ACL, writer/malformed/missing ACL, symlink/nonregular,
+  잘못된 owner 및 writable mount는 계속 `credential_permission` HARD STOP이다.
+- 기존 strict/full-sweep SOFT FAIL 정책·Music/TTS/Watch 동작·dependency/schema/DB/config/credential 권한은 바꾸지 않았다.
+  회귀에는 실제 shared ACL 검사기를 통과하는 observer loop와 잘못된 ACL에서 즉시 stop하는 loop를 포함했다.
+  관련 ACL/observer **67 PASS**, 이 중 새 회귀24개. Summary503 뒤 정상 ACL에서는 independent Watch ready 유지,
+  unsafe ACL에서는 HARD STOP 유지 확인. 이것은 synthetic evidence이며 live smoke가 아니다.
+
+### Exact retry candidate and verification
+
+- Fix commit **`391e415`**: observer ACL 정책 정렬 + 회귀 + changelog.
+- Verifier commit/runtime source **`92c25546af6b49044e17ed2a705a7cdf885532a0`**:
+  newest f47 DB·787 pin·7개 preservation에 stopped admission을 고정했다.
+  후보의 root observer가 `/proc/<isolated PID>/root/run/credentials`를 직접 검사하는 세 scope 검증을 추가했다.
+  Protected wheelhouse symlink metadata 검사는 sudo 이후 수행하되 symlink 거부는 유지한다.
+- Exact source archive SHA256 **`236630a076e6c9f448378eab9dda5a0dda40ff1d632e975cfa608204bed8f87a`**.
+  Dependency requirements와 승인된 wheelhouse는 변경하지 않았다.
+- 첫 Windows 전체 검사: 기본 개발 venv의 Deno launcher 부재로 **894 PASS/1 FAIL**,
+  65.17초. 원인은 `test_pinned_provider_and_runtime_load_without_network`의 실행 파일 부재로 확인했다.
+  해당 실행을 PASS로 숨기지 않는다. 이미 존재하던 `windows-media-venv`의
+  yt-dlp2026.8.19/EJS0.8.0/Deno2.9.7 pin과 launcher를 확인해 같은 archive에서 다시 검증한다.
+- Exact pinned Windows full strict **895 PASS/0 skip/0 xfail**,63.80초,
+  RuntimeWarning/PytestUnraisableExceptionWarning error 및 xfail_strict 적용; 기존 audioop deprecation warning1.
+- Pi exact ARM64 **886 PASS/9 intentional Node-less Watch harness skips/0 failures/0 errors/0 xfails**,
+  151.390초.9개 testcase name 모두 위 Windows895의 PASS와 대조 완료, 예상 밖 skip0.
+  최종 상태 **verified_not_activated**.
+- 새 immutable candidate **`r-92c25546af6b4904-3dac82a792fad576`**.
+  Manifest **`fcc5d91f65aaf29b19018fa16f5e833f41e69e05d6b262b0c47780ac2b76e543`**,
+  17411 files/schema[5,5], immutable inventory PASS.
+  Dependency **`3dac82a792fad5769f4e6b32cdd0c294fbfbb4863500e8e232f85b47b3297cc6`** 불변.
+- Pi Discord/Watch/operations 세 scope의 config/credential-format/exact scope/read-only/direct-source-denied 검사 PASS.
+  별도로 새 safety code를 root에서 실행해 실제 isolated service의 `/proc/.../root/run/credentials`를 검사한
+  **세 root observer view 모두 PASS**. 이 root probe는 credential contents/DB/network를 읽거나 요청하지 않았다.
+  재현·빌드 전후 current pin·canonical f47·config41edd0…·7개 preservation 및 protected inventory 불변,
+  production pair inactive/MainPID0/boot disabled, backup/update/manual timers disabled/inactive 재확인.
+- 원격 read-back `codex/rebuild-v2=1715c1f5d1de80b8693996662985eb6221259968`,
+  `main=8432fdef40cddc131176fa875e350660dc897e12` 그대로다. 이 continuation의 push0/activation0.
+  Remote1715c1f..runtime92c2554 **3commits/9newblobs**, 모든 새 commit tree/message/blob의
+  secret/.env/DB/SQL·backup/private key/credential/운영 data artifact 검사 PASS, findings0.
+  이후 검증 결과는 이 보고서/current plan만 변경하는 docs-only tail로 기록한다.
+
+안전한 증거: Pi `/home/os/discordbot-phase10/h1-credential-reproduction-02.json`,
+`retry-build-92c25546af6b.json`; local ignored `h1-windows-pinned-92c25546af6b.xml`,
+`h1-cross-platform.json`, `final-push-audit-92c25546af6b.json`. 최초 도구/runner 실패 evidence도 유지했다.
+
+### Consolidated remediation state
+
+| Group | Current finding | Remaining boundary |
+| --- | --- | --- |
+| A — runtime validator | Exact service ACL에 대한 observer/application 정책 불일치 수정·24개 새 회귀·전체 strict PASS | 새 candidate의 production 동작은 미검증 |
+| B — provider | 이 continuation의 external provider 호출0 | Summary503/429 및 Music provider 상태는 다음 단일 live 요청에서만 판정; blind retry 금지 |
+| C — browser/audio integration | 현재 production 기능 gate27개는 기존 H1로 BLOCKED | 실제 사용자 Music/TTS/order 및 PC Chrome public lifecycle 확인 필요 |
+| D — operations | 동일 Pi systemd mount에서 과거 판정 거부/새 root 판정 PASS, metadata-only 재현 완료 | 새 push/pin 승인 후 fresh reconciliation·70초 readiness·bounded sweep 필요 |
+| E — evidence limits | 당시 종료된 mount ACL은 남아 있지 않음. 노출을 보여주는 증거 없음 | 재현한 정상 mount의 정책 불일치와 과거 instance에 대한 증거 한계를 구분 |
+
+### Remaining gate / approval boundary
+
+이번 준비는 production 재활성화 승인이 아니다. 후보의 Windows/Pi/root metadata 검증과 source-range 검사를 완료했으며,
+새 source/pin 일반 FF push와 production activation을 위 정확한 identity로 승인 요청한다.
+승인 대상은 `codex/rebuild-v2`로 runtime92c2554 및 그 뒤 full-sweep report/current plan docs-only tail의
+일반 FF push, pin `r-92c25546af6b4904-3dac82a792fad576`를 사용한 단일 bounded full-sweep retry다.
+Push 직전 최종 HEAD/range/secret 검사와 새 canonical/config/release reconciliation을 다시 수행한다.
+현재 마지막 live H1와27 BLOCKED는 실제 재검증 전까지 남는다. 승인 후에는 단일 bounded full-sweep에서
+HARD STOP만 즉시 중단하고 일반 feature/provider SOFT FAIL은 기록 후 독립 gate를 계속한다.
+Actual audible Music/TTS/order 및 PC Chrome public Watch 전 gate PASS 뒤에만
+actual newest encrypted backup/private Bot-Data read-back/independent restore/boot/4h timer/final observation으로 진행한다.
+DB replay/old restore/remigration/down-migration/V1 start·Audit·PHASE11·legacy cleanup은 진행하지 않는다.
+
 ## 10B continuation — APPROVED FULL SWEEP / CREDENTIAL HARD STOP
 
 **PHASE 10B INCOMPLETE.** 2026-09-19 exact full-sweep 후보 승인을 받아 production activation을
