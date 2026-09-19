@@ -10,24 +10,23 @@ PHASE 10이 진행 중이면 새 세션은 아래 두 보고서를 모두 읽는
 
 각 책임 범위에서 최상단 최신 continuation이 우선한다. 겹치는 full-sweep 세부 내용은 전용 보고서를,
 cutover/migration의 역사적 근거는 부모 보고서를 따른다. 부모에는 현재 production identity와 간결한 결과만 유지한다.
-보고서 분리는 완료됐다. H1 검증은 유효하며 현재 H2 상태·후보·승인 경계는 아래 최신 요약을 따른다.
+보고서 분리는 완료됐다. H1 검증은 유효하며 현재 full-sweep 결과·후속 수정 범위·승인 경계는 아래 최신 요약을 따른다.
 새 runtime production 적용 또는 새 push/pin이 필요할 때 정확한 검증 후보에 대한 승인을 받는다.
 
-**PHASE 10B INCOMPLETE — H2 REMEDIATION VERIFIED / NEW PUSH-PIN APPROVAL REQUIRED.**
-Current production source92c25546af6b49044e17ed2a705a7cdf885532a0/pin
-`r-92c25546af6b4904-3dac82a792fad576`, canonical `678e93ec4fd2d087d5ce20ba2239fb205b0daa130cb3e804e300dbd5183aef66` 불변.
-H1 live ACL PASS 유지. H2는 과거 하위 원인 미확정이며 synthetic BUSY/LOCKED/IO/permission/corruption 재현 후
-안전한 probe subtype 진단과 엄격한 bounded BUSY 정책을 검증했다. 상세 근거는 전용 보고서 최상단이 기준이다.
-최종 runtime **`ecd391ff4548b7bda572ef916c30be296b714f94`**, candidate **`r-ecd391ff4548b7bd-3dac82a792fad576`**,
-dependency3dac82a… 불변, manifest`f023b1fa6d412b81300a9dd64a1ed584b653fd3040513399d14e755421d8ea6a`/17416files/schema[5,5].
-Windows978 PASS/0 skip/0 xfail; Pi969 PASS/9 intentional Node-less skips/0 xfail,
-동일9 testcase Windows PASS 대조 완료. 세 credential scopes/root observer views PASS.
-Production/staging/operations stopped, boot·backup/update/manual timers disabled, auto-update OFF;
-current config/data/state/cache/backups/audit와 모든8개 preservation 불변. 새 push/activation0.
-Remote af37aa58…/main8432fdef… 불변. 다음은 final source+report/current-plan docs-only tail normal FF push와
-위 exact release의 단일 bounded full-sweep 통합 승인이다. 승인 전 production activation 금지.
-과거 live PASS3/BLOCKED27 유지; actual backup/restore/boot/timer/final observation 미완료.
-Old restore/replay/remigration/down-migration/V1 start 및 Audit0–10/Integrated Audit/PHASE11/V1삭제 금지.
+**PHASE 10B INCOMPLETE — ECD FULL SWEEP / SOFT FAILS / STOPPED AND PRESERVED.**
+Current source `ecd391ff4548b7bda572ef916c30be296b714f94` / pin `r-ecd391ff4548b7bd-3dac82a792fad576`.
+승인된 HEAD99d80c6까지 일반 FF push/read-back 완료; main8432fdef… 불변.
+Windows978 PASS/Pi969 PASS+의도된 Node-less9 skip, 동일 Windows9 PASS 대조 유지.
+24.840초 readiness, H1 ACL/H2 DB safety PASS, 관찰1350.149초/65samples/HARD STOP0.
+30gates26 PASS/3 FAIL/1 NOT TESTED. Watch refresh/hydration/참여자 sync 결함과 별도 Music pause UI 결함;
+network drop/recovery 미시험. 상세 원인 미확정이며 최신 A–E matrix는 전용 보고서가 기준이다.
+Canonical **`e5661a0256c9873941db974019f30256c9ed9e3d2f2559cb2eecd06b259c2e52`**, schema5/integrity/fsync PASS, 새9번째 preservation과 기존8개 모두 보존.
+Newest preservation `/var/lib/discordbot/phase10-retry-ecd391ff4548b7bd-live-smoke-h2-full-sweep-20260919-01-guard-preservation`.
+Production/staging/ops/observer inactive, boot/timers disabled, auto-update OFF.
+Actual production backup/restore/enable/final observation 미진행. 이번 단일 승인 activation은 사용 완료됐다.
+현재 정지 유지. 다음은 통합 matrix 기반 격리 재현·최소 수정·strict Windows/Pi 검증이며,
+새 runtime push/pin/activation은 exact candidate 준비 후 새 승인이 필요하다. Old restore/replay/migration/V1 start 금지.
+Audit0–10/Integrated Audit/PHASE11/V1삭제를 시작하지 않는다.
 
 ## Historical 2c live retry
 

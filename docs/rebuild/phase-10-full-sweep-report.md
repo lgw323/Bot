@@ -8,6 +8,152 @@
 과거 본문의 이전 보존 이력 참조는 부모 보고서에 남아 있다. 이후 상세 full-sweep 근거는 이 파일에만 추가한다.
 문서 분리는 production 상태 변경이나 새로운 runtime 활성화 승인이 아니다.
 
+## Continuation — ECD approved full sweep / functional failures / stopped and verified
+
+**PHASE 10B INCOMPLETE.** 2026-09-19 사용자의 exact ECD 통합 승인을 집행했다.
+승인된 일반 FF push와 단일 activation을 마쳤으며 **26 PASS / 3 FAIL / 1 NOT TESTED**다.
+추가로 Music pause 버튼과 실제 음성 상태 불일치를 SOFT FAIL로 기록한다.
+기능 실패 뒤에도 독립 Music/TTS/Chrome/두 종료 경로를 끝까지 확인한 다음 operator `finish`로 정지·새 보존했다.
+이번 실행에서 HARD STOP invariant 위반은 관찰되지 않았다. 완료되지 않은 필수 기능을 PASS로 바꾸지 않는다.
+현재 runtime은 ECD pin 그대로지만 서비스는 정지 상태다. 새 runtime 수정·추가 activation·blind retry 없음.
+
+### Exact publication and activation
+
+- Runtime **`ecd391ff4548b7bda572ef916c30be296b714f94`**, production pin **`r-ecd391ff4548b7bd-3dac82a792fad576`**.
+  Source archive SHA256 `6d75f95d151c954cc84b3ee309b085ae954896cdeaaede143f1c882fb68f3418`.
+  Dependency `3dac82a792fad5769f4e6b32cdd0c294fbfbb4863500e8e232f85b47b3297cc6` 불변.
+  Manifest `f023b1fa6d412b81300a9dd64a1ed584b653fd3040513399d14e755421d8ea6a`,17416files/schema[5,5].
+- 직전 remote `af37aa58a17753663ff33543e487da6455318cc9` → **`99d80c6b5fc9aeddaf5ebd416539dfe7aa5a1ceb`**
+  `codex/rebuild-v2` 일반 FF push/read-back 완료. Main `8432fdef40cddc131176fa875e350660dc897e12` 불변.
+  Push 직전5 commits/18new blobs 및 각 commit tree/message 검사 finding0. ECD 이후 report/current-plan docs-only.
+  Secret/.env/DB/SQL/backup/private key/credential/production artifact 미포함. Force/rebase/history rewrite 없음.
+  사용자 미추적 handoff/zip은 그대로 유지했다. 이 결과 보고의 후속 docs는 승인된99d push에 포함됐다고 주장하지 않는다.
+- Exact-source Windows **978 PASS/0skip/0xfail**, Pi **969 PASS/9 intentional skip/0xfail** 검증을 사용했다.
+  Pi Node-less browser9는 동일9 testcase Windows PASS로 대조돼 있다. 이번 live 실행 중 runtime/dependency 변경0;
+  기존 synthetic/Node PASS가 아래 실제 Chrome 실패를 배제하지 못한다.
+- Fresh stopped preflight: canonical `678e93ec4fd2d087d5ce20ba2239fb205b0daa130cb3e804e300dbd5183aef66`, schema5/integrity/config 호환 PASS,
+  기존8개 preservation 및 protected inventory 불변, rollback journal header 확인.
+  세 credential scope/root observer/direct source denied, writers0/listeners0, boot/timers disabled 확인.
+  Config `41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40` 그대로이며 DB replay/restore/migration을 하지 않았다.
+- Run `h2-full-sweep-20260919-01`. Start `2026-09-19T14:26:49.513308+00:00` → ready `2026-09-19T14:27:14.358607+00:00`,
+  **24.840초/70초 PASS**; Gateway/sync/exact release/NRestarts0.
+
+### Current-release 30-gate human/technical matrix
+
+| # | Gate | 판정 | 이번 실행의 근거·범위 |
+|---|---|---|---|
+| 1 | 70초 bounded startup | PASS | 24.840초, exact release ready |
+| 2 | Gateway | PASS | Ready gate 및 실제 명령 응답 |
+| 3 | Command sync | PASS | Ready gate 및 실제 명령 응답 |
+| 4 | `/내정보` | PASS | 사용자 이번 release 성공 확인 |
+| 5 | `/랭킹` | PASS | 사용자 이번 release 성공 확인 |
+| 6 | `/요약` | PASS | 사용자 최소 범위 요청 성공 확인; 이전503 판정을 승계하지 않음 |
+| 7 | `💾 보관함` | PASS | 사용자 열림 확인 |
+| 8 | Dashboard / stored volume | PASS | 표시 성공; 사용자가 봇 조절 UI를 의도적으로 제거하고 Discord 사용자별 음량을 쓰는 의도 확인 |
+| 9 | Music URL 요청 | PASS | 사용자 URL 자동 선택·추가·실제 청취 확인 |
+| 10 | Music 검색어 요청 | PASS | 사용자 검색→선택→추가→청취 성공 확인 |
+| 11 | 검색 결과 선택 | PASS | 사용자 명시적 성공 확인 |
+| 12 | 대기열 추가 | PASS | 사용자 명시적 성공 확인 |
+| 13 | 실제 Music 청취 | PASS | 사용자 URL·검색 경로 모두 들림 확인 |
+| 14 | 정상 정지 | PASS | 사용자 정지 성공 확인 |
+| 15 | 음성방 퇴장 | PASS | 사용자 성공 확인; 버튼 후1–3초 지연은 별도 관찰 |
+| 16 | 입장 TTS 실제 청취 | PASS | 사용자 봇 입장 직후 안내가 들렸다고 확인 |
+| 17 | TTS가 Music에 덮이지 않음 | PASS | 사용자 TTS 후 노래 순서 확인 |
+| 18 | TTS 종료 뒤 Music 시작 | PASS | 사용자 실제 청취 순서 확인 |
+| 19 | TTS / pause intent | PASS | 사용자 TTS 확인 중 정지 유지 확인; 일반 pause 버튼 결함 A1과 구분. 독립적인 연속 TTS 횟수는 미확정 |
+| 20 | PC Chrome Watch 생성 | PASS | 사용자 실제 public 초대 경로 생성 성공 |
+| 21 | Watch 접속 | PASS | 사용자 실제 접속 성공; 서버 접속 최대3 |
+| 22 | 참여자 목록 | PASS | 사용자가 탭 전환까지 기본 항목 동작 확인 |
+| 23 | 새로고침 | FAIL | 새로고침 후 영상 영역 검음·위치 복원 실패 |
+| 24 | 네트워크 단절 후 재접속 | NOT TESTED | NOT TESTED 사유: 사용자가 네트워크를 끊는 시험을 수행하지 못함. 링크 재입장은 가능했으나 hydration 실패 |
+| 25 | 다른 탭 이동 / 복귀 | PASS | 사용자 동작 확인; 전체 hydration 성공을 뜻하지 않음 |
+| 26 | 재생 hydration | FAIL | 새로고침 검은 화면, 탭 닫고 같은 초대로 재입장하면 처음부터 재생 |
+| 27 | 재생 동기화 | FAIL | 한 참여자는 연동되나 다른 참여자는 썸네일에 정지·무음; 전체 PASS 불가 |
+| 28 | 일반 Watch 종료 | PASS | 전체 탭 종료 후 정상 종료·초대 메시지 자동 삭제 확인 |
+| 29 | 개인 관리 서버 강제 종료 | PASS | 별도 새 방에서 관리자 종료·초대 메시지 자동 삭제 확인 |
+| 30 | 실제 Cloudflare public path | PASS | PC Chrome 실제 public 접속 확인; route Watch9000만 일치. 재생 복원 실패는 별도 판정 |
+
+추가 SOFT FAIL **A1 Music pause UI**: 사용자는 첫 클릭에 버튼 모양만 바뀌고 노래가 계속 나오며,
+다음 클릭에서는 재생 이모지 상태에서 실제 일시정지됐다고 보고했다. TTS 중 pause 유지 PASS가 이 결함을 상쇄하지 않는다.
+퇴장1–3초 지연은 정리 후 퇴장 성공과 함께 기록한다. 코드에 오디오 정리·voice disconnect 순서가 있으나
+실제 지연의 원인을 확정하거나 버튼 무응답 문제 전체가 해결됐다고 주장하지 않는다.
+`watch_reconnect`는 연결 기능 자체 FAIL로 오인하지 않고 시험 미수행으로 남긴다. 재입장 후 처음부터 재생된 현상은 hydration FAIL이다.
+Music/TTS 청취와 순서는 사용자 확인에 기반한다. PCM/Voice acceptance는 보조 기술 근거다.
+Chrome PASS/FAIL도 사용자 실제 public 화면 보고에 기반하며, 다른 참여자의 정확한 browser/autoplay 상태는 수집하지 않았다.
+
+### Bounded sweep observation and safety limits
+
+- Observer **1350.149초 / 65 samples**. 이는 full-sweep 부분 관찰이며,
+  backup/timer enable 뒤 요구되는 final production observation이 아니다.
+- 마지막 stop 전 sample: Discord/Watch ready=true, NRestarts0, DB successful probes **265/265**.
+  이번 window에서 failed probe/contention/recovery event0, recovery_pending0, recent_failures0,
+  allowlisted error codes0, journal read exit0/truncation=false. 과거 H2 원인의 소급 증명도, bounded BUSY live exercise도 아니다.
+- H1 exact credential scope, schema5/integrity, release/config identity, writer scope, public route가 관찰 중 PASS.
+  Cloudflare `watch.lgw323.com → http://127.0.0.1:9000` matching1/internal9001·9010·9011 route0;
+  stopped inspector도 route를 재확인했다. 실제 browser 접속 PASS와 별도로 기록한다.
+- Technical Music work started/succeeded **28/28**,
+  firstPCM/Voice acceptance **12/12**.
+  이는 URL 요청 수/곡 수/실제 청취 횟수가 아니다. 서버 `soft_failures=[]`는 UI/browser 결함 미검출을 뜻하며,
+  사용자 보고 SOFT FAIL을 지우거나 성공으로 취급하지 않았다.
+
+| Process | RSS KiB min–max | FD min–max | Threads min–max | NRestarts |
+|---|---:|---:|---:|---:|
+| `discord-bot.service` | 82184–91000 | 9–19 | 6–13 | 0 |
+| `watch-web.service` | 68428–70736 | 9–15 | 3–5 | 0 |
+
+- Sampled `music_processes` gauge는 0–0이었다. FFmpeg/PCM event는 있으므로 이 gauge만으로
+  실행 중 child가 전혀 없었다고 판단하지 않는다. Music cache bytes 6,567,679–6,624,319.
+  Watch sessions max 1,
+  clients max 3; 종료 확인 뒤0/0.
+- Audit aggregate 마지막 158files/33039bytes,
+  disk free 104,122,605,568–104,123,109,376bytes,
+  temperature 61.7–66.65°C, throttling values ['0'].
+  Collection errors 0, metric/telemetry drops0.
+  Backup0/age−1/RPO exceeded1은 actual production backup 미실행 상태이며 PASS가 아니다.
+  전체 journal disk 사용량·완료 후 장기안정성은 이번 sweep에서 판정하지 않았다.
+
+### Controlled stop and newest preservation
+
+독립 gate 결과를 모두 분류한 뒤 operator `control/finish`를 생성했다. Guard reason 문자열은
+`sweep_finished_or_deadline`이지만 이번 원인은 **operator finish**이며 finite deadline 만료나 HARD STOP이 아니다.
+Pair stopped/newest state preserved/inventory verified 후, 별도 root read-only inspector가
+**`verified_stopped_preserved_integrity`**를 반환했다. sudo 비밀번호는 사용자가 터미널에만 입력했다.
+
+- Newest canonical/copy SHA256 **`e5661a0256c9873941db974019f30256c9ed9e3d2f2559cb2eecd06b259c2e52`**. 이전678e93 DB로 되돌리지 않았다.
+  Schema5/integrity PASS; favorites40/owners3, music_play_counts53/music_settings1/users15, Watch sessions/playlists0.
+  Data checksum `fb56b2bcb5c77b76cef837c5f22f6f6ddbe2dd24ed80d21c33b24e599a87dd36`; metadata `a30f3cabc852e189acef8841c9f3832ff5c5bbba6bd88d48d1e8454089b29745`.
+  Canonical/copy 동일, WAL/SHM/journal sidecar 모두 없음.
+- Ninth preservation **`/var/lib/discordbot/phase10-retry-ecd391ff4548b7bd-live-smoke-h2-full-sweep-20260919-01-guard-preservation`**.
+  Whole inventory SHA256 `9f162d8825de2b468386505acaff935de77b5035f17edb332efb9a4bcc94b0d0`.
+  data/state/cache/backups/audit/config current/copy 전부 일치, fsync PASS,
+  기존8개 preservation 전체와 config 불변; read-only inspection 전후 protected state 불변.
+- Production pair/staging/operations/observer inactive/MainPID0;
+  production/staging boot disabled, backup/update/manual timers disabled/inactive, auto-update OFF.
+  Candidate replay/old restore/remigration/down-migration/V1 start·기존 보존본 overwrite 없음.
+
+### Consolidated remediation matrix and completion boundary
+
+| Group | 확인된 사실 / 범위 | 다음 격리 검증·해결 과제 |
+|---|---|---|
+| A application/runtime | A1 pause 버튼 표시와 실제 음성 상태 불일치 SOFT FAIL. 퇴장1–3초 지연은 별도 관찰 | 실제 첫 클릭 intent·UI snapshot·actor/audio 상태 순서를 synthetic로 재현; TTS pause 유지와 일반 pause toggle을 분리 검증. 원인 미확정 |
+| B external/provider | 이번 Summary/URL/search는 사용자 성공 확인; 안전 집계에 provider failure 없음 | Watch iframe/provider/autoplay 영향은 아직 배제할 수 없으나 provider 원인으로 확정하지 않음 |
+| C browser/integration | C1 refresh/hydration 검은 화면·재입장 위치 소실, C2 일부 참여자 thumbnail 무음·sync 실패 | 실제 player ready/state hydration/autoplay/peer sync 순서를 격리 재현; 현재 Node9 harness PASS만으로 해결됐다고 판단 금지 |
+| D operations/deployment | 이번 startup·H1 ACL·H2 probe·identity·route·controlled stop/preservation PASS, HARD STOP0 | 현재 e5661a DB/9preservations 보존. Runtime 수정 시 exact Windows/Pi 검증 뒤 새 push/pin 승인 필요 |
+| E insufficient evidence | Network drop/recovery 미시험; 실패 참여자의 browser/player 조건과 pause 첫 클릭 원인 미확정 | 안전한 category/state metadata와 재현 조건만 확보. raw content/ID/URL/capability/credential 수집 금지 |
+
+Actual newest encrypted backup →private Bot-Data publication/read-back/independent download/decrypt/
+schema/count/data/metadata/semantic/application restore는 **BLOCKED BY Watch 필수 FAIL 및 network recovery 미검증**.
+Boot/4시간 backup timer enable과 그 뒤 bounded final observation도 이 선행조건에 의해 **미실행**이다.
+All-PASS일 때 사용할 외부 orchestration helper는 준비·문법검사만 했고 handoff/backup/finalizer는 실행하지 않았다.
+서비스를 다시 시작하거나 finite 창을 연장하지 않았다. 이번에는 요청된 failure matrix를 후속 일괄 수정의 기준으로 남기고 중단한다.
+PHASE10 COMPLETE/Audit0–10/Integrated Audit/PHASE11/V1삭제·legacy cleanup을 진행하지 않는다.
+
+Safe evidence: `h2-approved-preflight.json`, `h2-approved-push.json`, `h2-approved-start.json`,
+observer `summary.json`/`samples.jsonl`, `h2-approved-stop-inspection.json`, local `h2-approved-gates.json`.
+위 JSON 및 runtime/preservation은 Pi 또는 ignored scratch에 유지한다. 운영 artifact 자체를 Git에 추가하지 않았다.
+결과 문서3개를 exact-source archive에 overlay한 문서 구조·상대 링크 검사2 PASS, `git diff --check` PASS.
+이번 결과 기록은 docs-only이며 변경 없는 runtime full suite를 다시 실행한 것으로 표시하지 않는다.
+
 ## Continuation — H2 subtype remediation VERIFIED / exact push-pin approval required
 
 2026-09-19 첨부 지시에 따라 current plan·부모 보고서·최신 full-sweep continuation으로 상태를 재구성하고,

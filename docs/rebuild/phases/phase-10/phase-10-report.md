@@ -2,14 +2,16 @@
 
 ## Current PHASE 10B full-sweep status
 
-**PHASE 10B INCOMPLETE — services stopped, preservation verified.** Production source
-`92c25546af6b49044e17ed2a705a7cdf885532a0`, pin `r-92c25546af6b4904-3dac82a792fad576`.
-Newest canonical/preserved DB: `678e93ec4fd2d087d5ce20ba2239fb205b0daa130cb3e804e300dbd5183aef66`.
-Newest preservation: `/var/lib/discordbot/phase10-retry-92c25546af6b4904-live-smoke-h1-full-sweep-20260919-01-guard-preservation`.
-승인된 단일 H1 retry에서 corrected credential 검사와 readiness PASS 뒤 별개 DB probe HARD STOP 발생.
-최신 보존본 및 기존7개 보존본 무결성 검증 완료; 원인 세부는 아직 미확정이다.
-Boot/backup/update/manual timers disabled, auto-update OFF. 실제 production backup/restore 및 final observation 미완료.
-새 활성화 없이 정지 유지. 최신 상세 판정·30-gate matrix·후속 분석 범위는 전용 보고서 최상단을 따른다.
+**PHASE 10B INCOMPLETE — ECD full sweep 종료, services stopped / ninth preservation verified.**
+Source `ecd391ff4548b7bda572ef916c30be296b714f94`, pin `r-ecd391ff4548b7bd-3dac82a792fad576`.
+승인된99d80c6까지 일반 FF push/read-back 완료. Main 불변. 이번30 gates는 **26 PASS/3 FAIL/1 NOT TESTED**:
+Watch refresh/hydration/일부 참여자 sync 실패, network-drop recovery 미시험. Music pause UI 결함도 별도 확인했다.
+Music URL/search 실제 청취·입장 TTS/순서·요약·두 Watch 종료 경로는 사용자 PASS. 안전 HARD STOP0.
+최신 canonical/preserved DB **`e5661a0256c9873941db974019f30256c9ed9e3d2f2559cb2eecd06b259c2e52`**, schema5/integrity/fsync/current-copy PASS,
+새9번째 preservation `/var/lib/discordbot/phase10-retry-ecd391ff4548b7bd-live-smoke-h2-full-sweep-20260919-01-guard-preservation` 및 기존8개 불변.
+Boot/backup/update/manual timers disabled, auto-update OFF; actual backup/restore/final observation 미진행.
+후속 일괄 수정·새 runtime 검증 후 다음 push/pin 승인이 필요하다. 현재 정지 유지, old restore/replay 없음.
+상세30-gate matrix·safe evidence·A–E 수정 범위는 [전용 보고서](../../phase-10-full-sweep-report.md) 최상단을 따른다.
 
 Full-sweep 정책 검증과 credential HARD STOP 상세 continuation을
 [PHASE 10B full-sweep report](../../phase-10-full-sweep-report.md)로 이동했다.
