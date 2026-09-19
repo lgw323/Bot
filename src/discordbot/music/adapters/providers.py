@@ -109,8 +109,10 @@ class CachedMediaLibrary:
             raise ValidationError("invalid TTS text")
 
         async def produce(path: Path, maximum: int) -> None:
-            # Text goes over a child argument, never into a shell or a log.
-            await self._capture((sys.executable, "-m", "discordbot.music.adapters.tts_worker", text),
+            # Source is loaded explicitly by the immutable launcher, not installed
+            # in site-packages. A child does not inherit the parent's sys.path.
+            # Run the colocated standalone worker with the same interpreter.
+            await self._capture((sys.executable, "-I", "-B", str(Path(__file__).with_name("tts_worker.py")), text),
                                 path, maximum, 20, "tts")
 
         return await self.cache.acquire("tts:" + text, produce)

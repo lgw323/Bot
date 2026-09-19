@@ -155,6 +155,36 @@ async def test_provider_incompatible_result_boundary(rig):
     with pytest.raises(DataIntegrityError): await YtDlpProvider(pool).lookup("ytsearch3:test", 10, limit=3)
 
 
+async def test_tts_child_entrypoint_from_release_working_directory(rig, tmp_path):
+    """The immutable app is on the parent's sys.path, not installed in the venv."""
+    import os
+    import subprocess
+    from discordbot.music.adapters.providers import CachedMediaLibrary
+
+    executor = BoundedExecutor(workers=1, queue_capacity=4, name='tts-entrypoint')
+    cache = DiskCache(tmp_path/'cache', executor, rig[1])
+    pool = AsyncMock()
+    library = CachedMediaLibrary(cache, pool)
+
+    async def capture(arguments, path, maximum, seconds, name):
+        environment = dict(os.environ, PYTHON_DOTENV_DISABLED='1')
+        environment.pop('PYTHONPATH', None)
+        # Omit the text: entrypoint must reach argument validation without gTTS I/O.
+        result = subprocess.run(arguments[:-1], cwd=tmp_path, env=environment,
+            capture_output=True, timeout=10)
+        assert result.returncode == 2, 'TTS child cannot import its entrypoint outside the source checkout'
+        path.write_bytes(b'synthetic-audio')
+
+    library._capture = capture
+    try:
+        await cache.start()
+        media = await library.speech('synthetic')
+        await library.release(media)
+    finally:
+        await cache.close()
+        await executor.close(grace_seconds=2)
+
+
 async def test_v2_snapshot_is_consumable_by_legacy_reader(rig, tmp_path):
     from collections import deque
     from types import SimpleNamespace
