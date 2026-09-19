@@ -1,5 +1,6 @@
 """Cancellable yt-dlp/gTTS child processes; vendor objects never cross ports."""
 import json
+import os
 import sys
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -9,7 +10,14 @@ from discordbot.music.adapters.cache import DiskCache
 from discordbot.music.adapters.processes import ProcessPool
 from discordbot.music.domain.model import Track
 from discordbot.music.ports.playback import Media
-from discordbot.platform.errors import AppError, CapacityError, DataIntegrityError, ValidationError
+from discordbot.platform.errors import AppError, CapacityError, DataIntegrityError, ExternalPermanentError, ValidationError
+
+
+def provider_command() -> tuple[str, ...]:
+    """Use the sealed interpreter/runtime; never fetch executable components live."""
+    runtime = Path(sys.executable).with_name('deno.exe' if os.name == 'nt' else 'deno')
+    return (sys.executable, '-m', 'yt_dlp', '--ignore-config', '--no-js-runtimes',
+            '--js-runtimes', 'deno:'+str(runtime), '--no-remote-components')
 
 
 def youtube_url(value: str) -> str:
@@ -30,7 +38,7 @@ class YtDlpProvider:
             raise ValidationError("invalid provider query")
         if not query.startswith(("ytsearch3:", "ytsearch10:")):
             youtube_url(query)
-        output = await self.pool.run((sys.executable, "-m", "yt_dlp", "--ignore-config", "--skip-download",
+        output = await self.pool.run((*provider_command(), "--skip-download",
              "--dump-single-json", "--flat-playlist", "--no-warnings", "--playlist-end", str(limit), "--socket-timeout", "10",
              "--retries", "1", "--", query), seconds=30, name="lookup")
         try:
@@ -50,7 +58,7 @@ class YtDlpProvider:
                     continue
             return tuple(result)
         except (ValueError, AttributeError, TypeError):
-            raise DataIntegrityError("yt-dlp metadata contract changed") from None
+            raise DataIntegrityError("yt-dlp metadata contract changed", context={'reason':'invalid_output'}) from None
 
 
 class CachedMediaLibrary:
@@ -61,21 +69,27 @@ class CachedMediaLibrary:
         self.direct_until = direct_until
 
     async def _capture(self, arguments: tuple[str, ...], path: Path, maximum: int, seconds: float, name: str) -> None:
-        target = await self.cache.executor.run_retained(lambda: path.open("xb"))
+        try:
+            target = await self.cache.executor.run_retained(lambda: path.open("xb"))
+        except OSError:
+            raise ExternalPermanentError('Music cache write failed', context={'reason':'cache_write_failure'}) from None
         written = 0
         async def consume(chunk: bytes) -> None:
             nonlocal written
             if written + len(chunk) > maximum:
-                raise CapacityError("Music stream exceeded file limit")
+                raise CapacityError("Music stream exceeded file limit", context={'reason':'output_limit'})
             written += len(chunk)
-            await self.cache.executor.run_retained(target.write, chunk)
+            try:
+                await self.cache.executor.run_retained(target.write, chunk)
+            except OSError:
+                raise ExternalPermanentError('Music cache write failed', context={'reason':'cache_write_failure'}) from None
         try:
             await self.pool.run(arguments, seconds=seconds, name=name, consume=consume)
         finally:
             await self.cache.executor.run_retained(target.close)
 
     async def _direct(self, track: Track) -> Media:
-        raw = await self.pool.run((sys.executable, "-m", "yt_dlp", "--ignore-config", "--no-playlist", "--skip-download",
+        raw = await self.pool.run((*provider_command(), "--no-playlist", "--skip-download",
             "--dump-single-json", "--socket-timeout", "10", "--retries", "1", "-f", "bestaudio", "--", track.url),
             seconds=25, name="direct")
         try:
@@ -92,7 +106,7 @@ class CachedMediaLibrary:
         youtube_url(track.url)
 
         async def produce(path: Path, maximum: int) -> None:
-            await self._capture((sys.executable, "-m", "yt_dlp", "--ignore-config", "--no-playlist",
+            await self._capture((*provider_command(), "--no-playlist",
                 "--no-part", "--no-progress", "--no-warnings", "--quiet", "--max-filesize", str(maximum),
                 "--socket-timeout", "10", "--retries", "1", "--fragment-retries", "1",
                 "-f", "bestaudio[ext=m4a]/bestaudio", "-o", "-", "--", track.url), path, maximum, 60, "acquire")

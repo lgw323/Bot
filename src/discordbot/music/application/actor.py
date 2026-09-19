@@ -17,6 +17,7 @@ from typing import Any
 from uuid import uuid4
 
 from discordbot.music.domain.model import Bounds, LoopMode, Projection, Track, normalize_title, volume_value
+from discordbot.music.domain.failures import safe_failure_fields
 from discordbot.music.ports.playback import Audio, Media, MediaLibrary, Provider, Sleeper
 from discordbot.music.ports.repository import MusicRepository
 from discordbot.platform.clock import Clock
@@ -160,7 +161,8 @@ class MusicActor:
             except Exception as exc:
                 error = type(exc).__name__
                 logger.warning('music.work_failed', extra={'fields':dict(fields,
-                    error_code=exc.code.value if isinstance(exc, AppError) else 'internal')})
+                    error_code=exc.code.value if isinstance(exc, AppError) else 'internal',
+                    **safe_failure_fields(exc.context if isinstance(exc, AppError) else {}))})
             else:
                 logger.info('music.work_succeeded', extra={'fields':fields})
             try:

@@ -10,6 +10,9 @@
 ## [Unreleased]
 
 ### Fixed
+- Pi에서 재현된 Music download HTTP 403에 대응해 yt-dlp를 검증 후보 2026.8.19로 고정하고,
+  같은 release 안의 Deno/EJS를 명시적으로 사용합니다. Runtime component 자동 다운로드는 금지합니다.
+  Media 실패는 vendor stderr 대신 허용된 원인 분류와 제한된 child exit code만 기록합니다.
 - Music deferred 응답의 지연 삭제를 discord.py Webhook API와 맞추고, 삭제 작업을 bounded owner로 회수합니다.
   전송 전 인자 검증 실패에는 단일 fallback을 허용하며 통신 결과가 불확실한 전송을 중복하지 않습니다.
 - PHASE 10B 재시도에서 jukebox 갱신 시 새 버튼 callback까지 제거하던 순서와 immutable release의

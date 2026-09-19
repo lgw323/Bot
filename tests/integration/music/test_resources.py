@@ -155,6 +155,33 @@ async def test_provider_incompatible_result_boundary(rig):
     with pytest.raises(DataIntegrityError): await YtDlpProvider(pool).lookup("ytsearch3:test", 10, limit=3)
 
 
+async def test_provider_uses_release_local_deno_and_disallows_remote_components(tmp_path, monkeypatch):
+    from discordbot.music.adapters.providers import provider_command
+    executable = tmp_path/'immutable-env'/('python.exe' if os.name == 'nt' else 'python')
+    monkeypatch.setattr(sys, 'executable', str(executable))
+    command = provider_command()
+    assert command[:4] == (str(executable), '-m', 'yt_dlp', '--ignore-config')
+    assert command[command.index('--js-runtimes')+1] == 'deno:'+str(executable.with_name('deno.exe' if os.name == 'nt' else 'deno'))
+    assert '--no-js-runtimes' in command and '--no-remote-components' in command
+
+
+async def test_pinned_provider_and_runtime_load_without_network(rig, tmp_path, monkeypatch):
+    from importlib.metadata import version
+    from packaging.version import Version
+    from discordbot.music.adapters.providers import provider_command
+    pool = ProcessPool(rig[7])
+    monkeypatch.chdir(tmp_path)
+    try:
+        result = await pool.run((*provider_command(), '--version'), seconds=10)
+        assert Version(result.strip().decode()) == Version(version('yt-dlp'))
+        runtime = provider_command()[provider_command().index('--js-runtimes')+1].removeprefix('deno:')
+        result = await pool.run((runtime, '--version'), seconds=10)
+        assert result.decode().splitlines()[0].startswith('deno '+version('deno'))
+        assert version('yt-dlp-ejs') == '0.8.0'
+        assert not pool.children
+    finally: await pool.close()
+
+
 async def test_tts_child_entrypoint_from_release_working_directory(rig, tmp_path):
     """The immutable app is on the parent's sys.path, not installed in the venv."""
     import os

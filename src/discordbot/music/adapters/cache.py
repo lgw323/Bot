@@ -90,6 +90,7 @@ class DiskCache:
         key = hashlib.sha256(identity.encode()).hexdigest()
         work_id = uuid4().hex
         temporary = None
+        failure_reason = 'cache_read_failure'
         try:
             async with self._lock:
                 if len(self._leases) >= 32:
@@ -115,14 +116,18 @@ class DiskCache:
                 # and published entries together stay within the global budget.
                 await self._evict(self.item_bytes, 1)
                 temporary = self.directory / (uuid4().hex + ".part")
+                failure_reason = 'cache_write_failure'
                 logger.info('music.media_acquisition_started', extra={'fields':{'stage':'media_acquisition', 'work_id':work_id}})
                 await producer(temporary, self.item_bytes)
                 logger.info('music.media_acquired', extra={'fields':{'stage':'media_acquisition', 'work_id':work_id}})
+                failure_reason = 'cache_publish_failure'
 
                 def publish() -> Entry:
                     size = temporary.stat().st_size
-                    if not 0 < size <= self.item_bytes:
-                        raise CapacityError("Music cache item size invalid")
+                    if size == 0:
+                        raise DataIntegrityError('Music cache item is empty', context={'reason':'empty_output'})
+                    if size > self.item_bytes:
+                        raise CapacityError("Music cache item size invalid", context={'reason':'output_limit'})
                     with temporary.open("rb") as source:
                         checksum = hashlib.file_digest(source, "sha256").hexdigest()
                     destination = self.directory / (key + "-" + checksum + ".blob")
@@ -139,7 +144,7 @@ class DiskCache:
                     'work_id':work_id, 'result':'published', 'bytes':entry.size}})
                 return media
         except OSError:
-            raise ExternalPermanentError("Music cache disk operation failed") from None
+            raise ExternalPermanentError("Music cache disk operation failed", context={'reason':failure_reason}) from None
         finally:
             if temporary is not None:
                 await self.executor.run_retained(lambda: temporary.unlink(missing_ok=True))

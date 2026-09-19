@@ -37,5 +37,6 @@ def test_timers_bound_cadence_and_never_enable_themselves():
 
 def test_emergency_provider_pin_is_exact_and_all_normal_dependencies_are_pinned():
     lines = [line for line in (ROOT / "deploy" / "dependencies.pins").read_text().splitlines() if line and not line.startswith("#")]
-    assert "yt-dlp==2026.7.4" in lines
+    assert "yt-dlp==2026.8.19" in lines
+    assert "yt-dlp-ejs==0.8.0" in lines and "deno==2.9.7" in lines
     assert all("==" in line and ">=" not in line for line in lines)
