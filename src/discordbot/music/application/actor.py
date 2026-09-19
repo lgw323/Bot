@@ -39,7 +39,8 @@ class MusicActor:
     def __init__(self, guild_id: int, *, supervisor: TaskSupervisor, clock: Clock, sleeper: Sleeper,
                  provider: Provider, library: MediaLibrary, audio: Audio, repository: MusicRepository,
                  text_channel_id: int | None = None, volume: float = .5, bounds: Bounds = Bounds(),
-                 changed: Callable[[Projection], None] | None = None) -> None:
+                 changed: Callable[[Projection], None] | None = None,
+                 fail_fast: bool | Callable[[], bool] = False) -> None:
         self.guild_id, self.bounds = guild_id, bounds
         self.supervisor, self.clock, self.sleeper = supervisor, clock, sleeper
         self.provider, self.library, self.audio, self.repository = provider, library, audio, repository
@@ -68,6 +69,7 @@ class MusicActor:
         self._resume_paused = False
         self._restore_identity: str | None = None
         self.changed = changed
+        self.fail_fast, self.smoke_failed = fail_fast, False
 
     def _spec(self, name: str, identity: str, seconds: float) -> TaskSpec:
         return TaskSpec(name="music." + name, owner="music.actor", work_id=identity,
@@ -223,6 +225,9 @@ class MusicActor:
             self._work("autoplay", lambda: self.provider.lookup(query, previous.requester_id, limit=10), self.bounds.provider_seconds)
 
     async def _failed(self) -> None:
+        if self._smoke_enabled():
+            await self._stop_for_smoke()
+            return
         await self._stop_audio(corrupt=True)
         self._failures += 1
         if self._failures >= 3:
@@ -233,6 +238,21 @@ class MusicActor:
             self._retry_at = self.clock.monotonic() + delay
             self._status = "retry"
             self._work("retry", lambda: self.sleeper.sleep(delay), delay + 5)
+
+    def _smoke_enabled(self) -> bool:
+        return self.fail_fast() if callable(self.fail_fast) else self.fail_fast
+
+    async def _stop_for_smoke(self) -> None:
+        """Latch admission before yielding; retain the newest queue for preservation."""
+        self.smoke_failed = True
+        self._accepting = False
+        self._status, self._error = 'failed', 'live_smoke_failed'
+        logger.warning('music.smoke_failed', extra={'fields':{'stage':'live_smoke', 'result':'failed'}})
+        for name in tuple(self._jobs): self._cancel(name)
+        while self._requests:
+            future = self._requests.popleft()[-1]
+            if not future.done(): future.set_exception(ShutdownError('Music smoke stopped after first failure'))
+        await self._stop_audio(corrupt=True)
 
     def _notify(self, attempt: str, failed: bool) -> None:
         if attempt != self._attempt or any(c.operation == "ended" and c.payload.get("attempt") == attempt for c in self._mailbox):
@@ -291,6 +311,9 @@ class MusicActor:
             self._prepare()
 
     async def _dispatch(self, op: str, p: dict[str, Any]) -> Any:
+        if self.smoke_failed and op not in {'close', 'inspect'}:
+            if op == 'result': return False
+            raise ShutdownError('Music smoke stopped after first failure')
         if op == "inspect":
             return self.projection()
         if op == "enqueue":
@@ -343,6 +366,9 @@ class MusicActor:
         elif op == "ended":
             if p["attempt"] != self._attempt:
                 return False
+            if self._smoke_enabled() and p['failed']:
+                await self._stop_for_smoke()
+                return True
             tts = self._status.startswith("tts")
             previous = self._current
             await self._stop_audio(corrupt=p["failed"])
@@ -491,6 +517,9 @@ class MusicActor:
             self._work("tts", lambda: self.library.speech(text), 20)
 
     async def _result(self, name: str, value: Any, error: str | None) -> bool:
+        if error and self._smoke_enabled() and name in {'lookup', 'prepare', 'start', 'tts'}:
+            await self._stop_for_smoke()
+            return True
         if name == "lookup":
             receipt, _, _, enqueue, future = self._requests.popleft()
             if future.cancelled():

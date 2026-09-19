@@ -1,5 +1,6 @@
 """Explicit Music lifecycle for Discord composition; importing starts nothing."""
 import asyncio
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -29,7 +30,8 @@ class MusicResource:
     def __init__(self, bot: Any, repository: Any, clock: Any, executor: Any, *, cache_path: Path,
                  snapshot_path: Path, channels: dict[int, int], master: int, bounds: Bounds = Bounds(),
                  provider: Any = None, library: Any = None, audio_factory: Any = None,
-                 direct_until: float | None = None, tts_enabled: bool = True) -> None:
+                 direct_until: float | None = None, tts_enabled: bool = True,
+                 fail_fast: bool | Callable[[], bool] = False) -> None:
         if len(channels) > bounds.actors:
             raise CapacityError("Music configured guild capacity exceeded")
         self.bot, self.repository, self.clock, self.executor = bot, repository, clock, executor
@@ -42,6 +44,7 @@ class MusicResource:
         self.provider = provider or YtDlpProvider(self.processes)
         self.library = library or CachedMediaLibrary(self.cache, self.processes, direct_until=direct_until)
         self.tts_enabled = tts_enabled
+        self.fail_fast = fail_fast
         self.audio_factory = audio_factory or (lambda guild: DiscordAudio(bot, guild, self.ffmpeg))
         self.actors: dict[int, MusicActor] = {}
         self.messages: dict[int, Any] = {}
@@ -71,7 +74,7 @@ class MusicResource:
                 self.actors[guild] = MusicActor(guild, supervisor=self.supervisor, clock=self.clock,
                     sleeper=Sleeper(), provider=self.provider, library=self.library, audio=self.audio_factory(guild),
                     repository=self.repository, text_channel_id=self.channels[guild], volume=.5 if volume is None else volume,
-                    bounds=self.bounds, changed=self.changed)
+                    bounds=self.bounds, changed=self.changed, fail_fast=self.fail_fast)
             return self.actors[guild]
 
     def changed(self, state: Any) -> None:

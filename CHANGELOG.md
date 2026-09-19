@@ -10,6 +10,8 @@
 ## [Unreleased]
 
 ### Fixed
+- PHASE 10 live smoke를 root marker로 명시적으로 활성화하면 첫 Music 실패에서 admission을 닫아
+  guard polling 전에 재시도가 들어가지 않게 합니다. 정규 운영의 3초/8초 재시도는 유지합니다.
 - Pi에서 재현된 Music download HTTP 403에 대응해 yt-dlp를 검증 후보 2026.8.19로 고정하고,
   같은 release 안의 Deno/EJS를 명시적으로 사용합니다. Runtime component 자동 다운로드는 금지합니다.
   Media 실패는 vendor stderr 대신 허용된 원인 분류와 제한된 child exit code만 기록합니다.

@@ -1,5 +1,7 @@
 """Full Discord composition, explicitly invoked only after file/config validation."""
 
+from pathlib import Path
+
 from discordbot.composition.runtime import ProcessRuntime
 from discordbot.engagement.adapters.discord_runtime import EngagementConfig, EngagementResource, create_engagement_bot
 from discordbot.music.adapters.runtime import MusicResource
@@ -37,7 +39,8 @@ class DiscordFeatures:
             s.secrets.control_key, s.admin_channel, s.master, self.clock, r.telemetry)
         self.music = MusicResource(self.bot, SqliteMusicRepository(self.database), self.clock, r.executor,
             cache_path=s.cache / "music", snapshot_path=s.state / "music_state.json",
-            channels=dict(s.music_channels), master=s.master)
+            channels=dict(s.music_channels), master=s.master,
+            fail_fast=lambda: Path('/run/discordbot-live-smoke').is_file())
         self.deferred = DeferredMusic(self.music, self.bot, r.supervisor)
         try:
             for resource in (engagement, self.summary, watch, Gateway(self.bot, s.secrets.discord_token), self.deferred):
@@ -49,7 +52,8 @@ class DiscordFeatures:
 
     def ready(self):
         return bool(self.bot.is_ready() and self.deferred and self.deferred.started
-                    and not self.deferred.failed and not self.music.failed_restore)
+                    and not self.deferred.failed and not self.music.failed_restore
+                    and not any(actor.smoke_failed for actor in self.music.actors.values()))
 
     def gauges(self):
         return {"music_actors": len(self.music.actors) if self.music else 0,

@@ -27,3 +27,18 @@ Sources: [upstream provider release](https://github.com/yt-dlp/yt-dlp/releases/t
 Tests use synthetic child processes, temporary cache and fake Discord transport.
 The isolated ARM64 media check must also run against the exact new release before
 asking for production pin approval. Actual Music audio and TTS remain live gates.
+
+The live operator arms a root-owned `/run/discordbot-live-smoke` regular file before
+starting the approved release. In that mode the first lookup/acquire/start/TTS or
+audio callback failure latches Music admission closed, stops audio and retains the
+current track/queue for the normal shutdown checkpoint. It never admits the 3-second
+retry. Readiness becomes false. `deploy/production/observe-smoke.py` checks safe
+journal evidence every 0.25 seconds (health every 5 seconds), stops the pair and
+copies the newest data/state/audit into a fresh private preservation directory.
+The observer requires the marker and never overwrites an old output directory.
+
+Keep the marker through live smoke and bounded observation; remove it only after
+all required gates pass. A successful process then uses the normal 3/8-second retry
+policy without a restart. A failed process stays latched until a reviewed restart.
+The marker lives in `/run`, is absent after boot, and is never user data or config.
+No candidate replay, DB restore, down-migration or V1 restart belongs to this flow.
