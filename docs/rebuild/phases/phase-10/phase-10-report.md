@@ -1,10 +1,284 @@
 # PHASE 10 Report — Production Cutover
 
-## 10B retry investigation — IN PROGRESS / SERVICES STILL STOPPED
+## 10B continuation — MEDIA REPAIRED / VERIFIED RELEASE AWAITING PUSH-PIN APPROVAL
+
+2026-09-19 사용자 변경 지시에 따라 live 실패 뒤 정지·보존 상태에서 원인 분석, 격리 재현,
+코드 수정과 검증을 계속했다. **PHASE10 INCOMPLETE**이며 새 production pin/live 재시도는 아직 미승인이다.
+현재 canonical DB를 복원·승격·replay하지 않았고 V1을 시작하지 않았다. 아래 과거 실패 기록은 이력을 보존한다.
+
+### Confirmed acquisition cause and repair
+
+- 승인368 release의 Python3.12.3 / yt-dlp2026.7.4 / service UID / cwd / sandbox를 사용했다.
+  운영과 같은 cache 경로에는 격리 디렉터리를 bind mount하여 실제 cache와 DB를 변경하지 않았다.
+  대조 public clip은 acquire309288 bytes → PCM3840 bytes → fake VoiceClient → Opus96 bytes PASS.
+  실제 실패 class는 metadata 성공 뒤 **download HTTP403 / child exit1**로 재현됐다.
+- 기존 pin에서 WebM 선택도403, HLS audio 선택은 no_audio_format이었다. Deno2.9.7/EJS0.8.0을
+  추가한 기존 pin도403이었다. 따라서 단순 M4A 선택 또는 JS runtime 추가만으로 해결되지 않았다.
+- yt-dlp **2026.8.19**에서는 동일 실패 class가 JS runtime 활성화 전후 모두 acquire2525278 bytes,
+  PCM3840 bytes, fake VoiceClient acceptance, Opus96 bytes까지 PASS했다. 종전 pin의 provider 경로
+  compatibility 실패가 재현·해소됐으며, YouTube 내부의 구체적인403 정책까지 확정하지 않는다.
+  실제 Discord audible Voice 성공을 이 격리 결과로 대체하지 않는다.
+- 새 pin과 함께 기존 sealed inventory에 빠졌던 호환 EJS0.8.0, 공식 Deno2.9.7을 포함한다.
+  Adapter는 release-local Deno를 명시하며 remote component download를 금지한다. 다른58 artifacts는
+  hash 그대로 유지했고 기존 wheelhouse와 release를 보존했다. 이는 dependency 전체 최신화가 아니다.
+- Provider stderr는 그대로 출력·보관하지 않는다. 오류에는 executable/start/I/O, child_nonzero,
+  provider/auth/format, HTTP403/download, timeout, invalid/empty output, cache write/publish 등
+  allowlisted reason과 -255..255 child exit code만 기록한다. Track/title/URL/user ID는 기록하지 않는다.
+- Safe probe evidence: `/home/os/discordbot-phase10/media-boundary-01.json`부터 `04.json`까지.
+  모든 비교에서 canonical/state/cache/audit/config 및 최신 preservation hash 불변, 서비스 정지 확인.
+  FFmpeg exit255는 첫 PCM 확인 뒤 의도적으로 terminate/reap한 결과이며 provider 실패가 아니다.
+- 참고: [upstream provider release](https://github.com/yt-dlp/yt-dlp/releases/tag/2026.08.19),
+  [EJS installation contract](https://github.com/yt-dlp/yt-dlp/wiki/EJS).
+
+### Independent fixes and regression
+
+- `e1501fc`: discord.py2.7.1 Webhook.send에 unsupported delete_after를 보내지 않는다.
+  followup은 wait=True로 받은 메시지를 bounded supervisor에서 삭제한다. HTTP 호출 전 signature
+  오류에는 단일 fallback이 가능하고, 호출 이후 결과가 불확실한 실패에는 중복 응답을 보내지 않는다.
+- `7da55db`: Music provider pin/runtime 및 위 안전한 failure boundary 진단.
+- `a023fbf`: root-owned `/run/discordbot-live-smoke` marker가 있을 때 첫 Music 실패에서 admission과
+  retry를 닫고 current/queue를 보존한다. root guard의 journal 확인 간격은0.25초, health는5초다.
+  marker 해제 후 정상3초/8초 정책을 사용하며 실패 latch는 restart 전까지 유지한다.
+- `75d5481`: stopped verifier가 최신 DB와 세 보존본 및 모든 보호 state/config inventory를 전후 비교한다.
+  separate reviewed wheelhouse에서 exact source를 offline build/test하며 current를 활성화하지 않는다.
+- `4963982`: 실제 SDK ViewStore를 통한 Favorites 의미/공용 목록/pagination/owner/expiry/교체 회귀6개.
+- 기존 TTS absolute standalone worker와 Watch iframe-independent WS/presence/hydration/lifecycle/
+  bounded reconnect/terminal close 구현은 유지했다.
+- Windows 새 provider/EJS/Deno의 별도 test venv에서 전체 strict **813 passed /66.31초**,
+  skip0/xfail0, 기존 audioop deprecation1. 테스트는 실제 DB/외부 service를 사용하지 않았다.
+  Watch Node harness9 scenarios도 모두 PASS했다.
+
+### Production state and approval boundary
+
+- Current approved/pinned release는 여전히 `r-368c8ebf7cbff244-d026a47ed4f4b38a`다.
+- Canonical DB SHA256 **fdc1aca74b5bb65ce9ebd511e32b83a6b31e249246dffafd962c2c0eb15ece9f**.
+  최신 preservation `/var/lib/discordbot/phase10-retry-368c8ebf7cbff244-favorites-resume-guard-preservation/`.
+  기존52d2ef…/fab61b… 보존본도 유지한다. Schema5/integrity PASS, favorites40/3 owners, settings1,
+  play_counts51, users15의 기존 안전한 검사 evidence를 유지한다.
+- **Favorites gate PASS**: 사용자가 실제 💾 보관함 열림을 확인했다. 추가 production favorite를
+  만들지 않았고 더 이상 blocker로 취급하지 않는다. 새 release live에서의 단순 회귀 확인은 별도다.
+- Source/build candidate: `49639828a3c2f181e87a3cfffd5d5f80f47b359a`.
+  Archive SHA256 `39eea24a22e4113d024ef874780de499b0b9741cc9c12a264fd36712675e457a`.
+  New wheelhouse SHA256 `3dac82a792fad5769f4e6b32cdd0c294fbfbb4863500e8e232f85b47b3297cc6`.
+- **Pi exact-source full strict: 804 passed /9 skipped, failure0/error0/xfail0**. Build+verification149.839초.
+  Skip9개는 Node.js가 없는 ARM64 worker에서 의도된 shipped Watch browser harness이며,
+  Windows813 전체 검사에서 동일9개가 모두 PASS함을 JUnit 이름으로 대조했다. 다른 미검증 skip 없음.
+- Immutable release **`r-49639828a3c2f181-3dac82a792fad576`**, manifest17402 files, schema range **[5,5]**.
+  Manifest SHA256 `961e33dd6acc82fa608efefbd3ed5a24cbaa2b6d0cfb011ddb32a3f6f2f078e9`.
+  Discord/Watch UID999, Operations UID997의 credential scope exact/read-only mount PASS,
+  원본 secret 직접 접근 denied. Network login/DB open은 credential 검사에서 하지 않았다.
+  Build stage `verified_not_activated`, canonical 및 세 preservation 포함 protected state 불변.
+- **Exact release media probe PASS**: 대조 clip/search3 결과/기존 실패 class/synthetic TTS.
+  기존 실패 class acquire2525278 bytes → PCM3840 → fake Voice → Opus96,4.624초.
+  Synthetic TTS8832 bytes → 동일 PCM/Opus,0.539초. 모든 child 회수, remaining0.
+  같은 production cwd/cache path를 private mount로 격리했고 credentials/Discord login은 사용하지 않았다.
+  실제 Voice 청취 및 실제 Discord TTS는 여전히 승인 뒤 live gate다.
+- Safe evidence: `/home/os/discordbot-phase10/retry-build-49639828a3c2.json`,
+  `media-wheelhouse-verification.json`, `media-boundary-05.json`.
+- 최종 read-only 상태: Discord/Watch/staging inactive, MainPID0/NRestarts0/boot disabled,
+  backup/update/manual timers inactive/disabled,9000/9001/9010/9011 listener0.
+  Current pin368 유지. Config SHA256 `41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40`.
+- 새 runtime range368→496의 모든5 commit tree와27 new blobs/message 검사 PASS:
+  실제 secret/.env/DB/SQL/backup/private key/credential/운영 데이터 artifact0.
+  전체 ancestry 검사760 blobs/1744 objects는 기존 승인 때 검토한8개 fixture/path false positive만 동일했다.
+  최종 보고 문서 commit까지 포함한 range를 push 승인 요청 전에 다시 검사한다.
+- 원격 `codex/rebuild-v2`는368c8eb 그대로, `main`은8432fdef40cddc131176fa875e350660dc897e12 그대로다.
+  새 commit은 로컬에만 있으며 일반 fast-forward push와 이 검증된 release의 production pin 적용을
+  **한 번의 사용자 승인 gate**로 요청한다. Rebase/force/history rewrite는 없다.
+- Actual live gates: 70초 readiness, commands, Favorites/volume, URL/search audible Music, stop/disconnect,
+  TTS, Chrome Watch 전체 behavior와 Cloudflare public path는 새 pin 승인 뒤 순서대로 수행한다.
+  모두 성공한 뒤에만 actual production encrypted backup → Bot-Data publication/read-back →
+  isolated restore → boot/4h backup timer → bounded observation을 진행한다. Auto-update는 OFF 유지.
+- 실패 시 즉시 stop/preserve하되 Codex는 원인 분석·수정을 이어간다. 새 code activation 시에만
+  다시 push/pin 승인을 요청한다. Candidate replay/old DB restore/down-migration/V1 시작은 금지한다.
+  Audit0/Audit1–10/Integrated Audit/PHASE11/V1 삭제는 진행하지 않는다.
+
+## Historical continuation — MUSIC PREPARATION FAILED / SERVICES STOPPED
+
+2026-09-19 사용자 후속 지시에 따라 아래 stopped retry 상태에서 이어서 진행한다.
+Cutover/DB 승격을 반복하지 않는다. Production source/commit/pin은 승인된368 그대로이며,
+새 코드는 테스트6개만 추가했다. **PHASE10 INCOMPLETE**다. 사용자가 URL 재생 시 음성 채널 이탈과
+준비중 표시를 보고했고, guard가 Music 준비 실패를 감지해 자동 정지·새 상태 보존을 완료했다.
+07:32:48.839Z는 guard 완료 결과 파일의 mtime이며,07:35:50Z readonly 검증에서 정지·보존 일치를
+확인했다. 사용자 지시대로 추가 수정·재생·재시작 없이 보고 후 중단한다.
+
+### Confirmed failure sequence
+
+| UTC | Safe event / interpretation |
+| --- | --- |
+| 07:32:39.758 | `music.request_received / ui_request`1회. 원문 URL·title·사용자 ID는 보고서에 기록하지 않음 |
+| 07:32:40.063 | `music.voice_connected / voice_connection`, 이어서 lookup 시작 |
+| 07:32:41.902 | lookup 성공 → prepare 시작 |
+| 07:32:41.903 | media acquisition 시작. 별도로 `music.ui_failed / request / internal` 발생 |
+| 07:32:43.874 | **`music.work_failed / prepare / external_permanent`**, 재시도 대기 시작 |
+| 07:32:46.876 | 기존 actor의3초 대기 완료 → 두 번째 prepare/acquisition 실행 |
+| 07:32:47.243 | 두 번째 **prepare / external_permanent** 실패. 다음 retry 대기 시작 |
+| 07:32:48.839 이전 | Guard `music_failure`로 pair stop·보존 완료. 추가 retry 완료/세 번째 prepare 기록 없음 |
+
+이번 요청의 확인된 실패 경계는 **metadata 조회 이후, cache에 사용할 media 준비/취득 단계**다.
+`media_acquired`, `cache_leased`, `ffmpeg_started`, `first_pcm`, `playback_accepted` 기록은0회다.
+오류 전후 내부 health/DB probe는 정상이고 NRestarts0이므로 서비스 crash/restart 증거는 없다.
+음성 채널 이탈은 guard의 안전 정지와 함께 관찰되었으며, 이탈 자체를 최초 Voice transport 실패로
+확정하지 않는다. 실제 audible audio는 FAIL; 검색어 재생·정상 stop/disconnect smoke는 미진행이다.
+
+`external_permanent`는 subprocess 비정상 종료/실행 실패 등 여러 경로가 공유하는 코드다.
+현재 수집된 안전한 evidence에는 child exit code나 허용 목록으로 분류한 stderr 원인이 없어
+YouTube 제한/HTTP403/format/프로세스 실행 환경 중 하나를 원인으로 확정할 수 없다.
+Watch의 별도 Cloudflare1010 증거를 Music 다운로드 원인으로 연결하지 않는다.
+
+별도로 승인 source의 `MusicController.request` → `Responder.send`는 deferred followup에
+`delete_after=5`를 전달한다. 설치된 Windows discord.py2.7.1의 실제 `Webhook.send` signature는
+그 인자를 지원하지 않으며, network 없는 signature binding에서 **TypeError**를 확인했다.
+이는 확인된 SDK API 계약 불일치다. `Responder`는 첫 send 실패 전에 finished를 설정하므로
+catch 뒤 fallback send도 생략될 수 있다. 다만 live `request/internal` telemetry에는 exception type이
+없어 그 기록과 이 TypeError의 동일성을 직접 확정하지 않는다. 이 API 불일치는 별도의 media 취득
+실패 원인을 설명하지 않는다. 운영 코드 수정이나 새 release/push는 이번 실패 후 실행하지 않았다.
+
+**Fail-stop 관찰의 한계:** agent/user의 추가 재생 요청은 없지만, 기존 actor는 첫 실패 후3초에
+자동 재시도1회를 실행했다.5초 주기의 운영 guard가 이를 첫 실패 직후 차단하지 못했고, 두 번째
+실패 뒤 두 서비스를 멈췄다. 따라서 자동 재시도0회라고 보고하지 않는다. 재시도 허용 정책과
+최초 오류 차단 시점은 다음 별도 승인 작업에서 함께 조정해야 할 확인된 공백이다.
+
+### Newest state preservation and final gates
+
+- 최신 보존본: `/var/lib/discordbot/phase10-retry-368c8ebf7cbff244-favorites-resume-guard-preservation/`,
+  mode0700. Canonical와 copy DB SHA256
+  `fdc1aca74b5bb65ce9ebd511e32b83a6b31e249246dffafd962c2c0eb15ece9f`,143360 bytes 일치.
+  Schema5/integrity PASS, favorites40/3 owners, music_settings1, music_play_counts51, users15, Watch0/0.
+  정상 정지 후 WAL/SHM/journal sidecar 없음; 기존 DB를 복원하거나 sidecar를 삭제하지 않았다.
+- Data1/143360 bytes, state1/695, cache1/279075, backups0/0, audit146/30225, config17/3667의
+  inventory 및 모든 file byte hash copy 일치를 확인했다. 저장된 release도 승인368과 일치.
+- 최신 semantic checksum `42ab8fe5d77a4d9677a16498816f486fa1c5d5d954f608a1976122e832f3c17f`,
+  metadata checksum `3eab85922494f7e0dd52cbe963d66b1a1a26bdfe7ae18ca26f9c42cec59fa225`.
+  Config hash41edd03a… 그대로. 이전52d2ef… 및fab61b… 보존본 DB hashes 모두 불변.
+- Production/staging/ops6 services inactive/MainPID0, production pair Result=success/NRestarts0.
+  Runtime/staging boot disabled, backup/update/manual timers inactive/disabled, ports9000/9001/9010/9011
+  listeners0. Current pin은 승인368을 유지한다. Candidate replay/old restore/down-migration/V1 시작 없음.
+- Safe failure evidence `/home/os/discordbot-phase10/music-failure-verification.json` 및
+  `/var/tmp/phase10-retry-368c8ebf7cbff244-favorites-resume/{summary.json,samples.jsonl}`.
+  Guard summary의 `last.services/health`는 정지 직전 sample이다. 최종 상태는 guard result와 후속
+  readonly 검증의 inactive/MainPID0가 우선한다.
+- Guard 관찰 실제1282.760초/222 samples. Health bad0/release mismatch0/probe error0/restarts0,
+  DB recent failures0/telemetry drop0. Discord/Watch max RSS85056/68716KiB, FD15/12, threads8/4;
+  Music child max1, Watch session/client max0. 이는 실패 전 smoke 관찰이며 post-cutover 성공 관찰이 아니다.
+
+| Required live/final gate | Final outcome |
+| --- | --- |
+| Latest production integrity / exact approved release / Gateway / sync | PASS, 위 safe evidence 및25.567초 readiness |
+| `/내정보`, `/랭킹`, `/요약` | 직전 동일368 시도에서 사용자 PASS. 이번 빠른 재확인의 별도 응답은 받지 못함 |
+| Favorites | **사용자 보관함 열림 확인**. 최신 DB40/3 owners 유지. 목록의 개별 기존 항목 일치 확인은 별도 응답 없음. 실제 owner별 목록10/17/13개로 모두1 page; synthetic26/101 pagination PASS |
+| Volume | 직전 동일368에서100% 표시 확인. 이번 재확인 별도 응답 없음 |
+| URL Music / actual audible Voice | **FAIL — prepare/acquisition external_permanent**, 실제 오디오 성공 확인 없음 |
+| Search Music / normal stop-disconnect / TTS | 실패 후 미진행 |
+| Watch Chrome presence/refresh/reconnect/hydration/close/admin-close | 미진행; public browser/WSS PASS 아님 |
+| Cloudflare public path | Route9000/origin ready PASS; Python public403/1010. 실제 Chrome 결과 미확인 |
+| Actual canonical encrypted backup / Bot-Data read-back / isolated restore | 필수 smoke 실패로 미실행 |
+| Backup timer / boot / post-cutover observation | 미실행·비활성 유지. Auto-update/manual polling OFF |
+
+Audit0/PHASE11/V1 삭제는 진행하지 않았다. 아래는 이번 continuation의 시작 전 검증과 시작 이력이다.
+
+- 07:03:38Z Pi readonly reconciliation PASS: runtime/staging/ops6 services inactive/MainPID0,
+  backup/update/manual timers inactive/disabled, port9000/9001/9010/9011 listeners0.
+- Current release368, canonical/latest preservation DB fab61b… 일치. Schema5/integrity/application
+  readonly copy open/close PASS, 검사 전후 원본 hash 유지. Favorites40/3 owners, settings1,
+  play-count rows51, users15, Watch0/0 유지. Data loss로 분류하지 않는다.
+- Data checksum `bd3d4b0f3a4d808719f6e35bfc95390322c496b6694bdd7aeb51e349f9f6ca54`,
+  metadata checksum `1ec0e7acf5d31a5474b9b1bd1b4dbaa352d6a48d93c43d5cba8f7bfc109e9619`.
+  Safe evidence `/home/os/discordbot-phase10/favorites-resume-inspection.json`.
+- V1 retained `MusicPlayerView`와 V2 `build_dashboard`의 serialized component 비교: idle `⭐`
+  disabled, 재생 곡 있음 `⭐` enabled, `💾 보관함` 항상 enabled. 둘 다 secondary(gray) style이다.
+  `music:favorite`와 `music:favorites`는 별도 저장/목록 callback이며 색상이 disabled를 뜻하지 않는다.
+- `tests/integration/music/test_favorites_dispatch.py`의6 tests PASS: 실제 SDK ViewStore dispatch,
+  V1/V2 current 없음/있음 wire projection, 임시 SQLite26/101 favorites 사용자 공용 조회,
+  25-option stable pagination, private response ACK/owner/expiry, ready storm45회 및3회 replacement,
+  stale stop 이후 최신 handler 유지, typed failure response/log privacy. 실제 DB/Discord/network 미사용.
+- Related Music/contract/architecture **117 passed/7.31초**; full Windows strict **777 passed/64.58초**,
+  skip0/xfail0, 기존 audioop deprecation1. 운영 source diff0. 기존 approved ARM64 release와
+  762 pass/9 intentional Windows-covered skips 증거 유지; 새 runtime release/push를 만들지 않았다.
+- 동일 release manifest·DB·config·route 재확인 뒤07:10:59.797Z 시작,
+  07:11:25.369Z **25.567초/70초**에 양쪽 live/ready 동일368, NRestarts0 PASS.
+  pin/DB 교체 없음. Safe result `/home/os/discordbot-phase10/favorites-resume-start.json`.
+  새 finite guard: `/var/tmp/phase10-retry-368c8ebf7cbff244-favorites-resume/`.
+- 사용자가 **보관함 열림**을 실제 확인했다. 따라서 현재 `💾 보관함`의 disabled/callback 불능으로
+  판정하지 않는다. 나머지 표시·명령의 명시적인 확인을 요청했으나 추가 응답 없이 실제 URL
+  Music 실패가 보고되었다. 사용자 응답에 없는 항목을 PASS로 추정하지 않으며 최종 결과는 위 표를 따른다.
+- Public probe 분류: Windows 및 Pi의 Python HTTPS 요청은403, Windows 응답의 고정 code1010 확인.
+  Origin9000은 HTTP200/ready=true. 현재 route는9000 그대로이며 내부 port public 노출0.
+  [Cloudflare 공식1010 설명](https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1010/)의
+  client browser signature 차단과 일치한다. Python probe 차단과 실제 Chrome smoke를 구분하며,
+  임의 보안 설정/route 변경 또는 기존 과거 HTTPError의 동일 원인 확정은 하지 않는다.
+
+## 10B retry — STOPPED AT FAVORITES CHECK / NOT PASSED
 
 2026-09-19 새 세션은 첨부된 재개 지시와 repository evidence로 상태를 재구성했다.
 시작 HEAD `5e2e57b`, branch `codex/rebuild-v2`, worktree clean. 아래 첫 실패 기록을 보존하며
-**PHASE10은 미완료**다. 수정본 push/새 production pin은 아직 승인 요청 전이다.
+**PHASE10은 미완료**다. 아래 최신 승인·실행 기록을 우선하며 첫 실패와 조사 이력을 보존한다.
+
+2026-09-19 사용자가 exact368c8eb까지 일반 push와 release368 재시도를 명시적으로 승인했다.
+현재 writes/failed-attempt/복구 evidence 보존, 70초 gate, live smoke 실패 시 정지·보존,
+모든 smoke 성공 뒤 backup/restore와 boot/timer 순서 및 성공·실패 결과 보고 후 중단 조건을 유지한다.
+최종 검사 후 **origin/codex/rebuild-v2를63c7722→368c8eb로 일반 fast-forward push 완료**했다.
+원격 main은 `8432fdef40cddc131176fa875e350660dc897e12` 그대로다. Force/rebase/history rewrite 없음.
+승인된 새 release로 현재 canonical DB를 사용해 시작했고 내부 readiness는25.363초에 통과했다.
+사용자가 즐겨찾기 버튼의 계속된 비활성화를 보고하여 필수 smoke를 통과로 판정하지 않고
+06:52:58Z(15:52:58 KST)에 두 서비스를 정상 정지했다. 최신 상태를 새 경로에 보존·검증했다.
+**이번 재시도도10B 미완료이며, 사용자 지시에 따라 결과 기록 후 작업을 중단한다.**
+
+### Latest retry execution and stop evidence
+
+| Gate | Actual result |
+| --- | --- |
+| Config/schema/release compatibility | config41edd03a… / schema5 / approved immutable manifest PASS. Candidate 승격·DB 복원 없음 |
+| Bounded readiness | 06:46:56.541Z start →06:47:21.904Z ready, **25.363초 /70초 한도**, 두 process live/ready 동일368 release, restart0 |
+| Discord/Gateway/command sync | 내부 ready PASS. 승인 source의 ready는 Gateway `is_ready` 및 `tree.sync()` 완료 후 deferred started를 요구한다. 사용자 명령 응답도 확인 |
+| `/내정보`, `/랭킹`, `/요약` | 사용자 세 항목 PASS 보고 |
+| Favorites / volume | 사용자 즐겨찾기 버튼 계속 비활성 보고로 gate 중단. 볼륨100% 표시는 확인; 목록 열기/선택 및 볼륨 변경은 PASS로 판정하지 않음 |
+| Music search/add/play/stop/actual Voice | 이번 순차 smoke에서 미실행. Startup `music.voice_connected`1회만 있으며 실제 오디오 전달/청취 성공을 뜻하지 않음 |
+| TTS | 미실행 |
+| Watch create/connect/presence/refresh/reconnect/close | 미실행 |
+| Cloudflare | 시작 전 current invocation의 route1개가 `watch.lgw323.com → http://127.0.0.1:9000`; internal port route0. 외부 readiness 요청은 `HTTPError`로 실패했으나 status 미수집이어서 원인 미확정. 이번 공개 HTTPS/WSS PASS로 기록하지 않음 |
+| Actual production encrypted backup / Bot-Data / isolated restore | 필수 smoke 미통과로 모두 미실행. 앞선 local recovery는 이 gate의 대체 증거가 아님 |
+| Boot / backup timer / auto-update | runtime boot disabled, backup/update/manual timers disabled. 활성화하지 않음 |
+
+Finite guard는1800초 계획 중 **330.637초/58 samples**에서 수동 종료했다. 전체58 samples에서
+내부 health bad0/release mismatch0/probe error0/unexpected restart0, database recent failures0,
+telemetry drop0, music child process0, Watch session/client0이다. 이는5분30초 관찰이며 장기 안정성
+또는 미실행 기능 성공을 증명하지 않는다. Allowlisted journal에는 voice connection1회,
+typed error code0만 있어 Music 음성 실패 원인은 이번 실행으로도 확정할 수 없다.
+
+정지는 사용자 직접 sudo 인증 후 `retry-stop-favorites.py`로 실행했다.
+`stopped_preserved_verified`, production/staging/operations6 services 모두 inactive/MainPID0,
+production pair Result=success/NRestarts0 확인. Current pin은 승인368 release를 유지한다.
+최종 추가 확인에서 backup/update/manual timers 모두 inactive/disabled이고,
+9000/9001/9010/9011 TCP listeners는0개였다.
+
+- 새 보존 경로: `/var/lib/discordbot/phase10-retry-368c8ebf7cbf-favorites-failed-20260919T065256492640Z/`.
+- Canonical와 새 copy DB:143360 bytes, SHA256
+  `fab61bdda1dd2c8b664c5fd19525d1cdd46f20c82d630a94ce2ed4caf6f5cc65` 일치.
+  정상 종료 후 WAL/SHM/journal sidecar는 존재하지 않았다. 살아 있는 DB의 강제 copy/삭제는 하지 않았다.
+- Data1 file/143360 bytes, state1/430, cache1/279075, backups0/0, audit146/30225,
+  config17/3667의 파일 목록·byte hash copy 일치 검증 및 fsync 완료. 원문/credential은 전송·출력하지 않았다.
+- 이전 failed-attempt DB는 `52d2ef8813e72e0ab791d359c81a514f11622a1ca86a7165e2a211b1826cc1af`
+  그대로이며 overwrite 없음. 최신 canonical은 기존52d에서fab61b로 바뀌었고 최신 상태 그대로 보존했다.
+  이전 candidate replay, pre-cutover restore, down-migration, V1 시작, blind retry는 하지 않았다.
+- Safe results: `/home/os/discordbot-phase10/retry-start-368c8ebf7cbf.json`,
+  `/home/os/discordbot-phase10/retry-stop-favorites-20260919T065256492640Z.json`,
+  `/var/tmp/phase10-retry-368c8ebf7cbff244-smoke/{summary.json,samples.jsonl}`.
+  Guard summary의 `observing`은 중단 직전 snapshot이며 최종 상태는 stop result가 우선한다.
+
+즐겨찾기 원인은 아직 미확정이다. Source상 현재 곡 저장용 `⭐`는 current가 없으면 disabled이고,
+목록을 여는 `💾 보관함`은 별도 enabled control이다. 사용자 표현만으로 두 버튼 중 무엇인지,
+Discord에 실제 전송된 disabled 값 또는 callback 수신 여부를 확정하지 않는다. 기존40 rows/3 owners와
+격리 UI 생성 검사는 전체 row 소실 가설을 배제했지만 live 버튼 성공의 증거가 아니었다.
+향후 별도 지시가 있으면 정확한 버튼 구분과 안전한 component disabled/custom-id 종류 집계,
+current dashboard 교체/SDK dispatch 경로를 확인해야 한다. 현재 실행에서는 추가 수정·재시작하지 않는다.
+
+- Push 직전 전체 ancestry pattern 검사733 blobs, 새 range24 commits의 모든 tracked tree 및 새66 blobs 검사.
+  실제 secret/env/DB/SQL/backup/key artifact 발견0;8개 pattern은 앞서 검토한 경로/fixture이며 추가 탐지0.
+  넓은 data-directory 규칙의11개 항목은 `tests/integration/data/*.py` 소스였고 실제 데이터 artifact가 아니다.
+  Commit message pattern0. Safe local evidence: `scratch/phase10/final-push-audit-368c8ebf7cbf.json`.
+- Pi skip9개와 Windows junit testcase명을 정확히 대조했다. 모두 의도된 Node harness이며
+  push 직전 Windows에서 **9 passed/0.85초**로 재실행했다. 예상하지 못한 skip/미대응 항목0.
 
 - 05:26:42Z read-only Pi 검사 PASS. Production/staging/operations 6 services 모두 inactive,
   MainPID0, backup/update/manual timers inactive/disabled. Current는 승인된63 release다.
@@ -67,6 +341,28 @@
   승인63 이력의 경로 참조·synthetic fixture7곳과 이후 추가된 Cloudflare 보안 test의 가짜 credential URL1곳이다.
   실제 credential 발견0, current forbidden data/key/env/log path0, commit-message pattern0.
 
+### Exact retry source — VERIFIED / PUSHED / PIN APPROVED
+
+- Source `368c8ebf7cbff2444eec63cfd69a40de3b2e2f3e`.
+- Immutable ARM64 release `r-368c8ebf7cbff244-d026a47ed4f4b38a`, build/full strict148.428초.
+  **762 passed / 9 skipped / 0 failed / 0 errors**, skip은 Windows에서 통과한 Node browser harness만 해당한다.
+- Manifest17338 files, SHA256 `b56ff2e95287e75f2126511d249bb112107c48bc66a3285c30ebf27b86e12946`.
+  Dependency hash `d026a47ed4f4b38ad8b7d3ba4fb70d18a42f9abadce0ace763ca01329b80f394`, schema range5–5.
+- Discord/Watch UID999, Operations UID997의 설치된 production config/no-network scoped credentials 모두 PASS.
+  Readonly mount/exact inventory/direct source access denied. Network login 및 DB open은 scope검사에서 하지 않았다.
+- Guard after: canonical52d2ef… / config41edd03a… 유지, current unchanged, services stopped.
+- Final ancestry scan1667 objects/733 blobs/6391193 bytes: 앞서 분류한 같은8곳 외 추가 탐지0.
+  Current forbidden path0, commit-message pattern0. Windows full strict771 pass/61.80초.
+- 이번 재시도20 files 변경. 원격63 대비 누적35 files/24 commits(앞선 준비·실패 문서/검증 포함).
+  검증 당시 원격은63c7722였으며, 최신 push 결과는 위 실행 기록을 따른다.
+- Safe Pi evidence `/home/os/discordbot-phase10/retry-build-368c8ebf7cbf.json`.
+  Source archive SHA256 `d0d8b62c6ad7ca95c043a585df707253d7f14a25a7004b70e0eef1c2428bfe4b`.
+- 검토한 operator 도구: `retry-start.py`(70초 gate, 현재 DB 유지,
+  실패 시 newest-state 보존), `retry-observe.py`(유한 health guard/안전 stage 집계),
+  `retry-production-backup.py`(live smoke 성공 후 actual canonical encrypted publish/read-back/독립복원).
+  `retry-start.py`와 finite guard는 위 최신 기록대로 실행했다. Production backup 도구는
+  실제 smoke 성공 조건을 충족하지 못해 실행하지 않았다. 추가 stop helper의 보존 결과도 위에 기록한다.
+
 ### Current-write encrypted local recovery
 
 `deploy/production/preserve-stopped-current.py`를 사용자 sudo 인증으로 실행했다.
@@ -87,11 +383,11 @@ Safe evidence: Pi `/home/os/discordbot-phase10/retry-inspection.json`, `retry-re
 명시적으로 승인했다. Secret/raw row/raw log는 전송하지 않는다. sudo는 agent가 연 SSH 창에서
 사용자가 직접 입력한다. V1, original candidate, prior release/backup/history는 그대로 보존한다.
 
-## PHASE 10B result — FAILED LIVE SMOKE / SERVICES STOPPED
+## Earlier 63c7722 attempt — FAILED LIVE SMOKE / SERVICES STOPPED
 
 2026-09-19 사용자 명시적 승인으로10B를 실행했으나 실제 Music/Watch smoke가 실패했다.
 **PHASE 10 INCOMPLETE / 10B FAILED LIVE SMOKE**다. 두 production 서비스는05:09:43Z 정상 중지됐다.
-아래10A 완료 보고는 승인 전 증거로 보존하며, 현재 실행 상태는 이 절을 우선한다.
+아래10A 완료 보고는 승인 전 증거로 보존한다. 이 절은 첫 시도 이력이며 현재 상태는 문서 첫 절을 따른다.
 
 ### Actual live results and remaining gate
 

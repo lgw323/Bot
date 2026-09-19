@@ -4,7 +4,33 @@ Updated: 2026-09-19
 
 ## PHASE 10B execution override
 
-**10B FAILED LIVE SMOKE / SERVICES STOPPED.** 아래 PHASE8–10A 기록은 준비 단계의 이력이다.
+**10B MEDIA REPAIRED / VERIFIED IMMUTABLE RELEASE / PUSH-PIN APPROVAL PENDING.** PHASE10은 미완료다.
+사용자 변경 지시로 정지·보존 뒤에도 분석→격리 재현→수정→strict 검증→immutable release 준비를 이어갔다.
+Favorites는 실제 💾 보관함 열림과40 rows/3 owners 보존 evidence에 따라 **PASS**다.
+기존 yt-dlp2026.7.4의 media 취득 HTTP403/child exit1을 같은 Pi 환경에서 재현했고,
+format 변경과 Deno/EJS 추가만으로는 해결되지 않았다. 2026.8.19로 동일 실패 class의 acquire/PCM/Opus가
+통과했다. Runtime-local Deno2.9.7/EJS0.8.0을 봉인하고 remote component download를 금지했다.
+Responder Webhook API 계약, 단일 fallback/삭제 작업 ownership을 수정했다. Root marker로 활성화하는
+live-smoke first-failure latch는 retry 전에 admission을 닫고 current/queue를 보존한다. 정상3초/8초는 유지한다.
+
+Runtime source `49639828a3c2f181e87a3cfffd5d5f80f47b359a`, 새 비활성 release
+`r-49639828a3c2f181-3dac82a792fad576`: Windows813 pass, Pi804 pass/9 intentional Node skips,
+동일 Windows Node9 pass, manifest17402 files/schema[5,5]/세 credential scope PASS.
+Exact release의 search/public control/기존 실패 class/synthetic TTS 모두 PCM/Opus까지 PASS했다.
+이 결과는 실제 Discord 청취와 Chrome Watch를 대체하지 않는다.
+
+Current production pin은368 유지, canonical DB SHA256
+`fdc1aca74b5bb65ce9ebd511e32b83a6b31e249246dffafd962c2c0eb15ece9f` 및 config/state/cache/audit,
+세 실패 preservation은 모두 불변이다. Runtime/staging stopped/MainPID0, boot/timers disabled, listeners0.
+일반 FF push와 새 pin/live 재시도에 대한 단일 승인 gate에서 기다린다. 승인 후 현재 newest DB로
+readiness70초→commands→Favorites/volume→audible Music/search/stop→TTS→Chrome Watch/Cloudflare를
+확인하고, 모두 성공해야 actual encrypted backup/Bot-Data read-back/isolated restore/boot/4h timer/관찰을 진행한다.
+실패하면 즉시 stop/preserve하되 Codex는 분석·수정을 계속한다. 새 code activation은 다시 승인받는다.
+Candidate replay/old DB restore/down-migration/V1 restart, auto-update는 금지/비활성 유지한다.
+Audit0/Audit1–10/Integrated Audit/PHASE11/V1 삭제는 진행하지 않는다.
+최신 [PHASE10 보고서](../phases/phase-10/phase-10-report.md)의 첫 절이 우선한다.
+
+아래는 직전 정지 재시도와 PHASE8–10A 준비 단계의 이력이다.
 2026-09-19 사용자 최종 승인과 writer 최신성 재확인 후 승인된63c7722/schema5 candidate를
 production canonical로 승격했다. 양쪽 실제 서비스는24.827초 내 동일 release ready/live를 통과했다.
 사용자가 기존 Cloudflare Watch origin을127.0.0.1:9000으로 변경했고 공개 HTTPS ready를 확인했다.
@@ -13,8 +39,18 @@ Engagement/Summary는 사용자 PASS, Music/즐겨찾기/Watch는 실패, TTS는
 현재 상태·실패·실측 시간은 [PHASE10 실행 보고서](../phases/phase-10/phase-10-report.md)의 첫 절이 우선한다.
 재시도 조사에서는 current52d DB와 보존본 일치/schema5/favorites40을 확인하고, 현재 writes의 새 암호화
 local recovery roundtrip을 통과했다. Dashboard callback 등록, TTS child 경로와 Watch hydration/reconnect
-결함을 수정·검증 중이다. 사용자 요청으로 V1 jukebox 표시를 복원한다. 새 source의 Pi build와
-push/production pin 별도 승인, 실제 smoke/off-host backup/timer/관찰은 아직 남아 있다.
+결함을 수정·검증했다. 사용자 요청으로 V1 jukebox 표시를 복원했다.
+Windows771 pass와 Pi762 pass/9 intentional Node skips, 세 credential scope/manifest 검증을 통과했다.
+사용자가368c8eb push와 새 production pin을 승인했고 exact368까지 일반 fast-forward push를 완료했다.
+main은 변경하지 않았다. 새368 release로 기존 canonical을 사용해25.363초/70초 readiness를 통과했고,
+사용자 `/내정보`·`/랭킹`·`/요약` PASS와 볼륨100% 표시를 확인했다. 즐겨찾기 버튼 계속 비활성 보고로
+06:52:58Z 정지·새 보존본 검증을 완료했다. `⭐`와 `💾 보관함`의 구분 및 live 실패 원인은 미확정이다.
+Canonical/new copy DB는fab61b…로 동일하고 기존 failed-attempt52d…는 변경하지 않았다.
+Current pin은368을 유지하며 production pair/staging/ops6 services는 inactive/MainPID0,
+boot 및 backup/update/manual timers disabled다. Music 실제 음성/TTS/Watch와 off-host backup/restore는
+이번 순차 smoke에서 미실행이다.58 samples/330.637초의 내부 health 정상은 기능 통과를 대체하지 않는다.
+새 보존본·정확한 hash와 각 gate 결과는 최신 PHASE10 보고서 첫 절을 따른다.
+사용자 지시대로 결과를 기록하고 중단하며, 추가 수정·재시작은 이번 실행에 포함하지 않는다.
 10B 완료가 아니며 auto-update/manual polling은 비활성화 유지한다. Audit0/PHASE11은 별도 지시 전 금지다.
 
 ## Current state
