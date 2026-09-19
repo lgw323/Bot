@@ -40,7 +40,8 @@ class MusicActor:
                  provider: Provider, library: MediaLibrary, audio: Audio, repository: MusicRepository,
                  text_channel_id: int | None = None, volume: float = .5, bounds: Bounds = Bounds(),
                  changed: Callable[[Projection], None] | None = None,
-                 fail_fast: bool | Callable[[], bool] = False) -> None:
+                 fail_fast: bool | Callable[[], bool] = False,
+                 full_sweep: bool | Callable[[], bool] = False) -> None:
         self.guild_id, self.bounds = guild_id, bounds
         self.supervisor, self.clock, self.sleeper = supervisor, clock, sleeper
         self.provider, self.library, self.audio, self.repository = provider, library, audio, repository
@@ -70,6 +71,7 @@ class MusicActor:
         self._restore_identity: str | None = None
         self.changed = changed
         self.fail_fast, self.smoke_failed = fail_fast, False
+        self.full_sweep, self._validation_failed = full_sweep, False
 
     def _spec(self, name: str, identity: str, seconds: float) -> TaskSpec:
         return TaskSpec(name="music." + name, owner="music.actor", work_id=identity,
@@ -131,8 +133,12 @@ class MusicActor:
                     logger.warning('music.command_failed', extra={'fields':{
                         'stage':command.operation if command.operation in {'connect','enqueue','lookup','started','ended','result','tts','leave','close'} else 'control',
                         'error_code':error.code.value if isinstance(error, AppError) else 'internal'}})
-                    if not command.response.done():
-                        command.response.set_exception(error)
+                    try:
+                        if self._smoke_enabled() and isinstance(error, AppError) and error.code.value in {'data_integrity', 'database_unavailable'}:
+                            await self._stop_for_smoke(hard=True)
+                    finally:
+                        if not command.response.done():
+                            command.response.set_exception(error)
         finally:
             self._pump_task = None
             while self._mailbox:
@@ -152,7 +158,7 @@ class MusicActor:
         token = uuid4().hex
 
         async def run() -> None:
-            value, error = None, None
+            value, error, error_code = None, None, None
             fields = {'stage':name, 'work_id':token}
             logger.info('music.work_started', extra={'fields':fields})
             try:
@@ -162,13 +168,14 @@ class MusicActor:
                 raise
             except Exception as exc:
                 error = type(exc).__name__
+                error_code = exc.code.value if isinstance(exc, AppError) else 'internal'
                 logger.warning('music.work_failed', extra={'fields':dict(fields,
                     error_code=exc.code.value if isinstance(exc, AppError) else 'internal',
                     **safe_failure_fields(exc.context if isinstance(exc, AppError) else {}))})
             else:
                 logger.info('music.work_succeeded', extra={'fields':fields})
             try:
-                future = self.post("result", name=name, token=token, value=value, error=error)
+                future = self.post("result", name=name, token=token, value=value, error=error, error_code=error_code)
                 try:
                     accepted = await asyncio.shield(future)
                 except asyncio.CancelledError:
@@ -197,7 +204,7 @@ class MusicActor:
                 await self.library.release(media, corrupt=corrupt)
 
     def _prepare(self) -> None:
-        if not self._current or not self._connected or self._announcement_pending():
+        if self._validation_failed or not self._current or not self._connected or self._announcement_pending():
             return
         track = self._current
         self._status = "preparing"
@@ -215,7 +222,7 @@ class MusicActor:
             self._current = self._queue.pop(0)
             self._session = uuid4().hex
             self._prepare()
-        elif self._autoplay and previous and self._connected:
+        elif self._autoplay and previous and self._connected and not self._full_sweep_enabled():
             self._history.append(normalize_title(previous.title))
             self._history_urls.append(previous.url)
             query = "ytsearch10:" + previous.uploader
@@ -240,15 +247,21 @@ class MusicActor:
             self._work("retry", lambda: self.sleeper.sleep(delay), delay + 5)
 
     def _smoke_enabled(self) -> bool:
-        return self.fail_fast() if callable(self.fail_fast) else self.fail_fast
+        return (self.fail_fast() if callable(self.fail_fast) else self.fail_fast) or self._full_sweep_enabled()
 
-    async def _stop_for_smoke(self) -> None:
+    def _full_sweep_enabled(self) -> bool:
+        return self.full_sweep() if callable(self.full_sweep) else self.full_sweep
+
+    async def _stop_for_smoke(self, *, hard: bool = False) -> None:
         """Latch admission before yielding; retain the newest queue for preservation."""
-        self.smoke_failed = True
-        self._accepting = False
+        soft = self._full_sweep_enabled() and not hard
+        self.smoke_failed = not soft
+        self._accepting = soft
+        self._validation_failed = True
         self._status, self._error = 'failed', 'live_smoke_failed'
         logger.warning('music.smoke_failed', extra={'fields':{'stage':'live_smoke', 'result':'failed'}})
         for name in tuple(self._jobs): self._cancel(name)
+        self._tts.clear()
         while self._requests:
             future = self._requests.popleft()[-1]
             if not future.done(): future.set_exception(ShutdownError('Music smoke stopped after first failure'))
@@ -508,7 +521,7 @@ class MusicActor:
             if job is None or job[0] != p["token"]:
                 return False
             del self._jobs[p["name"]]
-            return await self._result(p["name"], p["value"], p["error"])
+            return await self._result(p["name"], p["value"], p["error"], p.get('error_code'))
         else:
             raise ValidationError("unknown Music command")
         return True
@@ -530,9 +543,9 @@ class MusicActor:
         elif self._queue:
             self._advance()
 
-    async def _result(self, name: str, value: Any, error: str | None) -> bool:
+    async def _result(self, name: str, value: Any, error: str | None, error_code: str | None = None) -> bool:
         if error and self._smoke_enabled() and name in {'lookup', 'prepare', 'start', 'tts'}:
-            await self._stop_for_smoke()
+            await self._stop_for_smoke(hard=error_code in {'data_integrity', 'database_unavailable'})
             return True
         if name == "lookup":
             receipt, _, _, enqueue, future = self._requests.popleft()
@@ -611,6 +624,7 @@ class MusicActor:
             self._current, self._session, self._voice_channel = None, None, None
             self._connected, self._status, self._offset = False, "idle", 0
             self._resume_paused = False
+            self._validation_failed = False
             await self.audio.disconnect()
 
     async def close(self) -> None:

@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import time
+import hashlib
 
 EVENTS={'music.request_received','music.ui_failed','music.command_failed','music.work_started','music.work_failed',
         'summary.request','summary.response','summary.preload',
@@ -42,6 +43,14 @@ def diagnostics(since):
             priorities[priority if priority in set('01234567') else 'unknown']+=1
             event=json.loads(row.get('MESSAGE',''))
             name=event.get('event')
+            if name not in EVENTS and event.get('error_code') in {'data_integrity', 'database_unavailable'}:
+                name='runtime.integrity_failed'
+                event=dict(event,event=name)
+            if name=='runtime.integrity_failed':
+                counts[name]+=1
+                codes[event['error_code']]+=1
+                sequence.append({'event':name,'error_code':event['error_code']})
+                continue
             if name not in EVENTS: continue
             counts[name]+=1
             value={'event':name}
@@ -50,6 +59,8 @@ def diagnostics(since):
                 value['error_code']=event['error_code'];codes[event['error_code']]+=1
             if event.get('result') in CODES | {'completed','failed','hit','published','success','delivery_failed','cancellation'}:
                 value['result']=event['result']
+                if event['result'] in {'data_integrity','database_unavailable'} and event.get('error_code')!=event['result']:
+                    codes[event['result']]+=1
             if re.fullmatch('[0-9a-f]{32}',str(event.get('work_id',''))): value['work_id']=event['work_id']
             if event.get('reason') in REASONS: value['reason']=event['reason']
             code=event.get('child_exit_code')
@@ -79,6 +90,72 @@ def failure_trigger(events):
     return None
 
 
+def full_sweep_failures(diagnostic):
+    """Classify safe metadata only; never issue a provider request or retry."""
+    hard=next((code for code in ('data_integrity','database_unavailable')
+               if diagnostic.get('error_codes',{}).get(code)),None)
+    if diagnostic.get('journal_exit_code') or diagnostic.get('possibly_truncated'):
+        hard=hard or 'diagnostic_coverage_lost'
+    if diagnostic.get('event_counts',{}).get('task.retrying'):
+        hard=hard or 'automatic_retry_during_sweep'
+    soft=[]
+    for event in diagnostic.get('recent_stages',[]):
+        if event.get('error_code') in {'data_integrity','database_unavailable'} or event.get('result') in {'data_integrity','database_unavailable'}:
+            hard=hard or 'data_integrity'
+        elif event.get('event')=='task.retrying':
+            hard=hard or 'automatic_retry_during_sweep'
+        elif (failure_trigger([event]) or event.get('event') in {'music.ui_failed','music.command_failed'}
+              or event.get('result') in {'failed','delivery_failed'}):
+            soft.append({key:event[key] for key in ('event','stage','error_code','result','reason','http_status') if key in event})
+    return hard,soft
+
+
+def health_trigger(value, first, release, bad):
+    for name in ('discord-bot.service','watch-web.service'):
+        state=value.get('services',{}).get(name,{})
+        initial=first.get('services',{}).get(name,{})
+        if (state.get('ActiveState')!='active' or state.get('MainPID','0')=='0'
+                or state.get('Result')!='success' or state.get('NRestarts')!=initial.get('NRestarts')):
+            return 'service_crash_or_restart'
+    if any(h.get('release')!=release for h in value.get('health',{}).values()):
+        return 'release_mismatch'
+    if bad>=3:
+        return 'persistent_readiness_loss'
+    return None
+
+
+def file_inventory(directory):
+    rows=[]
+    for path in sorted(directory.rglob('*')):
+        if path.is_symlink(): raise RuntimeError('linked_preservation_input')
+        if path.is_file():
+            with path.open('rb') as stream:
+                rows.append((str(path.relative_to(directory)),hashlib.file_digest(stream,'sha256').hexdigest()))
+    return hashlib.sha256(json.dumps(rows,separators=(',',':')).encode()).hexdigest()
+
+
+SWEEP_GATES=('startup','gateway','command_sync','profile','ranking','summary','favorites','volume',
+    'music_url','music_search','selection','queue','music_audible','stop','voice_disconnect',
+    'tts_audible','tts_not_overwritten','music_after_tts','tts_pause','watch_create','watch_connect',
+    'watch_presence','watch_refresh','watch_reconnect','watch_tab_return','watch_hydration','watch_sync',
+    'watch_close','admin_close','public_browser')
+
+
+def handoff_ready(control,release,common,soft_failures):
+    """Explicit human results plus an already running replacement guard; never infer PASS."""
+    path=control/'all-gates-pass.json'
+    if not path.exists() or soft_failures: return False
+    data=json.loads(path.read_text())
+    if (data.get('release')!=release or data.get('gates')!={gate:'PASS' for gate in SWEEP_GATES}
+            or data.get('human_audio_confirmed') is not True or data.get('chrome_confirmed') is not True):
+        return False
+    unit=data.get('replacement_guard','')
+    if not re.fullmatch('phase10-retry-'+re.escape(release[2:18])+'-post-cutover-[a-z0-9-]{1,48}\\.service',unit):
+        return False
+    state=common.systemd(unit)
+    return state.get('ActiveState')=='active' and state.get('MainPID','0')!='0' and state.get('NRestarts')=='0'
+
+
 def preserve_failure(destination, common):
     import fcntl
     timers=['discordbot-'+name+'.timer' for name in ('backup','update','manual')]
@@ -97,7 +174,12 @@ def preserve_failure(destination, common):
         shutil.copytree(Path('/etc/discordbot'),destination/'etc-discordbot',copy_function=shutil.copy2)
         (destination/'release.txt').write_text(str(Path('/opt/discordbot/current').resolve(strict=True)))
         subprocess.run(['sync','-f',str(destination)],capture_output=True,check=True,timeout=30)
-    return {'pair_stopped':True,'newest_state_preserved':True}
+        for name in ('data','state','cache','backups','audit'):
+            if file_inventory(common.ROOT/name)!=file_inventory(destination/name):
+                raise RuntimeError('preserved_inventory_mismatch')
+        if file_inventory(Path('/etc/discordbot'))!=file_inventory(destination/'etc-discordbot'):
+            raise RuntimeError('preserved_configuration_mismatch')
+    return {'pair_stopped':True,'newest_state_preserved':True,'inventory_verified':True}
 
 
 def main():
@@ -107,22 +189,40 @@ def main():
     parser.add_argument('--suffix',choices=('live-smoke','post-cutover'),required=True)
     parser.add_argument('--install',action='store_true')
     parser.add_argument('--since-unix',type=float)
+    parser.add_argument('--policy',choices=('strict','full-sweep'),default='strict')
+    parser.add_argument('--run-id')
     args=parser.parse_args()
     if os.geteuid()!=0 or not re.fullmatch('r-[0-9a-f]{16}-[0-9a-f]{16}',args.release) or not 60<=args.seconds<=1800:
         raise SystemExit('root_and_bounded_reviewed_release_required')
     if args.since_unix is not None and not 0<=time.time()-args.since_unix<=3600:
         raise SystemExit('recent_observation_window_required')
-    output=Path('/var/tmp')/('phase10-retry-'+args.release[2:18]+'-'+args.suffix)
-    preservation=Path('/var/lib/discordbot')/('phase10-retry-'+args.release[2:18]+'-'+args.suffix+'-guard-preservation')
+    if args.run_id is not None and not re.fullmatch('[a-z0-9-]{1,48}',args.run_id):
+        raise SystemExit('Invalid unique run identity')
+    if args.policy=='full-sweep' and (not args.run_id or args.suffix!='live-smoke'):
+        raise SystemExit('Full sweep requires unique live-smoke run')
+    label='phase10-retry-'+args.release[2:18]+'-'+args.suffix+('-'+args.run_id if args.run_id else '')
+    output=Path('/var/tmp')/label
+    preservation=Path('/var/lib/discordbot')/(label+'-guard-preservation')
     source=Path('/opt/discordbot/releases')/args.release/'app'
     spec=importlib.util.spec_from_file_location('reviewed_observation',source/'deploy/staging/observe.py')
     common=importlib.util.module_from_spec(spec);spec.loader.exec_module(common)
+    if args.policy=='full-sweep':
+        sys.path.insert(0,str(source/'src'))
+        from discordbot.composition.live_validation import full_sweep_active
+        safety_spec=importlib.util.spec_from_file_location('sweep_safety',source/'deploy/production/sweep-safety.py')
+        safety=importlib.util.module_from_spec(safety_spec);safety_spec.loader.exec_module(safety)
+        if not full_sweep_active(args.release):
+            raise SystemExit('Finite root-owned full-sweep marker required')
     if args.install:
         marker=Path('/run/discordbot-live-smoke')
         if not marker.is_file() or marker.is_symlink() or marker.stat().st_uid!=0:
             raise SystemExit('Root-owned live-smoke admission marker required')
         output.mkdir(mode=0o755);output.chmod(0o755)
         preservation.mkdir(mode=0o700);preservation.chmod(0o700)
+        if args.policy=='full-sweep':
+            import pwd
+            control=output/'control';control.mkdir(mode=0o700)
+            operator=pwd.getpwnam('os');os.chown(control,operator.pw_uid,operator.pw_gid)
         target=output/Path(__file__).name
         shutil.copyfile(__file__,target);target.chmod(0o444)
         subprocess.run(['systemd-run','--collect','--unit='+output.name,'-p','RuntimeMaxSec='+str(args.seconds+180),
@@ -130,13 +230,38 @@ def main():
             '-p','ReadWritePaths='+str(output)+' '+str(preservation)+' /var/lib/discordbot/operations.lock',
             '/usr/bin/python3','-I','-B',str(target),
             '--release',args.release,'--seconds',str(args.seconds),'--suffix',args.suffix,
-            '--since-unix',str(args.since_unix or time.time())],
+            '--since-unix',str(args.since_unix or time.time()),'--policy',args.policy,
+            *(['--run-id',args.run_id] if args.run_id else [])],
             check=True,capture_output=True,timeout=15)
         print('Finite '+args.suffix+' observation started.')
         return
+    try:
+        observe_loop(args, source, output, preservation, common,
+                     safety if args.policy=='full-sweep' else None,
+                     full_sweep_active if args.policy=='full-sweep' else None)
+    except Exception as error:
+        # A failed observer must not leave an unguarded production pair.
+        if args.policy=='full-sweep':
+            failure={'status':'guard_requires_reconciliation','error_type':type(error).__name__}
+            try:
+                failure['guard']=preserve_failure(preservation,common)
+            except Exception as stop_error:
+                failure['stop_error_type']=type(stop_error).__name__
+            try:
+                common.write_json(output/'observer-error.json',failure)
+            except OSError:
+                # Evidence storage itself failed; report only the fixed safe status.
+                print('Observer evidence unavailable; stopped-state reconciliation required.')
+            raise SystemExit('Full-sweep observer failed; stopped-state reconciliation required.') from None
+        raise
+
+
+def observe_loop(args, source, output, preservation, common, safety=None, full_sweep_active=None):
     common.METRICS.update({'music_actors','music_cache_bytes','music_processes','watch_sessions','watch_clients'})
     started=time.monotonic();since=args.since_unix or time.time();first=None;count=bad=0;status='observing';last_diagnostics={}
     sampled_at=-5
+    soft_failures=[]
+    safety_baseline=safety.identity(source) if args.policy=='full-sweep' else None
     while True:
         fresh=time.monotonic()-started-sampled_at>=5
         if fresh:
@@ -151,6 +276,27 @@ def main():
         if fresh: bad=0 if good else bad+1
         last_diagnostics=diagnostics(since)
         failure=failure_trigger(last_diagnostics['recent_stages'])
+        if args.policy=='full-sweep':
+            failure,soft=full_sweep_failures(last_diagnostics)
+            for item in soft:
+                if item not in soft_failures: soft_failures.append(item)
+            if len(soft_failures)>256: failure=failure or 'diagnostic_capacity_exceeded'
+            failure=failure or health_trigger(value,first,args.release,bad)
+            if fresh:
+                try:
+                    value['safety']=safety.check(source,common,value,safety_baseline)
+                except Exception as error:
+                    failure=failure or 'safety_invariant_failed'
+                    value['safety']={'error_type':type(error).__name__}
+                    if str(error) in safety.SAFE_FAILURES:
+                        value['safety']['reason']=str(error)
+            if not full_sweep_active(args.release): failure=failure or 'validation_window_expired'
+            control=output/'control'
+            if (control/'emergency-stop').exists(): failure='operator_emergency_stop'
+            if not failure and handoff_ready(control,args.release,common,soft_failures):
+                status='handed_to_post_cutover_guard'
+            if (control/'finish').exists() or time.monotonic()-started>=args.seconds:
+                failure=failure or 'sweep_finished_or_deadline'
         if unsafe or mismatch or bad>=3 or failure:
             status='guard_stopped_pair'
             value['guard_trigger']=failure or 'health_or_restart'
@@ -166,7 +312,8 @@ def main():
             last_diagnostics=diagnostics(since)
         if elapsed>=args.seconds and status=='observing': status='complete'
         common.write_json(output/'summary.json',{'status':status,'samples':count,'observed_seconds':round(elapsed,3),
-            'requested_seconds':args.seconds,'first':first,'last':value,'diagnostics':last_diagnostics})
+            'requested_seconds':args.seconds,'first':first,'last':value,'diagnostics':last_diagnostics,
+            'policy':args.policy,'soft_failures':soft_failures})
         if status!='observing': return
         time.sleep(min(.25,args.seconds-elapsed))
 

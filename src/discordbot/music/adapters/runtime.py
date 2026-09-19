@@ -31,7 +31,8 @@ class MusicResource:
                  snapshot_path: Path, channels: dict[int, int], master: int, bounds: Bounds = Bounds(),
                  provider: Any = None, library: Any = None, audio_factory: Any = None,
                  direct_until: float | None = None, tts_enabled: bool = True,
-                 fail_fast: bool | Callable[[], bool] = False) -> None:
+                 fail_fast: bool | Callable[[], bool] = False,
+                 full_sweep: bool | Callable[[], bool] = False) -> None:
         if len(channels) > bounds.actors:
             raise CapacityError("Music configured guild capacity exceeded")
         self.bot, self.repository, self.clock, self.executor = bot, repository, clock, executor
@@ -45,6 +46,7 @@ class MusicResource:
         self.library = library or CachedMediaLibrary(self.cache, self.processes, direct_until=direct_until)
         self.tts_enabled = tts_enabled
         self.fail_fast = fail_fast
+        self.full_sweep = full_sweep
         self.audio_factory = audio_factory or (lambda guild: DiscordAudio(bot, guild, self.ffmpeg))
         self.actors: dict[int, MusicActor] = {}
         self.messages: dict[int, Any] = {}
@@ -74,7 +76,7 @@ class MusicResource:
                 self.actors[guild] = MusicActor(guild, supervisor=self.supervisor, clock=self.clock,
                     sleeper=Sleeper(), provider=self.provider, library=self.library, audio=self.audio_factory(guild),
                     repository=self.repository, text_channel_id=self.channels[guild], volume=.5 if volume is None else volume,
-                    bounds=self.bounds, changed=self.changed, fail_fast=self.fail_fast)
+                    bounds=self.bounds, changed=self.changed, fail_fast=self.fail_fast, full_sweep=self.full_sweep)
             return self.actors[guild]
 
     def changed(self, state: Any) -> None:

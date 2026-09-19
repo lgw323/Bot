@@ -1,6 +1,7 @@
 """Full Discord composition, explicitly invoked only after file/config validation."""
 
 from pathlib import Path
+from discordbot.composition.live_validation import full_sweep_active
 
 from discordbot.composition.runtime import ProcessRuntime
 from discordbot.engagement.adapters.discord_runtime import EngagementConfig, EngagementResource, create_engagement_bot
@@ -40,7 +41,8 @@ class DiscordFeatures:
         self.music = MusicResource(self.bot, SqliteMusicRepository(self.database), self.clock, r.executor,
             cache_path=s.cache / "music", snapshot_path=s.state / "music_state.json",
             channels=dict(s.music_channels), master=s.master,
-            fail_fast=lambda: Path('/run/discordbot-live-smoke').is_file())
+            fail_fast=lambda: Path('/run/discordbot-live-smoke').is_file(),
+            full_sweep=lambda: full_sweep_active(self.config.release))
         self.deferred = DeferredMusic(self.music, self.bot, r.supervisor)
         try:
             for resource in (engagement, self.summary, watch, Gateway(self.bot, s.secrets.discord_token), self.deferred):

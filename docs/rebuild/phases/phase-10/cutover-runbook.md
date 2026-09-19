@@ -1,5 +1,58 @@
 # PHASE 10A → 10B cutover runbook
 
+## Current PHASE 10B full-sweep override (2026-09-19)
+
+이 절은 아래 최초 cutover 절차와 과거 fail-first smoke 정책보다 우선한다.
+현재 DB/source/pin의 정확한 값은 [최신 보고서](phase-10-report.md) 최상단에서 재확인한다.
+이미 production writes가 있는 canonical을 사용한다. 아래 과거 candidate promotion/restore 명령은 재실행하지 않는다.
+
+한 번의 승인된 activation에서 70초 startup gate 뒤 독립된 필수 기능을 전부 검사한다.
+Summary503/429, Music URL/search/acquisition/audibility, TTS/order, Favorites/UI, Watch/browser 및
+admin close의 일반 기능 실패는 **SOFT FAIL**로 남기고 독립 기능을 계속한다. 실패 요청을 반복하지 않는다.
+DB integrity/schema/access, source/release/dependency/config identity, credential/public route 위반,
+동시 writer, crash/restart, 기존5초 간격 health 검사3회 연속 readiness loss, retry storm/runaway child,
+기존 명시적 resource cap 도달, 보존/fsync/inventory 오류와 operator emergency는 **HARD STOP**이다.
+Health 검사의 실제 소요시간도 기록하며 지연된 검사를5초 독립 표본으로 과장하지 않는다.
+
+기본 `observe-smoke.py` strict 정책은 유지한다. 새 모드는 명시적 `--policy full-sweep`, 새 `--run-id`,
+root 소유·group/other 쓰기 금지 `/run/discordbot-live-smoke` JSON이 모두 필요하다. JSON은
+`mode=phase10-full-sweep`, exact `release`, `started_unix`, `expires_unix`만 담으며 최대1800초다.
+Marker 없음/만료/변조/다른 release는 full-sweep 허용이 아니다. Marker를 지워 실패를 우회하지 않는다.
+Runtime 변경이 포함된 release는 검증 뒤 **별도 push/pin 승인 전 활성화하지 않는다**.
+
+Music 기능 실패는 자동 retry/autoplay 작업을 중단하되 새 명시적 lookup/정지/퇴장/TTS 요청은 허용한다.
+실패한 current/queue를 자동 재시도하지 않는다. URL 취득 실패 뒤 검색 자체는 독립 시도할 수 있다.
+실패한 current가 남아 있으면 기존 정지/퇴장으로 명시적으로 정리한 뒤 다른 필수 경로를 시도한다.
+독립 TTS는 기존 실패한 media를 자동 재취득하지 않는다. DB typed error는 이 모드에서도 admission을 잠근다.
+일반 운영의 retry, UI, schema, snapshot 형식은 바꾸지 않는다.
+
+검사 순서는 startup/Gateway/sync → profile/ranking/Summary → Favorites/volume → URL/search/selection/queue/
+실제 음악 청취/stop/disconnect → 실제 입장 TTS/덮어쓰기 없음/이후 Music/필요한 연속TTS·pause →
+PC Chrome create/connect/presence/refresh/reconnect/tab return/hydration/sync/close/admin close/public path다.
+각 gate를 PASS / FAIL / BLOCKED BY 구체적 선행 실패 / NOT TESTED 구체적 이유로 각각 기록한다.
+이전 release PASS나 PCM/server telemetry는 새 human-audible/browser PASS를 대신하지 않는다.
+연속TTS/pause가 필요 없는 경우에도 이유를 적고 all-PASS 자동 handoff를 사용하지 않는다.
+
+SOFT FAIL은 category/status만 수집하고 live 중 하나씩 수정하지 않는다. 각 stage별 독립 계속 여부와
+blocked gate, 근거가 있는 계층·code 필요성·외부 가능성·추가 evidence를 단일 matrix에 남긴다.
+마지막에 A runtime / B provider / C browser-integration / D operations / E 미확정으로 묶는다.
+
+새 observer output의 operator 전용 `control/emergency-stop`은 즉시 정지 요청이고 `control/finish`는
+실패/blocked sweep 종료 요청이다. 고유 preservation에 최신 state를 복사하고 fsync/전체 inventory를 확인한다.
+1800초 내 완료되지 않으면 안전 정지·보존하며 결과를 꾸며 PASS 처리하지 않는다. 기존 보존본은 덮어쓰지 않는다.
+Observer 자체 오류도 pair stop·보존을 시도하고 reconciliation 필요 상태로 남긴다.
+
+전 gate PASS이면 서비스 중단 없이 backup/restore 단계로 handoff한다. 이때만 `control/all-gates-pass.json`에
+observer의30개 `SWEEP_GATES` 모두 PASS, exact release, `human_audio_confirmed=true`, `chrome_confirmed=true`,
+`replacement_guard`의 새 post-cutover unit 이름을 기록한다. 먼저 같은 release의 별도 bounded guard를 실제
+기동하고 active/PID/restart0 확인이 끝나야 full-sweep observer가 종료한다. SOFT FAIL이 있으면 handoff 거부.
+이후 validation marker를 해제하고 actual newest encrypted backup → Bot-Data publication/read-back →
+independent download/decrypt/isolated schema/count/semantic/application restore → canonical 불변 확인 →
+boot/4h backup timer → bounded observation을 진행한다. Auto-update/manual polling은 계속 OFF다.
+Handoff 이전의 부분 관찰은 완료 후 observation을 대체하지 않는다. 모든 gate 전 PHASE10 COMPLETE 금지.
+
+## Historical initial cutover preparation
+
 **10A COMPLETE / 10B NOT AUTHORIZED / NOT EXECUTED.**
 실행 순서·고정값·config/credential 권한·보존 위치·DB 승격·상황별 rollback은
 [최종 command sheet](final-command-sheet.md) 한 곳에서 관리한다. 이전 초안의 placeholder 명령은 폐기했다.

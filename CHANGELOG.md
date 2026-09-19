@@ -1,5 +1,11 @@
 # Changelog
 
+## PHASE 10B bounded full-sweep validation
+
+- 명시적 root-owned/release-bound/최대30분 검사 모드에서 일반 기능 실패를 SOFT FAIL로 수집하고 독립 검사를 계속한다.
+- Music 기능 실패 뒤 자동 retry는 막으면서 명시적 검색·정지·독립 TTS를 허용한다. 일반 운영과 기존 strict smoke 정책은 유지한다.
+- DB/schema/security/identity/restart 및 지속 readiness 실패는 HARD STOP을 유지하며 새 preservation의 fsync/inventory를 확인한다.
+
 모든 주요 변경 사항과 아키텍처 패치 노트가 이 파일에 기록됩니다.
 
 이 문서는 [Keep a Changelog](https://keepachangelog.com/ko/1.0.0/)의 국제 포맷팅 규칙을 따르며,
