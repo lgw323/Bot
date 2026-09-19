@@ -2,15 +2,14 @@
 
 ## Current PHASE 10B full-sweep status
 
-**PHASE 10B INCOMPLETE — services stopped.** Production source
-`787b3178908c08ffa926f41c64ae73753c39799a`, pin `r-787b3178908c08ff-3dac82a792fad576`.
-Newest canonical/preserved DB: `f47fbef36b7eded3e4b990f8179598b38b0e0bdbd818431eada33dab9aa89748`.
-Newest preservation:
-`/var/lib/discordbot/phase10-retry-787b3178908c08ff-live-smoke-full-sweep-20260919-01-guard-preservation`.
-Readiness24.870초 PASS 후 `safety_invariant_failed / credential_permission` HARD STOP;
-live gates PASS3/BLOCKED27/functional FAIL0. 기존 보존본6개 및 최신 보존본 무결성 검증 완료.
-Credential exposure가 확정된 것은 아니며 observer/application-validator 정책 불일치 가능성을 조사 중이다.
-Boot/backup/update/manual timer disabled, actual production backup/restore 및 final observation 미완료.
+**PHASE 10B INCOMPLETE — services stopped, preservation verified.** Production source
+`92c25546af6b49044e17ed2a705a7cdf885532a0`, pin `r-92c25546af6b4904-3dac82a792fad576`.
+Newest canonical/preserved DB: `678e93ec4fd2d087d5ce20ba2239fb205b0daa130cb3e804e300dbd5183aef66`.
+Newest preservation: `/var/lib/discordbot/phase10-retry-92c25546af6b4904-live-smoke-h1-full-sweep-20260919-01-guard-preservation`.
+승인된 단일 H1 retry에서 corrected credential 검사와 readiness PASS 뒤 별개 DB probe HARD STOP 발생.
+최신 보존본 및 기존7개 보존본 무결성 검증 완료; 원인 세부는 아직 미확정이다.
+Boot/backup/update/manual timers disabled, auto-update OFF. 실제 production backup/restore 및 final observation 미완료.
+새 활성화 없이 정지 유지. 최신 상세 판정·30-gate matrix·후속 분석 범위는 전용 보고서 최상단을 따른다.
 
 Full-sweep 정책 검증과 credential HARD STOP 상세 continuation을
 [PHASE 10B full-sweep report](../../phase-10-full-sweep-report.md)로 이동했다.

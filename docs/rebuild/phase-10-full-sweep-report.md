@@ -8,6 +8,149 @@
 과거 본문의 이전 보존 이력 참조는 부모 보고서에 남아 있다. 이후 상세 full-sweep 근거는 이 파일에만 추가한다.
 문서 분리는 production 상태 변경이나 새로운 runtime 활성화 승인이 아니다.
 
+## Continuation — approved H1 retry / H2 DB probe HARD STOP / preservation VERIFIED
+
+2026-09-19 exact candidate 승인에 따라 단일 bounded full-sweep을 실행했다.
+**PHASE 10B INCOMPLETE — STOPPED AND PRESERVED.** H1 ACL correction은 실제 production credential
+검사에서 통과했다. 별개 **H2 `database.probe_failed / database_unavailable` HARD STOP**으로
+감시기가 두 서비스를 정지하고 새 보존본을 생성했다. 원인을 확정하거나 safety 정책을 완화하지 않았다.
+아래가 최신 상태이며, 이전 continuation의 승인 대기/787 pin/7개 보존본 상태보다 우선한다.
+
+### Publication, exact identity and admission
+
+- Runtime source **`92c25546af6b49044e17ed2a705a7cdf885532a0`**;
+  current immutable pin **`r-92c25546af6b4904-3dac82a792fad576`**.
+- Dependency `3dac82a792fad5769f4e6b32cdd0c294fbfbb4863500e8e232f85b47b3297cc6`;
+  manifest `fcc5d91f65aaf29b19018fa16f5e833f41e69e05d6b262b0c47780ac2b76e543`,17411 files/schema[5,5].
+- Push 직전1715c1f…→**`af37aa58a17753663ff33543e487da6455318cc9`**의4 commits/11 new blobs와
+  각 commit tree/message를 재검사했다. Runtime92 이후 전용 report/current-plan docs-only,
+  source/dependency 변경0, secret/.env/DB/SQL/backup/private key/credential/운영 데이터 finding0.
+  기존 `codex/rebuild-v2`에 normal FF push 후 exact af37aa58… remote read-back 완료.
+  `main=8432fdef40cddc131176fa875e350660dc897e12` 불변; force/rebase/history rewrite 없음.
+  미추적 사용자 handoff/zip은 추가·수정하지 않았다. 실행 결과 문서는 이 push 이후 로컬에서 갱신했다.
+- 승인 후보의 exact tests: Windows895 PASS/0 skip/0 xfail; Pi886 PASS/9 intentional Node-less
+  Watch skips/0 fail/0 error/0 xfail. 동일9개 Windows PASS 대조 완료. 상세 및 최초 잘못된 Windows
+  runner 실패는 바로 아래 역사적 H1 검증 절에 남겼다. 이번 실행 중 runtime/dependency 변경0.
+- Fresh preflight `verified_stopped_ready_for_approved_start`: canonical f47fbef…/schema5/integrity,
+  config `41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40`, 모든 기존7개
+  preservation/protected inventory, stopped writers/extra Python·media0/listeners0 확인.
+  Boot/backup/update/manual timers disabled/inactive, exact credential scopes 및 direct source access denied,
+  세 root credential observer view PASS. Public Watch9000 route1/internal9001·9010·9011 route0.
+  Candidate replay/old restore/remigration/down-migration/V1 start 없음.
+
+### Activation and H2 evidence
+
+- Unique run **`h1-full-sweep-20260919-01`**, 새 root marker/observer path/preservation target 사용.
+  22:33:37.702774 KST start →22:34:02.566434 ready, **24.856초/70초 PASS**.
+  Discord/Watch exact release/Gateway/command sync/NRestarts0 및 live corrected credential safety PASS.
+- Observer **354.569초/17 samples** 뒤 `guard_stopped_pair`; diagnostic에는
+  `database.probe_failed=1`, `database_unavailable=1`, SOFT FAIL0, journal exit0/truncation false.
+  전체 검사를 끝낸 정상 final observation이 아니라 HARD STOP까지의 부분 관찰이다.
+  실제 sampling은 immutable inventory 검사 등을 포함해 약20–21초 간격이었다. 5초 간격이라 주장하지 않는다.
+- 마지막 sampled health: Discord probe67 ok; Watch66 ok/1 failed. 두 health는 그 snapshot에서 ready=true였고
+  Watch `database_recent_failures=2`였다. Adapter가 한 요청의 worker/awaiter failure를 각각 기록하므로
+  이 수치를 독립적인 DB 장애2건으로 해석하지 않는다. Journal의 typed DB failure로 guard가 정지했다.
+- 같은 마지막 safety 검사: schema5/integrity/identity/credential_scope/writer_scope/route verified.
+  Restart0, Music processes0, cache5 files/6,567,679 bytes, Watch sessions0/clients0,
+  telemetry/metric dropped0. 서비스 정보는 정지 직전 snapshot이고 정지 후 상태는 아래 inspector로 별도 검증했다.
+- 정지 직전 RSS Discord82,292 KiB/Watch68,672 KiB, FD10/10, threads6/4,
+  disk free105,053,290,496 bytes, temperature63.9°C/throttling0, audit156 files/32,570 bytes.
+  Backup0/age−1은 최초 실제 production backup 미완료를 뜻하며 PASS가 아니다.
+
+**확인된 범위와 미확정 원인:** 실패는 Watch process의 주기적 `SELECT 1` probe 경로다.
+`storage/adapters/execution.py`는 여러 SQLite 오류와 filesystem OSError를 `database_unavailable`로
+분류하지만 `operations/adapters/probe.py`는 최상위 error_code만 emit한다. 따라서 이번 telemetry로
+SQLITE_BUSY/LOCKED/IO/permission 등의 세부 원인을 구분할 수 없다. 원문 DB/credential/log를 노출해
+추측을 보완하지 않는다. 이번 정지 뒤 무결성 PASS는 corruption 증거가 없음을 보여 주지만,
+일시적인 DB 접근 실패를 배제하지 않는다. H1 재발·credential 노출·Gemini quota·Music 원인으로 결론내리지 않는다.
+
+### Current 30-gate matrix — this release only
+
+**PASS3 / BLOCKED27 / functional FAIL0 / safety HARD STOP1.** 기본 기능 확인 안내 후 보고 시점까지
+새 release의 사용자 성공/실패 답변을 받지 못했다. 4–30은 H2로 현재 검증이 차단되었으며,
+사용자가 실제 실행하지 않았다고 단정하는 의미는 아니다. 뒤늦은 답변은 정지 전 실행임을 확인해 별도로 반영한다.
+과거 Music/TTS/Chrome PASS는 승계하지 않는다. SOFT FAIL 때문에 independent gates를 생략한 것이 아니다.
+
+| # | Gate | Result |
+| --- | --- | --- |
+| 1 | bounded startup | PASS |
+| 2 | Gateway ready | PASS |
+| 3 | command sync | PASS |
+| 4 | /내정보 | BLOCKED BY H2 database_unavailable HARD STOP |
+| 5 | /랭킹 | BLOCKED BY H2 database_unavailable HARD STOP |
+| 6 | /요약 | BLOCKED BY H2 database_unavailable HARD STOP |
+| 7 | 💾 보관함 | BLOCKED BY H2 database_unavailable HARD STOP |
+| 8 | dashboard / stored volume | BLOCKED BY H2 database_unavailable HARD STOP |
+| 9 | Music URL request | BLOCKED BY H2 database_unavailable HARD STOP |
+| 10 | Music search request | BLOCKED BY H2 database_unavailable HARD STOP |
+| 11 | result selection | BLOCKED BY H2 database_unavailable HARD STOP |
+| 12 | queue addition | BLOCKED BY H2 database_unavailable HARD STOP |
+| 13 | actual human-audible Music | BLOCKED BY H2 database_unavailable HARD STOP |
+| 14 | normal stop | BLOCKED BY H2 database_unavailable HARD STOP |
+| 15 | voice disconnect | BLOCKED BY H2 database_unavailable HARD STOP |
+| 16 | join TTS actual audibility | BLOCKED BY H2 database_unavailable HARD STOP |
+| 17 | TTS not overwritten by Music | BLOCKED BY H2 database_unavailable HARD STOP |
+| 18 | Music after TTS completion | BLOCKED BY H2 database_unavailable HARD STOP |
+| 19 | consecutive TTS / pause intent | BLOCKED BY H2 database_unavailable HARD STOP |
+| 20 | PC Chrome Watch create | BLOCKED BY H2 database_unavailable HARD STOP |
+| 21 | Watch connect | BLOCKED BY H2 database_unavailable HARD STOP |
+| 22 | viewer presence | BLOCKED BY H2 database_unavailable HARD STOP |
+| 23 | refresh | BLOCKED BY H2 database_unavailable HARD STOP |
+| 24 | reconnect | BLOCKED BY H2 database_unavailable HARD STOP |
+| 25 | tab leave / return | BLOCKED BY H2 database_unavailable HARD STOP |
+| 26 | playback hydration | BLOCKED BY H2 database_unavailable HARD STOP |
+| 27 | playback synchronization | BLOCKED BY H2 database_unavailable HARD STOP |
+| 28 | normal Watch close | BLOCKED BY H2 database_unavailable HARD STOP |
+| 29 | private admin close | BLOCKED BY H2 database_unavailable HARD STOP |
+| 30 | actual public Chrome path | BLOCKED BY H2 database_unavailable HARD STOP |
+
+Music/TTS audible 및 ordering 사용자 확인0, PC Chrome/public-path 사용자 확인0.
+Telemetry/health/Cloudflare route 검증을 actual audio/browser PASS로 대체하지 않았다.
+Service 자동 정지는 gate14/15의 정상 사용자 stop/voice-disconnect PASS가 아니다.
+
+### Newest stopped state and preservation
+
+- 자동 guard: pair_stopped/newest_state_preserved/inventory_verified 모두true.
+  별도 sudo read-only inspector **`verified_stopped_preserved_integrity`** 완료.
+- Pre-retry canonical SHA256 `f47fbef36b7eded3e4b990f8179598b38b0e0bdbd818431eada33dab9aa89748` →
+  **최신 canonical = 새 preserved DB `678e93ec4fd2d087d5ce20ba2239fb205b0daa130cb3e804e300dbd5183aef66`**. 최신 DB를 유지하며 f47로 되돌리지 않는다.
+- 새 preservation: `/var/lib/discordbot/phase10-retry-92c25546af6b4904-live-smoke-h1-full-sweep-20260919-01-guard-preservation`.
+  전체 inventory SHA256 **`6cb75333b6e47812a28a7d1bc1284fc0a03768852b713dcc42782035e08cc0e8`**.
+  data/state/cache/backups/audit/config byte inventory 모두 current/copy 일치, fsync PASS.
+  Canonical/copy schema5/integrity 및 counts/data/metadata checksum 일치. Read-only 검사 전후 protected inventory 불변.
+- Counts favorites40/owners3, music_play_counts53, music_settings1, users15, watch sessions/playlists0.
+  Data checksum `6c32578e5cf1109496f3ebbb86dc22c4b1f924e79275750c13bdb4d838295a16`;
+  metadata checksum `318a1331957dd522d918b7915c73f3a3e8985e12f2a78dc6aedbdf14c44d2803`.
+  Counts는 시작 전과 같지만 data/metadata hash는 변경됐다. 실제 row를 읽어 변경 내용을 추정하지 않는다.
+  정상 종료 후 canonical/copy WAL/SHM/journal sidecars 없음을 확인했으며 별도 삭제하지 않았다.
+- 기존7개 preservation/config 불변, 새 보존본 포함 총8개. Credential source7개 root0600 regular/nonsymlink;
+  종료된 runtime credential mounts 없음. 이것을 종료 전 mount 검사 대신 사용하지 않는다.
+- Production/staging/operations/guard inactive/MainPID0/NRestarts0. Production/staging boot 및
+  backup/update/manual timers disabled/inactive. Auto-update OFF. Cloudflare Watch9000 route만 유지.
+
+### Consolidated remediation / finalization boundary
+
+| Group | Evidence and next requirement |
+| --- | --- |
+| A. application/runtime | H2 Watch DB probe failure confirmed; precise SQLite/filesystem cause unresolved. 다음 수정은 안전한 numeric error code/operation-stage 분류를 먼저 보존하고 synthetic multi-process SQLite/동시 reader·writer 조건에서 재현해야 한다. Runtime 재활성화 없이 준비하며, 재현 전 임의 busy timeout 증가나 failure 무시 금지. |
+| B. external/provider | 이번 run에서 Summary/Music provider 실패 증거 없음. 이전503/음성 evidence를 이번 결과로 승계하지 않는다. |
+| C. browser/integration | 이번 PC Chrome Watch evidence 없음; 전체 lifecycle/public-browser 검사는 H2로 차단. |
+| D. operations/deployment | H1 정상 named-service ACL 검사 live PASS. H2 guard stop/new preservation/7개 old preservation 검증 PASS. 새 활성화는 이번 단일 실행 승인에 포함되지 않는다. |
+| E. insufficient evidence | 27개 functional gates 및 DB 하위 원인 미확인. 정지 뒤 성공 요청을 다시 보내거나 과거 telemetry로 PASS 채우지 않는다. |
+
+Mandatory live gates가 완료되지 않아 actual newest encrypted backup →private Bot-Data publication →remote
+read-back/independent download/decrypt/schema/count/data/metadata/semantic/application restore를 **시작하지 않았다**.
+Boot/4-hour timer enable 및 bounded final production observation도 **미실행**이다.
+운영 pair는 정지 상태로 유지하고 이 승인에 따른 live 작업은 여기서 끝낸다.
+Audit0–10/Integrated Audit/PHASE11/V1삭제/legacy cleanup은 시작하지 않는다.
+
+안전한 evidence: `h1-approved-preflight.json`, `h1-approved-push.json`, `h1-approved-start.json`,
+`h1-observer-stopped.json`, `h1-observer-samples.jsonl`, `h1-approved-stop-inspection.json`,
+`h1-approved-gates.json`. 로컬 `scratch/phase10`의 ignored safe 결과만 보고에 사용했고 원본 DB/로그/credential을
+Git에 추가하지 않았다. 새 runtime 수정 없이 보고서와 current plan만 실제 결과로 갱신한다.
+최종 문서 검증: tracked source archive에 변경된 보고 문서3개만 overlay하여 구조·relative link **2 PASS**;
+사용자 미추적 handoff/zip은 검사 대상 archive에 넣지 않았다. `git diff --check` PASS, runtime/dependency diff0.
+
 ## Continuation — H1 ACL correction VERIFIED / new push-pin approval required
 
 2026-09-19 사용자 지시에 따라 보고서 분리 뒤 같은 세션에서 H1 조사·격리 재현·최소 수정·후보 검증을 계속했다.

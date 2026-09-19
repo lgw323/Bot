@@ -13,25 +13,21 @@ cutover/migration의 역사적 근거는 부모 보고서를 따른다. 부모�
 문서 분리는 별도 커밋으로 검증하고 즉시 같은 세션에서 H1 조사·안전한 격리 재현·최소 수정·회귀/full strict/Pi 검증을 계속한다.
 새 runtime production 적용 또는 새 push/pin이 필요할 때 정확한 검증 후보에 대한 승인을 받는다.
 
-문서 분리9829aa3 뒤 H1 정책 불일치를 실제 Pi systemd metadata로 재현하고 수정했다.
-**RETRY VERIFIED / NEW PUSH-PIN APPROVAL REQUIRED.** Runtime source
-`92c25546af6b49044e17ed2a705a7cdf885532a0`, 비활성 immutable candidate
-`r-92c25546af6b4904-3dac82a792fad576`, manifestfcc5d91f…/dependency3dac82a… 불변.
-정확한 source에서 Windows895 PASS/0 skip/0 xfail, Pi886 PASS/9 intentional skips/0 xfail;
-동일9개 Windows PASS 대조, 세 root observer credential scope PASS. 최초 Windows runner의 Deno 부재 실패는
-숨기지 않고 전용 보고서에 기록했다. Config/DB/보존본7개/production pin 불변, 새 push/activation0.
-원격1715c1f…/main8432fdef… 불변. 새 source 및 이후 전용 보고서/current plan docs-only tail의 일반 FF push와
-위 pin의 단일 bounded full-sweep retry 승인이 다음 단계다. 상세 근거는 전용 보고서 최상단을 따른다.
-
-**PHASE 10B INCOMPLETE.** 현재 source787b3178908c08ffa926f41c64ae73753c39799a,
-pin `r-787b3178908c08ff-3dac82a792fad576`, services stopped/boot·timers disabled, auto-update OFF.
-Readiness24.870초 PASS 뒤 H1 `safety_invariant_failed / credential_permission` HARD STOP;
-PASS3/BLOCKED27/functional FAIL0. 최신 canonical/preserved DB
-`f47fbef36b7eded3e4b990f8179598b38b0e0bdbd818431eada33dab9aa89748`, 새 보존본 및 이전6개 유지.
-실제 Pi 정상 ACL에서 이전 observer의 오탐과 새 검사 PASS를 재현했으며, 당시 종료된 mount의 ACL은 소급 증명하지 않는다.
-새 승인을 받기 전 임의 재시작·이전 DB 복원/replay/remigration/down-migration/V1 start 금지.
-전체 live sweep 및 production backup/restore/boot/timer/observation 완료·독립 검토 전 PHASE11 금지.
-Audit0–10/Integrated Audit/V1삭제/legacy정리도 시작하지 않는다.
+**PHASE 10B INCOMPLETE — APPROVED H1 RETRY STOPPED / H2 DB PROBE HARD STOP.**
+Runtime92c25546af6b49044e17ed2a705a7cdf885532a0와 report/current-plan tail af37aa58…까지
+승인된 normal FF push/read-back 완료, main8432fdef… 불변. Current pin
+`r-92c25546af6b4904-3dac82a792fad576`/dependency3dac82a…/manifestfcc5d91f… 일치.
+Windows895 PASS/0 skip/0 xfail, Pi886 PASS/9 intentional skips/0 xfail 및 Windows 대응9 PASS 유지.
+단일 live retry readiness24.856초 PASS, H1 live ACL 검사 PASS 뒤 Watch DB probe의
+`database_unavailable` HARD STOP으로354.569초 부분 관찰에서 자동 정지·새 보존했다.
+Live matrix PASS3/BLOCKED27; 새 사용자 audible/Chrome PASS 없음. 세부 DB 원인은 telemetry로 미확정이다.
+최신 canonical/copy SHA256 `678e93ec4fd2d087d5ce20ba2239fb205b0daa130cb3e804e300dbd5183aef66`;
+새 eighth preservation/schema5/integrity/inventory/fsync/기존7개 보존본 불변 검증 PASS.
+Production/staging/operations stopped; boot·backup/update/manual timers disabled, auto-update OFF.
+이번 single activation 승인은 소진됐다. 임의 재시작·old restore/replay/remigration/down-migration/V1 start 금지.
+다음 조사는 안전한 하위 DB 오류 분류 및 synthetic 격리 재현부터 시작하고 검증 후보 없이 새 pin 승인을 요청하지 않는다.
+실제 backup/restore/boot/timer/final observation 미실행. 모든 상세 근거는 전용 full-sweep report 최상단이 기준이다.
+Audit0–10/Integrated Audit/PHASE11/V1삭제/legacy cleanup은 시작하지 않는다.
 
 ## Historical 2c live retry
 
