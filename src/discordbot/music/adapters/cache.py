@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import logging
 import os
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
@@ -13,6 +14,8 @@ from discordbot.music.ports.playback import Media
 from discordbot.platform.clock import Clock
 from discordbot.platform.errors import CapacityError, DataIntegrityError, ExternalPermanentError
 from discordbot.platform.executors import BoundedExecutor
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -85,6 +88,7 @@ class DiskCache:
             raise CapacityError("Music cache acquisition capacity exhausted")
         self.admitted += 1
         key = hashlib.sha256(identity.encode()).hexdigest()
+        work_id = uuid4().hex
         temporary = None
         try:
             async with self._lock:
@@ -101,6 +105,8 @@ class DiskCache:
                         entry.touched = self.clock.monotonic()
                         media = Media(str(entry.path), key)
                         self._leases[media.lease_id] = key
+                        logger.info('music.cache_leased', extra={'fields':{'stage':'cache_lease',
+                            'work_id':work_id, 'result':'hit', 'bytes':entry.size}})
                         return media
                     if entry.pins:
                         raise DataIntegrityError("in-use media cache corrupted")
@@ -109,7 +115,9 @@ class DiskCache:
                 # and published entries together stay within the global budget.
                 await self._evict(self.item_bytes, 1)
                 temporary = self.directory / (uuid4().hex + ".part")
+                logger.info('music.media_acquisition_started', extra={'fields':{'stage':'media_acquisition', 'work_id':work_id}})
                 await producer(temporary, self.item_bytes)
+                logger.info('music.media_acquired', extra={'fields':{'stage':'media_acquisition', 'work_id':work_id}})
 
                 def publish() -> Entry:
                     size = temporary.stat().st_size
@@ -127,6 +135,8 @@ class DiskCache:
                 self._entries[key] = entry
                 media = Media(str(entry.path), key)
                 self._leases[media.lease_id] = key
+                logger.info('music.cache_leased', extra={'fields':{'stage':'cache_lease',
+                    'work_id':work_id, 'result':'published', 'bytes':entry.size}})
                 return media
         except OSError:
             raise ExternalPermanentError("Music cache disk operation failed") from None

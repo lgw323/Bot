@@ -7,6 +7,7 @@ empty, so an idle guild never consumes an immortal supervisor task.
 from __future__ import annotations
 
 import asyncio
+import logging
 import random
 import re
 from collections import deque
@@ -22,6 +23,8 @@ from discordbot.platform.clock import Clock
 from discordbot.platform.errors import AppError, CapacityError, ConflictError, ShutdownError, ValidationError
 from discordbot.platform.tasks import TaskSpec, TaskSupervisor
 from discordbot.storage.ports.contracts import DatabaseRequest
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -122,6 +125,9 @@ class MusicActor:
                         command.response.set_exception(ShutdownError("Music command interrupted"))
                     raise
                 except Exception as error:
+                    logger.warning('music.command_failed', extra={'fields':{
+                        'stage':command.operation if command.operation in {'connect','enqueue','lookup','started','ended','result','tts','leave','close'} else 'control',
+                        'error_code':error.code.value if isinstance(error, AppError) else 'internal'}})
                     if not command.response.done():
                         command.response.set_exception(error)
         finally:
@@ -144,6 +150,8 @@ class MusicActor:
 
         async def run() -> None:
             value, error = None, None
+            fields = {'stage':name, 'work_id':token}
+            logger.info('music.work_started', extra={'fields':fields})
             try:
                 async with asyncio.timeout(seconds):
                     value = await operation()
@@ -151,6 +159,10 @@ class MusicActor:
                 raise
             except Exception as exc:
                 error = type(exc).__name__
+                logger.warning('music.work_failed', extra={'fields':dict(fields,
+                    error_code=exc.code.value if isinstance(exc, AppError) else 'internal')})
+            else:
+                logger.info('music.work_succeeded', extra={'fields':fields})
             try:
                 future = self.post("result", name=name, token=token, value=value, error=error)
                 try:
@@ -224,6 +236,8 @@ class MusicActor:
         if attempt != self._attempt or any(c.operation == "ended" and c.payload.get("attempt") == attempt for c in self._mailbox):
             return
         try:
+            logger.info('music.playback_ended', extra={'fields':{'stage':'playback_callback',
+                'work_id':attempt, 'result':'failed' if failed else 'completed'}})
             self.post("ended", attempt=attempt, failed=failed)
         except (ShutdownError, CapacityError):
             # Internal events have 16 reserved slots; repeated callbacks for an
@@ -282,6 +296,7 @@ class MusicActor:
             if receipt and receipt in self._receipts:
                 return False
             self._enqueue(tuple(p["tracks"]))
+            logger.info('music.enqueued', extra={'fields':{'stage':'enqueue', 'count':len(p['tracks'])}})
             if receipt:
                 self._receipts.append(receipt)
             return True
@@ -305,6 +320,7 @@ class MusicActor:
                 raise ValidationError("invalid voice channel")
             async with asyncio.timeout(20):
                 await self.audio.connect(channel)
+            logger.info('music.voice_connected', extra={'fields':{'stage':'voice_connection'}})
             self._voice_channel, self._connected = channel, True
             self._cancel("reconnect")
             self._cancel("empty")

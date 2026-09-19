@@ -1,5 +1,6 @@
 """Discord consumes bounded PCM frames; this adapter owns the FFmpeg child."""
 import asyncio
+import logging
 import queue
 from typing import Any
 from uuid import uuid4
@@ -8,6 +9,8 @@ from discordbot.music.adapters.processes import ProcessPool
 from discordbot.music.ports.playback import Media
 from discordbot.platform.errors import AuthorizationError, CapacityError, ExternalPermanentError
 from discordbot.platform.tasks import TaskSpec
+
+logger = logging.getLogger(__name__)
 
 
 class DiscordAudio:
@@ -93,6 +96,7 @@ class DiscordAudio:
                 raise
             except Exception:
                 failure = True
+                logger.warning('music.decoder_failed', extra={'fields':{'stage':'pcm_decode', 'work_id':attempt}})
             finally:
                 finished = True
                 first_frame.set()
@@ -110,14 +114,17 @@ class DiscordAudio:
                 "-ss", str(seek), "-i", media.path, "-vn", "-f", "s16le", "-ar", "48000", "-ac", "2", "pipe:1",
                 stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
             self.pool.children.add(self._process)
+            logger.info('music.ffmpeg_started', extra={'fields':{'stage':'ffmpeg_start', 'work_id':attempt}})
             identity = uuid4().hex
             self._decoder = self.pool.supervisor.start(TaskSpec("music.ffmpeg.decode", "music.audio", identity, identity, 86400),
                                                         lambda process=self._process: decode(process))
             await asyncio.wait_for(first_frame.wait(), 5)
             if failure or frames.empty():
                 raise ExternalPermanentError("FFmpeg produced no playable audio")
+            logger.info('music.first_pcm', extra={'fields':{'stage':'first_pcm', 'work_id':attempt}})
             self._source = discord.PCMVolumeTransformer(Source(), volume=volume)
             self.voice.play(self._source, after=lambda error: loop.call_soon_threadsafe(notify, attempt, bool(error) or failure))
+            logger.info('music.playback_accepted', extra={'fields':{'stage':'voice_playback_acceptance', 'work_id':attempt}})
         except BaseException:
             if self._decoder:
                 await self._stop()

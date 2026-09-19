@@ -1,6 +1,7 @@
 """Lazy Discord components. Every mutation is routed to the guild actor."""
 import asyncio
 import hashlib
+import logging
 import re
 from dataclasses import replace
 from typing import Any
@@ -11,6 +12,13 @@ from discordbot.music.domain.pages import SongPages
 from discordbot.music.ports.repository import Favorite
 from discordbot.platform.errors import AppError, AuthorizationError, CapacityError, ConflictError, ExternalPermanentError
 from discordbot.storage.ports.contracts import DatabaseRequest
+
+logger = logging.getLogger(__name__)
+
+
+def report_failure(stage: str, error: Exception) -> None:
+    logger.warning('music.ui_failed', extra={'fields':{'stage':stage,
+        'error_code':error.code.value if isinstance(error, AppError) else 'internal'}})
 
 
 class Responder:
@@ -96,6 +104,7 @@ class MusicController:
 
     async def request(self, interaction: Any, query: str, *, modal: bool = False) -> None:
         responder = Responder(interaction)
+        logger.info('music.request_received', extra={'fields':{'stage':'ui_request'}})
         try:
             await responder.defer()
             actor = await self.actor(interaction.guild_id)
@@ -121,8 +130,10 @@ class MusicController:
         except asyncio.CancelledError:
             raise
         except AppError as error:
+            report_failure('request', error)
             await responder.send(error.safe_message, ephemeral=True)
-        except Exception:
+        except Exception as error:
+            report_failure('request', error)
             await responder.send("노래 정보를 가져오는 중 오류가 발생했습니다.", ephemeral=True, delete_after=5)
 
     async def message(self, message: Any) -> None:
@@ -146,6 +157,7 @@ class MusicController:
                     else f"✅ 대기열에 **'{tracks[0].title}'** 을(를) 추가했습니다." if tracks else "노래 정보를 찾을 수 없습니다.")
             await message.channel.send(text, delete_after=5)
         except AppError as error:
+            report_failure('message_request', error)
             await message.channel.send(error.safe_message, delete_after=8)
 
     async def favorites(self, guild: int, user: int) -> SongPages:
@@ -224,8 +236,10 @@ class MusicController:
                     await responder.send("🎶 노래 대기열" if action == "queue" else "💾 보관함", ephemeral=True,
                                          view=self.own(build_song_view(self, pages, action)))
         except AppError as error:
+            report_failure('action', error)
             await responder.send(error.safe_message, ephemeral=True)
-        except Exception:
+        except Exception as error:
+            report_failure('action', error)
             await responder.send("요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.", ephemeral=True)
 
 
@@ -345,8 +359,10 @@ def build_song_view(controller: MusicController, pages: SongPages, kind: str) ->
                         await responder.send(f"✅ 대기열에 {added}개의 노래를 추가했습니다.", ephemeral=True, delete_after=5)
                     self.stop()
             except AppError as error:
+                report_failure('selection', error)
                 await responder.send(error.safe_message, ephemeral=True)
-            except Exception:
+            except Exception as error:
+                report_failure('selection', error)
                 await responder.send("노래 정보를 가져오는 중 오류가 발생했습니다.", ephemeral=True)
     return SongView()
 
