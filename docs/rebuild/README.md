@@ -1,7 +1,8 @@
 # DiscordBot V2 Rebuild Documentation
 
-현재 상태는 **PHASE 9 로컬·synthetic Pi staging 검증 완료 / live·network gate 대기**다. Synthetic 데이터로
-검증하며 production DB migration/cutover는 시작하지 않았다.
+현재 상태는 **PHASE 10A production readiness 진행 중 / 10B 최종 승인 전**이다. Production 원본을
+보존한 별도 copy migration과 격리 backup/restore는 검증했으며 실제 production 전환은 실행하지 않았다.
+완료 항목과 남은 준비 조건은 [PHASE 10A 보고서](phases/phase-10/phase-10-report.md)를 따른다.
 
 | 위치 | 책임 | 변경 정책 |
 | --- | --- | --- |
@@ -48,6 +49,11 @@
   [staging runbooks](../../deploy/runbooks/README.md)
 
 - [PHASE 9 staging evidence and remaining gates](phases/phase-09/phase-9-report.md)
+
+- [PHASE 10A readiness report — in progress](phases/phase-10/phase-10-report.md),
+  [production migration contract](phases/phase-10/production-migration-contract.md),
+  [config migration guide](phases/phase-10/config-migration-guide.md),
+  [cutover approval gate/runbook](phases/phase-10/cutover-runbook.md)
 
 새 Phase 산출물은 `phases/phase-XX/`에 의미 있는 파일명으로 추가한다. 과거 분석과 달라진
 사실은 baseline을 고치지 않고 current ADR/trace/plan 또는 해당 Phase 보고서에 기록한다.

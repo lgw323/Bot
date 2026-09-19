@@ -71,7 +71,7 @@ PHASE 11 V1 제거는 별도 지시 전 시작하지 않는다.
 
 ## Active phase
 
-- [PHASE 10A report](../phases/phase-10/phase-10-report.md)
+- [PHASE 10A readiness report — 준비 미완료 및 완료 조건](../phases/phase-10/phase-10-report.md)
 - [Production migration contract](../phases/phase-10/production-migration-contract.md)
 - [한 번 실행하는 config setup](../phases/phase-10/config-migration-guide.md)
 - [Cutover gate/runbook](../phases/phase-10/cutover-runbook.md)

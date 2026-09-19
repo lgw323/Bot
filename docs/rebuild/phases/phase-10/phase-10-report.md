@@ -1,7 +1,67 @@
-# PHASE 10 report
+# PHASE 10 Report — 10A Production Readiness
 
 Updated: 2026-09-19. **10A IN PROGRESS / PC·Pi·Bot-Data isolated recovery verified; 10B NOT AUTHORIZED.**
 이 보고서는 현재 재개 지점이며 production 성공 보고서가 아니다. 최종 cutover 승인 질문은 아직 올리지 않았다.
+
+## Phase 10A Status
+
+**10A 준비 미완료 / 10B 최종 승인 요청 전 단계.** Source publication 승인은 완료했지만,
+그 승인이 staging 재관찰·최종 설치 절차 검토 또는 production 전환 완료를 의미하지 않는다.
+이 보고서는 2026-09-19까지 확보한 실행 증거를 정리한 준비 상태 보고서다. 이번 문서 정리에서
+Pi 서비스나 운영 데이터를 변경하거나 새로운 host 검증을 수행하지 않았다.
+
+| 준비 항목 | 판정 | 검증 근거와 한계 |
+| --- | --- | --- |
+| Authoritative source / 원본 보존 | PASS | 사용자 최신성 확인, 원본 hash 보존, 별도 copy에만 migration |
+| Production copy migration | PASS | Migration 1–5, schema 5, integrity/semantic/count/old-reader 검증 |
+| Config / secrets 준비 | PASS — offline | 한국어 setup 입력 완료, 실제 Pi 세 scope/권한/read-only mount 검증. API 인증은 미실행 |
+| Release build | PASS | 승인 후보 63c7722의 실제 ARM64 build/운영 tests/manifest/credential 검증 |
+| Source publication / update policy | PASS | 63c7722까지 일반 fast-forward push, main 보존, 예정 commit 고정·auto-update 비활성화 |
+| Encrypted backup / isolated restore | PASS | PC schema 0/5 및 Pi schema 5 복구, application open/close와 semantic 검증 |
+| Off-host publication / download / restore | PASS — isolated | Bot-Data 실제 drill 및 d54ff36 runtime entrypoint 검증. Production timer의 지속 RPO는 미검증 |
+| Retention | PASS — synthetic | 현재 tree retention/legacy 보존 테스트 통과. 실제 remote pruning·장기 저장 용량 검증과 구분 |
+| Longer staging observation | PARTIAL | 실제 24h/1,438 samples 완료. Probe 실패·HTTP 누락과 수정 후 관찰이 남음 |
+| Public Watch route 준비 | PARTIAL | Hostname/loopback 9000 확정, 기존 DNS 존재 확인. 실제 tunnel/origin 연결 검토 필요 |
+| Exact cutover / rollback command sheet | INCOMPLETE | 순서·guard·복구 후보는 준비, 최종 config/drop-in/명령·maintenance 확정 필요 |
+| Production activation / live smoke | NOT RUN — 10B | 승인 전 실행하지 않는 항목이며 10A에서 성공 처리하지 않음 |
+
+## Implemented / Tests / Approved Candidate
+
+Copy migration·복구 도구, 한국어 secret setup, scoped preflight, finite observer, 전용 SSH deploy key
+기반 encrypted Git backup, remote read-back 성공 후 latest 갱신, stopped-service activation guard와
+주기 작업 로그 감소를 구현했다. DB schema는 기존 ledger 5를 유지하고 V1 자산을 보존했다.
+
+- Windows full strict: **735 passed, 0 xfailed, 52.97s**. 기존 audioop deprecation warning 1개.
+- 로그 수정 관련 tests: **54 passed**. 실제 DB/API/systemd 대신 synthetic fixture 사용.
+- Pi ARM64: **63c7722 build/운영 tests/manifest/세 credential scope PASS, 138.196s**.
+  Windows 전체 735개를 Pi에서 모두 실행했다는 뜻은 아니다.
+- 승인된 production 예정 commit: **`63c77229d1a6e76a0edbc7d9249a8fceb5b0938c`**.
+- 해당 immutable release: **`r-63c77229d1a6e76a-d026a47ed4f4b38a`**, schema range [5,5].
+- 실제 off-host runtime 복구 증거는 선행 **d54ff36**에서 확보했다. Release activation과
+  수정본을 서비스에 적용한 로그 감소 효과는 아직 미검증이다.
+
+## Remaining 10A Work / Completion Criteria
+
+1. **관찰 결과 마무리:** 승인 후보를 synthetic staging에서 검증하고 로그 발생량·disk 증가·health를
+   재관찰한다. 기존 DB probe 실패 +12/+17 및 HTTPError 1회의 원인을 가능한 범위에서 분류한다.
+   끝내 분류하지 못한 항목은 남은 위험으로 명시하고 최종 승인 자료에 포함한다.
+2. **최종 설치·복구 명령 확정:** 승인 release, production config의 off-host opt-in, Operations credential
+   drop-in/권한, canonical promotion, synthetic state 분리, pre-cutover 보존 경로와 stopped rollback
+   명령을 하나의 실행 순서로 검토한다. 자동 update 비활성화를 유지하고 maintenance/운영자 역할을 확정한다.
+3. **외부 경로·보존 검토:** 기존 Watch hostname의 실제 tunnel/origin route와 충돌 여부를 읽기 전용으로
+   확인한다. Bot-Data의 Git history가 계속 커지는 보존 특성과 용량 검토 결과를 최종 자료에 포함한다.
+   DNS/route 변경 및 production remote backup 활성화는 10B까지 수행하지 않는다.
+4. **완료 보고 및 최종 승인:** 위 결과를 반영해 이 보고서를 10A 완료 상태로 갱신하고, source DB,
+   옮길 데이터, downtime 계획, backup/rollback, 남은 위험과 실제 Discord smoke의 영향을 제시한다.
+   그 뒤에만 **“이 상태로 실제 production cutover를 진행할까요?”**라고 명시적으로 묻는다.
+
+실제 API login, 친구 서버 smoke, canonical DB promotion, production timer와 public route 변경은
+10B 실행 범위다. 이 항목들을 미리 실행해서 10A 완료 조건을 채우지 않는다. V1 music_state 보존본은
+없어 기존 queue/voice 위치가 미이전이며, V1 삭제와 PHASE 11은 별도 지시 대상이다.
+
+아래는 위 판정의 상세 증거다. 실행 순서는 [cutover runbook](cutover-runbook.md), 데이터 identity와
+복구 경로는 [migration contract](production-migration-contract.md), 사용자 입력 절차는
+[config guide](config-migration-guide.md)를 따른다.
 
 ## Baseline / Production Source Data
 
