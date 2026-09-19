@@ -42,9 +42,11 @@ disk free 감소에 주기 작업의 과도한 정상 lifecycle journal이 기�
 off-host는 private Bot-Data/db-backup과 별도 write deploy key로 실제 upload/download/restore를 통과했다.
 `d54ff36`의 ARM64 build/격리 runtime backup 검증도 PASS다. 사용자 승인 후 전체 Git ancestry의 비밀값/파일
 검사를 거쳐 2026-09-19 exact commit을 origin/codex/rebuild-v2로 일반 push했다. main은 동일하다.
-초기 production pin은 d54ff36, 자동 update는 비활성화하며 이후 commit은 수동 승인한다.
+후속 사용자 승인으로 초기 production pin을 `63c77229d1a6e76a0edbc7d9249a8fceb5b0938c`으로 갱신했다.
+직전 전체 이력/파일/내용/commit 메시지를 재검사하고 해당 commit까지만 일반 fast-forward push했다.
+자동 update는 계속 비활성화하며 이후 commit은 수동 승인한다.
 후속 로컬 수정은 주기 작업의 정상 journal을 줄이고 DB 실패의 safe error code를 추가한다.
-수정본 `63c7722`도 Pi build/운영 테스트/세 scope 검증을 통과했다. 서비스 적용·재관찰 및 pin 변경 승인은 별도다. V1 music_state는 없어 active queue/voice 위치는 미이전이다.
+수정본 `63c7722`도 Pi build/운영 테스트/세 scope 검증을 통과했다. 서비스 적용·재관찰은 남으며 실제 production 전환은 별도 10B 승인 대상이다. V1 music_state는 없어 active queue/voice 위치는 미이전이다.
 관찰 이상 검토와 최종 release/config/rollback sheet를 마친 뒤
 [cutover runbook](../phases/phase-10/cutover-runbook.md)의
 준비 항목을 끝내고 명시적 최종 승인을 받은 뒤에만 10B DB promotion/login/production timer를 실행한다.

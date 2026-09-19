@@ -77,8 +77,8 @@ Origin `https://github.com/lgw323/Bot.git`. 사용자가 exact commit
 발견하지 않았다. pattern 검사가 모든 형태의 비밀을 수학적으로 배제한다는 뜻은 아니다. PC `.env`는 읽지 않았다.
 승인된 exact commit만 push했고 remote ref hash 일치를 재조회했다. main은 전후
 `8432fdef40cddc131176fa875e350660dc897e12`로 동일하다. force/history rewrite 없음.
-초기 production pin은 `d54ff36`, 자동 업데이트 비활성화, 이후 새 commit은 수동 검토·승인 정책이다.
-후속 로컬 수정은 이 승인에 포함되지 않는다. Bot-Data push는 별도 승인된 backup drill이다.
+당시 초기 production pin은 `d54ff36`이었다. 후속 사용자 승인으로 아래 `63c7722`까지 변경했다.
+자동 업데이트 비활성화와 이후 새 commit 수동 검토·승인 정책은 유지한다. Bot-Data push는 별도 승인된 backup drill이다.
 PHASE 10 guard 포함 commit `672694d3f0c5418ece99aecd0e886a42c53961ab`를 allowlisted git archive로
 전달하여 offline ARM64 build/operations strict tests/manifest validation/publish까지 **133.961초**에 통과했다.
 candidate release **`r-672694d3f0c5418e-d026a47ed4f4b38a`**, schema range [5,5], wheel lock SHA256
@@ -154,7 +154,15 @@ server-maintenance/telemetry-drain/database-probe의 정상 started/succeeded였
 별도 `verify_candidate.py`로 검증했으며 처음 잘못 지정한 run 경로는 실행 전 guard가 거부했다.
 수정한 경로로 성공했다. 이후 sudo 입력 완료 답변은 별도로 요구하지 않고 safe progress로 확인한다.
 63c7722 ancestry의 1,434 objects / 667 blobs를 검사했고 이전 7개 fixture/path 외 새 탐지는 없었다.
-해당 exact commit 일반 push/초기 production pin 변경을 별도로 요청했다. 아직 승인·push하지 않았다.
+사용자가 exact `63c77229d1a6e76a0edbc7d9249a8fceb5b0938c`까지 기존 branch 일반 fast-forward
+push와 초기 production 예정 commit 변경을 명시적으로 승인했다. push 직전에 전체 ancestry의
+1,434 objects / 667 blobs / 5,314,031 bytes 및 역사적 파일명·commit 메시지를 재검사했다.
+민감 파일명/commit 메시지 탐지 0, 기존 credential 경로 3곳과 synthetic fixture 4곳 외 새 내용 탐지 0.
+추가 1 commit·6 files의 diff도 재검토한 뒤 `d54ff36..63c7722` 일반 fast-forward push를 완료했다.
+원격 `refs/heads/codex/rebuild-v2`는 exact 승인 commit과 같고, main은
+`8432fdef40cddc131176fa875e350660dc897e12`로 보존됐다. force/history rewrite는 수행하지 않았다.
+이후 로컬 문서 commits는 승인된 push 범위에 포함하지 않았다. production 예정 release는
+`r-63c77229d1a6e76a-d026a47ed4f4b38a`; auto-update 비활성화 및 별도 10B 최종 승인 경계 유지.
 **24h 관찰 완료와 무결점 soak PASS는 다르며**, production/provider 부하는 미검증이다.
 
 ## Live Integration / Watch / Cloudflare
@@ -218,7 +226,7 @@ Pi previous immutable releases와 staging DB/config는 유지했다. code-only r
 없다고 확인했다. 기존 active queue/voice channel/재생 위치는 미이전이며 synthetic snapshot을 대신 사용하지 않는다.
 
 남은 위험/작업: 실제 API 인증/resources/permissions, 새 release pair activation, live providers 및 command UI,
-off-host durability, 24h 중 probe failures/HTTP 누락의 상세 원인, 로그 수정의 서비스 적용·재관찰 및 새 pin 승인,
+off-host durability, 24h 중 probe failures/HTTP 누락의 상세 원인, 로그 수정의 서비스 적용·재관찰,
 power-loss와 실부하 capacity, production RPO/RTO,
 미이전 V1 config overrides/log admin UI, maintenance/rollback operator 확인. 준비된 copy 성공은 이를 닫지 않는다.
 V1 code/scripts/env/legacy compatibility/history/backups/releases를 보존한다. PHASE 11은 별도 지시 전 시작하지 않는다.
@@ -242,7 +250,7 @@ runtime wiring의 중간 full strict 실패 2개는 synthetic settings fixture�
 fixture를 명시적 `backup_remote=None`으로 보완한 뒤 725 passed, 최종 stopped activation/host 검증 도구까지
 **732 passed, 0 xfailed, 48.96s**다. 실제 Pi 검증 성공과 Windows synthetic 테스트 성공은 구분한다.
 코드 커밋은 `6fd1660`, `4f15a34`, `4abaaa2`, `b1562d7`, `d54ff36`으로 책임별 분리했다.
-후속 로그 수정 `63c7722`는 독립 로컬 commit이며 push/production pin 변경은 하지 않았다.
+후속 로그 수정 `63c7722`는 독립 commit이며 사용자 별도 승인 후 exact commit만 push하고 production 예정 pin을 갱신했다.
 수정 전 회귀 2개가 예상 실패했고 수정 후 관련 54개 및 전체 strict **735 passed, 0 xfailed, 52.97s**다.
 기존 audioop deprecation warning 1개만 남았다. readiness/DB schema/실제 사용자 동작은 변경하지 않았다.
 2026-09-17 후속 remote source ref 재조회는 자동 승인 검토 사용량 한도로 거절되어 갱신하지 못했다.

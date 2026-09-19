@@ -13,12 +13,12 @@
 | Production candidate | Pi `/var/lib/discordbot/phase10-recovery-20260916-01/restored/candidate.db`, SHA256 `8d17018f1927d91b9ea633700471a6cda7388633b175a560be36f4b904ae4e5b`; PC 암호화 artifact에서 격리 복구, 아직 미승격 |
 | Production runtime paths | `/opt/discordbot/releases/REVIEWED_RELEASE`, `/opt/discordbot/current`; data/state/cache/backups/audit는 `/var/lib/discordbot/` 아래 |
 | Current staging release | `r-0376f14868461d16-d026a47ed4f4b38a` |
-| Reviewed candidate release / commit | `r-d54ff3696c1a81d4-d026a47ed4f4b38a`, commit `d54ff3696c1a81d48a88008110d044d0e14edc89`; offline build/tests/manifest/isolated runtime backup PASS, activation 미실행 |
+| Reviewed candidate release / commit | `r-63c77229d1a6e76a-d026a47ed4f4b38a`, commit `63c77229d1a6e76a0edbc7d9249a8fceb5b0938c`; offline build/운영 tests/manifest/세 credential scope PASS, activation 미실행. 실제 isolated remote backup 증거는 선행 d54ff36 기준 |
 | Config/secrets | `/etc/discordbot/production-candidate/` 사용자 입력·3개 scope probe PASS; 실제 목적지는 `/etc/discordbot/config.json`, `/etc/discordbot/secrets/` |
 | Key identity | `production-key-1`; Pi 사용자 입력 key로 approved artifact decrypt·재백업·재복구 PASS |
 | Public Watch | 사용자 선택 `https://watch.lgw323.com` → existing tunnel → `http://127.0.0.1:9000` |
-| Source publication | 사용자 승인 후 2026-09-19 exact d54ff36을 `origin` (`https://github.com/lgw323/Bot.git`)의 `refs/heads/codex/rebuild-v2`로 일반 push/remote hash 확인 완료; main 보존 |
-| Update policy | 초기 production d54ff36 고정, auto-update 비활성화; 이후 새 commit은 별도 검토·수동 승인 |
+| Source publication | 사용자 승인 후 2026-09-19 exact 63c7722까지 `origin` (`https://github.com/lgw323/Bot.git`)의 `refs/heads/codex/rebuild-v2`로 일반 fast-forward push/remote hash 확인 완료; main 보존 |
+| Update policy | 초기 production 63c77229d1a6e76a0edbc7d9249a8fceb5b0938c 고정, auto-update 비활성화; 이후 새 commit은 별도 검토·수동 승인 |
 | Off-host | 사용자 선택 private `https://github.com/lgw323/Bot-Data.git`, `db-backup` branch; 전용 deploy key 등록, 실제 upload/download/decrypt drill PASS; d54ff36 runtime 연결 ARM64 격리 검증 PASS; 실제 설치는 10B gate |
 | Maintenance | operator 시간/공지 수단 미확정. 자동 메시지 전송 안 함 |
 
@@ -49,7 +49,8 @@ placeholder가 남은 명령은 실행하지 않는다. 변경 가능한 변수�
    검증한다. 필요하면 synthetic pair로 Phase 9 방식의 activation/rollback을 재검증한다. production config를
    넣고 일반 deploy pipeline을 실행하면 조기 login이 일어나므로 그렇게 사용하지 않는다.
    로그 수정 로컬 commit `63c77229d1a6e76a0edbc7d9249a8fceb5b0938c`는 별도 ARM64 build/운영 테스트/세 scope 검증을 통과했다.
-   release `r-63c77229d1a6e76a-d026a47ed4f4b38a`는 아직 승인된 production pin/published ref를 대체하지 않았다. 검증과 후속 pin 승인 전 최종 전환 sheet는 동결하지 않는다.
+   release `r-63c77229d1a6e76a-d026a47ed4f4b38a`를 사용자 승인으로 초기 production 후보로 확정했고
+   exact source commit을 공개했다. 서비스 적용·재관찰과 config/rollback sheet 검토 및 10B 승인은 남는다.
 5. 첫 synthetic observer의 24h/1,438개 samples를 회수했다. restart 0, backup RPO 초과 0이지만
    DB probe 실패 +12/+17, 9010 health 누락 1회, disk free 약 0.96GB 감소를 관찰했고 과도한 주기 작업 정상 로그가 기여함을 확인했다.
    throttling 1,438개 표본은 모두 0, health 누락은 status 미수집 HTTPError 1회다. [관찰 결과](phase-10-report.md)의 한계를 최종 승인 화면에 명시하고
@@ -58,8 +59,8 @@ placeholder가 남은 명령은 실행하지 않는다. 변경 가능한 변수�
    새 소스에 명시적 opt-in `backup_remote`/credential wiring을 구현했지만 Pi의 기존 release/config는
    그대로다. d54ff36의 격리 entrypoint/manifest는 통과했으며 config/drop-in의 최종 설치 검토는 남는다.
    한 번의 성공을 자동 off-host RPO PASS로 표시하지 않는다.
-7. d54ff36 source publication/pin과 auto-update 비활성화는 승인·완료했다. 후속 로그 수정 commit은
-   build/test 결과를 검토한 뒤 별도 publication/pin 승인을 받아야 하며 임의로 remote를 갱신하지 않는다.
+7. 63c7722 source publication/pin 변경은 별도 사용자 승인 후 완료했다. auto-update는 비활성화한다.
+   이후 commit도 별도 검토·수동 승인을 받아야 하며 이번 source 승인은 10B 전환 승인이 아니다.
 8. 예상 작업 창은 **30–60분의 보수적 계획값**이며 실측 downtime/RTO가 아니다. 문제 시 maintenance를
    연장하거나 rollback/reconciliation한다. V1은 operator 확인상 이미 실행되지 않으므로 기존 중단 시간과
    이번 전환 작업 시간을 구분해 기록한다.
@@ -107,7 +108,8 @@ placeholder가 남은 명령은 실행하지 않는다. 변경 가능한 변수�
    sudo -u discordbot-deploy /opt/discordbot/releases/REVIEWED_RELEASE/.venv/bin/python -I /opt/discordbot/releases/REVIEWED_RELEASE/app/deploy/production/activate-stopped.py --target REVIEWED_RELEASE --expected-current r-0376f14868461d16-d026a47ed4f4b38a --approve-cutover-activation
    ```
 
-   현재 REVIEWED_RELEASE는 미확정이므로 실행하지 않는다. CLI flag는 사용자 최종 승인 자체를 대체하지 않는다.
+   승인된 후보 REVIEWED_RELEASE는 `r-63c77229d1a6e76a-d026a47ed4f4b38a`다.
+   최종 config/rollback command sheet와 10B 승인 전에는 실행하지 않는다. CLI flag는 사용자 최종 승인 자체를 대체하지 않는다.
 8. [real restore](../../../../deploy/runbooks/real-restore.md)의 `ops` wrapper를 검토한 production config에
    연결한 뒤 **검증된 Pi isolated candidate**만 promote한다. 이 command는 자신의 operation lock을 얻는다.
    외부 lock을 다시 중첩하지 않는다. 시작 전 real services 외에 synthetic peer가 멈췄는지도 별도 확인한다.

@@ -126,9 +126,10 @@
   `r-672694d3f0c5418e-d026a47ed4f4b38a` ARM64 후보도 offline build/tests/manifest를 통과했고 activation은 안 했다.
 - Pi isolated production backup decrypt/재backup/재restore/runtime UID open-close PASS.
   current release와 canonical inode 보존, stage `verified_not_promoted`; 실제 production timer는 미검증이다.
-- 현재 blocker: 로그 수정의 서비스 적용·재관찰 및 새 pin 승인과 최종 release/config/rollback command sheet,
-  maintenance와 관찰 이상 검토. `.env` 자동 사용 금지. d54ff36 publication/pin 및 자동 update 비활성화 정책은 승인됐다.
-  전체 Git history 검사 후 해당 commit만 일반 push 완료, main 보존. 후속 commit은 별도 수동 승인 대상이다.
+- 현재 blocker: 로그 수정의 서비스 적용·재관찰과 최종 release/config/rollback command sheet,
+  maintenance와 관찰 이상 검토. `.env` 자동 사용 금지. 초기 production pin은 사용자 후속 승인으로
+  `63c77229d1a6e76a0edbc7d9249a8fceb5b0938c`이 됐다. 전체 Git history/파일/내용/commit 메시지
+  재검사 후 해당 commit까지만 fast-forward push 완료, main 보존. 자동 update 비활성화와 이후 commit 수동 승인 유지.
 - 사용자는 private Bot-Data/db-backup을 off-host 목적지로 선택하고 별도 write deploy key 등록을 완료했다.
   실제 upload/download/restore는 PASS다. opt-in runtime wiring과 stopped activation guard를 구현했고
   Windows full strict는 d54ff36 기준 732 passed다. 해당 source ARM64 build/실제 runtime backup 검증도 PASS다.
