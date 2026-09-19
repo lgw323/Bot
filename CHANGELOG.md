@@ -10,6 +10,8 @@
 ## [Unreleased]
 
 ### Fixed
+- Music deferred 응답의 지연 삭제를 discord.py Webhook API와 맞추고, 삭제 작업을 bounded owner로 회수합니다.
+  전송 전 인자 검증 실패에는 단일 fallback을 허용하며 통신 결과가 불확실한 전송을 중복하지 않습니다.
 - PHASE 10B 재시도에서 jukebox 갱신 시 새 버튼 callback까지 제거하던 순서와 immutable release의
   TTS child 실행 경로를 수정했습니다. Watch는 iframe 준비와 독립된 참여자 연결, 단독 새로고침의
   상태 복원 및 제한된 재연결을 지원합니다. 사용자 요청으로 V1 jukebox의 색상·썸네일·진행·볼륨 표시를 복원했습니다.

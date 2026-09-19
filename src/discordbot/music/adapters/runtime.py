@@ -194,7 +194,7 @@ class MusicResource:
     async def stop(self) -> None:
         if self.closed: return
         self.closed = True
-        self.controller.close()
+        await self.controller.stop()
         if self.cog:
             try:
                 await self.bot.remove_cog(self.cog.qualified_name)

@@ -1,8 +1,10 @@
 """Lazy Discord components. Every mutation is routed to the guild actor."""
 import asyncio
 import hashlib
+import inspect
 import logging
 import re
+from collections.abc import Callable
 from dataclasses import replace
 from typing import Any
 from uuid import uuid4
@@ -11,6 +13,7 @@ from discordbot.music.domain.model import LoopMode, Track
 from discordbot.music.domain.pages import SongPages
 from discordbot.music.ports.repository import Favorite
 from discordbot.platform.errors import AppError, AuthorizationError, CapacityError, ConflictError, ExternalPermanentError
+from discordbot.platform.tasks import TaskSpec, TaskSupervisor
 from discordbot.storage.ports.contracts import DatabaseRequest
 
 logger = logging.getLogger(__name__)
@@ -22,8 +25,9 @@ def report_failure(stage: str, error: Exception) -> None:
 
 
 class Responder:
-    def __init__(self, interaction: Any) -> None:
+    def __init__(self, interaction: Any, *, delete_later: Callable[[Any, float], None] | None = None) -> None:
         self.interaction = interaction
+        self.delete_later = delete_later
         self.acknowledged = bool(interaction.response.is_done())
         self.finished = False
 
@@ -43,10 +47,22 @@ class Responder:
     async def send(self, content: str | None = None, **kwargs: Any) -> Any:
         if self.finished:
             return None
-        self.finished = True
         callback = self.interaction.followup.send if self.acknowledged else self.interaction.response.send_message
+        delay = kwargs.pop('delete_after', None) if self.acknowledged else None
+        if delay is not None:
+            if self.delete_later is None or not 0 <= delay <= 60:
+                raise ValueError('bounded followup deletion owner required')
+            kwargs['wait'] = True
+        # A binding failure is known to precede any HTTP request. Leave the
+        # responder available for one fallback. Once invoked, a failed send
+        # can be ambiguous and must never admit a second response.
+        inspect.signature(callback).bind(content=content, **kwargs)
+        self.finished = True
         self.acknowledged = True
-        return await self._call(lambda: callback(content=content, **kwargs))
+        message = await self._call(lambda: callback(content=content, **kwargs))
+        if delay is not None:
+            self.delete_later(message, delay)
+        return message
 
     async def edit(self, **kwargs: Any) -> Any:
         if self.finished:
@@ -66,6 +82,37 @@ class MusicController:
         self.actors, self.repository, self.clock, self.channels, self.master = actors, repository, clock, channels, master
         self.views: dict[str, tuple[Any, float]] = {}
         self.delete_failures = 0
+        self._deletions = TaskSupervisor(capacity=32, history_capacity=64, clock=clock)
+        self._delete_tasks: set[asyncio.Task] = set()
+        self._closed = False
+
+    def responder(self, interaction: Any) -> Responder:
+        return Responder(interaction, delete_later=self._delete_later)
+
+    def _delete_later(self, message: Any, delay: float) -> None:
+        async def delete() -> None:
+            await asyncio.sleep(delay)
+            try:
+                # SDK delete(delay=...) creates an unowned background task.
+                # Keep both the delay and HTTP operation in this bounded owner.
+                async with asyncio.timeout(3):
+                    await message.delete()
+            except Exception:
+                self.delete_failures += 1
+
+        if self._closed:
+            self.delete_failures += 1
+            return
+        identity = uuid4().hex
+        try:
+            task = self._deletions.start(TaskSpec('music.reply_delete', 'music.ui', identity, identity, delay+4), delete)
+        except AppError:
+            # The response was delivered. Cleanup saturation cannot send a
+            # duplicate fallback or turn an accepted request into a failure.
+            self.delete_failures += 1
+            return
+        self._delete_tasks.add(task)
+        task.add_done_callback(self._delete_tasks.discard)
 
     def own(self, view: Any, seconds: float = 180) -> Any:
         for key, (old, expires) in tuple(self.views.items()):
@@ -79,8 +126,14 @@ class MusicController:
         return view
 
     def close(self) -> None:
+        self._closed = True
+        for task in self._delete_tasks: task.cancel()
         for view, _ in self.views.values(): view.stop()
         self.views.clear()
+
+    async def stop(self) -> None:
+        self.close()
+        await self._deletions.shutdown(grace_seconds=0)
 
     async def actor(self, guild_id: int) -> Any:
         if guild_id not in self.channels:
@@ -103,7 +156,7 @@ class MusicController:
         return moved
 
     async def request(self, interaction: Any, query: str, *, modal: bool = False) -> None:
-        responder = Responder(interaction)
+        responder = self.responder(interaction)
         logger.info('music.request_received', extra={'fields':{'stage':'ui_request'}})
         try:
             await responder.defer()
@@ -190,7 +243,7 @@ class MusicController:
         return added
 
     async def action(self, interaction: Any, action: str, state: Any) -> None:
-        responder = Responder(interaction)
+        responder = self.responder(interaction)
         try:
             if interaction.guild_id != state.guild_id:
                 raise AuthorizationError("cross-guild Music component")
@@ -271,7 +324,7 @@ def build_song_view(controller: MusicController, pages: SongPages, kind: str) ->
                 pages.select((), interaction.guild_id, interaction.user.id, controller.clock.monotonic())
                 return True
             except AppError as error:
-                await Responder(interaction).send(error.safe_message, ephemeral=True)
+                await controller.responder(interaction).send(error.safe_message, ephemeral=True)
                 return False
 
         def render(self):
@@ -286,14 +339,14 @@ def build_song_view(controller: MusicController, pages: SongPages, kind: str) ->
                     if not await self.interaction_check(interaction): return
                     visible = {track.item_id for track in pages.page(self.page_index)}
                     if not set(select.values) <= visible:
-                        await Responder(interaction).send("입력값을 확인해 주세요.", ephemeral=True)
+                        await controller.responder(interaction).send("입력값을 확인해 주세요.", ephemeral=True)
                         return
                     self.selected.difference_update(visible)
                     self.selected.update(select.values)
                     if kind == "search": await self.perform(interaction, "add")
                     else:
                         self.render()
-                        await Responder(interaction).edit(view=self)
+                        await controller.responder(interaction).edit(view=self)
                 select.callback = selected
                 self.add_item(select)
             if kind == "queue":
@@ -315,7 +368,7 @@ def build_song_view(controller: MusicController, pages: SongPages, kind: str) ->
             self.add_item(button)
 
         async def perform(self, interaction, action):
-            responder = Responder(interaction)
+            responder = controller.responder(interaction)
             try:
                 selected = pages.select(tuple(song.item_id for song in pages.songs if song.item_id in self.selected),
                                         interaction.guild_id, interaction.user.id, controller.clock.monotonic())
@@ -374,7 +427,7 @@ def build_clear_confirmation(controller: MusicController, pages: SongPages) -> A
     for label, confirmed in (("확인", True), ("취소", False)):
         button = discord.ui.Button(label=label, custom_id="music:clear:"+str(confirmed))
         async def callback(interaction, confirmed=confirmed):
-            responder = Responder(interaction)
+            responder = controller.responder(interaction)
             try:
                 pages.select((), interaction.guild_id, interaction.user.id, controller.clock.monotonic())
                 if controller.clock.monotonic() >= expiry: raise ConflictError("confirmation expired")
