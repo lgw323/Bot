@@ -107,6 +107,47 @@ async def test_dashboard_delete_recovery_failure_health_and_cleanup_timing(rig, 
         await executor.close(grace_seconds=2)
 
 
+async def test_dashboard_refresh_retains_real_discord_component_dispatch(rig, tmp_path):
+    """Use the SDK registry; AsyncMock.edit alone misses removal of new callbacks."""
+    from discord.ui.view import ViewStore
+
+    bot, channel = fake_bot()
+    store = ViewStore(SimpleNamespace())
+    message = channel.send.return_value
+
+    async def edit(**kwargs):
+        store.remove_message_tracking(message.id)
+        store.add_view(kwargs['view'], message.id)
+        return message
+
+    async def send(**kwargs):
+        store.add_view(kwargs['view'], message.id)
+        return message
+
+    message.edit.side_effect = edit
+    channel.send.side_effect = send
+    executor = BoundedExecutor(workers=1, queue_capacity=8, name='dashboard-dispatch')
+    rig[6].get_volume.return_value = None
+    rig[6].list_play_counts.return_value = ()
+    runtime = MusicResource(bot, rig[6], rig[1], executor, cache_path=tmp_path/'cache',
+        snapshot_path=tmp_path/'synthetic.json', channels={100:55}, master=99,
+        provider=rig[5], library=rig[4], audio_factory=lambda _: rig[3])
+    try:
+        actor = await runtime.actor(100)
+        for _ in range(3):
+            await runtime.dashboard(100, actor.projection())
+            current = runtime.dashboard_views[100]
+            registered = store._views.get(message.id, {})
+            for action in ('favorites', 'search', 'leave'):
+                item = registered.get((2, 'music:'+action))
+                assert item is not None, 'dashboard refresh removed the replacement callback'
+                assert item.view is current and not item.disabled
+            assert store._synced_message_views[message.id] is current
+    finally:
+        await runtime.stop()
+        await executor.close(grace_seconds=2)
+
+
 @pytest.mark.parametrize("mode", ["normal", "nonzero", "hung", "immediate_stop", "start_failure", "empty_audio"])
 async def test_cf02_cf20_ffmpeg_adapter_local_child_ownership(rig, tmp_path, monkeypatch, mode):
     # Substitute only the executable, retaining the real async child/pipe/reap

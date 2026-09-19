@@ -114,6 +114,11 @@ class MusicResource:
                         if candidate.author.id == self.bot.user.id and candidate.embeds:
                             message = candidate
                             break
+                # discord.py indexes callbacks by message/custom_id. Retire
+                # the old registration before installing the replacement;
+                # stopping it afterwards would remove the new callbacks too.
+                if old_view:
+                    old_view.stop()
                 if message:
                     try:
                         await message.edit(embed=dashboard_embed(state), view=view)
@@ -127,7 +132,6 @@ class MusicResource:
                     message = await channel.send(embed=dashboard_embed(state), view=view)
                 self.messages[guild] = message
                 self.dashboard_views[guild] = view
-                if old_view: old_view.stop()
                 # Preserve dashboard/pinned messages and bounded jukebox cleanup.
                 new_track = state.session_id is not None and self._cleaned_sessions.get(guild) != state.session_id
                 if channel.permissions_for(channel.guild.me).manage_messages and (new_dashboard or new_track):
