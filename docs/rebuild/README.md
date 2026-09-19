@@ -1,8 +1,8 @@
 # DiscordBot V2 Rebuild Documentation
 
-현재 상태는 **PHASE 10A production readiness 진행 중 / 10B 최종 승인 전**이다. Production 원본을
+현재 상태는 **PHASE 10A COMPLETE / 10B NOT AUTHORIZED**이다. Production 원본을
 보존한 별도 copy migration과 격리 backup/restore는 검증했으며 실제 production 전환은 실행하지 않았다.
-완료 항목과 남은 준비 조건은 [PHASE 10A 보고서](phases/phase-10/phase-10-report.md)를 따른다.
+완료 증거와 남은 production 위험은 [PHASE 10A 보고서](phases/phase-10/phase-10-report.md)를 따른다.
 
 | 위치 | 책임 | 변경 정책 |
 | --- | --- | --- |
@@ -50,7 +50,7 @@
 
 - [PHASE 9 staging evidence and remaining gates](phases/phase-09/phase-9-report.md)
 
-- [PHASE 10A readiness report — in progress](phases/phase-10/phase-10-report.md),
+- [PHASE 10A readiness report — COMPLETE](phases/phase-10/phase-10-report.md),
   [production migration contract](phases/phase-10/production-migration-contract.md),
   [config migration guide](phases/phase-10/config-migration-guide.md),
   [cutover approval gate/runbook](phases/phase-10/cutover-runbook.md)

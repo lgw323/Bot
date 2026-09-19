@@ -12,9 +12,11 @@
 ### Fixed
 - 반복되는 운영 작업의 정상 시작·종료 journal 기록을 줄였습니다. 작업 metric과 제한된 이력,
   실패·취소·deadline 기록은 유지하고 DB health probe 실패에는 비밀 내용 없는 오류 코드만 남깁니다.
-  readiness 기준은 유지하며 Pi 적용/운영 commit 변경은 후속 검증·승인 대상입니다.
+  readiness 기준은 유지하며 승인된63c7722를 Pi synthetic pair에서 검증했습니다. Production 전환은 별도 승인 대상입니다.
 
 ### Added
+- PHASE 10A의 수정본 synthetic 재관찰, 민감값 없는 connector route 조회, 별도 최종 config 준비와
+  exact cutover/rollback 명령표를 추가했습니다. 10A 준비 완료이며10B production 전환은 미승인입니다.
 - PHASE 10A에 private Bot-Data 전용 SSH key 준비와 암호화 artifact의 일반 Git push/read-back/격리 복구
   도구를 추가했습니다. V2 현재 tree의 retention과 과거 Git history 보존을 구분하며 자동 백업은 아직 활성화하지 않습니다.
 - 승인된 off-host 목적지의 명시적 runtime opt-in, 원격 검증 실패 시 이전 정상 backup 유지와

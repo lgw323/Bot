@@ -143,3 +143,12 @@
   관찰 완료를 무결점 soak PASS로 해석하지 않는다. [PHASE 10 report](../phases/phase-10/phase-10-report.md)에 근거를 남긴다.
 - 전환 가능한 상태가 되기 전 최종 10B 승인 질문을 올리지 않는다. 승인 후에도 V1/호환성/backup/역사는
   보존하며 PHASE 11을 자동 시작하지 않는다.
+
+## PHASE 10A closure (2026-09-19)
+
+앞의 미완료 준비 항목은 후속 작업으로 닫았다.63 synthetic pair300.171초 관찰, failure logging 주입,
+Cloudflare current origin read-only 검토, 별도 install config digest와 exact activation/promotion/rollback sheet 완료.
+**10A COMPLETE / 10B NOT AUTHORIZED**이며 다음 결정은 최종 production cutover 승인이다.
+과거 probe/HTTP 오류 원인, live API/provider/권한, 장기용량/RPO/RTO 위험은
+[최종 보고서](../phases/phase-10/phase-10-report.md)에 남겨 승인 자료에 공개한다.
+원인을 모르는 과거 실패를 해결됐다고 주장하지 않는다. 기존off-host 복구검증은 반복하지 않았다.

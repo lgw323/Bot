@@ -1,67 +1,105 @@
 # PHASE 10 Report — 10A Production Readiness
 
-Updated: 2026-09-19. **10A IN PROGRESS / PC·Pi·Bot-Data isolated recovery verified; 10B NOT AUTHORIZED.**
-이 보고서는 현재 재개 지점이며 production 성공 보고서가 아니다. 최종 cutover 승인 질문은 아직 올리지 않았다.
+Updated: 2026-09-19. **10A COMPLETE / 10B NOT AUTHORIZED.**
+준비 단계의 완료이며 PHASE 10 전체 완료나 production 성공을 뜻하지 않는다.
+Production canonical promotion/login/service start/public route 변경/production backup timer는 실행하지 않았다.
 
 ## Phase 10A Status
 
-**10A 준비 미완료 / 10B 최종 승인 요청 전 단계.** Source publication 승인은 완료했지만,
-그 승인이 staging 재관찰·최종 설치 절차 검토 또는 production 전환 완료를 의미하지 않는다.
-이 보고서는 2026-09-19까지 확보한 실행 증거를 정리한 준비 상태 보고서다. 이번 문서 정리에서
-Pi 서비스나 운영 데이터를 변경하거나 새로운 host 검증을 수행하지 않았다.
+| 최종 승인 자료 | 판정 / identity / 한계 |
+| --- | --- |
+| Authoritative DB source | PC `docs/rebuild/bot_database.db`; 최신성 사용자 확인. SHA256 `4e8f333b4903d2372fef75ac7ed5a90e58926b3b23a61cceb0c7cfd12517aa25` 재확인, 원본 SQLite open 없음 |
+| Candidate DB | Pi `/var/lib/discordbot/phase10-recovery-20260916-01/restored/candidate.db`; SHA256 `8d17018f1927d91b9ea633700471a6cda7388633b175a560be36f4b904ae4e5b` 재확인. schema5/semantic/count/복구 PASS 증거 재사용, 재migration 없음 |
+| Approved source/release | commit `63c77229d1a6e76a0edbc7d9249a8fceb5b0938c`, release `r-63c77229d1a6e76a-d026a47ed4f4b38a`; ARM64 build PASS. 해당 commit까지 일반 FF push 완료, main 보존 |
+| Config/secrets | 기존 production-candidate와 세 credential scope 검증 유지. 새 별도 설치 준비 config digest `41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40`; exact 경로·권한·mount·보존 순서 확정. 현재 staging config 불변 |
+| Corrected staging observation | 실제 synthetic pair에63 적용, **300.171초/31 samples**, 같은 release, live/ready PASS, NRestarts 증가0. 정상 주기 lifecycle journal0; failure/cancel/deadline/retry와 probe stable code 보존을 별도 Pi fault worker로 확인 |
+| DB probe/health anomaly classification | 기존24h +12/+17, HTTPError1의 원인/status 소급 미확정. 새 `database_unavailable` 분류는 주입 증거이며 과거 원인을 뜻하지 않음. 손상 증거 없음, readiness/rollback trigger 아래 명시 |
+| Watch tunnel | 실행 중 connector의 최신 config event에서 `watch.lgw323.com → http://localhost:8000` 확인. ingress2개, 내부9001/9010/9011 route0. 10B에서 기존 route origin만 `http://127.0.0.1:9000`으로 변경 |
+| Off-host readiness | private Bot-Data 전용 SSH key, 실제 encrypted upload/download/decrypt 및 d54 runtime drill PASS 유지. 설치/drop-in/timer/retention/실패 정책 확정. 지속 production RPO·Git 총용량은 미측정 |
+| Exact activation/promotion/rollback sheet | [최종 명령표](final-command-sheet.md) 준비 완료. 실제 release/DB/config hash, operation lock, 보존·설치·승격·first start와 단계별 실패 절차 고정, 입력 placeholder 없음 |
+| Downtime plan | 승인 뒤30–60분 예상(실측 아님). Codex 단계별 실행, 사용자 직접sudo 및 Discord/browser smoke 확인. V1은 기존 확인상 이미 정지 상태 |
+| Live smoke effects | command sync/dashboard/생일 due 알림 가능. `/내정보`, `/랭킹`, `/요약`, Music1곡, TTS, Watch create/connect/close, 실제 production backup/isolated restore는10B에서만 실행 |
+| Remaining risks | 실제 token/guild/channel 권한·provider 부하 미검증, 과거 transient 원인 불명, short observation 한계, V1 music_state 부재, 새 V2 writes 이후 원본 복구 시 데이터 손실 판단 필요, Git history 증가 |
+| Production / PHASE11 | **NOT AUTHORIZED / NOT RUN**. auto-update/manual timer 비활성화 유지. V1/env/history/backup 삭제 없음 |
 
-| 준비 항목 | 판정 | 검증 근거와 한계 |
+## Corrected-release Actual Pi Observation
+
+증거: `/var/tmp/phase10-corrected-63c7722/progress.json` stage `complete`, 같은 디렉터리 samples/summary.
+PC ignored 보존본 `scratch/phase10/corrected-release-result.json`, `corrected-release-samples.jsonl`.
+prebuilt63을 기존 synthetic pair에 적용했으며 production credential/DB/login을 사용하지 않았다.
+작업 중 synthetic backup timer만 일시 정지 후 원래 active 상태로 복원했다. Update/manual은 계속inactive다.
+관찰 UTC **2026-09-19 04:08:13.576–04:13:13.584**, observer elapsed **300.171초**.
+service restart 전후 PID 변경은 명시적 release 적용 때문이며 관찰 중 PID43017/43018은 일정했다.
+
+| 실제 측정 | Synthetic Discord | Watch |
 | --- | --- | --- |
-| Authoritative source / 원본 보존 | PASS | 사용자 최신성 확인, 원본 hash 보존, 별도 copy에만 migration |
-| Production copy migration | PASS | Migration 1–5, schema 5, integrity/semantic/count/old-reader 검증 |
-| Config / secrets 준비 | PASS — offline | 한국어 setup 입력 완료, 실제 Pi 세 scope/권한/read-only mount 검증. API 인증은 미실행 |
-| Release build | PASS | 승인 후보 63c7722의 실제 ARM64 build/운영 tests/manifest/credential 검증 |
-| Source publication / update policy | PASS | 63c7722까지 일반 fast-forward push, main 보존, 예정 commit 고정·auto-update 비활성화 |
-| Encrypted backup / isolated restore | PASS | PC schema 0/5 및 Pi schema 5 복구, application open/close와 semantic 검증 |
-| Off-host publication / download / restore | PASS — isolated | Bot-Data 실제 drill 및 d54ff36 runtime entrypoint 검증. Production timer의 지속 RPO는 미검증 |
-| Retention | PASS — synthetic | 현재 tree retention/legacy 보존 테스트 통과. 실제 remote pruning·장기 저장 용량 검증과 구분 |
-| Longer staging observation | PARTIAL | 실제 24h/1,438 samples 완료. Probe 실패·HTTP 누락과 수정 후 관찰이 남음 |
-| Public Watch route 준비 | PARTIAL | Hostname/loopback 9000 확정, 기존 DNS 존재 확인. 실제 tunnel/origin 연결 검토 필요 |
-| Exact cutover / rollback command sheet | INCOMPLETE | 순서·guard·복구 후보는 준비, 최종 config/drop-in/명령·maintenance 확정 필요 |
-| Production activation / live smoke | NOT RUN — 10B | 승인 전 실행하지 않는 항목이며 10A에서 성공 처리하지 않음 |
+| Health | 9010, 31/31 ready, HTTP errors0 | 9011, 31/31 ready, HTTP errors0 |
+| Release | r-63c77229d1a6e76a-d026a47ed4f4b38a | 동일 |
+| NRestarts | 0→0 | 0→0 |
+| RSS KiB 범위 | 52,524–52,660 | 68,276–68,584 |
+| FD / threads | 7 / 2→3 | 9 / 3→4 |
+| DB probe | 관찰 종료까지60 ok, failed0 | 관찰 종료까지60 ok, failed0 |
+| 관찰 구간 journal entries | 2 | 2 |
+| 3개 주기 task 정상 started/succeeded | 0 | 0 |
 
-## Implemented / Tests / Approved Candidate
+관찰 전후 `Services.smoke`의 ready/live pair 검증과 synthetic canonical schema/application validation PASS.
+31개 sample 모두 ready이나10초 표본 사이 무중단을 입증하지는 않는다. 자원 범위에는 첫 probe/executor
+thread 생성이 포함된다. 이전24h의 각 service 약379,000 journal entries와 달리 정상 주기 로그가 사라졌다.
+global journal 사용량은 양쪽 모두 도구 표시 **3.2G**(반올림)였고 실제 journal byte 증가0을 뜻하지 않는다.
+관찰+후속 점검/fault worker 구간 disk free delta **-118,784 bytes**; sample 첫/끝 차이는-110,592 bytes.
+global disk 차이를 journal에만 귀속하지 않는다. 온도56.2–68.85°C, throttling samples 모두0.
+첫 sample만 양쪽 backup_age=-1/RPO gauge1이었다. 코드상 최초5초 probe 전 초기값이며 이후30개는
+age 정상/RPO gauge0, 마지막age 약773초였다. 이5분은 새 scheduled backup 실행/RPO 지속 증거가 아니다.
 
-Copy migration·복구 도구, 한국어 secret setup, scoped preflight, finite observer, 전용 SSH deploy key
-기반 encrypted Git backup, remote read-back 성공 후 latest 갱신, stopped-service activation guard와
-주기 작업 로그 감소를 구현했다. DB schema는 기존 ledger 5를 유지하고 V1 자산을 보존했다.
+별도 transient `discordbot-phase10-telemetry-fault.service`는 approved63의 실제 TaskSupervisor/Probe를
+사용하되 fake DB dependency와 PrivateNetwork로 실제 DB/API/secret에 접근하지 않았다.
+실제 journal에 `task.failed`, `task.cancelled`, `task.deadline_exceeded`, `task.retrying`,
+`database.probe_failed` 각1회와 **`database_unavailable`**1회를 확인했다. 주입 후 readiness false도
+worker assertion을 통과했다. 자연 발생 장애를 재현하거나 기존24h 실패의 원인을 확정한 증거가 아니다.
 
-- Windows full strict: **735 passed, 0 xfailed, 52.97s**. 기존 audioop deprecation warning 1개.
-- 로그 수정 관련 tests: **54 passed**. 실제 DB/API/systemd 대신 synthetic fixture 사용.
-- Pi ARM64: **63c7722 build/운영 tests/manifest/세 credential scope PASS, 138.196s**.
-  Windows 전체 735개를 Pi에서 모두 실행했다는 뜻은 아니다.
-- 승인된 production 예정 commit: **`63c77229d1a6e76a0edbc7d9249a8fceb5b0938c`**.
-- 해당 immutable release: **`r-63c77229d1a6e76a-d026a47ed4f4b38a`**, schema range [5,5].
-- 실제 off-host runtime 복구 증거는 선행 **d54ff36**에서 확보했다. Release activation과
-  수정본을 서비스에 적용한 로그 감소 효과는 아직 미검증이다.
+## Anomaly Classification and Cutover Triggers
 
-## Remaining 10A Work / Completion Criteria
+| 항목 | 확인된 category / readiness / 손상 evidence | 10B 처리 기준 |
+| --- | --- | --- |
+| 기존 synthetic probe +12 | probe read 실패 집계만 있음; 당시 stable code 없음. 수집된 ready false0이나 사이 순간 저하 가능 | 신규 failure 시 code/time/health status 기록. 단발은 제한 재확인;5초 간격3회 연속 ready false/error면 pair stop·조사 |
+| 기존 Watch probe +17 | 위와 동일. SQLite busy/I/O/deadline 중 하나로 추측하지 않음 | 동일 기준. data_integrity나 schema/digest 이상은 즉시 stop/reconcile |
+| 9010 HTTPError1 | HTTPError category 확정, status 미저장.503이라고 단정 불가. 해당 ready payload 미수집 | status와 양쪽 live/ready를 제한 확인;70초 startup gate 초과 또는 maintenance 중 예상 밖 restart면 stop |
+| 신규 injected probe | database_unavailable + ready false. 구체적인 SQLite busy 대 I/O 구분은 이 code로 불가능 | error message/SQL/사용자 값 없이 code만 기록. 원인조사는 별도 안전한 진단으로 진행 |
 
-1. **관찰 결과 마무리:** 승인 후보를 synthetic staging에서 검증하고 로그 발생량·disk 증가·health를
-   재관찰한다. 기존 DB probe 실패 +12/+17 및 HTTPError 1회의 원인을 가능한 범위에서 분류한다.
-   끝내 분류하지 못한 항목은 남은 위험으로 명시하고 최종 승인 자료에 포함한다.
-2. **최종 설치·복구 명령 확정:** 승인 release, production config의 off-host opt-in, Operations credential
-   drop-in/권한, canonical promotion, synthetic state 분리, pre-cutover 보존 경로와 stopped rollback
-   명령을 하나의 실행 순서로 검토한다. 자동 update 비활성화를 유지하고 maintenance/운영자 역할을 확정한다.
-3. **외부 경로·보존 검토:** 기존 Watch hostname의 실제 tunnel/origin route와 충돌 여부를 읽기 전용으로
-   확인한다. Bot-Data의 Git history가 계속 커지는 보존 특성과 용량 검토 결과를 최종 자료에 포함한다.
-   DNS/route 변경 및 production remote backup 활성화는 10B까지 수행하지 않는다.
-4. **완료 보고 및 최종 승인:** 위 결과를 반영해 이 보고서를 10A 완료 상태로 갱신하고, source DB,
-   옮길 데이터, downtime 계획, backup/rollback, 남은 위험과 실제 Discord smoke의 영향을 제시한다.
-   그 뒤에만 **“이 상태로 실제 production cutover를 진행할까요?”**라고 명시적으로 묻는다.
+기존 migration/restore/schema/integrity 검증과 이번 synthetic validation에 데이터 손상 증거는 없었다.
+과거 모든 transient가 무해했다는 뜻은 아니다. 첫 검증 backup 이후 age<=6h, remote publication 실패,
+identity split, audit/fsync uncertainty, writer 충돌을 성공 선언 중단/복구 검토 trigger로 둔다.
+세부 [monitoring 및 rollback 절차](final-command-sheet.md#7-monitoring-stop-triggers)를 따른다.
 
-실제 API login, 친구 서버 smoke, canonical DB promotion, production timer와 public route 변경은
-10B 실행 범위다. 이 항목들을 미리 실행해서 10A 완료 조건을 채우지 않는다. V1 music_state 보존본은
-없어 기존 queue/voice 위치가 미이전이며, V1 삭제와 PHASE 11은 별도 지시 대상이다.
+## Final Config / Route / Installation Evidence
 
-아래는 위 판정의 상세 증거다. 실행 순서는 [cutover runbook](cutover-runbook.md), 데이터 identity와
-복구 경로는 [migration contract](production-migration-contract.md), 사용자 입력 절차는
-[config guide](config-migration-guide.md)를 따른다.
+`prepare_install_sheet.py`를 Pi에서 interactive sudo로 실행해 **별도 준비 경로만** 생성했다.
+`/var/tmp/phase10-install-sheet-result.json` stage `prepared_not_installed`, production_activated=false.
+원본 user-entered config digest는 `5f1f360a6be8d23e4217051902605f0360651cf72d8926efc10caf851557e3f3`,
+새 준비 config는 `/var/lib/discordbot/phase10-install-plan-63c7722/config.json`이다. 변경은 검증된
+backup_remote opt-in object 하나이며 최종 digest는 위 표와 같다.5개 secret 및 SSH2개 source는
+root-owned regular/nonempty/0600 검사를 통과했다. 값은 출력·기록하지 않았다. 기존 scoped offline 검증을
+반복하지 않았으며10B 실제 목적지 설치 뒤 다시 scope preflight를 수행한다.
+PC authoritative hash와 Pi verified candidate hash는 그대로다. 새로운 source/writer는 보고되지 않았다.
+
+Cloudflare read-only helper는 **현재 cloudflared InvocationID**의 마지막 config update event만 읽었다.
+event_time_unix_us `1789357096890474`, matching hostname1/ingress2/internal port route0;
+현재 origin은 `http://localhost:8000`이다. dashboard/API를 독립 검증했다는 뜻은 아니며10B 편집 직전에
+대상을 다시 확인한다. DNS/route/connector는 변경하지 않았다. 설정의 token/다른 hostname/raw 로그는 출력하지 않았다.
+
+## Implemented / Validation / Approval Boundary
+
+추가 도구는 synthetic bounded observation, allowlisted connector route 조회, 별도 설치 config 준비에 한정한다.
+기존 immutable63 runtime/DB schema/dependency는 변경하지 않았다. Windows 전체 strict 결과는 아래 최종 기록을 따른다.
+직접 guard/config/문서 검증 **13 passed**. 최종 전체 strict **746 passed, 0 xfailed, 60.71초**이며
+기존 audioop deprecation warning1개다. 작성 중 문서 anchor 오류1개를 수정한 뒤 전체 검사를 다시 통과했다.
+실제 사용자 DB/API/systemd에 접근하는 pytest는 없다.
+Pi63 ARM64 build/운영 tests/manifest/세 scope 검증은 기존 **138.196초 PASS** evidence를 유지한다.
+off-host actual upload/download/decrypt를 불필요하게 반복하지 않았다. 이번 로컬 commits는 push하지 않는다.
+
+실행 순서는 [최종 명령표](final-command-sheet.md), 기능 smoke/배경은 [runbook](cutover-runbook.md),
+데이터 identity는 [migration contract](production-migration-contract.md), 입력 가이드는
+[config guide](config-migration-guide.md)를 따른다. 과거 증거는 아래에 보존하며 최신 판정은 이 요약을 따른다.
 
 ## Baseline / Production Source Data
 
@@ -209,7 +247,7 @@ server-maintenance/telemetry-drain/database-probe의 정상 started/succeeded였
 실패·취소·deadline/retry 기록은 유지한다. DB probe 실패는 message/context 없이 stable error code만
 추가한다. 기존 readiness 기준/주기/timeout은 유지한다. 수정본의 Pi build/운영 테스트/세 scope 검증도 138.196초에 PASS했다. 새 release는
 `r-63c77229d1a6e76a-d026a47ed4f4b38a`, schema [5,5]이며 current/staging config는 전후 동일하다.
-실제 서비스에 적용한 로그 감소 효과와 DB 실패 원인 재관찰은 아직 미검증이다. allowlisted archive SHA256은
+당시 서비스 적용은 미실행이었다. 후속 실제 bounded 관찰은 위 최종 증거에 기록했다. 과거 DB 실패 원인은 소급 미확정이다. allowlisted archive SHA256은
 `8948ad0da780f81336d7bb30f7fc41fc3485602f5cd91c757d658221fb5cec69`이며 Pi로 전달했다.
 별도 `verify_candidate.py`로 검증했으며 처음 잘못 지정한 run 경로는 실행 전 guard가 거부했다.
 수정한 경로로 성공했다. 이후 sudo 입력 완료 답변은 별도로 요구하지 않고 safe progress로 확인한다.
@@ -234,7 +272,7 @@ Watch browser/public route 실제 smoke는 모두 NOT RUN. 최소 visible action
 `http://127.0.0.1:9000`; signed control 9001과 health 9010/9011은 public 금지.
 hostname 선택은 기록했고 DNS/public route 생성·변경은 10B final approval까지 실행하지 않는다.
 2026-09-19 read-only DNS 조회에서 해당 이름의 A/AAAA 응답이 이미 존재함을 확인했다.
-이 결과만으로 기존 Cloudflare tunnel/origin routing이 올바르다고 판단하지 않으며 dashboard route 검토가 남는다.
+DNS만으로 route를 판단하지 않았다. 후속 current connector config event 검토 결과는 위 최종 증거를 따른다.
 
 ## Backup / Off-host Status
 
@@ -285,10 +323,9 @@ Pi previous immutable releases와 staging DB/config는 유지했다. code-only r
 동시 V1/V2 writer, 불확실한 promotion 재시도 금지. operator가 2026-09-17 V1 music_state 보존본은
 없다고 확인했다. 기존 active queue/voice channel/재생 위치는 미이전이며 synthetic snapshot을 대신 사용하지 않는다.
 
-남은 위험/작업: 실제 API 인증/resources/permissions, 새 release pair activation, live providers 및 command UI,
-off-host durability, 24h 중 probe failures/HTTP 누락의 상세 원인, 로그 수정의 서비스 적용·재관찰,
-power-loss와 실부하 capacity, production RPO/RTO,
-미이전 V1 config overrides/log admin UI, maintenance/rollback operator 확인. 준비된 copy 성공은 이를 닫지 않는다.
+남은 위험: 실제 API 인증/resources/permissions, live providers 및 command UI, 지속 off-host durability,
+기존24h probe/HTTP 실패 원인, power-loss와 실부하 capacity, production RPO/RTO,
+미이전 V1 config overrides/log admin UI. Synthetic 수정본 관찰과 설치·복구 명령표는 완료했지만 위 위험은 남는다.
 V1 code/scripts/env/legacy compatibility/history/backups/releases를 보존한다. PHASE 11은 별도 지시 전 시작하지 않는다.
 
 ## Tests / Commits / Decision Required
@@ -316,8 +353,9 @@ fixture를 명시적 `backup_remote=None`으로 보완한 뒤 725 passed, 최종
 2026-09-17 후속 remote source ref 재조회는 자동 승인 검토 사용량 한도로 거절되어 갱신하지 못했다.
 2026-09-18 SSH 상태 조회는 정상 승인 경로로 성공했고 차단된 조회를 우회하지 않았다.
 
-Source publication/update policy는 승인·실행 완료다. maintenance 시간은 미확정이다.
-선택된 Bot-Data actual drill과 ARM64 runtime backup wiring은 완료했고, 용량 증가와 로그 수정 검토는 남는다.
-`activate-stopped.py`와 6개 guard/uncertain-outcome test를 구현했지만 실제 실행은 10B 승인 뒤다.
-관찰 이상 항목 검토 및 최종 release/config/drop-in/rollback command sheet 확정도 남는다.
-모든 risk·backup·source·downtime·smoke가 검토 가능한 상태가 된 뒤에만 10B 명시적 승인을 요청한다.
+Source publication/update policy는 승인·실행 완료다. 실제 시작 시각은10B 승인 뒤 잡으며30–60분을 계획한다.
+수정본 synthetic 관찰, 기존 이상 분류/위험 공개, route read-only 검토 및 exact config/off-host/promotion/
+rollback 명령표를 완료했다. 최종 상태는 **10A COMPLETE / 10B NOT AUTHORIZED**다.
+실제 production 전환 및 PHASE11은 실행하지 않았다. 최종 질문은 다음과 같다.
+
+**“이 상태로 실제 production cutover(PHASE 10B)를 진행할까요?”**

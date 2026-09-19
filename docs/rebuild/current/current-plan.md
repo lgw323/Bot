@@ -33,7 +33,7 @@ PHASE 10A에서 사용자 확인을 받은 최신 preservation DB의 별도 copy
 원본은 보존했고 Pi canonical은 synthetic이다. `.env`는 사용하지 않는다.
 한국어 single-command setup으로 사용자 직접 입력을 완료했고, 세 서비스의 no-network credential mount/
 owner/mode/basic config 검증이 통과했다. commit `672694d`의 ARM64 immutable 후보 release도 별도
-build/operations strict/manifest 검증을 통과했다. current는 이전 synthetic release를 유지한다.
+build/operations strict/manifest 검증을 통과했다. 당시 current는 이전 synthetic release였으며 아래 후속 검증에서63으로 적용했다.
 Watch origin은 `https://watch.lgw323.com`; DNS/route 생성은 아직 승인·실행하지 않았다.
 Pi candidate decrypt/재backup/재restore/runtime UID open-close도 통과했다. 첫 observer의 실제 24h/1,438개
 samples를 회수했고 restart/RPO 초과는 0이었다. DB probe 실패 +12/+17, health 누락 1회와 약 0.96GB
@@ -45,12 +45,14 @@ off-host는 private Bot-Data/db-backup과 별도 write deploy key로 실제 uplo
 후속 사용자 승인으로 초기 production pin을 `63c77229d1a6e76a0edbc7d9249a8fceb5b0938c`으로 갱신했다.
 직전 전체 이력/파일/내용/commit 메시지를 재검사하고 해당 commit까지만 일반 fast-forward push했다.
 자동 update는 계속 비활성화하며 이후 commit은 수동 승인한다.
-후속 로컬 수정은 주기 작업의 정상 journal을 줄이고 DB 실패의 safe error code를 추가한다.
-수정본 `63c7722`도 Pi build/운영 테스트/세 scope 검증을 통과했다. 서비스 적용·재관찰은 남으며 실제 production 전환은 별도 10B 승인 대상이다. V1 music_state는 없어 active queue/voice 위치는 미이전이다.
-관찰 이상 검토와 최종 release/config/rollback sheet를 마친 뒤
-[cutover runbook](../phases/phase-10/cutover-runbook.md)의
-준비 항목을 끝내고 명시적 최종 승인을 받은 뒤에만 10B DB promotion/login/production timer를 실행한다.
-PHASE 11 V1 제거는 별도 지시 전 시작하지 않는다.
+수정본63을 실제 synthetic pair에 적용해300.171초/31 samples 관찰을 완료했다. 양쪽 같은release,
+ready/live, restart0과 정상 주기 journal0을 확인했고 별도 Pi fault worker에서 실패 로그/코드를 검증했다.
+과거24h 장애의 상세 원인은 미확정으로 공개하고 stop/reconciliation 기준을 고정했다.
+실제 connector 현재 route는 watch.lgw323.com → localhost:8000이며 변경하지 않았다.
+별도 production install config 준비와 [exact 명령표](../phases/phase-10/final-command-sheet.md)를 완료했다.
+최종 상태는 **10A COMPLETE / 10B NOT AUTHORIZED**다. 다음 gate는 사용자 최종 cutover 승인이다.
+승인 전 production promotion/login/timer/route 변경은 실행하지 않는다. V1 music_state는 없어 queue/voice 위치는 미이전이다.
+PHASE11 V1 제거는 별도 지시 전 시작하지 않는다.
 
 전체 단계·rollback 설계는 frozen [migration plan](../baseline/20-migration-plan.md),
 최신 결정과 증거는 [Architecture Decision Log](architecture-decision-log.md),
@@ -71,7 +73,7 @@ PHASE 11 V1 제거는 별도 지시 전 시작하지 않는다.
 
 ## Active phase
 
-- [PHASE 10A readiness report — 준비 미완료 및 완료 조건](../phases/phase-10/phase-10-report.md)
+- [PHASE 10A readiness report — COMPLETE / 10B 승인 대기](../phases/phase-10/phase-10-report.md)
 - [Production migration contract](../phases/phase-10/production-migration-contract.md)
 - [한 번 실행하는 config setup](../phases/phase-10/config-migration-guide.md)
 - [Cutover gate/runbook](../phases/phase-10/cutover-runbook.md)
