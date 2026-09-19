@@ -4,6 +4,48 @@ Updated: 2026-09-19
 
 ## PHASE 10B execution override
 
+**10B TTS REPAIRED / VERIFIED RELEASE / PUSH-PIN APPROVAL PENDING. PHASE10 INCOMPLETE.**
+사용자가 commands3개, Favorites/volume, Music URL/search/선택/추가/실제 청취/stop·퇴장을 PASS로 확인했다.
+이후 봇 입장 안내 없이 음악이 시작된다는 TTS 실패를 보고하여 정지·새 보존을 완료했다.
+현재 pin4963982 유지, canonical/copy DB SHA256
+`28291bf37128dd62815c818ac45865c8a504cc04a2b3dbb9a8a564d8226dab1d`, 이전 세 preservation 불변.
+새 copy는 `phase10-retry-49639828a3c2f181-operator-failed-20260919T092351777156Z`다.
+Watch/public browser와 production backup/restore/boot/timer는 미진행. Auto-update OFF.
+분석을 계속해 lookup/추가가 idle TTS를 덮는 경쟁 및 TTS 완료 뒤 idle 복귀 결함을 격리 재현·수정했다.
+수정 a77f43e + 최신 stopped guard8261076 + 연속 안내 pause 보존d14eba8,
+직접 regression8/관련51/최종 Windows full strict821 PASS.
+Live에서는 TTS acceptance 뒤0.173711초 만에 Music acceptance가 발생했다.
+실제 DiskCache를 사용하는 합성 재현에서도 이전 source의 TTS lease 누수/종료 오류를 확인했고,
+수정본은 잔존 lease0/cache close PASS다. Live 종료 오류는 DataIntegrityError category만 확인했다.
+새 source `d14eba80bdec912615d9bcc8ba22005b2aec3929`의 Pi ARM64 전체 strict **812 pass/9 skip**,
+동일 Windows Watch harness9개 PASS, 예상 밖 skip0. 새 비활성 immutable release
+`r-d14eba80bdec9126-3dac82a792fad576`: manifest17403 files/schema[5,5]/세 credential scope PASS.
+Current496 pin/최신 canonical DB/config/네 preservation 및 protected state 불변, services stopped,
+boot/backup/update/manual timers disabled. 실제 DB schema5/integrity/favorites40 rows/3 owners 유지.
+새 runtime은 아직 push/활성화하지 않았다. 원격 branch2e008c3와 main8432fdef… 불변을 재확인했다.
+Runtime/guard3 commits와 별도 최종 보고 commit을 포함한 일반 FF push 및 위 pin으로 live 재시도를
+한 번의 승인 gate에서 요청한다. 승인 후 최신 DB compatibility/readiness/commands/Favorites/volume/
+Music/실제 입장 TTS/Chrome Watch/Cloudflare를 모두 확인하고, 모두 PASS한 뒤에만
+actual encrypted backup/remote read-back/isolated restore/boot/4h timer/관찰을 진행한다.
+실패하면 정지·새 보존 뒤 분석을 계속한다. 이전 DB replay/restore, V1 시작, down-migration 금지.
+Audit/PHASE11/PHASE10 COMPLETE 승인을 요청하지 않는다.
+
+### 승인된496 release live 실행 이력
+
+**10B APPROVED RELEASE LIVE / REQUIRED SMOKE IN PROGRESS. PHASE10 INCOMPLETE.**
+사용자 `진행` 승인 뒤 exact `2e008c37936a7077bb9b81e6f280cdc138297d58`까지 기존 branch에
+일반 FF push/read-back 완료, main8432fdef… 불변. 최종6 commits/29 blobs secret/artifact scan PASS.
+현재 pin은 **`r-49639828a3c2f181-3dac82a792fad576`**이며 최신 canonical DB를 그대로 사용한다.
+시작 전 DBfdc1aca…/config/세 preservation inventory 불변 및 schema5/manifest compatibility PASS.
+08:43:21.886Z 시작,25.648초/70초 readiness PASS. Discord/Watch active, 같은 release, NRestarts0.
+Root fail-fast marker와30분 유한 guard를 켰다. 복원 Music은 실제 acquisition/PCM/Voice acceptance와
+정상 playback 종료까지 통과했으며, 사용자가 **실제 청취/보관함 열림/볼륨100% 표시 PASS**를 확인했다.
+Commands/새 Music URL·search·추가·stop/TTS/Chrome Watch 순차 smoke가 남아 있고,
+그 뒤에만 actual encrypted backup/remote read-back/isolated restore/
+boot/4h backup timer/관찰을 수행한다. Auto-update OFF. Audit/PHASE11/V1 삭제는 진행하지 않는다.
+
+### 승인 직전 준비 이력
+
 **10B MEDIA REPAIRED / VERIFIED IMMUTABLE RELEASE / PUSH-PIN APPROVAL PENDING.** PHASE10은 미완료다.
 사용자 변경 지시로 정지·보존 뒤에도 분석→격리 재현→수정→strict 검증→immutable release 준비를 이어갔다.
 Favorites는 실제 💾 보관함 열림과40 rows/3 owners 보존 evidence에 따라 **PASS**다.

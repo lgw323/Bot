@@ -1,6 +1,147 @@
 # PHASE 10 Report — Production Cutover
 
-## 10B continuation — MEDIA REPAIRED / VERIFIED RELEASE AWAITING PUSH-PIN APPROVAL
+## 10B continuation — TTS REPAIRED / VERIFIED RELEASE / PUSH-PIN APPROVAL PENDING
+
+2026-09-19 승인된4963982 release의 사용자 smoke에서 Music URL/search/실제 청취까지 통과했으나,
+사용자가 **봇 입장 안내 없이 바로 음악이 시작되는 TTS 실패**를 보고했다. 서비스를 정지·새 상태 보존했고,
+사용자 지시대로 분석·격리 재현·수정·Windows/Pi 검증과 새 immutable release 준비까지 완료했다.
+**PHASE10 INCOMPLETE**이며 새 commit push와 production pin/live 재시도 승인을 기다린다.
+
+### Actual live gates and newest preservation
+
+- 사용자 PASS: `/내정보`, `/랭킹`, `/요약`, 💾 보관함, footer 볼륨100%, 저장된 재생 상태 복원 청취,
+  새 URL 요청, 검색어·선택·대기열 추가·실제 재생, ⏹️ 정지·음성방 퇴장.
+- TTS FAIL: 봇이 사람이 있는 음성방에 들어올 때 입장 안내가 들리지 않고 음악으로 진행한다는 사용자 확인.
+  TTS 생성/첫 PCM/Voice acceptance telemetry는 실제 청취 PASS로 취급하지 않는다.
+- Watch Chrome create/connect/presence/refresh/reconnect/hydration/close 및 실제 public-browser gate는 미진행.
+  Cloudflare configuration의9000 단일 route 확인은 보존하되 browser 성공과 구분한다.
+- Production encrypted backup/Bot-Data publication/read-back/isolated restore, boot enable/4h timer와
+  post-cutover observation은 **미진행**. Auto-update OFF. Audit0/1–10/Integrated Audit/PHASE11/V1 삭제 없음.
+- 현재 pinned release는 `r-49639828a3c2f181-3dac82a792fad576` 그대로이며 Discord/Watch inactive,
+  MainPID0/Resultsuccess.09:23:51.777Z는 정지 helper invocation identity다.
+- 새 preservation:
+  `/var/lib/discordbot/phase10-retry-49639828a3c2f181-operator-failed-20260919T092351777156Z/`.
+  Canonical와 새 copy DB SHA256 **28291bf37128dd62815c818ac45865c8a504cc04a2b3dbb9a8a564d8226dab1d** 일치.
+  정상 정지 후 WAL/SHM/journal 없음. Data/state/cache/backups/audit/config의 모든 file byte 비교 PASS,
+  기존52d2ef…/fab61b…/fdc1aca… 세 preservation 및 config 불변. 이전 DB restore/replay/promote 없음.
+- Safe evidence: `/home/os/discordbot-phase10/media-live-stop-20260919T092351777156Z.json`,
+  stage `stopped_preserved_verified`.
+- 최신 read-only 검사에서 schema 5 / integrity PASS, favorites 40 rows / 3 owners,
+  music_play_counts 53, music_settings 1, users 15, watch_playlists 0 / watch_sessions 0.
+  Data checksum `d18b9cda3f385875f1482bcdb08a6a9a85adc57f3feb6c1430e190a27c15b256`,
+  metadata checksum `c41c3b85f39bcbfba1cd9145fb8fd65e2e9406e8e35a3df198545a51f020b0ad`.
+  Config SHA256 `41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40` 유지.
+- 최초 유한 guard는1800.551초 정상 완료했다. 그 후 사용자 응답 시점에 새 `live-continuation` guard를
+  설치했으며 시작 시 전체 startup 이후 safe journal을 재검토했다. 두 guard 사이 관찰 공백이 있었고,
+  root fail-fast marker는 유지됐다. 이번 실패는 typed error 없이 안내가 덮이는 동작이므로
+  자동 guard가 감지한 오류가 아니라 사용자 청취 보고로 정지한 것이다.
+
+### Reproduced TTS ordering defects and repair
+
+- Live safe event 순서: join-tts 성공 → TTS 취득/PCM/Voice acceptance → lookup 완료 → Music
+  prepare/start/PCM/Voice acceptance. 해당 입장 TTS의 completed callback은 없었다.
+  TTS acceptance 09:21:33.587308Z → lookup 완료 09:21:33.679284Z → Music acceptance
+  09:21:33.761019Z로, 안내 시작 수락 뒤 **0.173711초** 만에 음악이 수락됐다.
+  실제 순서를 사용한 network/DB 없는 deterministic regression은 수정 전 실패했다.
+- 확인된 코드 결함: current song이 없는 입장 TTS 도중 lookup/추가가 완료되면 `_enqueue → _advance`
+  경로가 TTS attempt를 음악 attempt로 교체한다. 중복 connect의 queued Music 진입도 같은 위험이 있었다.
+  별도로 곡 없이 TTS가 끝나면 `tts` 상태가 남아 다음 안내 generation을 막는 결함도 재현했다.
+- `a77f43e`: 안내 생성/시작/재생 동안 pending Music을 유지하고 안내 완료 뒤 시작한다.
+  안내 종료 시 idle로 전환하고 다음 안내 또는 Music을 이어간다. 생성 실패 시 정상 운영에서는
+  대기 중 Music을 계속하며, live-smoke failure latch와 기존3초/8초 정책은 유지한다.
+- `d14eba8`: 연속 안내 종료 뒤에도 기존 곡의 pause intent/재생 위치를 보존한다.
+  직접 regression8개: lookup 완료 교차, idle 연속 안내, generating/starting/playing 중
+  enqueue·connect, generation 실패 후 Music, queued announcements 뒤 Music, 연속 안내 뒤 pause 유지.
+  Music 관련51개 PASS. 최종 Windows 전체 strict **821 passed /63.91초**, skip0/xfail0,
+  기존 audioop deprecation1. 실제 DB/Discord/provider 호출 없이 격리했다.
+- `8261076`: stopped build verifier의 current pin/최신 DB 및 네 preservation guard 갱신.
+  Runtime source **d14eba80bdec912615d9bcc8ba22005b2aec3929**.
+  Archive SHA256 `15d7cd1aa44e43797e2b10b396e20a55c6abcbfe6b485a751f1830231810b600`.
+  Dependency pin/wheelhouse는 기존 검증3dac82a… 그대로다.
+- 종료 시 `gateway-stop`의 `DataIntegrityError` 1건도 safe category로 확인했다.
+  합성 파일만 사용하는 실제 DiskCache + 구/신 actor 비교에서 이전496 source는 안내를 덮은 뒤
+  actor 종료 후에도 TTS lease 1개가 남아 cache close가 같은 오류 유형으로 실패했다.
+  수정 d14 source는 안내를 완료한 뒤 Music으로 이어지고 lease 0개 / cache close PASS /
+  잔존 task 0개였다. 이는 cache lease 누수의 재현·해소 증거이며, live 오류의 원문 메시지나
+  stack은 수집하지 않아 live 종료 오류의 정확한 발생 위치까지 확정하지 않는다.
+  최신 canonical DB 무결성 검사는 별도로 PASS했다.
+
+### Verified candidate and single approval gate
+
+- **Pi ARM64 exact-source full strict: 812 passed / 9 skipped**, failures 0 / errors 0 / xfail 0.
+  Build/test/manifest 검증 154.309초. 9개는 Node.js 없는 Pi의 의도된 Watch browser harness이며,
+  Windows 821 결과의 동일 testcase 이름과 대조하여 **9개 모두 PASS**, 예상 밖 skip 0개 확인.
+  시나리오: iframe-independent-presence, empty-player-protocol, hydrate-before-player,
+  recoverable-return, terminal-stays-closed, page-lifecycle, bounded-reconnect,
+  return-open-probe, select-before-player. 실제 Chrome live gate는 별도로 남는다.
+- 준비된 immutable release **`r-d14eba80bdec9126-3dac82a792fad576`**.
+  Manifest **17403 files**, SHA256 `6ea4e46a6239766f6c5bab07308e1dc5c386d7d8db1f128fac54c2d0e150de4f`,
+  schema range **[5,5]**, immutable validation PASS.
+  기존 wheelhouse SHA256 `3dac82a792fad5769f4e6b32cdd0c294fbfbb4863500e8e232f85b47b3297cc6` 유지.
+- Discord/Watch UID 999와 Operations UID 997에서 configuration/secret format/scope exact/
+  read-only mount PASS, 원본 credential 직접 접근 denied. Network login/DB open은 이 검사에서 하지 않았다.
+- Build stage **`verified_not_activated`**. Current pin496 / canonical DB28291b… / config /
+  data/state/cache/backups/audit 및 네 preservation의 전체 protected identity 불변.
+  Build 후 별도 service 조회도 Discord/Watch/staging/MainPID 0/inactive/boot disabled,
+  backup/update/manual services inactive 및 timers inactive/disabled를 확인했다.
+- 새 runtime/guard **3 commits / 8 new blobs** 및 각 commit tree/message의 secret-artifact scan PASS.
+  전체 source ancestry의 기존 synthetic fixture/path 판정 8건은 원격 base와 같고 새 finding 0건이다.
+  최종 보고 문서 commit까지 포함한 range는 승인 요청 전과 실제 push 직전에 다시 검사한다.
+  원격 `codex/rebuild-v2`는 `2e008c37936a7077bb9b81e6f280cdc138297d58`,
+  `main`은 `8432fdef40cddc131176fa875e350660dc897e12`로 재확인했다. 새 push/activation 없음.
+- 승인 대상은 위 runtime source의 새 pin과 보고 commit을 포함한 일반 fast-forward push다.
+  Runtime source 이후 보고 commit은 phase report/current plan만 변경하며 release 내용은 바꾸지 않는다.
+  DB/schema/config/dependency 변경 없음. Rollback은 우선 서비스 정지와 새 state 보존이며,
+  이전 candidate/DB 자동 replay·restore, V1 시작, down-migration, history rewrite를 하지 않는다.
+- 승인 후 최신 canonical DB로 compatibility → 70초 readiness/Gateway/command sync → commands3개 →
+  Favorites/volume → Music URL/search/실제 청취/stop·퇴장 → **입장 TTS 실제 청취** → Chrome Watch
+  create/connect/presence/refresh/reconnect/hydration/close → Cloudflare public 경로를 확인한다.
+  모두 PASS한 뒤에만 actual encrypted backup → Bot-Data publication/read-back → isolated restore →
+  boot enable/4h backup timer → bounded observation을 진행한다. 기존 smoke marker와 종료된 guard는
+  새 시도 전에 상태를 확인하고 새 고유 guard를 설치하며, 이전 evidence를 덮어쓰지 않는다.
+  실패하면 즉시 정지·새 보존하고 분석을 계속한다. PHASE10 COMPLETE/Audit/PHASE11 승인은 요청하지 않는다.
+- Safe Pi evidence: `/home/os/discordbot-phase10/retry-build-d14eba80bdec.json`,
+  `tts-stopped-inspection.json`, `tts-shutdown-categories.json`.
+  Local ignored evidence: `scratch/phase10/tts-full-windows.xml`,
+  `tts-cross-platform-verification.json`, `tts-cache-ownership.json`.
+
+## Historical retry — APPROVED RELEASE LIVE / REQUIRED SMOKE IN PROGRESS
+
+2026-09-19 사용자가 준비된 commit push와 새 production pin 재시도에 `진행`으로 승인했다.
+**PHASE10 INCOMPLETE**이며 실제 사용자 기능 smoke를 진행 중이다. 아래 repair/build 절은 승인 전 이력이다.
+
+- 최종 range368→`2e008c37936a7077bb9b81e6f280cdc138297d58`: 6 commits /29 new blobs,
+  모든 commit tree/message 및 새 blob 검사 PASS. 금지 artifact/secret/운영 데이터 탐지0.
+  기존 `codex/rebuild-v2`에 해당 exact commit까지 일반 fast-forward push 완료 및 원격 read-back 일치.
+  `main=8432fdef40cddc131176fa875e350660dc897e12` 불변. Force/rebase/history rewrite 없음.
+- 새 production pin **`r-49639828a3c2f181-3dac82a792fad576`** 활성화.
+  Runtime source4963982와 push HEAD2e008c3 사이에는 검증 보고 문서만 있으며 runtime 변경은 없다.
+  Manifest17402 files/hash961e33dd…/schema[5,5]를 재검증했다.
+- 시작 직전 canonical DB `fdc1aca74b5bb65ce9ebd511e32b83a6b31e249246dffafd962c2c0eb15ece9f`,
+  config41edd03a… 및 canonical data/state/cache/backups/audit/config와 세 기존 preservation의
+  전체 file inventory hash 불변을 확인했다. Schema5 application compatibility PASS.
+  DB promotion/restore/candidate replay는 하지 않았다. 이후 정상 live write는 현재 canonical에 적용된다.
+- Root-owned `/run/discordbot-live-smoke` marker를 **시작 전에** 생성했다.
+  서비스 시작08:43:21.886Z → ready08:43:47.569Z, **25.648초 /70초 gate PASS**.
+  Discord/Watch 모두 같은 새 release, active/Resultsuccess/NRestarts0.
+  Discord readiness는 실제 Gateway ready와 `tree.sync()` 완료 후 deferred initialization을 요구한다.
+- 저장된 Music 복원은 live `voice_connected → media_acquired → cache_leased → ffmpeg_started →
+  first_pcm → playback_accepted → playback_ended/completed`를 통과했다.
+  사용자가 게임 중 봇 입장과 **실제 음악 청취를 확인: audible Voice PASS**.
+  같은 새 release의 **💾 보관함 열림 PASS**, UI footer **볼륨100% 표시 PASS**도 사용자 확인했다.
+  이는 복원 playback에 대한 live 성공이며 새 URL/search 요청·선택·대기열 추가·stop 검사는 별도로 남는다.
+  30분 유한 live guard를 설치했으며 첫 Music 실패 때 admission/retry를 막고 즉시 정지·새 보존한다.
+- Cloudflare 현재 configuration event에서 `watch.lgw323.com → http://127.0.0.1:9000` 단일 route,
+  internal port public route0 확인. Chrome 실제 연결은 아래 live 사용자 gate로 남아 있다.
+- 08:58Z 확인: 두 서비스 active/Resultsuccess/NRestarts0, 851.701초 관찰에서 ready2/2,
+  Music allowlisted error0/guard trigger 없음.
+- 새 release의 commands/Music URL·search·선택·추가·stop/TTS/Chrome Watch 확인 대기.
+  Actual production encrypted backup/Bot-Data read-back/isolated restore/boot enable/4h timer/
+  bounded post-cutover observation은 아직 실행하지 않았다. Backup/update/manual timers inactive/disabled.
+- Safe start evidence: `/home/os/discordbot-phase10/media-live-start.json`.
+  Safe guard evidence: `/var/tmp/phase10-retry-49639828a3c2f181-live-smoke/summary.json`.
+
+## Historical preparation — MEDIA REPAIRED / VERIFIED RELEASE AWAITING PUSH-PIN APPROVAL
 
 2026-09-19 사용자 변경 지시에 따라 live 실패 뒤 정지·보존 상태에서 원인 분석, 격리 재현,
 코드 수정과 검증을 계속했다. **PHASE10 INCOMPLETE**이며 새 production pin/live 재시도는 아직 미승인이다.
