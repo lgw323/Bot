@@ -16,6 +16,7 @@ from discordbot.platform.errors import (AppError, AuthorizationError, CapacityEr
 from discordbot.platform.tasks import CancellationBehavior, TaskSpec, TaskSupervisor
 from discordbot.platform.telemetry import TelemetryEmitter
 from discordbot.summary.application.capture import Capture
+from discordbot.summary.domain.failures import safe_failure_fields
 from discordbot.summary.domain.models import NoSummaryData, Prompt, Query, Result, Scope, SummaryConfig, Topic
 from discordbot.summary.ports.io import Authorization, Provider
 
@@ -115,6 +116,7 @@ class SummaryService:
                        destination: int, query: Query, deadline: float, previous: str | None) -> Result:
         started = self.clock.monotonic()
         outcome = "success"
+        failure_fields: dict[str, str | int] = {}
         try:
             async with self.timeout(self.remaining(deadline)):
                 await self.authorization.require(scope, requester)
@@ -168,13 +170,15 @@ class SummaryService:
             raise
         except AppError as exc:
             outcome = exc.code.value
+            failure_fields = safe_failure_fields(exc.context)
             raise
         except Exception:
             outcome = "external_permanent"
             raise ExternalPermanentError("Summary dependency failed") from None
         finally:
             self.telemetry.emit("summary.request", component="summary", result=outcome,
-                fields={"duration_seconds": max(0, self.clock.monotonic() - started), "queue_depth": self.waiting})
+                fields={"duration_seconds": max(0, self.clock.monotonic() - started),
+                        "queue_depth": self.waiting, **failure_fields})
 
     def bind(self, result_id: str, message_id: int) -> None:
         result = self._results.get(result_id)

@@ -12,6 +12,7 @@ import sys
 import time
 
 EVENTS={'music.request_received','music.ui_failed','music.command_failed','music.work_started','music.work_failed',
+        'summary.request','summary.response','summary.preload',
         'music.work_succeeded','music.voice_connected','music.enqueued','music.media_acquisition_started',
         'music.media_acquired','music.cache_leased','music.ffmpeg_started','music.first_pcm',
         'music.smoke_failed','music.playback_accepted','music.playback_ended','music.decoder_failed','database.probe_failed',
@@ -26,7 +27,8 @@ CODES={'internal','validation','authorization','capacity','conflict','data_integ
 
 REASONS = {'executable_not_found','process_start_failure','process_io_failure','child_nonzero','provider_rejected',
     'auth_required','no_audio_format','download_failed','http_forbidden','timeout','invalid_output','empty_output',
-    'cache_read_failure','cache_write_failure','cache_publish_failure','output_limit','js_runtime_missing'}
+    'cache_read_failure','cache_write_failure','cache_publish_failure','output_limit','js_runtime_missing',
+    'http_rate_limited','http_server_error','http_rejected','transport_error'}
 
 def diagnostics(since):
     result=subprocess.run(['journalctl','-u','discord-bot','-u','watch-web','--since=@'+str(int(since)),
@@ -46,17 +48,35 @@ def diagnostics(since):
             if event.get('stage') in STAGES: value['stage']=event['stage']
             if event.get('error_code') in CODES:
                 value['error_code']=event['error_code'];codes[event['error_code']]+=1
-            if event.get('result') in {'completed','failed','hit','published'}: value['result']=event['result']
+            if event.get('result') in CODES | {'completed','failed','hit','published','success','delivery_failed','cancellation'}:
+                value['result']=event['result']
             if re.fullmatch('[0-9a-f]{32}',str(event.get('work_id',''))): value['work_id']=event['work_id']
             if event.get('reason') in REASONS: value['reason']=event['reason']
             code=event.get('child_exit_code')
             if type(code) is int and -255<=code<=255: value['child_exit_code']=code
+            status=event.get('http_status')
+            if type(status) is int and 100<=status<=599: value['http_status']=status
             sequence.append(value)
         except (ValueError,TypeError,AttributeError):
             continue
     return {'event_counts':dict(counts),'error_codes':dict(codes),'priorities':dict(priorities),
             'recent_stages':sequence[-100:],'journal_exit_code':result.returncode,
             'possibly_truncated':len(result.stdout.splitlines())>=10000}
+
+
+def failure_trigger(events):
+    for event in events:
+        name=event['event']
+        if (name=='music.smoke_failed' or name=='music.decoder_failed'
+                or name=='music.work_failed' and event.get('stage') in {'lookup','prepare','start','tts'}
+                or name=='music.playback_ended' and event.get('result')=='failed'
+                or name=='music.command_failed' and event.get('stage')=='connect'):
+            return 'music_failure'
+        if (name=='summary.request' and event.get('result') in
+                {'external_temporary','external_permanent','deadline_exceeded','internal','database_unavailable','data_integrity'}
+                or name=='summary.response' and event.get('result')=='delivery_failed'):
+            return 'summary_failure'
+    return None
 
 
 def preserve_failure(destination, common):
@@ -130,14 +150,10 @@ def main():
         good=len(health)==2 and all(h.get('ready') for h in health.values())
         if fresh: bad=0 if good else bad+1
         last_diagnostics=diagnostics(since)
-        music_failure=any(event['event']=='music.smoke_failed' or (event['event']=='music.work_failed' and event.get('stage') in {'lookup','prepare','start','tts'})
-            or (event['event']=='music.playback_ended' and event.get('result')=='failed')
-            or event['event']=='music.decoder_failed'
-            or (event['event']=='music.command_failed' and event.get('stage')=='connect')
-            for event in last_diagnostics['recent_stages'])
-        if unsafe or mismatch or bad>=3 or music_failure:
+        failure=failure_trigger(last_diagnostics['recent_stages'])
+        if unsafe or mismatch or bad>=3 or failure:
             status='guard_stopped_pair'
-            value['guard_trigger']='music_failure' if music_failure else 'health_or_restart'
+            value['guard_trigger']=failure or 'health_or_restart'
             try:
                 value['guard']=preserve_failure(preservation,common)
             except Exception as error:

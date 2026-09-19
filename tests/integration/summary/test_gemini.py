@@ -63,6 +63,8 @@ async def test_http_typed_failure_does_not_read_or_log_body(status, error, caplo
     with pytest.raises(error) as raised:
         await GeminiProvider("SECRET", session=session).generate(Prompt("private", "private"), remaining=60)
     assert "SECRET" not in str(raised.value) + caplog.text
+    reason = 'http_rate_limited' if status == 429 else 'http_server_error' if status >= 500 else 'http_rejected'
+    assert dict(raised.value.context) == {'reason': reason, 'http_status': status}
     assert response.closed and session.post.call_count == 1
 
 

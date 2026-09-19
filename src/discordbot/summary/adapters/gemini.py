@@ -29,7 +29,7 @@ class GeminiProvider:
         import aiohttp
 
         if remaining <= 0:
-            raise DeadlineExceededError("Gemini budget exhausted")
+            raise DeadlineExceededError("Gemini budget exhausted", context={'reason': 'timeout'})
         if self._session is None:
             raise ConfigurationError("Gemini not started")
         try:
@@ -50,9 +50,12 @@ class GeminiProvider:
                 allow_redirects=False,
             ) as response:
                 if response.status == 429 or 500 <= response.status <= 599:
-                    raise ExternalTemporaryError("Gemini temporarily unavailable")
+                    raise ExternalTemporaryError("Gemini temporarily unavailable", context={
+                        'reason': 'http_rate_limited' if response.status == 429 else 'http_server_error',
+                        'http_status': response.status})
                 if response.status != 200:
-                    raise ExternalPermanentError("Gemini rejected request")
+                    raise ExternalPermanentError("Gemini rejected request", context={
+                        'reason': 'http_rejected', 'http_status': response.status})
                 data = bytearray()
                 async for chunk in response.content.iter_chunked(8192):
                     data.extend(chunk)
@@ -62,9 +65,9 @@ class GeminiProvider:
         except (ExternalTemporaryError, ExternalPermanentError, MalformedSummary):
             raise
         except (asyncio.TimeoutError, aiohttp.ServerTimeoutError):
-            raise DeadlineExceededError("Gemini call deadline") from None
+            raise DeadlineExceededError("Gemini call deadline", context={'reason': 'timeout'}) from None
         except (aiohttp.ClientError, OSError):
-            raise ExternalTemporaryError("Gemini transport failed") from None
+            raise ExternalTemporaryError("Gemini transport failed", context={'reason': 'transport_error'}) from None
         except asyncio.CancelledError:
             raise
         except Exception:
