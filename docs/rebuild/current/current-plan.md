@@ -4,6 +4,31 @@ Updated: 2026-09-19
 
 ## PHASE 10B execution override
 
+**10B SUMMARY FAILED / STOPPED / VERIFIED RETRY AWAITING PUSH-PIN APPROVAL. PHASE10 INCOMPLETE.**
+승인된 d14 source와 docs-only dd5d9aa까지 일반 FF push 후24.821초/70초 readiness를 통과했다.
+사용자 `/내정보`·`/랭킹`·`💾 보관함`·볼륨100% PASS, `/요약` FAIL로 즉시 정지·새 보존했다.
+Current pin `r-d14eba80bdec9126-3dac82a792fad576`, 최신 canonical/copy DB SHA256
+`1d871bed4ba8b8fe4fd9426cfa15c8b373f700baca2f548f5cea571570252363`, schema5/integrity PASS.
+새 `phase10-retry-d14eba80bdec9126-live-smoke-guard-preservation`과 기존 네 보존본 모두 유지,
+services inactive/MainPID0, boot/backup/update/manual timers disabled, auto-update OFF.
+실제 두 Summary 요청은 external_temporary이며 정확한 HTTP status는 당시 기록되지 않았다.
+정지 후 합성 provider 요청1회에서503/UNAVAILABLE를 확인했지만 제공자 회복은 미확인이다.
+과거 음악 테스트의 버튼 무응답은 SDK HTTP edit 대기 중 callback 등록 공백을 격리 재현·수정했다.
+추가한 Summary telemetry/guard는 안전한 오류 분류와 즉시 정지용이며 upstream503의 해결은 아니다.
+새 source `2c768ec98d1fc8b1325f88cdfa1558bc6972d551`, Windows exact Git archive full strict837 PASS,
+Pi ARM64 full strict828 PASS/9 intentional skips, 같은 Windows Watch9개 PASS, 예상 밖 skip0.
+새 비활성 release `r-2c768ec98d1fc8b1-3dac82a792fad576`, manifest17406 files/schema[5,5],
+immutable/세 credential scope PASS, 최신 DB/config/다섯 preservation 및 protected state 불변.
+새3commits/15blobs secret/artifact 검사 PASS. 원격 dd5d9aa/main8432fdef… 불변.
+Workspace 전체 검사의 미추적 gpt_handoff 문서 링크 실패는 별도 기록했고 사용자 파일은 보존했다.
+새 runtime push/pin은 아직 승인되지 않았으며 검증된 source2c768ec와 보고-only commit까지의
+일반 FF push 및 위 새 release pin을 단일 승인 대상으로 제시한다. Push 직전 최종 range 재검사한다.
+이 release에서 남은 Music/TTS 실제 청취와 Chrome public Watch/private admin close까지 모두 PASS해야
+actual newest production backup/read-back/independent restore → boot/4h timer → bounded observation을 진행한다.
+DB replay/restore/remigration/down-migration/V1 시작 없음. Audit/PHASE11/V1 삭제도 진행하지 않는다.
+
+### TTS 수정 및 승인 전 검증 이력
+
 **10B TTS REPAIRED / VERIFIED RELEASE / PUSH-PIN APPROVAL PENDING. PHASE10 INCOMPLETE.**
 사용자가 commands3개, Favorites/volume, Music URL/search/선택/추가/실제 청취/stop·퇴장을 PASS로 확인했다.
 이후 봇 입장 안내 없이 음악이 시작된다는 TTS 실패를 보고하여 정지·새 보존을 완료했다.
