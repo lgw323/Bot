@@ -88,7 +88,7 @@ class Servers:
                 if await server.on_tick(0):
                     raise ShutdownError("listener requested shutdown")
         self.tick = self.supervisor.start(TaskSpec("server-maintenance", "listeners", "tick", "listeners", 5,
-            cancellation_behavior=CancellationBehavior.CANCEL_ON_SHUTDOWN), tick)
+            cancellation_behavior=CancellationBehavior.CANCEL_ON_SHUTDOWN, emit_routine_events=False), tick)
         def done(task):
             if not task.cancelled() and task.exception() is None:
                 self.schedule()
@@ -194,7 +194,7 @@ class TelemetryDrain:
             await asyncio.sleep(1)
             self.flush()
         self.task = self.runtime.supervisor.start(TaskSpec("telemetry-drain", "operations", "drain", "telemetry", 5,
-            cancellation_behavior=CancellationBehavior.CANCEL_ON_SHUTDOWN), drain)
+            cancellation_behavior=CancellationBehavior.CANCEL_ON_SHUTDOWN, emit_routine_events=False), drain)
         self.task.add_done_callback(lambda task: self.schedule() if not task.cancelled() and task.exception() is None else None)
 
     async def stop(self) -> None:

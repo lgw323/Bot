@@ -12,7 +12,7 @@ from discordbot.platform.clock import Clock, SystemClock
 from discordbot.platform.errors import ConflictError, ShutdownError, StartupError
 from discordbot.platform.executors import BoundedExecutor
 from discordbot.platform.health import HealthRegistry, HealthStatus
-from discordbot.platform.tasks import ShutdownReport, TaskObservation, TaskSupervisor
+from discordbot.platform.tasks import ShutdownReport, TaskObservation, TaskResult, TaskSupervisor
 from discordbot.platform.telemetry import (
     MetricRegistry,
     TelemetryBuffer,
@@ -98,6 +98,10 @@ class ProcessRuntime:
                 "criticality": observation.spec.criticality.value,
             },
         )
+        if not observation.spec.emit_routine_events and observation.result in {
+            TaskResult.STARTED, TaskResult.SUCCEEDED,
+        }:
+            return
         self.telemetry.emit(
             f"task.{observation.result.value}",
             component="task_supervisor",

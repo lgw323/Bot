@@ -38,9 +38,11 @@ class Probe:
                 await self.database.read(DatabaseRequest.within(2), lambda conn: conn.execute("SELECT 1").fetchone())
                 self.database_ready = True
                 self.runtime.metrics.increment("database_probe_total", labels={"result": "ok"})
-            except AppError:
+            except AppError as exc:
                 self.database_ready = False
                 self.runtime.metrics.increment("database_probe_total", labels={"result": "failed"})
+                self.runtime.telemetry.emit("database.probe_failed", component="operations", result="failed",
+                                           fields={"error_code": exc.code.value})
             self.checked = self.runtime.clock.monotonic()
             self.runtime.metrics.increment("database_probe_seconds_total", self.checked - start)
             if self.backup_latest is not None:
@@ -50,7 +52,7 @@ class Probe:
                 except OSError:
                     self.backup_age = -1.0
         self.task = self.runtime.supervisor.start(TaskSpec("database-probe", "operations", "probe", "health", 10,
-            cancellation_behavior=CancellationBehavior.CANCEL_ON_SHUTDOWN), sample)
+            cancellation_behavior=CancellationBehavior.CANCEL_ON_SHUTDOWN, emit_routine_events=False), sample)
         self.task.add_done_callback(lambda task: self.schedule() if not task.cancelled() and task.exception() is None else None)
 
     def gauges(self):

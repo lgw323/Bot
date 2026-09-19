@@ -80,6 +80,8 @@ class TaskSpec:
     cancellation_behavior: CancellationBehavior = CancellationBehavior.DRAIN_UNTIL_DEADLINE
     restart_policy: RestartPolicy = RestartPolicy()
     shutdown_phase: ShutdownPhase = ShutdownPhase.WORK
+    # Routine maintenance keeps bounded observations/metrics; failures still log.
+    emit_routine_events: bool = True
 
     def __post_init__(self) -> None:
         for field_name in ("name", "owner", "work_id", "correlation_id"):
