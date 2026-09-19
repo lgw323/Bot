@@ -50,7 +50,7 @@ evidence에 modify만 추가했다. key를 agent 계정에 공개하거나 works
 
 ## Actual candidate / recovery
 
-이번 run: `scratch/phase10/candidate-20260915-01/` (PC에만 존재).
+PC run: `scratch/phase10/candidate-20260915-01/`. 아래 Pi 검증에는 승인된 암호화 artifact만 전송했다.
 candidate SHA256 `a38bd20adc5a42058262bfcf3c8ed6837610a4e5489573724c7d440f834388bc`, 143,360 bytes.
 
 | Table | Before | After |
@@ -86,10 +86,53 @@ Restored schema 0 file: `preservation-recovery/restored-v1.db`, SHA256
 `c072e070aab23e5e41828bffb667954a88151a64d489e1af9f9cdc5c3c3791b7`.
 Independent decrypt/restore preserves counts, data checksum, metadata checksum and version 0.
 
+## Actual Pi isolated recovery (2026-09-16)
+
+사용자가 위 schema 5 `.enc`와 matching JSON metadata의 전송을 승인했다.
+Pi input은 `/home/os/discordbot-phase10/recovery-input/` (0700), 파일은 0600이며 artifact SHA256이
+PC와 동일하다. plaintext DB/키는 전송하지 않았다. Pi wizard에서 별도로 입력한 `production-key-1`
+credential을 Operations scope에 mount하여 decrypt에 성공했다.
+
+release `r-672694d3f0c5418e-d026a47ed4f4b38a`에서 새 private run
+`/var/lib/discordbot/phase10-recovery-20260916-01/`을 생성했다. 후보 `restored/candidate.db`의 SHA256은
+`8d17018f1927d91b9ea633700471a6cda7388633b175a560be36f4b904ae4e5b`다.
+incoming restore → schema/위 aggregate 검증 → 새 encrypted backup → `restored/roundtrip.db` 복구 →
+data/metadata/count 비교를 통과했다. SQL restore 후 PC 후보와 file digest가 다른 것은 별도 image로
+기록하며 semantic 일치 검증으로 판단한다.
+
+Pi 새 backup identity `20260916T022913726030-9e6a4f1f3db140aca083d7178a7bae71`,
+SHA256 `3dcaf8eafd9cb33309531e556593dc4a968b3696df2f9236b254625ce1b43766`.
+파일은 위 run의 `backups/` 아래에 보존한다. runtime UID 999의 별도 no-network/no-credential
+open/close도 PASS. 후보 파일은 private run 내 공유 group 접근 0660이며 원본 secret 권한은 확대하지 않았다.
+실행 증거는 `/home/os/discordbot-phase10/recovery-progress.json`, stage `verified_not_promoted`다.
+후보 digest/current pointer/canonical inode 보존 확인을 통과했다. canonical 교체 및 production 시작은 없다.
+0.304초의 worker 측정은 end-to-end 운영 RTO가 아니며 off-host/timer gate도 대체하지 않는다.
+
+## Actual off-host recovery
+
+Operator가 별도 write deploy key를 등록한 private Bot-Data의 `db-backup` branch에 위 Pi encrypted
+artifact를 정상 fast-forward push하고 독립 fetch/download했다. Remote commit
+`1d6d6f5317d27581425e70cabb1a94c111f2c753`, artifact identity/SHA256은 위 Pi backup과 동일하다.
+`/var/lib/discordbot/phase10-offhost-20260917-01/restored/remote-candidate.db`는 schema 5와 위 counts,
+application open/close를 통과했고 digest도 `8d17018f1927d91b9ea633700471a6cda7388633b175a560be36f4b904ae4e5b`다.
+증거 `/home/os/discordbot-phase10/offhost-progress.json`, stage `verified_not_enabled`.
+업로드 worker는 SSH key만, 복구 worker는 no-network/DB key만 사용했다. 키/평문은 전송하지 않았다.
+실제 off-host recovery point 1개가 존재하지만 자동 publication/timer의 지속 RPO 증거는 아니다.
+
 Both use operator-entered key ID `production-key-1`. Recovery compatibility reference is installed
 `r-0376f14868461d16-d026a47ed4f4b38a`; the run used the PHASE 10 local tool and current unchanged recovery
 implementation. This is **not** the final production release identity. Key/artifacts remain private and untracked.
 PC rehearsal evidence is not an installed Pi off-host backup publication or a production timer proof.
+
+## Runtime entrypoint off-host verification (2026-09-18)
+
+`r-d54ff3696c1a81d4-d026a47ed4f4b38a`의 실제 `backup_once`를 별도 DB copy/config/paths에서 실행했다.
+Identity `20260918T002700190443-9da027cd4df542f3912d600d3499dbb0`, SHA256
+`c40ef426984524686e1d6fcfee5b6e5cfafbacff3697aa838e09b7955612d956`, Bot-Data remote commit
+`94886cab51fd0bf4cdc0ec55f21f05c0c1bd6e55`. independent download/decrypt/schema 5/count/data/metadata
+reconciliation PASS. `/var/lib/discordbot/phase10-offhost-wiring-d54ff3696c1a/` 격리 run에 보존했다.
+증거 `/home/os/discordbot-phase10/offhost-wiring-progress.json`: `verified_not_activated`.
+Production candidate config/current pointer/canonical inode는 유지했다. 실제 production activation/timer는 아니다.
 
 ## Promotion and rollback boundary
 
