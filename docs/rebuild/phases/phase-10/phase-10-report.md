@@ -1,5 +1,155 @@
 # PHASE 10 Report — Production Cutover
 
+## 10B continuation — APPROVED FULL SWEEP / CREDENTIAL HARD STOP
+
+**PHASE 10B INCOMPLETE.** 2026-09-19 exact full-sweep 후보 승인을 받아 production activation을
+1회 수행했다. 70초 readiness gate는 **24.870초**에 통과했으나 첫 안전 검사에서
+`safety_invariant_failed / credential_permission` HARD STOP이 발생했다.
+감시기가 두 서비스를 정지하고 최신 상태를 **새 일곱 번째 preservation**에 보존했다.
+이것은 Summary/Music 기능 실패에 따른 과거 fail-first 중단이 아니다. 사용자 지정 HARD STOP 경계이며,
+재시작·자동 재시도·runtime 수정 없이 정지 후 확인과 통합 보고만 진행한다.
+아래가 현재 결과이며, 이후 절은 당시의 역사적 기록이다.
+
+### Exact publication and activation evidence
+
+- Approved runtime **`787b3178908c08ffa926f41c64ae73753c39799a`**;
+  current immutable pin **`r-787b3178908c08ff-3dac82a792fad576`**.
+- Dependency **`3dac82a792fad5769f4e6b32cdd0c294fbfbb4863500e8e232f85b47b3297cc6`**;
+  manifest **`906c8bcad00c5e78f54a42dd67d2b56fc0c5022d6430c058c70dd4f1786314ad`**,
+  17410 files/schema[5,5]. Source archive
+  `ce1760794f196620d372ee30b808ca9b5ed17168f33058ea3b1afd97049e5bb6`.
+- Normal FF push/read-back **`e616511b77f5eb4553c7ede4fffdf2f0e69acf2c`** to `codex/rebuild-v2`.
+  Before-push range `686b946439ab5404cf194f8282f4559be245a1ea..e616511b77f5eb4553c7ede4fffdf2f0e69acf2c`:
+  5 commits/17 new blobs, all new commit trees/messages/blobs inspected; actual secret/forbidden artifact/binary0.
+  Runtime 이후 tail은 phase report/current plan 두 문서뿐이며 runtime/dependency 변경0.
+  `main=8432fdef40cddc131176fa875e350660dc897e12` read-back 불변; force/rebase/history rewrite0.
+  미추적 `gpt_handoff` 자료와 zip은 포함하거나 변경하지 않았다.
+- Exact archive Windows **871 PASS/0 skip/0 xfail**, 65.39초;
+  Pi **862 PASS/9 skip/0 failures/0 errors/0 xfail**, 155.342초.
+  Pi9개는 Node 부재에 따른 의도된 Watch harness skip이며 같은9개 testcase의 Windows PASS 대조 완료.
+  이 검증 결과를 실제 audible/Chrome PASS로 승계하지 않는다.
+- Fresh stopped preflight: canonical
+  **`6270821c287a066533f89e4f59e4aa8a74b89c14dfb5c199601e1bba4817e099`**,
+  schema5/integrity/현재·최신2c 보존본 inventory 일치 및 이전 보존본6개 전체 불변.
+  Favorites40/owners3, play counts53/settings1/users15, Watch sessions0/queue0.
+  Config **`41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40`** 불변.
+  세 credential scope exact/read-only/direct source access denied, 외부 login 없는 preflight PASS.
+  `watch.lgw323.com → http://127.0.0.1:9000` route1/internal9001·9010·9011 route0.
+- Activation은 code pointer만 변경했고 현재 canonical DB를 사용했다.
+  DB promotion/replay/old restore/remigration/down-migration/V1 start0.
+  2026-09-19 **21:17:00.664 KST** start → **21:17:25.540 KST** readiness.
+  Discord/Watch ready=true, same approved release, NRestarts0.
+  Discord readiness는 Gateway ready와 `DeferredMusic`의 `tree.sync()` 완료 후에만 true이므로
+  Gateway/command sync의 기술 증거로 기록한다.
+
+### Single current 30-gate live matrix
+
+**H1 = 첫 full-sweep safety 검사 `credential_permission` HARD STOP으로 production pair가 정지됨.**
+사용자 기능 검사 요청을 보내기 전 H1이 발생했다. 기능 gate를 FAIL이나 과거 PASS로 대체하지 않는다.
+
+| # | Gate | Result | Evidence / dependency |
+| --- | --- | --- | --- |
+| 1 | Bounded startup (70s) | PASS | 24.870s, exact release ready |
+| 2 | Gateway ready | PASS | current runtime readiness true |
+| 3 | Command sync | PASS | readiness requires successful tree sync |
+| 4 | `/내정보` | BLOCKED BY H1 | no current-release user test |
+| 5 | `/랭킹` | BLOCKED BY H1 | no current-release user test |
+| 6 | `/요약` | BLOCKED BY H1 | no current-release provider request |
+| 7 | `💾 보관함` | BLOCKED BY H1 | no current-release user test |
+| 8 | Dashboard / stored volume | BLOCKED BY H1 | no current-release user test |
+| 9 | Music URL request | BLOCKED BY H1 | no current-release request |
+| 10 | Music search request | BLOCKED BY H1 | no current-release request |
+| 11 | Result selection | BLOCKED BY H1 | search path not executed |
+| 12 | Queue addition | BLOCKED BY H1 | selection/add path not executed |
+| 13 | Human-audible Music | BLOCKED BY H1 | no human confirmation |
+| 14 | Normal stop | BLOCKED BY H1 | guard stop is not a normal Music stop test |
+| 15 | Voice disconnect | BLOCKED BY H1 | no functional voice-disconnect test |
+| 16 | Join TTS human audibility | BLOCKED BY H1 | no human confirmation |
+| 17 | TTS not overwritten | BLOCKED BY H1 | no observed Music/TTS ordering |
+| 18 | Music starts after TTS | BLOCKED BY H1 | no observed Music/TTS ordering |
+| 19 | Consecutive TTS / pause intent | BLOCKED BY H1 | no independent live TTS/pause test |
+| 20 | Chrome Watch create | BLOCKED BY H1 | no actual Chrome session |
+| 21 | Watch connect | BLOCKED BY H1 | create/connect path not executed |
+| 22 | Viewer presence | BLOCKED BY H1 | no actual Chrome session |
+| 23 | Refresh | BLOCKED BY H1 | no actual Chrome session |
+| 24 | Reconnect | BLOCKED BY H1 | no actual Chrome session |
+| 25 | Tab leave / return | BLOCKED BY H1 | no actual Chrome session |
+| 26 | Playback hydration | BLOCKED BY H1 | no actual Chrome session |
+| 27 | Playback synchronization | BLOCKED BY H1 | no actual Chrome session |
+| 28 | Normal Watch close | BLOCKED BY H1 | guard shutdown is not normal browser close |
+| 29 | Private admin close | BLOCKED BY H1 | no current-release admin close test |
+| 30 | Actual Cloudflare public browser path | BLOCKED BY H1 | route inspection alone is not Chrome evidence |
+
+30개 중 **PASS3 / BLOCKED27 / 기능 FAIL0 / NOT TESTED0**. 별도 safety gate H1은 FAIL/HARD STOP이다.
+SOFT FAIL0은 기능 성공을 뜻하지 않는다. 이 activation의 allowlisted Music/Summary event0,
+safe error code0, journal exit0/truncation=false였으며 기능별 실제 요청이 수행되지 않았다.
+실제 audible Music/TTS와 Chrome public-path evidence는 모두 없고 과거 청취·harness 결과와 구분한다.
+
+### Stop, preservation and observation
+
+- Observer result `guard_stopped_pair`, policy `full-sweep`, first safety result
+  `RuntimeError / credential_permission`, trigger `safety_invariant_failed`.
+  보존 결과 `pair_stopped=true / newest_state_preserved=true / inventory_verified=true`.
+  후속 read-only systemd 확인에서 두 production unit 및 guard inactive/MainPID0/NRestarts0/Result=success.
+- New preservation:
+  `/var/lib/discordbot/phase10-retry-787b3178908c08ff-live-smoke-full-sweep-20260919-01-guard-preservation`.
+  기존 보존본 overwrite 없음. Current release pin은787 그대로이며 재활성화하지 않는다.
+- 독립 sudo read-only 결과 **`verified_stopped_preserved_integrity`**.
+  Canonical after = preserved DB SHA256
+  **`f47fbef36b7eded3e4b990f8179598b38b0e0bdbd818431eada33dab9aa89748`**.
+  두 DB schema5/integrity/count/data/metadata reconciliation PASS, WAL/SHM/journal sidecar 모두 없음.
+  Data checksum **`d18b9cda3f385875f1482bcdb08a6a9a85adc57f3feb6c1430e190a27c15b256`** 및
+  Favorites40/owners3/play counts53/settings1/users15/Watch0/0 유지.
+  Metadata checksum은 before `4cae0601ec1209414019e6028e1b702101f464e9fd928c06a647f0c3d4ff797d` →
+  after **`4958e8f59c02677ade32e91da63f8c655bbab2ae2dd6a528a50304664f519933`**.
+  최신 상태를 보존했으며 historical hash로 되돌리지 않았다.
+- Data/state/cache/backups/audit/config 전체 원본·보존본 inventory 일치, fsync 확인,
+  **이전 보존본6개 및 설정 전체 inventory 불변**, read-only 검사 전후 protected state 불변.
+  새 preservation 전체 inventory SHA256
+  **`6cb61f67b87d2bd7d7f699a7621bf88b476bec6b797e2cc075453386cabc1d7b`**.
+  Production/staging/ops/guard inactive/MainPID0, production boot 및 backup/update/manual timer disabled/inactive.
+- Source credential 파일7개 metadata는 모두 regular/non-symlink/root:root0600.
+  정지 후 두 runtime credential mount는 실제로 없어져 당시 mount ACL은 이 검사로 재확인할 수 없다.
+  Unit User/Group=discordbot, UMask0077, NoNewPrivileges=yes, ProtectSystem=strict, ProtectHome=yes.
+  현재 Cloudflare invocation의 마지막 구성에서 public9000 route1/internal route0 재확인;
+  actual browser path 성공으로 해석하지 않는다.
+- Live observer는 **1 sample /22.105초**이며 그 시간에는 안전 검사·정지·보존이 포함된다.
+  정상 운영 22초 관찰이나 완료 후 final observation으로 해석하지 않는다.
+  첫 표본: Discord RSS82052KiB/FD11/threads6, Watch RSS68380KiB/FD10/threads3,
+  Music child0/cache6567679bytes, Watch sessions0/clients0, DB recent failures0,
+  telemetry/metric drops0, backup age-1/RPO exceeded1, audit154files/32101bytes,
+  free disk105517568000bytes, temperature67.2°C/throttling0. NRestarts0.
+  첫 actual production backup 이전이므로 backup age-1은 PASS가 아니다.
+  Journal priority6 count26, safe feature event0; journal 사용량·장기 자원 추세는 측정하지 않았다.
+
+### Consolidated failure and remediation matrix
+
+| Group | Current evidence | Conclusion / later batch remediation |
+| --- | --- | --- |
+| A — application/runtime | 설정 검증의 `private_mode`는 exact named-service ACL을 검사하지만 `sweep-safety.py`는 `st_mode & 0o077`만으로 거부 | 두 검증기의 정책 불일치 확인. 승인 runtime은 그대로 두고, 향후 동일 ACL 정책·부정 사례·observer integration을 함께 검증할 것 |
+| B — external/provider | 이번 Summary/Music provider request0, historical Summary503 및 Music 실패만 존재 | 현재 provider 상태/무료 quota 여부 미확정. 새 PASS/FAIL로 승계하거나 blind retry하지 않음 |
+| C — browser/integration | 실제 PC Chrome Watch0, current audible Music/TTS confirmation0 | 모든 관련 gate H1 차단. Harness PASS는 실제 browser/audio 증거를 대체하지 않음 |
+| D — operations/deployment | readiness PASS 뒤 credential permission HARD STOP, pair stop/new preservation 성공 | 감시기의 credential 판정으로 sweep 종료. Mode/ACL metadata와 실제 접근 범위를 구분해 후속 격리 검증 필요 |
+| E — insufficient evidence | 실패 이벤트에 실제 credential mode/ACL/파일 종류 세부 값이 없고 정지 후 두 mount 부재 확인 | 실제 노출인지 정상 ACL 오탐인지 이 이벤트만으로 확정하지 않음. Source 파일0600은 mount ACL의 대체 증거가 아님. 후속 검사는 값 없이 metadata만 사용 |
+
+정지 후 값 없는 합성 ACL 검사에서 root-owned0440/named-service-read-only ACL은 기존 application validator가
+허용하고 새 observer predicate는 거부하는 차이를 재현했다. 기존 ACL 회귀 **10 PASS/0 skip**, 0.35초.
+이는 코드 정책 불일치의 증거이며 실패 당시 mount의 실제 ACL을 복원한 증거는 아니다.
+Source/dependency/설정/실제 credential 권한을 변경하지 않았다.
+최종 보고 두 문서의 tracked archive 문서 구조·링크 검사 **2 PASS**; 사용자 미추적 handoff는 검사용 archive에 포함하지 않았다.
+
+안전한 증거 파일은 Pi `/home/os/discordbot-phase10/`의
+`full-sweep-approved-preflight.json`, `full-sweep-approved-start.json`, `full-sweep-approved-push.json`,
+`full-sweep-approved-stop-inspection.json`과
+`/var/tmp/phase10-retry-787b3178908c08ff-live-smoke-full-sweep-20260919-01/summary.json`이다.
+원문 DB/개인 ID/음악 제목·URL/secret 값 없이 집계·identity·안전한 오류 분류만 보고했다.
+
+Actual newest production encrypted backup → private Bot-Data publication/read-back/independent download →
+decrypt/schema/count/data/metadata/semantic/application restore는 **BLOCKED BY H1 and incomplete live gates**.
+실행·성공 identity 없음. Boot enable/4h backup timer enable/final bounded production observation도 진행하지 않았다.
+Auto-update 및 manual source polling은 OFF를 유지한다. Audit0–10/Integrated Audit/PHASE11/V1삭제/legacy정리0.
+최종 보고서만 갱신하고 중단하며 새 runtime 수정·push/pin 재시도는 이 실행에 포함하지 않는다.
+
 ## 10B continuation — FULL-SWEEP POLICY VERIFIED / NEW RUNTIME APPROVAL REQUIRED
 
 2026-09-19 새 사용자 지시로 fail-first 검사를 HARD STOP / SOFT FAIL의 단일 bounded full-sweep로 변경했다.
