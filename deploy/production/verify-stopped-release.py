@@ -22,16 +22,17 @@ import zipfile
 
 ROOT = Path('/var/lib/discordbot')
 WORK = Path('/home/os/discordbot-phase10')
-OLD = Path('/opt/discordbot/releases/r-2c768ec98d1fc8b1-3dac82a792fad576')
+OLD = Path('/opt/discordbot/releases/r-787b3178908c08ff-3dac82a792fad576')
 CONFIG = Path('/etc/discordbot/config.json')
-DB_SHA = '6270821c287a066533f89e4f59e4aa8a74b89c14dfb5c199601e1bba4817e099'
+DB_SHA = 'f47fbef36b7eded3e4b990f8179598b38b0e0bdbd818431eada33dab9aa89748'
 PRESERVED = {
     'phase10-precutover-63c7722/failed-attempt': '52d2ef8813e72e0ab791d359c81a514f11622a1ca86a7165e2a211b1826cc1af',
     'phase10-retry-368c8ebf7cbf-favorites-failed-20260919T065256492640Z': 'fab61bdda1dd2c8b664c5fd19525d1cdd46f20c82d630a94ce2ed4caf6f5cc65',
     'phase10-retry-368c8ebf7cbff244-favorites-resume-guard-preservation': 'fdc1aca74b5bb65ce9ebd511e32b83a6b31e249246dffafd962c2c0eb15ece9f',
     'phase10-retry-49639828a3c2f181-operator-failed-20260919T092351777156Z': '28291bf37128dd62815c818ac45865c8a504cc04a2b3dbb9a8a564d8226dab1d',
     'phase10-retry-d14eba80bdec9126-live-smoke-guard-preservation': '1d871bed4ba8b8fe4fd9426cfa15c8b373f700baca2f548f5cea571570252363',
-    'phase10-retry-2c768ec98d1fc8b1-live-smoke-guard-preservation': DB_SHA,
+    'phase10-retry-2c768ec98d1fc8b1-live-smoke-guard-preservation': '6270821c287a066533f89e4f59e4aa8a74b89c14dfb5c199601e1bba4817e099',
+    'phase10-retry-787b3178908c08ff-live-smoke-full-sweep-20260919-01-guard-preservation': DB_SHA,
 }
 CONFIG_SHA = '41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40'
 SCOPES = {'discord-bot': ('discord_token', 'gemini_key', 'control_key'),
@@ -161,6 +162,41 @@ def credential_worker(run: Path, service: str, release: str) -> None:
     print(json.dumps(result))
 
 
+def root_credential_probe(release: str, service: str, names: tuple[str, ...]) -> dict:
+    """Exercise candidate safety checks from the observer's root/proc namespace."""
+    import pwd
+    source = Path('/opt/discordbot/releases')/release/'app'
+    spec = importlib.util.spec_from_file_location('candidate_safety', source/'deploy/production/sweep-safety.py')
+    safety = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(safety)
+    unit = 'phase10-h1-root-probe-' + service + '.service'
+    user = 'discordbot-deploy' if service == 'operations' else 'discordbot'
+    command = ['systemd-run', '--collect', '--unit='+unit, '-p', 'Type=exec', '-p', 'User='+user,
+        '-p', 'Group=discordbot', '-p', 'PrivateNetwork=yes', '-p', 'ProtectSystem=strict',
+        '-p', 'ProtectHome=yes', '-p', 'NoNewPrivileges=yes', '-p', 'PrivateTmp=yes',
+        '-p', 'UMask=0077', '-p', 'RuntimeMaxSec=30',
+        '-p', 'InaccessiblePaths='+' '.join(str(ROOT/name) for name in ('data','state','cache','backups','audit'))]
+    for name in names:
+        command += ['-p', 'LoadCredential='+name+':'+str(CREDENTIAL_SOURCES[name])]
+    command += ['/usr/bin/sleep', '25']
+    try:
+        checked(command, 15)
+        pid = int(checked(['systemctl','show',unit,'-p','MainPID','--value']).strip())
+        if not pid:
+            raise RuntimeError('Isolated credential namespace unavailable')
+        expected = pwd.getpwnam(user).pw_uid
+        if (Path('/proc')/str(pid)).stat().st_uid != expected:
+            raise RuntimeError('Isolated process ownership differs')
+        if service != 'operations' and safety.credential_service_uid(pid) != expected:
+            raise RuntimeError('Candidate account mapping differs')
+        directory = Path('/proc')/str(pid)/'root/run/credentials'/unit
+        safety.check_credentials(directory,set(names),expected)
+        return {'root_observer_view':'pass','credential_scope':'exact','readonly_mount':True,
+                'shared_acl_policy':'pass','credential_content_read':False,'network_requests':0,'database_open':False}
+    finally:
+        checked(['systemctl','stop',unit],15)
+
+
 def parent(run: Path, commit: str, checksum: str, wheels: Path) -> int:
     import grp
     import pwd
@@ -219,6 +255,11 @@ def parent(run: Path, commit: str, checksum: str, wheels: Path) -> int:
                 command += [str(Path('/opt/discordbot/releases')/release/'.venv/bin/python'),'-I','-B',str(helper),
                             '--worker',service,'--release',release,'--commit',commit,'--run',str(run)]
                 evidence['credentials'][service] = json.loads(checked(command,45))
+            evidence['root_credential_probes'] = {}
+            for service,names in SCOPES.items():
+                evidence['stage'] = 'root_credential_'+service
+                record(output,evidence)
+                evidence['root_credential_probes'][service] = root_credential_probe(release,service,names)
             unchanged()
             if protected_identity() != protected_before:
                 raise RuntimeError('Protected state changed during isolated verification')
@@ -243,7 +284,7 @@ def main() -> int:
     args = parser.parse_args()
     if not re.fullmatch(r'[0-9a-f]{40}',args.commit) or args.run != ROOT/('phase10-retry-build-'+args.commit[:12]):
         raise SystemExit('Exact source and isolated path required')
-    if args.wheels.parent != ROOT or not re.fullmatch(r'(?:wheels|phase10-wheels-[a-z0-9-]+)',args.wheels.name) or args.wheels.is_symlink():
+    if args.wheels.parent != ROOT or not re.fullmatch(r'(?:wheels|phase10-wheels-[a-z0-9-]+)',args.wheels.name):
         raise SystemExit('Reviewed local wheelhouse required')
     if args.worker and args.worker != 'build' and not re.fullmatch(r'r-[0-9a-f]{16}-[0-9a-f]{16}',args.release or ''):
         raise SystemExit('Exact release required')
@@ -261,6 +302,8 @@ def main() -> int:
         raise SystemExit('Reviewed archive checksum required')
     if os.geteuid()!=0:
         os.execvp('sudo',['sudo','--',str(OLD/'.venv/bin/python'),'-I','-B',str(Path(__file__).resolve()),*sys.argv[1:]])
+    if args.wheels.is_symlink():
+        raise SystemExit('Linked wheelhouse refused')
     return parent(args.run,args.commit,args.archive_sha256,args.wheels)
 
 
