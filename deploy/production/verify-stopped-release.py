@@ -22,9 +22,9 @@ import zipfile
 
 ROOT = Path('/var/lib/discordbot')
 WORK = Path('/home/os/discordbot-phase10')
-OLD = Path('/opt/discordbot/releases/r-787b3178908c08ff-3dac82a792fad576')
+OLD = Path('/opt/discordbot/releases/r-92c25546af6b4904-3dac82a792fad576')
 CONFIG = Path('/etc/discordbot/config.json')
-DB_SHA = 'f47fbef36b7eded3e4b990f8179598b38b0e0bdbd818431eada33dab9aa89748'
+DB_SHA = '678e93ec4fd2d087d5ce20ba2239fb205b0daa130cb3e804e300dbd5183aef66'
 PRESERVED = {
     'phase10-precutover-63c7722/failed-attempt': '52d2ef8813e72e0ab791d359c81a514f11622a1ca86a7165e2a211b1826cc1af',
     'phase10-retry-368c8ebf7cbf-favorites-failed-20260919T065256492640Z': 'fab61bdda1dd2c8b664c5fd19525d1cdd46f20c82d630a94ce2ed4caf6f5cc65',
@@ -32,7 +32,8 @@ PRESERVED = {
     'phase10-retry-49639828a3c2f181-operator-failed-20260919T092351777156Z': '28291bf37128dd62815c818ac45865c8a504cc04a2b3dbb9a8a564d8226dab1d',
     'phase10-retry-d14eba80bdec9126-live-smoke-guard-preservation': '1d871bed4ba8b8fe4fd9426cfa15c8b373f700baca2f548f5cea571570252363',
     'phase10-retry-2c768ec98d1fc8b1-live-smoke-guard-preservation': '6270821c287a066533f89e4f59e4aa8a74b89c14dfb5c199601e1bba4817e099',
-    'phase10-retry-787b3178908c08ff-live-smoke-full-sweep-20260919-01-guard-preservation': DB_SHA,
+    'phase10-retry-787b3178908c08ff-live-smoke-full-sweep-20260919-01-guard-preservation': 'f47fbef36b7eded3e4b990f8179598b38b0e0bdbd818431eada33dab9aa89748',
+    'phase10-retry-92c25546af6b4904-live-smoke-h1-full-sweep-20260919-01-guard-preservation': DB_SHA,
 }
 CONFIG_SHA = '41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40'
 SCOPES = {'discord-bot': ('discord_token', 'gemini_key', 'control_key'),
@@ -92,6 +93,10 @@ def unchanged() -> None:
             '-p', 'ActiveState', '-p', 'MainPID']).splitlines())
         if props != {'MainPID': '0', 'ActiveState': 'inactive'}:
             raise RuntimeError('Stopped services required')
+    for name in ('discord-bot.service', 'watch-web.service', 'discordbot-staging-discord.service',
+                 'discordbot-backup.timer', 'discordbot-update.timer', 'discordbot-manual.timer'):
+        if checked(['systemctl', 'show', name, '-p', 'UnitFileState', '--value']).strip() != 'disabled':
+            raise RuntimeError('Disabled production boot and timers required')
     for name in ('backup', 'update', 'manual'):
         if checked(['systemctl', 'show', 'discordbot-'+name+'.timer', '-p', 'ActiveState', '--value']).strip() != 'inactive':
             raise RuntimeError('Stopped timers required')
@@ -101,6 +106,20 @@ def unchanged() -> None:
         path = ROOT/directory/'data/bot_database.db'
         if digest(path) != expected or any(Path(str(path)+suffix).exists() for suffix in ('-wal', '-shm', '-journal')):
             raise RuntimeError('Production data changed; reconciliation required')
+
+
+def canonical_journal_header() -> str:
+    """Read only the two format version bytes, never rows or immutable-URI PRAGMA inference."""
+    with (ROOT/'data/bot_database.db').open('rb') as stream:
+        if stream.read(16) != b'SQLite format 3\x00':
+            raise RuntimeError('Canonical header invalid')
+        stream.seek(18)
+        versions = stream.read(2)
+    if versions == b'\x01\x01':
+        return 'rollback'
+    if versions == b'\x02\x02':
+        return 'wal'
+    raise RuntimeError('Canonical journal format unsupported')
 
 
 def protected_identity() -> dict[str, str]:
@@ -210,6 +229,7 @@ def parent(run: Path, commit: str, checksum: str, wheels: Path) -> int:
             raise ValueError('New verification paths required')
         with ExclusiveLock(ROOT/'operations.lock').acquire():
             unchanged()
+            evidence['canonical_journal_header'] = canonical_journal_header()
             protected_before = protected_identity()
             archive = WORK/('source-'+commit+'.zip')
             if digest(archive) != checksum:
