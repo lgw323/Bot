@@ -47,6 +47,23 @@ def test_retry_preflight_uses_installed_production_credential_sources():
         assert sources[name].as_posix()=='/etc/discordbot/secrets/'+name
 
 
+@pytest.mark.parametrize('change', ['unknown', 'missing', 'duplicate', 'none'])
+def test_retry_browser_skip_inventory_is_closed(change):
+    module = verifier()
+    allowed = sorted(module.NODELESS_BROWSER_CASES)
+    module.validate_browser_skips(allowed)
+    if change == 'unknown':
+        invalid = allowed + ['test_shipped_watch_playback_reconciliation[unreviewed]']
+    elif change == 'missing':
+        invalid = allowed[1:]
+    elif change == 'duplicate':
+        invalid = allowed + allowed[:1]
+    else:
+        invalid = []
+    with pytest.raises(RuntimeError, match='inventory'):
+        module.validate_browser_skips(invalid)
+
+
 def test_protected_identity_detects_state_and_preservation_changes_without_content(tmp_path, monkeypatch):
     module = verifier()
     monkeypatch.setattr(module, 'ROOT', tmp_path/'root')
