@@ -56,6 +56,16 @@
   설치된 production config의 세 credential scope를 검사한다. Source export에는 legacy test 지원만 포함하고
   실제 data/env/backup/log/key는 제외한다. Node가 없는 Pi의 JS harness skip은 Windows 실행 결과와 구분한다.
   이 도구는 pin/DB/config/service를 활성화하거나 변경하지 않는다.
+- First retry source `080e19022393a3939d8ad4649523b205220a5232`: ARM64 offline build143.119초,
+  full strict761 passed/9 skipped(Node 없는 Pi의 JS harness), failures/errors0,
+  immutable manifest17338 files/schema5 PASS. Discord/Watch no-network credential scopes PASS.
+  Operations scope는 검증 도구가 SSH credential의 source를 잘못 `/etc/discordbot/secrets/`로 지정해 실패했다.
+  설치 규약의 `/etc/discordbot/backup-ssh/id_ed25519` 및 `known_hosts`로 도구를 수정하고 직접 회귀 검사를 추가했다.
+  실제 config/secret을 이동하거나 수정하지 않았으며 기존 immutable080 release를 보존한다.
+  경로 수정 후 Windows full strict **771 passed/61.80초**, skip0/xfail0; 새 exact-source Pi 검증 예정.
+- 080 소스의 전체 ancestry1651 objects/730 blobs/6322658 bytes pattern scan에서8곳을 확인했다.
+  승인63 이력의 경로 참조·synthetic fixture7곳과 이후 추가된 Cloudflare 보안 test의 가짜 credential URL1곳이다.
+  실제 credential 발견0, current forbidden data/key/env/log path0, commit-message pattern0.
 
 ### Current-write encrypted local recovery
 
