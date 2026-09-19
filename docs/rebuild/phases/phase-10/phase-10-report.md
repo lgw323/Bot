@@ -1,6 +1,146 @@
 # PHASE 10 Report — Production Cutover
 
-## 10B continuation — SUMMARY FAILED / STOPPED / VERIFIED RETRY AWAITING PUSH-PIN APPROVAL
+## 10B continuation — 2c LIVE SUMMARY HTTP503 / STOPPED AND VERIFIED / PHASE 10B INCOMPLETE
+
+2026-09-19 사용자 첨부 지시문이 검증된2c source의 일반 FF push와 exact pin/live retry를 명시적으로
+승인했다. 새 release는 readiness를 통과했으나 실제 `/요약` HTTP503으로 자동 정지·새 보존했다.
+최신 상태와 여섯 번째 preservation의 무결성까지 확인했다. **PHASE 10B INCOMPLETE**.
+아래는 이번 exact release의 새 evidence이며 과거 PASS를 승계하지 않는다.
+
+- Git publication: **`686b946439ab5404cf194f8282f4559be245a1ea`**까지 기존 `codex/rebuild-v2`에
+  일반 fast-forward push/read-back 완료. `main=8432fdef40cddc131176fa875e350660dc897e12` 불변.
+  Push 직전 dd5d9aa→686b946의4 commits/17 new blobs와 모든 commit tree/message 검사 PASS,
+  forbidden artifact/secret/binary data finding0. Source2c 이후는 두 보고 문서만 변경한 commit1개다.
+  Force/rebase/history rewrite 없음. 미추적 `gpt_handoff`와 zip은 그대로 보존했다.
+- Runtime source **`2c768ec98d1fc8b1325f88cdfa1558bc6972d551`**, production pin
+  **`r-2c768ec98d1fc8b1-3dac82a792fad576`**.
+  Dependency `3dac82a792fad5769f4e6b32cdd0c294fbfbb4863500e8e232f85b47b3297cc6`,
+  manifest `e201e8291798bedb23444472bf6430147b34d2f7629d927f6327a0531f893bce`,17406 files/schema[5,5].
+  실제 installed inventory/manifest 재검증 PASS. Runtime/dependency/config 수정 없음.
+- 기존 exact-source 검증 evidence를 재확인했다: Windows837 PASS/skip0/xfail0,
+  Pi828 PASS/Node 없는 환경의 intentional Watch skip9/failure0/error0/xfail0.
+  동일9개 Windows PASS 대조 완료. 변경 없는 전체 test를 반복하지 않았다.
+- 시작 전 readonly integrity/schema5 PASS, canonical DB SHA256
+  **`1d871bed4ba8b8fe4fd9426cfa15c8b373f700baca2f548f5cea571570252363`**.
+  Favorites40/owners3, play counts53/settings1/users15, Watch0/0 유지.
+  Data checksum d18b9cda…/metadata85c5820b… 일치. Config41edd03a… 및 data/state/cache/backups/audit,
+  기존 다섯 preservation 전체 file inventory 불변, newest copy와 canonical inventory 일치.
+  보존 DB identities는52d2ef…/fab61b…/fdc1aca…/28291b…/1d871b…이며 아래 실패 이력의 정확한 hash를 유지한다.
+- 실제 production/staging/ops writer stopped/MainPID0, boot와 backup/update/manual timers disabled 확인.
+  Pi 검사 자신 외 Python/media process0, runtime listeners0, 로컬 PC Python process0.
+  다른 host의 token owner 부재를 이 process 검사만으로 증명한다고 주장하지 않는다.
+  세 credential scope의 UID999/997·exact read-only mount·source 직접 접근 denied를 다시 확인했다.
+  Cloudflare current invocation의 `watch.lgw323.com → http://127.0.0.1:9000` 단일 route,
+  internal9001/9010/9011 public route0 확인. 실제 browser gate는 별도로 남는다.
+- 기존 d14 root smoke marker와 종료된 guard를 reconciliation 후 새 marker로 교체했다.
+  운영 작업 디렉터리의 helper는 승인된 observer에 operator stop 요청 경로만 추가하며 immutable release를 수정하지 않았다.
+  자동 승인 검토가 첨부 승인 누락으로 처음 시작 명령을 차단했으나, 첨부4절의 exact activation 승인
+  근거를 다시 제시한 동일 작업의 재검토가 통과했다. 차단된 호출은 실행되지 않았다.
+- Compatibility 재검증 뒤 **10:55:50.699891Z 시작 →10:56:15.573768Z ready**,
+  **24.840초/70초 PASS**. Discord/Watch active, 동일 exact release, Resultsuccess/NRestarts0.
+  Readiness는 Gateway ready와 command tree sync 완료를 요구한다. 시작 diagnostics 오류0.
+  Summary dependency/delivery 실패도 포함한30분 bounded guard와 operator stop·새 보존 경로를 설치했다.
+  해당 guard가 이번 Summary 실패를 실제로 감지하고 종료했다.
+
+| 이번 release 필수 gate | 결과 |
+| --- | --- |
+| Gateway / command sync / readiness | PASS |
+| `/내정보` | PASS — 사용자 확인 |
+| `/랭킹` | PASS — 사용자 확인 |
+| `/요약` | FAIL — 사용자 오류 응답, live HTTP503 확인 |
+| `💾 보관함` | PASS — 사용자 확인 |
+| Volume / dashboard status | PASS — 사용자 확인 |
+| Music URL 요청 | FAIL — 요약 실패 뒤 사용자 무응답 보고; 정지 영향과 분리되지 않음 |
+| Music 검색어 요청 | FAIL — 요약 실패 뒤 사용자 무응답 보고; 정지 영향과 분리되지 않음 |
+| 선택 / 대기열 추가 | NOT TESTED |
+| Music 실제 사용자 청취 | NOT TESTED |
+| 정상 정지 / 음성방 퇴장 | NOT TESTED |
+| 봇 입장 TTS 실제 사용자 청취 | NOT TESTED |
+| TTS 덮어쓰기 없음 / 이후 Music 시작 | NOT TESTED |
+| 필요한 연속 TTS / pause intent | NOT TESTED — live 필요성 판단 대기 |
+| PC Chrome Watch create/connect | NOT TESTED |
+| Presence/user list | NOT TESTED |
+| Refresh | NOT TESTED |
+| Reconnect / tab return | NOT TESTED |
+| Hydration / synchronization | NOT TESTED |
+| Close | NOT TESTED |
+| Private admin close | NOT TESTED |
+| 실제 Chrome Cloudflare public path | NOT TESTED |
+| Actual newest production encrypted backup/publication/read-back | NOT TESTED — 필수 live gate 이후 |
+| Independent download/decrypt/schema/count/semantic/application restore | NOT TESTED — backup 이후 |
+| Boot /4h backup timer enable | NOT TESTED — disabled 유지 |
+| Post-cutover bounded observation | NOT TESTED — 위 모든 gate 이후 |
+
+### Confirmed live failure and stopped investigation
+
+- 이번 실제 Summary 요청은 **1건**, **10:57:25.205100Z**, **6.868612초**, queue depth0,
+  `external_temporary` / `http_server_error` / **HTTP503**이다.
+  이전 d14의 HTTP code 미기록 두 요청과 구분한다. 이번에는 실제 live HTTP503이 직접 기록됐다.
+  새 guard 결과 `guard_stopped_pair`, trigger `summary_failure`, pair stopped/newest state preserved true.
+  실패 후 추가 Gemini 요청·synthetic provider probe·서비스 재시작은 **0회**다.
+- 사용자는 무료 사용의 일일 한도 가능성을 제기했다. Google 공식
+  [오류 분류](https://ai.google.dev/gemini-api/docs/api-errors)는 rate/daily quota 초과를429,
+  일시적인 서비스 과부하·중단을503으로 구분한다. [한도 문서](https://ai.google.dev/gemini-api/docs/rate-limits)는
+  모델·tier별 제한과 project 단위 적용, Pacific midnight의 RPD reset을 설명한다(2026-09-19 확인).
+  이번 evidence에429는 없다. 실제 해당 project quota/잔량은 확인하지 않았으므로 무료 한도 소진을
+  확정하거나 완전히 배제하지 않는다. Provider 내부의 정확한 원인/회복은 미확인이다.
+- 사용자는 메시지 URL, `/재생 URL`, `/재생 검색` 모두 무응답이었으며 **요약 실패 확인 뒤**에
+  시도했다고 밝혔다. 해당 시작 이후 정지 완료까지 allowlisted Music request/work/command failure
+  telemetry는0건이었다. 이는 서비스 자동 정지 영향과 맞지만 개별 요청 시각이 없어 세 요청이
+  모두 정지 완료 뒤였다고 단정하지 않는다. 사용자 실패는 위 표에 남기고, 활성 서비스에서의
+  Music 입력/Voice/TTS 검증과 구분한다. 이전 release의 audible PASS를 승계하지 않는다.
+- 코드 경계 조사: Gemini REST adapter가 직접 POST1회를 수행하고 HTTP503을 typed temporary failure로
+  처리하는 지점을 확인했다. Provider body를 읽거나 출력하지 않으며 hidden SDK retry가 없다.
+  실제 외부 호출 없는 기존 HTTP/diagnostic/observer 회귀 **29 PASS /0.55초/skip0/xfail0** 재검사.
+  최종 두 보고 문서의 tracked-source 기준 문서 검사도 **2 PASS /0.55초**다.
+  여기서 새 application/runtime/dependency 결함은 확정되지 않아 새 runtime 수정이나 release를 만들지 않았다.
+  Provider/model/config/dependency를 변경하거나 retry/fallback으로 smoke를 통과시키지 않았다.
+
+### Latest canonical, all preservations and final state
+
+- 새 preservation: **`/var/lib/discordbot/phase10-retry-2c768ec98d1fc8b1-live-smoke-guard-preservation/`**.
+  Canonical 및 새 copy DB SHA256 **`6270821c287a066533f89e4f59e4aa8a74b89c14dfb5c199601e1bba4817e099`**.
+  DB before는1d871bed…였고 실제 현재 after627082…를 유지한다. 이전 hash로 되돌리지 않았다.
+  Stage `verified_stopped_preserved_integrity`, schema5/integrity PASS, canonical/copy 전체 file byte 일치.
+  정상 정지 후 WAL/SHM/journal 없음. 수동 sidecar 삭제 없음. 기존 다섯 보존본/config 전체 inventory 불변.
+  Favorites40/owners3, play counts53/settings1/users15, Watch playlists/sessions0/0 유지.
+  Data checksum `d18b9cda3f385875f1482bcdb08a6a9a85adc57f3feb6c1430e190a27c15b256` 동일,
+  metadata checksum은 **`4cae0601ec1209414019e6028e1b702101f464e9fd928c06a647f0c3d4ff797d`**로 변경됐다.
+  원문 row는 검사·출력하지 않아 특정 metadata row의 변경 원인까지 확정하지 않는다.
+
+| `/var/lib/discordbot/` 아래 보존 경로 | DB SHA256 |
+| --- | --- |
+| `phase10-precutover-63c7722/failed-attempt` | `52d2ef8813e72e0ab791d359c81a514f11622a1ca86a7165e2a211b1826cc1af` |
+| `phase10-retry-368c8ebf7cbf-favorites-failed-20260919T065256492640Z` | `fab61bdda1dd2c8b664c5fd19525d1cdd46f20c82d630a94ce2ed4caf6f5cc65` |
+| `phase10-retry-368c8ebf7cbff244-favorites-resume-guard-preservation` | `fdc1aca74b5bb65ce9ebd511e32b83a6b31e249246dffafd962c2c0eb15ece9f` |
+| `phase10-retry-49639828a3c2f181-operator-failed-20260919T092351777156Z` | `28291bf37128dd62815c818ac45865c8a504cc04a2b3dbb9a8a564d8226dab1d` |
+| `phase10-retry-d14eba80bdec9126-live-smoke-guard-preservation` | `1d871bed4ba8b8fe4fd9426cfa15c8b373f700baca2f548f5cea571570252363` |
+| `phase10-retry-2c768ec98d1fc8b1-live-smoke-guard-preservation` | `6270821c287a066533f89e4f59e4aa8a74b89c14dfb5c199601e1bba4817e099` |
+
+- Partial live guard는 **72.259초/74 poll records**에서 실패로 종료했다. 마지막 **정지 직전** 표본:
+  ready2/2, NRestarts0, DB probe 성공14/14·recent failures0, Discord/Watch RSS82228/68584 KiB,
+  FD12/10, threads6/4, Music child0/cache5 files·6567679 bytes, Watch sessions/clients0/0.
+  Backup age=-1/RPO exceeded1(첫 actual production backup 미실행), backup files0,
+  audit152 files/31632 bytes, disk free106437746688 bytes, temperature62.8°C/throttling0.
+  Journal allowlisted Summary failure1건, truncation false. 별도 장기 journal 용량/안정성 검증은 수행하지 않았다.
+  이 실패 시점까지의 부분 관찰은 post-cutover observation PASS가 아니다.
+- 최종 services: production pair/staging/backup/update/manual inactive/MainPID0/Resultsuccess,
+  production boot disabled, backup/update/manual timers inactive/disabled. Current pin2c 유지, auto-update OFF.
+  Live failure 때문에 actual production encrypted backup/Bot-Data publication/read-back/isolated restore,
+  boot enable/4h timer 및 완료 후 observation으로 진행하지 않았다.
+  기존 off-host rehearsal을 actual production backup PASS로 처리하지 않는다.
+- DB replay/restore/promote/remigration/down-migration/V1 시작 없음. Audit0–10/Integrated Audit/PHASE11/legacy 삭제 없음.
+  추가 실패 요청 없이 현재 결과를 보고하고 중단한다. 다음 gate는 provider 가용성/필요 시 안전한 quota
+  집계 확인 후 별도로 정한 재개 절차이며, **627082… newest DB**를 사용해야 한다.
+- Safe evidence: `/home/os/discordbot-phase10/summary-live-preflight.json`, `summary-live-start.json`,
+  `summary-failure-categories-2c768ec9.json`, `summary-live-failure-inspection.json`,
+  `/var/tmp/phase10-retry-2c768ec98d1fc8b1-live-smoke/summary.json`.
+  Local copies와 `scratch/phase10/summary-live-gates.json`에 사용자 확인과 미검증 범위를 기록했다.
+
+**Final verdict: PHASE 10B INCOMPLETE.** 필수 Summary 실패를 유지하며 Music/TTS/Chrome Watch,
+actual production backup/restore/timer/boot/post-cutover observation은 완료되지 않았다.
+
+## Historical preparation — SUMMARY FAILED / STOPPED / VERIFIED RETRY AWAITING PUSH-PIN APPROVAL
 
 2026-09-19 승인된 d14 release의 smoke에서 `/요약`이 실패했다. 즉시 operator stop을 요청하여
 서비스를 정지하고 최신 상태를 다섯 번째 고유 preservation에 보존했다. **PHASE10 INCOMPLETE**.
