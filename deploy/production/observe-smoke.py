@@ -125,6 +125,8 @@ def full_sweep_failures(diagnostic):
     """Classify safe metadata only; never issue a provider request or retry."""
     hard=next((code for code in ('data_integrity','database_unavailable')
                if diagnostic.get('error_codes',{}).get(code)),None)
+    if diagnostic.get('event_counts',{}).get('database.probe_failed'):
+        hard=hard or 'database_probe_failed'
     if diagnostic.get('journal_exit_code') or diagnostic.get('possibly_truncated'):
         hard=hard or 'diagnostic_coverage_lost'
     if diagnostic.get('event_counts',{}).get('task.retrying'):
@@ -133,6 +135,8 @@ def full_sweep_failures(diagnostic):
     for event in diagnostic.get('recent_stages',[]):
         if bounded_probe_busy(event):
             continue
+        if event.get('event')=='database.probe_failed':
+            hard=hard or 'database_probe_failed'
         if event.get('error_code') in {'data_integrity','database_unavailable'} or event.get('result') in {'data_integrity','database_unavailable'}:
             hard=hard or 'data_integrity'
         elif event.get('event')=='task.retrying':

@@ -126,6 +126,15 @@ def test_probe_field_allowlist_rejects_sensitive_shapes():
     assert value == {'operation': 'select1_probe'}
 
 
+@pytest.mark.parametrize('code', ['deadline_exceeded', 'capacity', 'cancellation', 'internal', None])
+def test_terminal_probe_failure_is_hard_even_without_umbrella_code(code):
+    event = dict(event='database.probe_failed', result='failed', error_code=code)
+    module = observer()
+    assert module.full_sweep_failures({'recent_stages':[event]})[0] == 'database_probe_failed'
+    # Hard evidence cannot disappear when a long journal tail drops the detail.
+    assert module.full_sweep_failures({'event_counts':{'database.probe_failed':1}})[0] == 'database_probe_failed'
+
+
 def test_full_observer_continues_exact_busy_but_stops_second_hard_event(tmp_path, monkeypatch):
     from .test_full_sweep_observer import healthy, RELEASE
     module = observer()
