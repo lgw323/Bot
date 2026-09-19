@@ -102,6 +102,22 @@ def test_schema_readonly_hard_gate_uses_synthetic_db(tmp_path):
     with pytest.raises(sqlite3.DatabaseError): m.check_database(db)
 
 
+def test_schema_failure_closes_observer_database_connection(tmp_path,monkeypatch):
+    import sqlite3
+    path=Path(__file__).resolve().parents[3]/'deploy/production/sweep-safety.py'
+    spec=importlib.util.spec_from_file_location('sweep_close_test',path)
+    m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+    closed=[]
+    class Connection(sqlite3.Connection):
+        def close(self):
+            closed.append(True);super().close()
+    connect=sqlite3.connect
+    db=tmp_path/'synthetic.db';connect(db).close()
+    monkeypatch.setattr(m.sqlite3,'connect',lambda *a,**k:connect(*a,**k,factory=Connection))
+    with pytest.raises(RuntimeError): m.check_database(db)
+    assert closed==[True]
+
+
 def test_handoff_requires_every_gate_and_human_confirmation(tmp_path):
     m=observer();control=tmp_path
     state=SimpleNamespace(systemd=lambda _: {'ActiveState':'active','MainPID':'999','NRestarts':'0'})

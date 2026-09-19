@@ -1,5 +1,6 @@
 """Read-only full-sweep invariants. No content, credential values or recovery writes."""
 import hashlib
+from contextlib import closing
 import json
 import os
 from pathlib import Path
@@ -23,7 +24,7 @@ def identity(source):
 
 def check_database(path):
     from discordbot.storage.adapters.migrations import validate_ledger
-    with sqlite3.connect(path.as_uri()+'?mode=ro',uri=True,timeout=2) as conn:
+    with closing(sqlite3.connect(path.as_uri()+'?mode=ro',uri=True,timeout=2)) as conn:
         conn.execute('PRAGMA query_only=ON')
         conn.execute('PRAGMA trusted_schema=OFF')
         if conn.execute('PRAGMA quick_check').fetchall()!=[('ok',)] or validate_ledger(conn)!=5:
