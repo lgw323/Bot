@@ -71,7 +71,7 @@ def _anchor(text: str) -> str:
 
 
 def test_rebuild_documents_are_partitioned_without_loss() -> None:
-    assert _markdown_names(REBUILD_ROOT) == {"README.md"}
+    assert _markdown_names(REBUILD_ROOT) == {"README.md", "phase-10-full-sweep-report.md"}
     assert _markdown_names(REBUILD_ROOT / "baseline") == BASELINE_DOCUMENTS
     assert _markdown_names(REBUILD_ROOT / "current") == CURRENT_DOCUMENTS
     for phase, expected in PHASE_DOCUMENTS.items():

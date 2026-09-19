@@ -1,9 +1,10 @@
 # DiscordBot V2 Rebuild Documentation
 
-현재 상태는 **PHASE 10A COMPLETE / 10B FAILED LIVE SMOKE — 서비스 정지**다. Production 원본을
-보존한 candidate를 production DB로 승격했고 승인된63c7722의 실제 Discord/Watch 첫 ready 검증을 통과했다.
-실제 Music/Watch 기능 실패로 중지했으며 첫 production backup/timer는 활성화하지 않았다. PHASE10 완료가 아니다.
-실행 증거와 남은 production 위험은 [PHASE 10 보고서](phases/phase-10/phase-10-report.md)를 따른다.
+현재 상태는 **PHASE 10A COMPLETE / PHASE 10B INCOMPLETE — 서비스 정지**다.
+PHASE 10을 재개하는 세션은 [부모 보고서](phases/phase-10/phase-10-report.md)와
+[full-sweep 상세 보고서](phase-10-full-sweep-report.md)를 모두 읽는다.
+부모는 cutover/migration·초기10B 이력과 전체 상태, 전용 보고서는 현재 full-sweep 실행·실패·수정·재시도의 기준이다.
+각 범위에서 최신 continuation이 우선하며 구체적인 다음 작업은 [current plan](current/current-plan.md)을 따른다.
 
 | 위치 | 책임 | 변경 정책 |
 | --- | --- | --- |
@@ -51,7 +52,8 @@
 
 - [PHASE 9 staging evidence and remaining gates](phases/phase-09/phase-9-report.md)
 
-- [PHASE 10A readiness report — COMPLETE](phases/phase-10/phase-10-report.md),
+- [PHASE 10 parent report](phases/phase-10/phase-10-report.md),
+  [PHASE 10B full-sweep report](phase-10-full-sweep-report.md),
   [production migration contract](phases/phase-10/production-migration-contract.md),
   [config migration guide](phases/phase-10/config-migration-guide.md),
   [cutover approval gate/runbook](phases/phase-10/cutover-runbook.md)

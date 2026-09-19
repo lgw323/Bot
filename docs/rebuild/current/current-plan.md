@@ -2,63 +2,26 @@
 
 Updated: 2026-09-19
 
-## Latest approved full-sweep execution — HARD STOP
+## PHASE 10 reporting authority and current work
 
-**PHASE 10B INCOMPLETE.** 승인 source787b3178908c08ffa926f41c64ae73753c39799a,
-pin `r-787b3178908c08ff-3dac82a792fad576`, dependency3dac82a…/manifest906c8bca…로 activation1회.
-Runtime 이후 phase report/current plan만 변경한 e616511b77f5eb4553c7ede4fffdf2f0e69acf2c까지
-일반 FF push/read-back 완료. Range686b946..e616511의5commits/17newblobs·모든 commit tree/message 검사 PASS,
-금지 artifact/secret0, main8432fdef… 불변. Handoff 자료/zip 미포함, force/rebase/history rewrite0.
-Exact Windows871 PASS/skip0/xfail0, Pi862 PASS/9 intentional Node-less Watch skips/xfail0;
-동일9개 Windows PASS 확인. Source/dependency는 검증 후보 이후 변경하지 않았다.
+PHASE 10이 진행 중이면 새 세션은 아래 두 보고서를 모두 읽는다.
+- [PHASE 10 parent report](../phases/phase-10/phase-10-report.md): 10A 준비·migration/cutover·production DB promotion·config/secrets·초기10B 이력과 전체 상태의 기준.
+- [PHASE 10B full-sweep report](../phase-10-full-sweep-report.md): bounded full-sweep 정책·30-gate 실행·HARD STOP/SOFT FAIL·수정·재시도·최종화의 상세 기준.
 
-21:17:00.664 KST start → **24.870초/70초 readiness PASS**, Gateway/command sync/동일 release/NRestarts0.
-그러나 첫 full-sweep safety 검사에서 `credential_permission` → `safety_invariant_failed` **HARD STOP**.
-Production pair는 자동 정지됐고 새 preservation의 fsync/inventory 검증 성공.
-현재 pair/guard inactive/MainPID0/NRestarts0, pin787 유지. 재시작·자동 retry0.
-30개 live gate 중 PASS3/나머지27개 BLOCKED BY 이 credential HARD STOP.
-현재 기능 실패/성공을 과거 결과에서 가져오지 않는다. Summary provider 요청0,
-actual audible Music/TTS·Chrome Watch0. SOFT FAIL0은 미실행 기능의 성공을 뜻하지 않는다.
+각 책임 범위에서 최상단 최신 continuation이 우선한다. 겹치는 full-sweep 세부 내용은 전용 보고서를,
+cutover/migration의 역사적 근거는 부모 보고서를 따른다. 부모에는 현재 production identity와 간결한 결과만 유지한다.
+문서 분리는 별도 커밋으로 검증하고 즉시 같은 세션에서 H1 조사·안전한 격리 재현·최소 수정·회귀/full strict/Pi 검증을 계속한다.
+새 runtime production 적용 또는 새 push/pin이 필요할 때 정확한 검증 후보에 대한 승인을 받는다.
 
-새 보존본은 `phase10-retry-787b3178908c08ff-live-smoke-full-sweep-20260919-01-guard-preservation`.
-Before canonical627082…/config41edd0…/이전 보존본6개 불변 preflight PASS.
-독립 sudo read-only **verified_stopped_preserved_integrity** 완료.
-최신 canonical = new preserved SHA256 **f47fbef36b7eded3e4b990f8179598b38b0e0bdbd818431eada33dab9aa89748**,
-schema5/integrity/count/data/metadata 및 전체 inventory/fsync 일치. 기존 보존본6개와 config 불변.
-Data checksum d18b9c…/집계 유지, metadata4958e8…; WAL/SHM/journal sidecar 없음.
-새 preservation inventory6cb61f… 검증. Source credential7개 root:root0600/non-symlink,
-정지 후 runtime mount2개 부재. Public9000 route1/internal route0; 실제 Chrome PASS는 아님.
-Production/staging boot와 backup/update/manual timer 모두 disabled/inactive 확인.
-1sample/22.105초에는 정지·보존 시간이 포함되며 final production observation이 아니다.
-Actual production backup/publication/independent restore/boot enable/4h timer enable은 미진행;
-auto-update/manual polling OFF. DB replay/restore/remigration/down-migration/V1 start 없음.
-
-확인된 코드 불일치: 기존 `private_mode`는 exact named-service read-only ACL을 검증하지만
-새 sweep safety는 mode group bits만으로 거부한다. 값 없는 합성0440 ACL에서 불일치 재현,
-기존 ACL regression10 PASS. 실제 실패 당시 ACL은 기록되지 않아 노출/오탐의 최종 판정은 미확정이다.
-운영 코드·권한을 고치거나 동일 release를 다시 시작하지 않는다. 보고서의 A–E 통합 matrix로 정리하여
-후속 batch remediation 검토에 넘긴다. Audit/PHASE11/V1삭제/legacy정리를 시작하지 않는다.
-최신 전체30개 gate 및 보존 결과는 [Phase 10 report](../phases/phase-10/phase-10-report.md) 첫 절을 따른다.
-
-## PHASE 10B full-sweep override
-
-**FULL-SWEEP POLICY VERIFIED / NEW RUNTIME APPROVAL REQUIRED / PHASE 10B INCOMPLETE.**
-최신 사용자 지시로 단일 bounded activation에서 HARD STOP만 즉시 중단하고 SOFT FAIL은 독립 검사를 계속한다.
-기존2c Music latch가 readiness를 내리므로 외부 observer만 변경해서는 충족되지 않았다.
-새 runtime source787b3178908c08ffa926f41c64ae73753c39799a에 release-bound/root-owned/최대1800초 모드,
-자동 retry 없는 독립 요청 허용, safety observer 및 focused regression을 준비했다. Dependency3dac82a… 불변.
-Windows exact full strict871 PASS/skip0/xfail0, Pi862 PASS/9 intentional Node-less Watch skips/0 xfails.
-동일9개 Windows PASS 대조 완료. 검증된 비활성 후보 r-787b3178908c08ff-3dac82a792fad576,
-manifest906c8bca…/17410 files/schema[5,5]/세 credential scope PASS. Production 활성화 승인은 별도다.
-Current pin은2c 그대로, services inactive/MainPID0, boot/backup/update/manual timers disabled, auto-update OFF.
-Fresh sudo read-only 확인: latest canonical627082…/schema5/integrity/config/보존본6개 전체 inventory 불변,
-세 credential scope exact/read-only, public9000 route1/internal private route0. 원문 row/credential 출력 없음.
-Remote branch686b946…/main8432fdef… 불변. 새 commits는 local-only, push/activation0.
-새 후보의30개 live gate 및 actual production backup/restore/boot/timer/observation은 아직 NOT TESTED다.
-과거 PASS를 승계하지 않는다. 새 push/pin 승인 뒤 한 번의 sweep에서 전 independent gate를 수집하고,
-실패하면 마지막에 새 preservation+단일 matrix+A–E remediation을 남긴다. HARD STOP 시 즉시 stop/preserve.
-모두 PASS일 때만 중단 없는 actual backup/restore/boot/timer/final observation으로 진행한다.
-DB replay/restore/remigration/down-migration/V1 시작·Audit·PHASE11·legacy 삭제 금지.
+**PHASE 10B INCOMPLETE.** 현재 source787b3178908c08ffa926f41c64ae73753c39799a,
+pin `r-787b3178908c08ff-3dac82a792fad576`, services stopped/boot·timers disabled, auto-update OFF.
+Readiness24.870초 PASS 뒤 H1 `safety_invariant_failed / credential_permission` HARD STOP;
+PASS3/BLOCKED27/functional FAIL0. 최신 canonical/preserved DB
+`f47fbef36b7eded3e4b990f8179598b38b0e0bdbd818431eada33dab9aa89748`, 새 보존본 및 이전6개 유지.
+Root:root0600 source 파일과 합성 ACL 정책 불일치만으로 실제 당시 mount의 노출/오탐을 단정하지 않는다.
+H1 해결 전 임의 재시작·이전 DB 복원/replay/remigration/down-migration/V1 start 금지.
+전체 live sweep 및 production backup/restore/boot/timer/observation 완료·독립 검토 전 PHASE11 금지.
+Audit0–10/Integrated Audit/V1삭제/legacy정리도 시작하지 않는다.
 
 ## Historical 2c live retry
 
