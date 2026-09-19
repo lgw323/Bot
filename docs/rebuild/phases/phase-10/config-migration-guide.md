@@ -11,7 +11,7 @@ PHASE 10A 준비용이다. `.env`를 자동 읽거나 복사하지 않는다. �
 | DISCORD_TOKEN | `/etc/discordbot/secrets/discord_token`, Discord만 mount |
 | GOOGLE_API_KEY | `secrets/gemini_key`, Discord만 mount |
 | DB_ENCRYPTION_KEY | `secrets/db_key`, Operations만 mount; 기존 backup을 읽을 키를 보존 |
-| DB_BACKUP_REMOTE_URL | 자동 이전 없음. `backup_remote:null`은 local-only. 외부 adapter/destination 승인 필요 |
+| DB_BACKUP_REMOTE_URL | 자동 이전 없음. `backup_remote:null`은 local-only. 사용자 선택 Bot-Data/db-backup의 새 typed opt-in과 별도 deploy key는 cutover runbook 참조; 실제 설정은 아직 null |
 | MASTER_USER_ID | `master`: 정수, 기존 최고관리자 |
 | LOG_CHANNEL_ID | 자동 1:1 이전 없음. `admin_channel`은 private Watch control 채널이다. V1 raw error log 채널과 같은 의미로 간주하지 않는다. 현재 Discord log/admin UI 미연결은 Phase 8 잔여 범위 |
 | MUSIC_CHANNEL_ID | `music_channels:[[guild_id, channel_id]]`; 같은 전용 jukebox 채널, guild를 명시 |

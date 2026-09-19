@@ -23,7 +23,22 @@ Never remove latest or its valid predecessor to clear this condition.
 
 Remote publication is an injected encrypted-object/digest port. `backup_remote:null` explicitly means
 local-only; off-host RPO/host-loss durability is not claimed. No code-remote fallback or force push
-exists. A production remote destination/adapter needs its own approved decision before cutover.
+exists. PHASE 10 selected private Bot-Data with a separate write deploy key. The opt-in object is
+`{"kind":"git-ssh","repository":"git@github.com:lgw323/Bot-Data.git","ref":"refs/heads/db-backup"}`;
+no other destination/ref is accepted. Operations additionally needs scoped `backup_ssh_key` and
+`known_hosts` mounts. Runtime Discord/Watch scopes do not receive them. Actual production activation
+still requires the final gate; see [PHASE 10 cutover](../../docs/rebuild/phases/phase-10/cutover-runbook.md).
+
+The Git adapter uploads only the whole-file encrypted envelope and allowlisted metadata, using a
+normal fast-forward commit. Independent remote fetch/read-back must succeed before `latest.json`
+advances. Failed or uncertain publication retains the previous latest and local artifacts, returns
+failure and requires operator reconciliation; there is no retry loop. A single transport has a 90s
+deadline and its executor drains before the operation lock is released.
+
+Remote active tree retention selects the latest eight plus the newest per each of seven UTC dates
+(at most fourteen distinct points). Legacy files and Git ancestors remain intact. This does not
+erase historical ciphertext or cap repository storage; inspect growth separately. Remote deletion
+logic is verified on disposable synthetic repositories, not by pruning existing V1 history.
 
 Postcondition: latest checksum validates, independent isolated restore passes, age is within RPO and
 safe backup/rehearsal audits exist. A checksum alone is not a recovery proof.
