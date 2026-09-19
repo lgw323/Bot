@@ -76,6 +76,31 @@ async def test_creation_grace_and_reconnect_boundary(service, invite, clock):
         service.resolve(invite.capability)
 
 
+@pytest.mark.parametrize('playing', [False, True])
+async def test_single_viewer_reload_hydrates_actor_playback(service, invite, clock, playing):
+    actor, peer = await service.connect(invite.capability, Socket())
+    await actor.call('message', peer.id, {'type':'join','username':'Before'})
+    await actor.call('message', peer.id, {'type':'sync_response','playing':playing,
+        'time':17,'videoId':'aaaaaaaaaaa'})
+    await actor.call('leave', peer.id)
+    await advance(service, clock, 4)
+    socket = Socket()
+    _, replacement = await service.connect(invite.capability, socket)
+    await actor.call('message', replacement.id, {'type':'join','username':'After'})
+    await asyncio.sleep(0)
+    snapshots = [m for m in socket.messages if m['type']=='sync_response']
+    assert len(snapshots)==1
+    assert snapshots[0]['videoId']=='aaaaaaaaaaa'
+    assert snapshots[0]['state']==('playing' if playing else 'paused')
+    assert snapshots[0]['time']==(21 if playing else 17)
+    assert next(m for m in socket.messages if m['type']=='user_list')['users']==['After']
+    # A return probe receives a server response even without another browser.
+    socket.messages.clear()
+    await actor.call('message', replacement.id, {'type':'sync_request'})
+    await asyncio.sleep(0)
+    assert {m['type'] for m in socket.messages}=={'sync_response','user_list'}
+
+
 async def test_playlist_duplicate_order_close_race(service, invite):
     actor = service.resolve(invite.capability)
     one, two = "https://youtu.be/aaaaaaaaaaa", "https://youtu.be/bbbbbbbbbbb"

@@ -1109,6 +1109,12 @@
         let playlistAgain = false;
         let syncTimer;
         let toastTimer;
+        let playerReady = false;
+        let pendingPlayback = null;
+        let reconnectTimer;
+        let returnTimer;
+        let reconnectAttempts = 0;
+        let pageSuspended = false;
 
         // 1. YouTube IFrame API 로드 성공 시 호출되는 콜백
         function onYouTubeIframeAPIReady() {
@@ -1131,6 +1137,11 @@
         }
 
         function onPlayerReady(event) {
+            playerReady = true;
+            if (pendingPlayback) {
+                applyPlayback(pendingPlayback);
+                pendingPlayback = null;
+            }
             initWebSocket();
             fetchPlaylist();
         }
@@ -1202,16 +1213,20 @@
 
         // 2. WebSocket 초기화 및 통신 핸들러
         function initWebSocket() {
+            if (terminal || pageSuspended || (ws && [WebSocket.OPEN, WebSocket.CONNECTING].includes(ws.readyState))) return;
+            clearTimeout(reconnectTimer);
             const loc = window.location;
             const wsProto = loc.protocol === "https:" ? "wss:" : "ws:";
             const wsUrl = `${wsProto}//${loc.host}/ws/${sessionId}`;
 
-            ws = new WebSocket(wsUrl);
+            const socket = new WebSocket(wsUrl);
+            ws = socket;
 
             const badge = document.getElementById("connection-badge");
             const badgeText = document.getElementById("ws-status-text");
 
-            ws.onopen = () => {
+            socket.onopen = () => {
+                if (socket !== ws || terminal || pageSuspended) { socket.close(1000); return; }
                 badge.className = "badge badge-ws";
                 badgeText.innerText = "실시간 동기화 됨";
                 showToast("실시간 동기화가 활성화되었습니다.");
@@ -1221,11 +1236,15 @@
                     type: "join",
                     username: addedBy
                 });
+                fetchPlaylist();
             };
 
-            ws.onclose = (event) => {
-                if ([4001, 4002, 4003, 4008].includes(event.code)) {
+            socket.onclose = (event) => {
+                if (socket !== ws) return;
+                clearTimeout(returnTimer);
+                if (terminal || [4001, 4002, 4003].includes(event.code)) {
                     terminal = true;
+                    clearTimeout(reconnectTimer);
                     badge.className = "badge badge-ws disconnected";
                     badgeText.innerText = "세션 종료";
                     showToast("시청 세션이 종료되었습니다.");
@@ -1233,20 +1252,30 @@
                 }
                 badge.className = "badge badge-ws disconnected";
                 badgeText.innerText = "연결 끊김 (재시도 중)";
-                showToast("연결이 종료되었습니다. 3초 후 재연결을 시도합니다.");
-                setTimeout(initWebSocket, 3000);
+                if (pageSuspended) return;
+                if (reconnectAttempts >= 5) {
+                    badgeText.innerText = "연결 끊김";
+                    showToast("연결을 복구하지 못했습니다. 연결 상태를 확인해 주세요.");
+                    return;
+                }
+                const delay = Math.min(500 * 2 ** reconnectAttempts++, 3000);
+                showToast("연결을 다시 시도합니다.");
+                clearTimeout(reconnectTimer);
+                reconnectTimer = setTimeout(initWebSocket, delay);
             };
 
-            ws.onerror = (err) => {
+            socket.onerror = (err) => {
                 console.error("Watch request failed");
             };
 
             let lastRevision = 0;
-            ws.onmessage = (event) => {
-                if (terminal) return;
+            socket.onmessage = (event) => {
+                if (terminal || socket !== ws) return;
                 const message = JSON.parse(event.data);
                 if (!Number.isSafeInteger(message.revision) || message.revision <= lastRevision) return;
                 lastRevision = message.revision;
+                reconnectAttempts = 0;
+                clearTimeout(returnTimer);
 
                 isSyncing = true; // 무한 동기화 루프 방지 ON
 
@@ -1258,14 +1287,7 @@
                         showToast(message.message);
                         appendSystemMessage(message.message);
                         // 내가 방의 선구자(기존 플레이어)라면 신입에게 현재 플레이 상태를 전달
-                        if (player && player.getPlayerState() !== YT.PlayerState.UNSTARTED && player.getPlayerState() !== -1) {
-                            sendWsMessage({
-                                type: "sync_response",
-                                state: player.getPlayerState() === YT.PlayerState.PLAYING ? "playing" : "paused",
-                                time: player.getCurrentTime(),
-                                videoId: currentVideoId
-                            });
-                        }
+                        sendPlayback();
                         break;
 
                     case "user_left":
@@ -1282,34 +1304,23 @@
                         break;
 
                     case "state_change":
-                        syncPlayerState(message.state, message.time);
+                        receivePlayback(message);
                         appendSystemMessage(`ℹ️ 누군가 동영상을 ${message.state === 'playing' ? '재생' : '일시정지'}했습니다.`);
                         break;
 
                     case "seek":
-                        syncPlayerSeek(message.time);
+                        if (playerReady) syncPlayerSeek(message.time);
+                        else if (pendingPlayback) pendingPlayback.time = message.time;
                         appendSystemMessage(`ℹ️ 누군가 재생 구간을 건너뛰었습니다.`);
                         break;
 
                     case "sync_request":
                         // 누군가 싱크를 요청할 때 내 상태 전송
-                        if (player && player.getPlayerState() !== -1) {
-                            sendWsMessage({
-                                type: "sync_response",
-                                state: player.getPlayerState() === YT.PlayerState.PLAYING ? "playing" : "paused",
-                                time: player.getCurrentTime(),
-                                videoId: currentVideoId
-                            });
-                        }
+                        sendPlayback();
                         break;
 
                     case "sync_response":
-                        // 받아온 타겟 비디오와 현재 비디오가 다르면 영상 변경
-                        if (message.videoId && message.videoId !== currentVideoId) {
-                            loadVideoById(message.videoId, false);
-                        }
-                        // 상태 및 시각 강제 동기화
-                        syncPlayerState(message.state, message.time);
+                        receivePlayback(message);
                         break;
 
                     case "playlist_change":
@@ -1324,6 +1335,56 @@
                 syncTimer = setTimeout(() => { isSyncing = false; }, 400);
             };
         }
+
+        function sendPlayback() {
+            if (!playerReady || !currentVideoId || !/^[A-Za-z0-9_-]{11}$/.test(currentVideoId)) return;
+            const state = player.getPlayerState();
+            if (![YT.PlayerState.PLAYING, YT.PlayerState.PAUSED].includes(state)) return;
+            sendWsMessage({type: "sync_response", state: state === YT.PlayerState.PLAYING ? "playing" : "paused",
+                time: player.getCurrentTime(), videoId: currentVideoId});
+        }
+
+        function receivePlayback(message) {
+            if (!playerReady) {
+                pendingPlayback = {...pendingPlayback, ...message};
+                return;
+            }
+            applyPlayback(message);
+        }
+
+        function applyPlayback(message) {
+            isSyncing = true;
+            if (message.videoId && message.videoId !== currentVideoId) loadVideoById(message.videoId, false);
+            syncPlayerState(message.state ?? (message.playing ? "playing" : "paused"), message.time);
+            clearTimeout(syncTimer);
+            syncTimer = setTimeout(() => { isSyncing = false; }, 400);
+        }
+
+        function returnToPage() {
+            if (terminal || pageSuspended || document.visibilityState === "hidden") return;
+            if (!ws || ws.readyState === WebSocket.CLOSED) {
+                reconnectAttempts = 0;
+                initWebSocket();
+            } else if (ws.readyState === WebSocket.OPEN) {
+                const socket = ws;
+                sendWsMessage({type: "sync_request"});
+                fetchPlaylist();
+                clearTimeout(returnTimer);
+                returnTimer = setTimeout(() => {
+                    if (ws === socket && socket.readyState === WebSocket.OPEN) socket.close(1000);
+                }, 2000);
+            }
+        }
+
+        document.addEventListener("visibilitychange", returnToPage);
+        window.addEventListener("online", returnToPage);
+        window.addEventListener("pagehide", () => {
+            pageSuspended = true;
+            clearTimeout(reconnectTimer);
+            clearTimeout(returnTimer);
+            if (ws) ws.close(1000);
+        });
+        window.addEventListener("pageshow", () => { pageSuspended = false; returnToPage(); });
 
         function sendWsMessage(obj) {
             if (ws && ws.readyState === WebSocket.OPEN) {
@@ -1373,7 +1434,11 @@
         }
 
         function loadVideoById(videoId, triggerWs = true) {
-            if (!player) return;
+            if (!playerReady) {
+                pendingPlayback = {videoId, state: "playing", time: 0};
+                if (triggerWs) sendWsMessage({type: "sync_response", ...pendingPlayback});
+                return;
+            }
             currentVideoId = videoId;
             player.loadVideoById(videoId);
 
@@ -1632,6 +1697,9 @@
                 toast.className = "toast";
             }, 3000);
         }
+        // Presence and the 5-second reload grace must not wait for an iframe/CDN.
+        initWebSocket();
+        fetchPlaylist();
     </script>
 </body>
 </html>

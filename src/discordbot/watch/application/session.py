@@ -87,6 +87,7 @@ class WatchSession:
         self.closed = self.durable_closed = False
         self.empty_at: float | None = intent.created + 30 + 5
         self.playback: dict[str, object] = {"state": "paused", "time": 0.0}
+        self.playback_at = clock.monotonic()
         self.rate = Rate(limits.rate_per_second * limits.clients_per_session)
         identity = ids.new_id()
         self.task = supervisor.start(TaskSpec(name="session-mailbox", owner="watch-web", work_id=identity,
@@ -117,6 +118,23 @@ class WatchSession:
         for identity, peer in tuple(self.peers.items()):
             if identity != exclude:
                 peer.offer(event)
+
+    def send_current(self, peer: Peer, *, presence: bool = False) -> None:
+        # The actor owns hydration too: a sole viewer can reload inside the
+        # existing empty grace without requiring another browser to answer.
+        if presence:
+            self.revision += 1
+            peer.offer({'type':'user_list', 'users':[p.name for p in self.peers.values() if p.name is not None],
+                        'revision':self.revision})
+        if 'videoId' in self.playback:
+            self.revision += 1
+            peer.offer(dict(self.playback_snapshot(), type='sync_response', revision=self.revision))
+
+    def playback_snapshot(self) -> dict[str, object]:
+        value = dict(self.playback)
+        if value['state'] == 'playing':
+            value['time'] = min(604800, float(value['time']) + max(0, self.clock.monotonic()-self.playback_at))
+        return value
 
     async def _close(self) -> None:
         if not self.closed:
@@ -179,12 +197,20 @@ class WatchSession:
                 self.broadcast({"type": "user_joined", "username": peer.name,
                     "message": f"👉 {peer.name}님이 시청방에 입장하셨습니다."}, exclude=identity)
                 self.broadcast({"type": "user_list", "users": [p.name for p in self.peers.values() if p.name is not None]})
+                self.send_current(peer)
                 self.broadcast({"type": "sync_request"}, exclude=identity)
             else:
                 if kind == "chat":
                     value["username"] = peer.name or str(value.get("username", "임시유저"))
                 if kind in {"state_change", "seek", "sync_response"}:
+                    self.playback = self.playback_snapshot()
                     self.playback.update({key: field for key, field in value.items() if key != "type"})
+                    if 'playing' in value:
+                        self.playback['state'] = 'playing' if value['playing'] else 'paused'
+                    self.playback.pop('playing', None)
+                    self.playback_at = self.clock.monotonic()
+                if kind == 'sync_request':
+                    self.send_current(peer, presence=True)
                 self.broadcast(value, exclude=identity)
             return None
         self.rate.take(self.clock.monotonic())
