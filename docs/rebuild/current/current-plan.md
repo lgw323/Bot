@@ -2,7 +2,27 @@
 
 Updated: 2026-09-19
 
-## PHASE 10B execution override
+## PHASE 10B full-sweep override
+
+**FULL-SWEEP POLICY VERIFIED / NEW RUNTIME APPROVAL REQUIRED / PHASE 10B INCOMPLETE.**
+최신 사용자 지시로 단일 bounded activation에서 HARD STOP만 즉시 중단하고 SOFT FAIL은 독립 검사를 계속한다.
+기존2c Music latch가 readiness를 내리므로 외부 observer만 변경해서는 충족되지 않았다.
+새 runtime source787b3178908c08ffa926f41c64ae73753c39799a에 release-bound/root-owned/최대1800초 모드,
+자동 retry 없는 독립 요청 허용, safety observer 및 focused regression을 준비했다. Dependency3dac82a… 불변.
+Windows exact full strict871 PASS/skip0/xfail0, Pi862 PASS/9 intentional Node-less Watch skips/0 xfails.
+동일9개 Windows PASS 대조 완료. 검증된 비활성 후보 r-787b3178908c08ff-3dac82a792fad576,
+manifest906c8bca…/17410 files/schema[5,5]/세 credential scope PASS. Production 활성화 승인은 별도다.
+Current pin은2c 그대로, services inactive/MainPID0, boot/backup/update/manual timers disabled, auto-update OFF.
+Fresh sudo read-only 확인: latest canonical627082…/schema5/integrity/config/보존본6개 전체 inventory 불변,
+세 credential scope exact/read-only, public9000 route1/internal private route0. 원문 row/credential 출력 없음.
+Remote branch686b946…/main8432fdef… 불변. 새 commits는 local-only, push/activation0.
+새 후보의30개 live gate 및 actual production backup/restore/boot/timer/observation은 아직 NOT TESTED다.
+과거 PASS를 승계하지 않는다. 새 push/pin 승인 뒤 한 번의 sweep에서 전 independent gate를 수집하고,
+실패하면 마지막에 새 preservation+단일 matrix+A–E remediation을 남긴다. HARD STOP 시 즉시 stop/preserve.
+모두 PASS일 때만 중단 없는 actual backup/restore/boot/timer/final observation으로 진행한다.
+DB replay/restore/remigration/down-migration/V1 시작·Audit·PHASE11·legacy 삭제 금지.
+
+## Historical 2c live retry
 
 **10B 2c LIVE SUMMARY HTTP503 / STOPPED AND VERIFIED. PHASE 10B INCOMPLETE.**
 사용자 첨부의 exact push/pin 승인에 따라4 commits/17 blobs 및 docs-only tail을 재검사하고

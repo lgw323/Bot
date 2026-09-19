@@ -1,6 +1,140 @@
 # PHASE 10 Report — Production Cutover
 
-## 10B continuation — 2c LIVE SUMMARY HTTP503 / STOPPED AND VERIFIED / PHASE 10B INCOMPLETE
+## 10B continuation — FULL-SWEEP POLICY VERIFIED / NEW RUNTIME APPROVAL REQUIRED
+
+2026-09-19 새 사용자 지시로 fail-first 검사를 HARD STOP / SOFT FAIL의 단일 bounded full-sweep로 변경했다.
+일반 기능 실패는 독립 gate를 막지 않고 수집한다. 이 세션에서 production activation은 **0회**다.
+현재 production은 정지한2c pin이며 새 정책 release를 활성화한 것으로 기록하지 않는다.
+**PHASE 10B INCOMPLETE**. 아래는 정책 구현·검증과 다음 live sweep의 승인 경계다.
+
+### Verified current state and candidate
+
+- Actual current source `2c768ec98d1fc8b1325f88cdfa1558bc6972d551`, pin
+  `r-2c768ec98d1fc8b1-3dac82a792fad576` 유지.
+- 새 runtime source **`787b3178908c08ffa926f41c64ae73753c39799a`**.
+  정책fa53f3f, 최신 stopped verifier c72428e, probe connection 정리787b317의 원자적 로컬 commits.
+  Dependency 변경 없음: `3dac82a792fad5769f4e6b32cdd0c294fbfbb4863500e8e232f85b47b3297cc6`.
+  정확한 Git archive SHA256 `ce1760794f196620d372ee30b808ca9b5ed17168f33058ea3b1afd97049e5bb6`.
+- Candidate **`r-787b3178908c08ff-3dac82a792fad576`**, stage **verified_not_activated**.
+  Pi exact ARM64 full strict **862 PASS /9 intentional Node-less Watch skips/0 failures/0 errors/0 xfails**,
+  155.342초. 동일9개 testcase name의 Windows PASS 대조 완료, 예상 밖 skip0.
+  Manifest **`906c8bcad00c5e78f54a42dd67d2b56fc0c5022d6430c058c70dd4f1786314ad`**,
+  17410 files/schema[5,5]/immutable inventory와 세 credential scope 검증 PASS.
+  Windows exact archive full strict **871 PASS /0 skip/0 xfail**,
+  65.39초, 기존 Python3.12 audioop deprecation warning1. 새 정책/actor/marker/DB-close 회귀34개 포함.
+  관련 Music/Summary/observer258 PASS 뒤 최종 DB-close regression24 PASS. 최종 문서 링크/구조2 PASS.
+- 중간 후보c72428e는 Windows870 PASS, Pi861 PASS/Node-less Watch9 skip/0 failures/0 errors,
+  154.328초였으나 최종 후보가 아니다. 서비스에 활성화하지 않았으며 immutable 보존한다.
+- Remote 재조회: `codex/rebuild-v2=686b946439ab5404cf194f8282f4559be245a1ea`,
+  `main=8432fdef40cddc131176fa875e350660dc897e12` 불변. 이 세션 push0/force0/rebase0/history rewrite0.
+  787b317까지 원격686b946 기준4 commits/15 new blobs·모든 새 commit tree/message 검사에서 secret/금지 artifact0.
+  새 runtime push/pin 승인은 아직 받지 않았다. 최종 보고 문서 tail은 source 뒤 docs-only로 별도 기록한다.
+- Fresh sudo read-only `sweep-stopped-preflight.json`: current/schema5/integrity/manifest17406 files,
+  data/state/cache/backups/audit/config 및 기존 **보존본6개 전체 inventory 불변**.
+  Canonical before=after **`6270821c287a066533f89e4f59e4aa8a74b89c14dfb5c199601e1bba4817e099`**,
+  최신2c preservation과 동일. 다른 DB로 되돌리거나 후보를 replay하지 않았다.
+  Favorites40/owners3, play counts53/settings1/users15, Watch0/0.
+  Data checksum `d18b9cda3f385875f1482bcdb08a6a9a85adc57f3feb6c1430e190a27c15b256`,
+  metadata `4cae0601ec1209414019e6028e1b702101f464e9fd928c06a647f0c3d4ff797d` 유지.
+  Config `41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40` 유지.
+- Production/staging/ops services inactive/MainPID0, boot·backup/update/manual timers disabled/inactive.
+  Auto-update OFF. Pi 추가 Python/media process0, runtime listener0 확인. 다른 host writer 부재를 이 검사만으로
+  단정하지 않는다. 세 credential scope exact/read-only/direct source access denied, 외부 login0.
+  Public route `watch.lgw323.com → http://127.0.0.1:9000`1개, internal9001/9010/9011 public route0.
+  실제 Chrome 검증과 구분한다. 미추적 gpt_handoff/zip은 건드리지 않았다.
+
+### Why the external observer alone cannot implement this sweep
+
+2c `MusicActor._stop_for_smoke`는 첫 기능 실패에서 admission을 영구 잠그며
+`DiscordFeatures.ready()`도 false가 된다. Summary trigger만 observer에서 제거하면 Music URL 실패 뒤
+검색·독립TTS가 거부되고 결국 readiness HARD STOP으로 Watch도 막힌다. Marker 제거는 정상 retry를
+재활성화하므로 no-blind-retry 요구에 어긋난다. 따라서 외부 observer만의 변경으로 충분하다고 주장하지 않는다.
+사용자 첨부3절의 “If this requires changing runtime code ... obtain the required approval before activation”에
+따라 새 exact source/release 검증 후 push/pin 승인을 받는다. 2c 승인 범위를 임의로 확장하지 않는다.
+
+### Policy and regression evidence
+
+- Root-owned, group/other non-writable, exact release, started/expires 최대1800초 JSON marker와
+  `--policy full-sweep --run-id UNIQUE`를 동시에 요구한다. 기본 runtime 및 strict observer 정책 유지.
+- Summary503/429·일반 Music/TTS/UI/command 기능 실패는 safe category/status를 남기고 SOFT FAIL.
+  새 명시적 검색·정지/퇴장·독립 TTS는 허용하고, 실패한 current media와 대기 작업의 자동 retry/autoplay는 막는다.
+  실패 current가 있는 상태에서 다른 취득 경로를 실제 재생하려면 기존 정지/퇴장으로 먼저 명시적으로 정리한다.
+  독립TTS 완료가 기존 실패 media를 자동 재취득하지 않는 회귀도 통과했다.
+- DB typed corruption/unavailable, schema/ledger/quick-check, exact release/dependency/config,
+  writer/credential scope/public route, restart/crash, readiness 연속3회, 기존 resource cap·child capacity,
+  관찰된 task.retrying, diagnostic coverage loss와 operator emergency는 HARD STOP이다.
+  보존은 stop → unique copy → fsync → 전체 inventory 일치이며 기존 보존본 overwrite/restore 없음.
+  DB read-only probe는 성공·예외 모두 connection을 명시적으로 닫는다.
+- Fake clock의 실제 observer loop에서 Summary503 → Music prepare 실패 → TTS 실패 뒤에도
+  Watch ready를 유지하며 다음 표본을 관찰했다. 정지는 지정 deadline에서1회 발생했다.
+  이 synthetic 증거를 실제 Chrome/audible PASS로 기록하지 않는다. 실제 외부 provider 재시도0.
+- Deadline/finish는 controlled stop·새 preservation. 전30 gate PASS와 사용자 실제 audio/Chrome 확인 및
+  이미 active인 replacement post-cutover guard를 모두 확인해야 서비스 중단 없는 finalization handoff 허용.
+  자세한 operator 절차·dependency 처리·rollback은 [cutover runbook](cutover-runbook.md) 최신 절을 따른다.
+
+### Single current full-sweep gate matrix
+
+아래는 **새 full-sweep 후보**의 live 결과다. 승인 전이므로 과거2c PASS를 승계하지 않는다.
+현재 선행 조건은 검증된 새 runtime의 push/pin 승인이다. Pi 격리 검증은 완료됐으며 실제 live는 미실행이다.
+
+| # | Gate | Current result |
+| --- | --- | --- |
+| 1 | Bounded startup (70s) | NOT TESTED — new runtime approval pending |
+| 2 | Gateway ready | NOT TESTED — new runtime approval pending |
+| 3 | Command sync | NOT TESTED — new runtime approval pending |
+| 4 | `/내정보` | NOT TESTED — new runtime approval pending |
+| 5 | `/랭킹` | NOT TESTED — new runtime approval pending |
+| 6 | `/요약` | NOT TESTED — new runtime approval pending |
+| 7 | `💾 보관함` | NOT TESTED — new runtime approval pending |
+| 8 | Dashboard / stored volume | NOT TESTED — new runtime approval pending |
+| 9 | Music URL request | NOT TESTED — new runtime approval pending |
+| 10 | Music search request | NOT TESTED — new runtime approval pending |
+| 11 | Result selection | NOT TESTED — new runtime approval pending |
+| 12 | Queue addition | NOT TESTED — new runtime approval pending |
+| 13 | Human-audible Music | NOT TESTED — new runtime approval pending |
+| 14 | Normal stop | NOT TESTED — new runtime approval pending |
+| 15 | Voice disconnect | NOT TESTED — new runtime approval pending |
+| 16 | Join TTS human audibility | NOT TESTED — new runtime approval pending |
+| 17 | TTS not overwritten | NOT TESTED — new runtime approval pending |
+| 18 | Music starts after TTS | NOT TESTED — new runtime approval pending |
+| 19 | Consecutive TTS / pause intent (if applicable) | NOT TESTED — new runtime approval pending |
+| 20 | Chrome Watch create | NOT TESTED — new runtime approval pending |
+| 21 | Watch connect | NOT TESTED — new runtime approval pending |
+| 22 | Viewer presence | NOT TESTED — new runtime approval pending |
+| 23 | Refresh | NOT TESTED — new runtime approval pending |
+| 24 | Reconnect | NOT TESTED — new runtime approval pending |
+| 25 | Tab leave / return | NOT TESTED — new runtime approval pending |
+| 26 | Hydration | NOT TESTED — new runtime approval pending |
+| 27 | Synchronization | NOT TESTED — new runtime approval pending |
+| 28 | Close | NOT TESTED — new runtime approval pending |
+| 29 | Private admin close | NOT TESTED — new runtime approval pending |
+| 30 | Actual Cloudflare public browser path | NOT TESTED — new runtime approval pending |
+| 31 | Actual production encrypted backup / Bot-Data publication / read-back | NOT TESTED — all live gates prerequisite |
+| 32 | Independent download/decrypt/schema/count/semantic/application restore | NOT TESTED — production backup prerequisite |
+| 33 | Production boot /4h backup timer | NOT TESTED — restore prerequisite; disabled |
+| 34 | Final bounded production observation | NOT TESTED — finalization prerequisite |
+
+### Consolidated remediation and evidence boundary
+
+| Group / stage | Safe category / policy | Independent continuation / blocked gates | Supported layer / repair evidence |
+| --- | --- | --- | --- |
+| A — full-sweep Music admission | validation policy limitation; code prepared | New mode permits explicit search/TTS; actual gates await approval | Existing fail-fast latch/ready coupling confirmed; focused and full strict tests |
+| B — prior2c Summary | `external_temporary/http_server_error/503`; SOFT FAIL in new mode | Must continue Music/TTS/Watch; no dependent blocking | External provider response confirmed historically; current availability/quota unknown; one intended live request required |
+| C — Watch/Chrome integration | insufficient live evidence | All browser lifecycle checks remain independently required | No new browser defect established; actual PC Chrome public path needed |
+| D — observer workflow | old Summary/Music fail-first policy; replaced only for bounded mode | New guard classifies safety separately; no automatic request retry | Synthetic multi-failure loop and safety tests; actual live observer not yet exercised |
+| E — audible Music/TTS/input | insufficient exact-release evidence | Prior Music no-response followed Summary stop; no isolated active-runtime failure proven | Need fresh URL/search, actual hearing/order, normal stop/disconnect and pause checks |
+
+이번은 승인 대기 준비 결과이며 실행한 full-sweep의 완료 결과가 아니다. 원래 사용자 목적은 아직 남아 있다.
+일반 feature bug를 live 중 하나씩 고치거나 provider/model/config/dependency를 바꾸지 않았다.
+새 canonical preservation 생성0(서비스 시작0), 기존6개 identities는 바로 아래 보존 이력 표와 동일하다.
+Actual backup/publication/restore/boot/timer/완료 후 observation0. Audit/PHASE11/V1 삭제/legacy cleanup0.
+최종 검증을 완료했다. Exact new source787b317/pin r-787b3178908c08ff-3dac82a792fad576와
+보고 docs-only tail의 일반 FF push 및 단일 full-sweep activation을 승인 요청한다.
+Safe evidence: `sweep-stopped-preflight.json`, `retry-build-787b3178908c.json`,
+local `full-sweep-final-windows.xml`, `full-sweep-cross-platform.json`.
+**Final verdict: PHASE 10B INCOMPLETE — policy verified, production sweep awaiting required new-runtime approval.**
+
+## Historical live retry — 2c SUMMARY HTTP503 / STOPPED AND VERIFIED
 
 2026-09-19 사용자 첨부 지시문이 검증된2c source의 일반 FF push와 exact pin/live retry를 명시적으로
 승인했다. 새 release는 readiness를 통과했으나 실제 `/요약` HTTP503으로 자동 정지·새 보존했다.
