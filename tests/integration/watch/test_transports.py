@@ -48,6 +48,13 @@ async def test_public_routes_security_playlist_and_terminal(service, invite):
         assert page.status_code == 200
         assert "frame-ancestors 'none'" in page.headers["content-security-policy"]
         assert page.headers["referrer-policy"] == "no-referrer"
+        from hashlib import sha256
+        from pathlib import Path
+        from discordbot.watch.adapters import web
+        template = Path(web.__file__).with_name("templates").joinpath("player.html").read_text(encoding="utf-8")
+        assert page.headers["x-watch-client-revision"] == sha256(template.encode()).hexdigest()
+        assert page.headers["cache-control"] == "no-store"
+        assert "etag" not in page.headers
         assert "__WATCH_NONCE__" not in page.text
         assert "escapeHtml" in page.text and "X-Watch-CSRF" in page.text
         data = {"video_url": "https://youtu.be/aaaaaaaaaaa", "added_by": "<script>"}

@@ -2,6 +2,7 @@
 
 import asyncio
 from dataclasses import asdict
+from hashlib import sha256
 from pathlib import Path
 import secrets
 from urllib.parse import urlsplit
@@ -18,6 +19,7 @@ def build_public_app(service: WatchService, origin: str):
     from fastapi.responses import HTMLResponse, JSONResponse
     origin = public_origin(origin)
     template = Path(__file__).with_name("templates").joinpath("player.html").read_text(encoding="utf-8")
+    client_revision = sha256(template.encode("utf-8")).hexdigest()
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     app.add_middleware(Ingress, maximum=service.limits.body_bytes, capacity=service.limits.requests)
     rate = Rate(80)
@@ -57,7 +59,8 @@ def build_public_app(service: WatchService, origin: str):
             "img-src 'self' data: https://i.ytimg.com https://img.youtube.com; "
             "frame-src https://www.youtube.com; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
         return HTMLResponse(template.replace("__WATCH_NONCE__", nonce), headers={"Content-Security-Policy": csp,
-            "Referrer-Policy": "no-referrer", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
+            "Referrer-Policy": "no-referrer", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
+            "X-Watch-Client-Revision": client_revision})
 
     @app.get("/api/playlist/{session_id}")
     async def playlist(request: Request, session_id: str):

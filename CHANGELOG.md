@@ -16,6 +16,9 @@
 ## [Unreleased]
 
 ### Fixed
+- Watch의 YouTube API script를 defer하여 Chrome의 warm-cache 새로고침에서도 준비 콜백이 먼저 등록됩니다.
+  영상 전환 중 잠시 없는 iframe metadata는 재생 확인 대기로 처리합니다. 실제 Chrome·YouTube iframe의
+  실패→성공 회귀와 독립 context/TCP 단절 검증을 추가했으며, 응답 header로 client asset hash를 확인할 수 있습니다.
 - Watch 새로고침·재접속은 서버의 영상·위치·재생 상태를 비동기 플레이어에 복원하고 완료 상태를 확인합니다.
   기존 참여자의 오래된 화면으로 방 상태를 덮어쓰지 않으며, 자동재생 차단·재생 미확인 시 직접 누르는
   `재생 이어가기`를 표시합니다. 연결 성공과 실제 재생 동기화 상태를 구분합니다.

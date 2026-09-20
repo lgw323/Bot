@@ -42,7 +42,9 @@ function client(room, blocked=false) {
         createElement:element,querySelectorAll:()=>[]};
     const frame={id:null,time:0,state:-1,at:room.now,pending:null,blocked,gesture:false,commands:[],
         getCurrentTime(){return this.time+(this.state===1?(room.now-this.at)/1000:0);},getPlayerState(){return this.state;},
-        getVideoData(){return {video_id:this.id};},
+        // The real iframe API clears metadata synchronously while loading and
+        // fills it again in a later message. It is not always an object.
+        getVideoData(){return this.pending ? undefined : {video_id:this.id};},
         loadVideoById(value,start=0){this.load(value,start,'playing');},
         cueVideoById(value,start=0){this.load(value,start,'paused');},
         load(value,start,intent){this.commands.push(intent);this.pending=typeof value==='string'?{videoId:value,startSeconds:start,intent}:{...value,intent};this.state=-1;},
