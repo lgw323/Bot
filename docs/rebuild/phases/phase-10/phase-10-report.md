@@ -1008,7 +1008,7 @@ worker assertion을 통과했다. 자연 발생 장애를 재현하거나 기존
 기존 migration/restore/schema/integrity 검증과 이번 synthetic validation에 데이터 손상 증거는 없었다.
 과거 모든 transient가 무해했다는 뜻은 아니다. 첫 검증 backup 이후 age<=6h, remote publication 실패,
 identity split, audit/fsync uncertainty, writer 충돌을 성공 선언 중단/복구 검토 trigger로 둔다.
-세부 [monitoring 및 rollback 절차](final-command-sheet.md#7-monitoring-stop-triggers)를 따른다.
+세부 [monitoring 및 rollback 절차](final-command-sheet.md#7-monitoring--stop-triggers)를 따른다.
 
 ## Final Config / Route / Installation Evidence
 

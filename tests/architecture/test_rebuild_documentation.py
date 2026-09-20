@@ -40,6 +40,15 @@ CURRENT_DOCUMENTS = {
     "open-questions.md",
     "requirement-test-trace.md",
 }
+# Later evidence/audit additions are permitted, not required in a checkout that
+# predates them. The link check below requires every referenced canonical target.
+CURRENT_EXTENSIONS = {
+    "phase-10b-active-state.md",
+    "phase-10b-gate-ledger.md",
+    "final-audit-active-state.md",
+    "final-audit-ledger.md",
+    "final-audit-document-index.md",
+}
 PHASE_DOCUMENTS = {
     "phase-00": {"phase-0-report.md"},
     "phase-01": {
@@ -67,13 +76,20 @@ def _anchor(text: str) -> str:
     value = text.strip().casefold()
     value = re.sub(r"[`*_~]", "", value)
     value = re.sub(r"[^\w\- ]", "", value)
-    return re.sub(r"[ ]+", "-", value)
+    return value.replace(" ", "-")
+
+
+def test_heading_anchor_preserves_spaces_around_removed_punctuation() -> None:
+    assert _anchor("Final completion verdict — 2026-09-20") == "final-completion-verdict--2026-09-20"
 
 
 def test_rebuild_documents_are_partitioned_without_loss() -> None:
     assert _markdown_names(REBUILD_ROOT) == {"README.md", "phase-10-full-sweep-report.md"}
     assert _markdown_names(REBUILD_ROOT / "baseline") == BASELINE_DOCUMENTS
-    assert _markdown_names(REBUILD_ROOT / "current") == CURRENT_DOCUMENTS
+    current = _markdown_names(REBUILD_ROOT / "current")
+    assert CURRENT_DOCUMENTS <= current <= CURRENT_DOCUMENTS | CURRENT_EXTENSIONS
+    if (REBUILD_ROOT / "final-audit").exists():
+        assert _markdown_names(REBUILD_ROOT / "final-audit") == {"a0-phase-0-report.md"}
     for phase, expected in PHASE_DOCUMENTS.items():
         assert _markdown_names(REBUILD_ROOT / "phases" / phase) == expected
 
@@ -81,6 +97,9 @@ def test_rebuild_documents_are_partitioned_without_loss() -> None:
 def test_all_relative_rebuild_document_links_resolve() -> None:
     failures: list[str] = []
     for document in sorted(REBUILD_ROOT.rglob("*.md")):
+        # S0 defines this copied handoff tree as export material, not canonical docs.
+        if document.is_relative_to(REBUILD_ROOT / "gpt_handoff"):
+            continue
         text = document.read_text(encoding="utf-8")
         for raw_target in MARKDOWN_LINK.findall(text):
             target = raw_target.strip().strip("<>")
