@@ -2,16 +2,19 @@
 
 ## Current PHASE 10B full-sweep status
 
-**PHASE 10B INCOMPLETE — ECD full sweep 종료, services stopped / ninth preservation verified.**
-Source `ecd391ff4548b7bda572ef916c30be296b714f94`, pin `r-ecd391ff4548b7bd-3dac82a792fad576`.
-승인된99d80c6까지 일반 FF push/read-back 완료. Main 불변. 이번30 gates는 **26 PASS/3 FAIL/1 NOT TESTED**:
-Watch refresh/hydration/일부 참여자 sync 실패, network-drop recovery 미시험. Music pause UI 결함도 별도 확인했다.
-Music URL/search 실제 청취·입장 TTS/순서·요약·두 Watch 종료 경로는 사용자 PASS. 안전 HARD STOP0.
-최신 canonical/preserved DB **`e5661a0256c9873941db974019f30256c9ed9e3d2f2559cb2eecd06b259c2e52`**, schema5/integrity/fsync/current-copy PASS,
-새9번째 preservation `/var/lib/discordbot/phase10-retry-ecd391ff4548b7bd-live-smoke-h2-full-sweep-20260919-01-guard-preservation` 및 기존8개 불변.
-Boot/backup/update/manual timers disabled, auto-update OFF; actual backup/restore/final observation 미진행.
-후속 일괄 수정·새 runtime 검증 후 다음 push/pin 승인이 필요하다. 현재 정지 유지, old restore/replay 없음.
-상세30-gate matrix·safe evidence·A–E 수정 범위는 [전용 보고서](../../phase-10-full-sweep-report.md) 최상단을 따른다.
+**PHASE 10B INCOMPLETE — de3aae sweep 21 PASS/3 FAIL/6 NOT TESTED, stopped/preserved verified.**
+Current source `de3aae30a82828433666c872b6789abfbb19648b`, pin `r-de3aae30a8282843-3dac82a792fad576`.
+Approved HEAD26da4c2까지 정상 FF push/read-back 완료, main8432fdef… 불변. Readiness25.693s/70s PASS.
+Music URL/search/actual audio/한 클릭 pause-resume/TTS 청취·재생 복귀 PASS.
+Summary HTTP503 및 Watch refresh/hydration black-player FAIL; paused TTS/network/multi-client/종료 등6gate 미검증.
+Guard `unexpected_python_writer`로 자동 정지·새10번째 preservation 생성 후 canonical/copy integrity 검증 PASS.
+Agent의 별도 readonly Python poll이 기존 writer 규칙에 해당함을 격리 재현했으나 실제 offending PID 미기록으로
+당시 감지 대상 확정은 불가. Guard 완화·runtime 수정·재시작은 하지 않았다.
+Newest canonical/copy `860f5fcc96ae25322c392bffc65930923a7634229dc4c6294662c54d0529b647`, schema5/integrity PASS.
+기존9preservation/config 불변. Production/staging/ops inactive/MainPID0, boot/timers disabled; auto-update OFF.
+Actual backup/publication/restore/final observation 미실행. 원래 단일 실행 승인으로 재시도하지 않는다.
+Old restore/replay/migration/V1 start 금지. Audit0–10/Integrated Audit/PHASE11/legacy cleanup 미착수.
+상세 결과·승인 경계는 [전용 보고서](../../phase-10-full-sweep-report.md) 최상단을 따른다.
 
 Full-sweep 정책 검증과 credential HARD STOP 상세 continuation을
 [PHASE 10B full-sweep report](../../phase-10-full-sweep-report.md)로 이동했다.

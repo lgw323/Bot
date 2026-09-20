@@ -8,6 +8,144 @@
 과거 본문의 이전 보존 이력 참조는 부모 보고서에 남아 있다. 이후 상세 full-sweep 근거는 이 파일에만 추가한다.
 문서 분리는 production 상태 변경이나 새로운 runtime 활성화 승인이 아니다.
 
+## Continuation — 승인된 de3aae sweep / 기능 실패 및 writer guard 정지·보존 검증 (2026-09-20)
+
+**PHASE 10B INCOMPLETE — 21 PASS /3 FAIL /6 NOT TESTED. Services stopped; tenth preservation verified.**
+사용자가 exact HEAD/pin의 단일 bounded30-gate 실행과, 전 필수 gate PASS 뒤에만 actual backup/restore →
+boot/4h timer → bounded final observation을 통합 승인했다. Summary SOFT FAIL 뒤 독립 Music/TTS/Watch 검사를
+계속했으나 `unexpected_python_writer` safety 조건이 발생해 guard가 두 서비스를 정지했다.
+현재 승인된 단일 실행은 종료했다. 재시작·재시도·runtime 수정·guard 완화·추가 push/pin을 하지 않는다.
+
+### Publication / activation / unchanged scope
+
+- Push 직전6commit/22newblob 및 각 commit tree/message 검사 finding0. Runtime
+  `de3aae30a82828433666c872b6789abfbb19648b` 이후2commit은 이 보고서/current plan만 변경.
+  `99d80c6b5fc9aeddaf5ebd416539dfe7aa5a1ceb` → **`26da4c210792b8c0ee2aec17e12b9551bc5f3a9c`**
+  정상 FF push/read-back 완료. Main `8432fdef40cddc131176fa875e350660dc897e12` 불변.
+- Exact current pin **`r-de3aae30a8282843-3dac82a792fad576`**. Manifest
+  `e70649a2607c642b08cd11399c1a081de05250560abbd5101be3e231d55a4c57`,17419files/schema[5,5],
+  dependency `3dac82a792fad5769f4e6b32cdd0c294fbfbb4863500e8e232f85b47b3297cc6` 불변.
+- Fresh stopped preflight: canonicalE566/config41ed/schema5, 기존9preservation 및 retained c724,
+  current/rollback pointers, credential3scope/root observer, services/timers disabled, public9000 route PASS.
+  Protected metadata aggregate `69b09b7272c5e05ce90df357f33da9193aed5e7999043ec0f1928f98826b0dfa` 일치.
+  DB/config/release compatibility 검증 후 pointer-only activation1회, production start1회.
+- Start `2026-09-20T01:40:45.328719Z`; ready `2026-09-20T01:41:11.029043Z`:
+  **25.693s /70s PASS**. Run `batch-full-sweep-20260920-01`; expiry02:09:25.227418Z 이전 safety stop.
+  Windows1009PASS/Pi979PASS+30intentional skip의 기존 exact-release 검증을 재사용했고 dependency 변경0.
+- Operator orchestration만 별도 scratch/WORK 경로에 준비했다. Finalization 도구에는 approved actual canonical
+  schema/count/data/metadata before/after 및 isolated restore 대조를 준비했으나 조건 불충족으로 실행하지 않았다.
+
+### Current exact-run gate matrix
+
+과거 ECD PASS를 승계하지 않는다. 실제 사용자가 확인한 결과와 미확인 경계를 분리했다.
+
+| # | Gate | Result | Current-run evidence / limit |
+| --- | --- | --- | --- |
+| 1 | 70s startup | PASS | 25.693s /70s |
+| 2 | Gateway | PASS | same-release ready |
+| 3 | Command sync | PASS | readiness command sync |
+| 4 | /내정보 | PASS | user confirmed |
+| 5 | /랭킹 | PASS | user confirmed |
+| 6 | /요약 | FAIL | external_temporary/http_server_error/503, one request |
+| 7 | 보관함 | PASS | user confirmed |
+| 8 | Volume display | PASS | display-only contract; user confirmed |
+| 9 | Music URL | PASS | fresh request after stopping restored track |
+| 10 | Music search | PASS | user confirmed search and actual audio |
+| 11 | Selection | PASS | user confirmed |
+| 12 | Queue | PASS | user confirmed |
+| 13 | Human-audible Music | PASS | user heard actual audio |
+| 14 | Normal stop | PASS | user confirmed |
+| 15 | Voice disconnect | PASS | user confirmed |
+| 16 | Human-audible join TTS | PASS | user heard entry announcement |
+| 17 | TTS not overwritten | PASS | music yielded while TTS audible |
+| 18 | Music after TTS | PASS | user confirmed resumed audio from previously-playing case |
+| 19 | Paused intent / consecutive TTS | NOT TESTED | user explicitly cannot recall previously-paused case |
+| 20 | Chrome Watch create | PASS | actual PC Chrome, video addition initially worked |
+| 21 | Watch connect | PASS | actual public invite opened |
+| 22 | Presence | PASS | single participant label visible; multi-client not verified |
+| 23 | Refresh | FAIL | black player after refresh, controls absent |
+| 24 | Network reconnect | NOT TESTED | actual network drop not performed |
+| 25 | Tab return | NOT TESTED | no fresh confirmation before safety stop |
+| 26 | Playback hydration | FAIL | video/position not restored; black player |
+| 27 | Multi-participant sync | NOT TESTED | friends unavailable; >=2 participants not tested |
+| 28 | Normal Watch close | NOT TESTED | safety stop interrupted completion; no independent PASS |
+| 29 | Private admin close | NOT TESTED | new /시청 nonresponse overlapped stopped pair; blocked |
+| 30 | Actual public Chrome path | PASS | actual watch.lgw323.com browser route accessed |
+
+추가 필수/관찰 항목:
+- **Music 한 클릭 pause/resume PASS**: 첫 클릭에 실제 음성이 멈추고, 다음 클릭에 재개됨을 사용자 확인.
+  재생 중 `⏸️`는 누르면 수행할 일시정지 동작을 뜻한다. 이번 보고된 동작은 이 계약과 일치한다.
+- 시작 직후 전날 트랙의 자동복원 관찰 후 사용자가 정상 퇴장시키고 새 URL·검색 경로를 각각 시험했다.
+  재시작 복원은 유지 계약이지만, 전날 정지 시점과 저장 상태까지 정상이라고 추가 단정하지 않는다.
+- 혼자 다른 voice channel로 빠르게 이동했다 돌아왔을 때 jukebox thumbnail 소실 관찰.
+  Safe telemetry에 `empty` work 시작이 있으나 정확한 UI/actor 시점과 원인은 입증되지 않았다.
+- TTS 실제 청취·재생 중 TTS 이후 음악 재개는 확인했다. 사용자는 후속 질문에서 **미리 pause한 상태는
+  불확실**하다고 명시했으므로 pause intent PASS로 계산하지 않는다.
+- Watch playing/refresh black failure 확인. Paused refresh, 실제 network disconnect/reconnect,
+  >=2 참여자 play/pause/seek는 미검증. `유저_숫자`는 페이지당 random display name 생성 코드와 일치하지만
+  이 사실을 black-player 원인으로 취급하지 않는다. CSP/iframe/player-ready/browser/provider 원인은 아직 미확정.
+- 사용자 후속 `/시청` 무응답 당시 pair inactive/MainPID0를 확인했다. 해당 요청의 정확한 시각이 없어
+  별도의 Discord command 결함으로 확정하거나 정상 종료/admin close PASS로 취급하지 않는다.
+
+### Safety stop and operator observation conflict
+
+- Final guard status **`guard_stopped_pair`**, trigger `safety_invariant_failed`, safe reason
+  **`unexpected_python_writer`**. `pair_stopped/newest_state_preserved/inventory_verified=true`.
+  Guard 실행 관찰 **520.003s**,25poll records (매 record가 독립 fresh sample인 것은 아님).
+  마지막 fresh sample `2026-09-20T01:49:28.815300+00:00` 당시 두 서비스는
+  ready/NRestarts0였고 DB probes 정상, integrity/schema5 PASS였다. 이후 guard stop 및 preservation 완료.
+- **이번 agent의 관찰 도구 선택 문제**: safe JSON을 짧은 별도 SSH Python 프로세스
+  `batch-poll.py`로 읽었다. 이 도구는 start/summary JSON만 읽으며 DB·credential 읽기/쓰기나 서비스 변경을 하지
+  않지만, service/observer descendant가 아닌 Python을 모두 거부하는 기존 writer 규칙에 해당한다.
+  이 감시 조건을 사전에 고려하지 않은 운영 도구 선택은 부적절했다. 이후 원격 확인은 `cat`/SCP로 수행했다.
+- Production에 재현 요청하지 않고 exact `owned()` + rejection predicate AST를 가짜 process table로 검증:
+  service/observer만 PASS, owned media child PASS, 별도 readonly Python은 같은 error 발생,
+  cat/SCP는 발생하지 않음 — **4/4 expected results**. Runtime 수정0/production calls0.
+  Stop 시점 offending PID/comm/parent가 기록되지 않으므로 **해당 poll이 실제 감지 대상이었다는 확정은 불가**.
+  실제 무단 writer가 있었다거나 credential-security 위반이었다는 증거도 없다.
+  Guard 규칙의 deterministic 충돌 가능성과 실제 PID attribution 한계를 함께 기록한다.
+- 실제 H1 credential_permission 오류는 이번 run에 없었다. Credential 범위·readonly/권한 검사는 직전까지 PASS.
+  Guard를 우회/완화하거나 같은 승인으로 두 번째 activation을 하지 않았다. 안전 원인이 해소됐다고 선언하지 않는다.
+
+### Stop preservation / canonical identity
+
+- **`verified_stopped_preserved_integrity`**. Current pin de3aae 유지, production/staging/ops 및 guard
+  inactive/MainPID0, NRestarts0. Boot/backup/update/manual timers disabled/inactive; auto-update/manual polling OFF.
+- New tenth preservation:
+  `/var/lib/discordbot/phase10-retry-de3aae30a8282843-live-smoke-batch-full-sweep-20260920-01-guard-preservation`.
+  Whole file inventory SHA256 **`2933e76fe7e07ea57e8183132949462476298961890aa3d2c23f33223250121a`**.
+  Data/state/cache/backups/audit 및 config canonical/copy inventory 모두 일치, fsync PASS.
+  기존9preservation와 config 불변, overwrite0.
+- Newest canonical AND copy SHA256 **`860f5fcc96ae25322c392bffc65930923a7634229dc4c6294662c54d0529b647`**,
+  schema5/integrity PASS; favorites40/owners3/play_counts53/settings1/users15/Watch0/0.
+  Data checksum `c52382d5edf3c80d2e06dfbaa27a850bf04aaae6f77a73942fc8dc7a7937d386`,
+  metadata checksum `f20317d783d9a168f84bdbdfc96152c3a7e3f6e6f6cae5fb81b516fe5d77cb63`.
+  WAL/SHM/journal 양쪽 미존재. 이전E566 DB로 restore/replay하지 않는다.
+- Config SHA256 `41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40` 불변.
+  Credential source metadata root:root0600/regular/no symlink, runtime credential mounts 정지 후 사라짐.
+  Cloudflare route1개 `watch.lgw323.com → http://127.0.0.1:9000`, internal-port route0.
+
+### Partial live observations / finalization boundary
+
+- First→last fresh samples: Discord RSS83652→94868KiB, FD16→11, threads10→7;
+  Watch RSS68496→70304KiB, FD10→11, threads4→5. 양쪽 NRestarts0, 마지막 successful DB probe counter100.
+  마지막 music_processes0/cache6624319bytes, Watch sessions1/clients1; 안전 정지 후 persisted Watch0/0.
+- Cache7files/6624319bytes, backups0, audit160files/33508bytes (stop 전 sample).
+  Disk free103573794816→103573635072bytes; temperature67.2→64.45°C; throttling0→0.
+  Sample read errors0, backup_age=-1/backup_rpo_exceeded=1은 actual production backup 미실행 상태다.
+  First/last 값을 전체 기간 min/max나 production 안정성 완료 근거로 과장하지 않는다.
+- **Actual production backup/Bot-Data publication/read-back/download/decrypt/restore0**;
+  **boot/4h timer enable0; bounded final production observation0**.
+  Partial live520.003s는 finalization 완료 후 observation이 아니다. Journal 용량 최종 확인은 미실행.
+- 새 runtime code/test 변경0. Final approval 조건 불충족으로 COMPLETE 선언 금지.
+  PHASE11/Audit0–10/Integrated Audit/V1 삭제/legacy cleanup 미착수.
+  추가 production retry는 현재 종료한 단일 실행의 승인을 재사용하지 않고 정확한 다음 범위를 승인받는다.
+
+Safe evidence: `batch-approved-preflight.json`, `batch-approved-start.json`, `batch-approved-push.json`,
+`batch-git-audit-26da4c210792.json`, `batch-approved-gates.json`, `batch-final-summary.json`,
+`batch-approved-stop-inspection.json`, `batch-poll-policy-reproduction.json`.
+상세 원문 DB/사용자 ID/메시지/음악 제목·URL/credential 값은 조회·보고에 포함하지 않았다.
+
 ## Continuation — 승인된 cold archive 완료 / exact immutable candidate 검증 (2026-09-20)
 
 **PHASE 10B INCOMPLETE — candidate `verified_not_activated`, 단일 통합 push/pin 승인 대기.**
