@@ -100,6 +100,13 @@ os.environ.pop('PYTHON_DOTENV_DISABLED', None)
 assert dotenv.load_dotenv() is False
 assert dotenv.main.load_dotenv('.env') is False
 assert 'DISCORD_TOKEN' not in os.environ
+with patch('os.path.realpath', return_value=os.path.abspath('outside-credential')):
+    try:
+        Path('.env').read_text()
+    except PermissionError:
+        pass
+    else:
+        raise AssertionError('repository dotenv symlink name bypassed boundary')
 with patch.object(Path, 'resolve', side_effect=AssertionError('mockable path resolution')):
     for reader in (lambda: Path('.env').read_text(), lambda: dotenv.dotenv_values('.env')):
         try:

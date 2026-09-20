@@ -21,10 +21,13 @@ def _deny_repository_credentials(event: str, args: tuple[Any, ...]) -> None:
         return
     # Do not use Path.resolve here: filesystem tests replace it with a model
     # that reads files, which would recursively trigger this audit hook.
-    path = os.path.normcase(os.path.realpath(os.fsdecode(args[0])))
-    name = os.path.basename(path)
-    if os.path.dirname(path) == _REPOSITORY and (name == ".env" or name.startswith(".env.")):
-        raise PermissionError("pytest forbids repository credential file access")
+    path = os.path.normcase(os.path.abspath(os.fsdecode(args[0])))
+    # Check the requested name first: .env itself may point outside the repo.
+    # Then check the resolved name to catch an alias pointing into the repo.
+    for candidate in (path, os.path.normcase(os.path.realpath(path))):
+        name = os.path.basename(candidate)
+        if os.path.dirname(candidate) == _REPOSITORY and (name == ".env" or name.startswith(".env.")):
+            raise PermissionError("pytest forbids repository credential file access")
 
 
 sys.addaudithook(_deny_repository_credentials)
