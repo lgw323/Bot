@@ -22,9 +22,9 @@ import zipfile
 
 ROOT = Path('/var/lib/discordbot')
 WORK = Path('/home/os/discordbot-phase10')
-OLD = Path('/opt/discordbot/releases/r-ecd391ff4548b7bd-3dac82a792fad576')
+OLD = Path('/opt/discordbot/releases/r-de3aae30a8282843-3dac82a792fad576')
 CONFIG = Path('/etc/discordbot/config.json')
-DB_SHA = 'e5661a0256c9873941db974019f30256c9ed9e3d2f2559cb2eecd06b259c2e52'
+DB_SHA = '860f5fcc96ae25322c392bffc65930923a7634229dc4c6294662c54d0529b647'
 PRESERVED = {
     'phase10-precutover-63c7722/failed-attempt': '52d2ef8813e72e0ab791d359c81a514f11622a1ca86a7165e2a211b1826cc1af',
     'phase10-retry-368c8ebf7cbf-favorites-failed-20260919T065256492640Z': 'fab61bdda1dd2c8b664c5fd19525d1cdd46f20c82d630a94ce2ed4caf6f5cc65',
@@ -34,7 +34,8 @@ PRESERVED = {
     'phase10-retry-2c768ec98d1fc8b1-live-smoke-guard-preservation': '6270821c287a066533f89e4f59e4aa8a74b89c14dfb5c199601e1bba4817e099',
     'phase10-retry-787b3178908c08ff-live-smoke-full-sweep-20260919-01-guard-preservation': 'f47fbef36b7eded3e4b990f8179598b38b0e0bdbd818431eada33dab9aa89748',
     'phase10-retry-92c25546af6b4904-live-smoke-h1-full-sweep-20260919-01-guard-preservation': '678e93ec4fd2d087d5ce20ba2239fb205b0daa130cb3e804e300dbd5183aef66',
-    'phase10-retry-ecd391ff4548b7bd-live-smoke-h2-full-sweep-20260919-01-guard-preservation': DB_SHA,
+    'phase10-retry-ecd391ff4548b7bd-live-smoke-h2-full-sweep-20260919-01-guard-preservation': 'e5661a0256c9873941db974019f30256c9ed9e3d2f2559cb2eecd06b259c2e52',
+    'phase10-retry-de3aae30a8282843-live-smoke-batch-full-sweep-20260920-01-guard-preservation': DB_SHA,
 }
 CONFIG_SHA = '41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40'
 SCOPES = {'discord-bot': ('discord_token', 'gemini_key', 'control_key'),
