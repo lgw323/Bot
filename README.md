@@ -50,6 +50,9 @@ python main_bot.py
 python -m pytest tests/
 ```
 
+루트 `conftest.py`는 테스트 수집 전에 자동 `.env` 로딩과 저장소 `.env` 직접 읽기를
+차단하고, 실행 셸에서 상속된 앱 설정을 제거합니다. 필요한 설정은 테스트가 명시적인
+합성 값으로 제공합니다. 이 보호는 일반 fixture보다 먼저 적용되며 운영 실행에는 적용되지 않습니다.
 테스트는 `tests/conftest.py`가 준비한 임시 SQLite DB와 임시 백업 경로를
 사용합니다. 실제 `data/bot_database.db`, 실제 SQL 백업, Discord, Gemini,
 YouTube, GitHub와 systemd에는 접근하지 않습니다.

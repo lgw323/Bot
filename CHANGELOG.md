@@ -1,5 +1,10 @@
 # Changelog
 
+## A0R test credential isolation
+
+- pytest 수집 전 자동 dotenv 로딩과 저장소 credential 파일 접근을 차단하고 상속된 앱 설정을 제거한다.
+- 합성 canary와 별도 Python process로 두 V1 import 경로의 수집 전 격리 및 보호 없는 실패를 검증한다.
+
 ## PHASE 10B bounded full-sweep validation
 
 - 명시적 root-owned/release-bound/최대30분 검사 모드에서 일반 기능 실패를 SOFT FAIL로 수집하고 독립 검사를 계속한다.
