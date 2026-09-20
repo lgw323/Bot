@@ -13,7 +13,17 @@ cutover/migration의 역사적 근거는 부모 보고서를 따른다. 부모�
 보고서 분리는 완료됐다. H1 검증은 유효하며 현재 full-sweep 결과·후속 수정 범위·승인 경계는 아래 최신 요약을 따른다.
 새 runtime production 적용 또는 새 push/pin이 필요할 때 정확한 검증 후보에 대한 승인을 받는다.
 
-**PHASE 10B INCOMPLETE — de3aae sweep 21 PASS/3 FAIL/6 NOT TESTED, stopped/preserved verified.**
+**PHASE 10B INCOMPLETE — 실제 Chrome refresh FAIL→PASS, Windows1009 PASS; Pi 슬롯 승인 대기.**
+최신 작업: 실제 Chrome153 + 실제 YouTube iframe/Watch adapter + synthetic DB로 warm-cache callback 누락 재현.
+`defer` 및 로딩 중 metadata guard로 최소 수정. Playing/paused refresh, 독립 peer2개 sync,
+실제 autoplay 차단/명시적 복구, TCP 단절 후2→1→2/reconnect/terminal PASS. Public 재검증은 아직 미실행.
+후보 source **`8e9018d4b8061cde6006eee47fa4103522f77718`**, 집중119PASS, 최종 Windows full strict1회1009PASS.
+Pi release16/16: 비보호 `r-787b3178908c08ff-3dac82a792fad576`의 retained 동일 filesystem rename 승인 필요.
+이전 c724만의 승인을 확장하지 않는다. Slot 확보 후 exact-source Pi/release full strict1회 및
+manifest/credential/immutable/protected-state 검증을 끝내고 통합 push/pin/full-sweep 승인을 요청한다.
+새 production start/push0; 후보 immutable release 아직 미생성. 상세 근거는 full-sweep report 최상단.
+
+마지막 production sweep은21PASS/3FAIL/6NOTTESTED이며 아래 identity로 정지·보존한 상태다.
 Current source `de3aae30a82828433666c872b6789abfbb19648b`, pin `r-de3aae30a8282843-3dac82a792fad576`.
 Approved HEAD26da4c2까지 정상 FF push/read-back 완료, main8432fdef… 불변. Readiness25.693s/70s PASS.
 Music URL/search/actual audio/한 클릭 pause-resume/TTS 청취·재생 복귀 PASS.

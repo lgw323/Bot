@@ -8,6 +8,126 @@
 과거 본문의 이전 보존 이력 참조는 부모 보고서에 남아 있다. 이후 상세 full-sweep 근거는 이 파일에만 추가한다.
 문서 분리는 production 상태 변경이나 새로운 runtime 활성화 승인이 아니다.
 
+## Continuation — 실제 Chrome warm refresh FAIL → PASS / 최소 Watch 수정 (2026-09-20)
+
+**PHASE 10B INCOMPLETE — Stage A/B 완료. 실제 설치 Chrome + 실제 YouTube iframe에서 기존 코드 FAIL,
+수정 코드 PASS. Production 미활성화; 최종 Pi candidate는 아직 검증 전이다.**
+사용자의 변경된 실행 전략에 따라 추가30-gate sweep 없이 로컬 synthetic Watch session으로 원인을 재현했다.
+실제 독립 browser context2개 검증과 실제 TCP disconnect/reconnect도 PASS했다. Stage C Windows 최종1회
+**1009 PASS /0 skip**. Pi release capacity16/16 때문에 새로운 cold archive 대상 승인이 필요하다.
+
+### Browser fidelity / established cause
+
+- Chrome **153.0.8010.50**, 기존 bundled Playwright/CDP 사용. 설치·runtime dependency 변경0.
+  Loopback의 실제 Watch HTTP/WebSocket/actor/SQLite adapter + 임시 synthetic DB + 공개 YouTube 예제 영상.
+  운영 DB/config/사용자 invite/profile을 쓰지 않았다. 외부 iframe은 mock하지 않았다.
+- Exact de3 HTML로 이미 재생 중인 방을 만든 뒤 같은 context에서 warm refresh.
+  **80ms `api_callback_lookup_before_registration` → 81ms WS 생성 → 84ms open/join →
+  92ms authoritative playing snapshot 수신**. 이후 deadline까지 iframe0/player-ready=false;
+  WebSocket OPEN, 영상/재생 상태 snapshot은 존재했다. 사용자 증상과 같은 검은 placeholder/controls 부재.
+- 원인: blocking external `iframe_api`가 inline 앱의 ready callback 등록보다 먼저 실행되는 cached-load race.
+  API 자체와 `YT.Player` constructor는 로드됐지만 callback을 놓쳐 **iframe을 생성하지 못했다**.
+  [YouTube 공식 API 문서](https://developers.google.com/youtube/iframe_api_reference)의 ready callback 계약과
+  실제 Chrome callback lookup trace를 함께 확인했다. 이 재현에서 stale revision/새 이름/session identity 손실,
+  snapshot discard, YouTube error/153, CSP 차단 또는 autoplay는 최초 iframe 부재의 원인이 아니었다.
+- 별도 실제 초기 선택에서 `loadVideoById` 직후 `getVideoData()`가 잠시 undefined가 되는 것도 확인했다.
+  기존 harness는 항상 object를 반환해 해당 TypeError와 acknowledgement 중단을 놓쳤다.
+  Runtime3곳을 optional metadata 접근으로 바꾸고 harness도 iframe acknowledgement 전 undefined를 반환한다.
+- 최소 수정: API script의 **`defer`**로 앱 callback 등록을 먼저 완료; 위 metadata guard3곳.
+  안전한 **`X-Watch-Client-Revision`** header에 UTF-8 template SHA256을 노출해 served asset 비교를 지원한다.
+  명령/endpoint/WS schema/권한/DB schema/dependency/CSP/referrer/30s·5s grace 정책 변경0.
+  Music A1·Gemini provider/model/config·writer guard는 변경하지 않았다.
+
+### Asset identity and cache limits
+
+| Asset | Before de3 | Fixed |
+| --- | --- | --- |
+| normalized HTML/template SHA256 | `77ef3491fe9d53778de6434ad7b5e1fd2f2cb6ab4976400a2154b01eed0c8a69` | `c1f1e05edc49b0a7a0563b613b62b245e01e7853bd28111ea25fee00a463949e` |
+| inline application JS SHA256 | `bfbba8a23bf34c4a5328e23a5cf3a438428f3024f203aebeb55d22d048135cd1` | `e1ea7ac0e5d35f763ecf338ce240c6c8e7a86bc8d493562f06e80cd9028c8265` |
+
+첫 접속/refresh 응답 모두 각 source hash와 일치했다. `Cache-Control: no-store`, ETag 없음,
+service-worker controller 없음; app JS는 HTML inline이며 별도 static URL cache가 아니다.
+새 revision header는 CSP nonce 치환 전 digest여서 nonce 변화와 구분할 수 있다.
+진단용 old-template fixture도 header를 제공하지만 **기존 production de3가 이 header를 제공했다는 뜻은 아니다**.
+API 외부 resource의 warm cache는 그대로 유지했다. Playwright response routing으로 cache를 끈 중간 진단은
+WebSocket까지 교란해 decisive evidence에서 제외했다.
+운영은 정지했으므로 **현재 Cloudflare public response/cache의 exact asset identity는 미검증**이다.
+향후 승인된 public-path 시험에서 candidate hash/header와 실제 응답을 비교해야 한다.
+
+### Real browser regression and independent participants
+
+- 동일 already-playing-room warm refresh regression: **before FAIL → after PASS**, JS errors0.
+  수정 후 실제 iframe 생성/ready/영상 확인/playing/position 복원이 완료됐다.
+  별도 실제 playing-refresh sample은 client55.259s/server55.374s로 근접했다.
+- 최종 집중 matrix는 playing refresh, paused refresh 및 그 위치에서 resume, 서로 독립된 Chrome context2개,
+  **server unique peer2개**, 같은 영상/playing, pause/resume/seek 전파를 검증했다.
+- Read-only Playwright evaluate가 user gesture를 부여해 autoplay failure를 가리는 fidelity gap도 제거했다.
+  상태 관찰은 CDP `Runtime.evaluate(userGesture=false)`로 바꿨다.
+  그 뒤 실제 두 번째 client autoplay-blocked를 관찰하고 server/첫 client playing authority 불변,
+  사용자의 **재생 이어가기** 동작에 해당하는 explicit click으로 복구되는 것을 확인했다.
+- Chrome DevTools Offline/Online은 이 환경에서 열린 WS를 끊지 않았다(OPEN/client2 유지).
+  그 결과는 **RECONNECT_NOT_REPRODUCED**로 보존했으며 PASS로 세지 않았다.
+- 대체로 loopback HTTP/CONNECT proxy가 두 번째 context의 **실제 TCP socket을 끊었다**.
+  client2→1→2, unique peer2, 최신 playing 및 paused hydration, terminal close 이후 client0/no reconnect PASS.
+  첫 context가 방을 유지해 기존5s empty-room expiry와 구분했다. JS close-event 합성은 사용하지 않았다.
+- 최종 공개 경로 절차: 일반 Chrome + Incognito/독립 profile을 두 participant로 쓸 수 있다.
+  서버 peer count2를 확인하고 한쪽 실제 네트워크만 잠시 차단해 playing/paused 재접속을 검사한다.
+  이 세션의 proxy는 synthetic loopback 전용이다. Public용 relay가 필요하면 host 제한·TLS 비복호화·
+  credential 비기록을 별도 검토해야 한다. DevTools Offline을 무조건 충분한 단절로 간주하지 않는다.
+- 계측은 callback lookup/WS categories/iframe 존재와 readiness/state/position checkpoints를 제공한다.
+  YouTube 내부 전체 event timeline을 모두 계측했다고 주장하지 않는다. 판정 근거는 실제 iframe/상태와
+  서버 authoritative state 비교이며 production 사용자 청취 또는 public-path PASS를 대체하지 않는다.
+
+### Verification cadence / exact source
+
+- 집중 Watch/server 및 stopped-verifier 회귀 **119 PASS** (9.34s); RuntimeWarning/unraisable strict.
+  경로를 잘못 지정한 두 명령은 test0으로 종료했으며 PASS count에 포함하지 않았다.
+- Source responsibility: `6c6cde0` 이전 live 결과 docs; `e327bea` 최소 Watch 수정·회귀·opt-in browser 도구;
+  **`8e9018d4b8061cde6006eee47fa4103522f77718`** 최신 canonical860f/10th preservation 검증 기준 갱신.
+  최종 runtime source는8e9018d이며 이후 report/current-plan만 변경한다.
+  Source ZIP SHA256 **`f58327f1ac36f8722f5fe1b5650b521e1c586cdf727699681c8a08746d995f70`**.
+- Stage A/B 동안 full Windows/Pi0, production sweep0. 실제 browser PASS 이후 exact Git export에서
+  Stage C Windows full strict **1009 PASS /0 skip /0 fail /0 error, 69.64s**, 정확히1회 실행했다.
+  기존 Python3.12 `audioop` DeprecationWarning1은 별도 기록하며 RuntimeWarning/unraisable strict PASS.
+  Pi Node-less closed skip inventory30개에 대응하는 동일 Windows testcase30개 모두 이번 XML에서 PASS 확인.
+  Pi build/full strict/credential/manifest는 슬롯 승인 전 미실행.
+  Candidate를 아직 `verified_not_activated`라고 부르지 않는다.
+- Local runtime range26da4c2→8e9018d: 3commit/14newblob, 전 commit tree·message 및 secret/binary/운영 artifact
+  audit finding0. 실제 코드/fixture 검토에서도 credential은 synthetic fixture뿐이며 운영 데이터 추가0.
+  최종 report/current-plan docs-only tail을 포함한 exact HEAD 결과는 `watch-final-git-audit.json`에 기록한다.
+  Remote rebuild26da4c2/main8432fdef… read-back 불변, push0. 사용자 `gpt_handoff` 파일들은 추적하지 않았다.
+
+### Fresh stopped-host / capacity boundary
+
+- Read-only 검사 **verified_readonly**: production/staging/ops inactive/MainPID0, boot/timers disabled,
+  Python/media writer0/runtime listener0. 현재 de3 pin과 canonical860f/config41ed/10preservation,
+  data/state/cache/backups/audit/config의 전체 hash·metadata가 검사 전후 불변.
+- Online release16/capacity16. 현재 de3와 최신4개(de3, ECD,1014,H1-92c)는 보호된다.
+  Current pointer hash `3c567010f25b7bdc91da84d33661e98a9099a718d6c16030a70719ab2a4d5e0b`;
+  previous/rollback/activation pointer 및 activation.json/rollback.json 없음.
+- 다음 archive 제안은 **`r-787b3178908c08ff-3dac82a792fad576`** 하나.
+  현재·activation·rollback·최신4개 보호 대상 아님을 확인했고 destination 미존재/same filesystem PASS.
+  Destination `/opt/discordbot/retained/releases/r-787b3178908c08ff-3dac82a792fad576`.
+  Manifest `906c8bcad00c5e78f54a42dd67d2b56fc0c5022d6430c058c70dd4f1786314ad`;
+  전체 byte/권한/owner/xattr/mtime/inode inventory **`1cdbe56da7cac167d2fca9e911bd794381859553cbe838279adb2aef2fc01f01`**,
+  19016entries/17411files/377119764bytes. 아직 이동/삭제0.
+- 이전 사용자의 cold archive 승인은 **c724라는 특정 release 하나**만 허용했다.
+  이번 787의 same-filesystem atomic rename은 별도 좁은 승인 경계다. Capacity/retention 정책을 변경하거나
+  무단 삭제하지 않는다. 승인 뒤에도 직전 보호 참조·inventory를 재검증하고 이동 전후 불변을 대조한다.
+  해당 exact787만 rename하는 도구를 로컬에 준비·검토했으며 아직 Pi에 전송/실행하지 않았다.
+  새 보관본뿐 아니라 기존 retained c724 전체 inventory도 이동 전후 대조한다.
+- 새 pin activation/push/30-gate/finalization 승인 요청은 **Pi 후보 검증까지 끝난 뒤**로 남긴다.
+  그때 actual public asset identity와 PC Chrome 검사도 포함해야 한다. Stage C를 반복해서 돌리지 않는다.
+  운영 활성 중 auxiliary Python poll 금지; 이미 승인된 observer output을 cat/SCP로만 읽는다.
+  Canonical old restore/replay/migration0, production start0, Gemini retry0; boot/backup/update OFF 유지.
+
+Safe local evidence: `watch-chrome-prefixed.json`, `watch-chrome-trace-before.json`,
+`watch-regression-before-final.json`, `watch-regression-after-final.json`,
+`watch-real-browser-matrix.json`, `watch-real-browser-no-gesture.json`,
+`watch-capacity-inspection-20260920.json`. 재현 절차/도구는 `tests/browser/README.md` 참조.
+Local fixture 종료와 browser 종료를 확인했다. 실제 콘텐츠·URL·capability·credential은 evidence에 기록하지 않았다.
+PHASE11/Audit0–10/Integrated Audit/V1삭제/legacy cleanup 미착수.
+
 ## Continuation — 승인된 de3aae sweep / 기능 실패 및 writer guard 정지·보존 검증 (2026-09-20)
 
 **PHASE 10B INCOMPLETE — 21 PASS /3 FAIL /6 NOT TESTED. Services stopped; tenth preservation verified.**
