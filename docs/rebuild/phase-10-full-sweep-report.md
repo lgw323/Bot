@@ -8,6 +8,91 @@
 과거 본문의 이전 보존 이력 참조는 부모 보고서에 남아 있다. 이후 상세 full-sweep 근거는 이 파일에만 추가한다.
 문서 분리는 production 상태 변경이나 새로운 runtime 활성화 승인이 아니다.
 
+## Continuation — 승인된 787 보존 이동 / 최종 exact Pi candidate 검증 완료 (2026-09-20)
+
+**PHASE 10B INCOMPLETE — Stage C 완료, `verified_not_activated`. 통합 push/pin/full-sweep 승인 대기.**
+직전 continuation의 실제 Chrome before FAIL→after PASS와 Windows1009PASS를 유지한다.
+사용자가 exact787 release 하나의 보존 이동을 승인했고, 여기서 멈추지 않고 최종 Pi 검증까지 완료했다.
+운영 서비스 시작0/push0/DB 복원·replay·migration0. 새로운 production live 결과는 아직 없다.
+
+### Approved atomic preservation
+
+- 대상 **`r-787b3178908c08ff-3dac82a792fad576`** 하나를
+  `/opt/discordbot/releases/`에서 `/opt/discordbot/retained/releases/`로 동일 filesystem atomic rename.
+  삭제0, overwrite0, retention/capacity 정책 변경0. 직전 current/activation/rollback/최신4개 보호 대상 아님 재확인.
+- 전후 전체 inventory **`1cdbe56da7cac167d2fca9e911bd794381859553cbe838279adb2aef2fc01f01`** 일치:
+  19016entries/17411files/377119764bytes. Bytes/topology/owner/mode/xattr/mtime/inode 불변, directory fsync 완료.
+  Read atime과 rename 자체의 root ctime 변화는 durable identity 비교 대상에서 제외한다.
+- 기존 retained c724 전체 inventory
+  **`545f768741216ff9618d5406828ecaf05d9d1c59db0b96e475927426eb2f4aeb`** 불변.
+  Current pointer `3c567010f25b7bdc91da84d33661e98a9099a718d6c16030a70719ab2a4d5e0b` 및 참조 상태 불변.
+  DB/config/10preservation/data/state/cache/backups/audit의 전체 byte·metadata 불변.
+  Protected aggregate `043fc64618c7a397fb4bf9fd86c74701ac4af30480c3c1aebbe7ea2d40126c2f`.
+- Online count16→15 뒤 새 후보 하나를 생성해16. 이동과 검증 모두 완료했으며 기존 release 보존을 줄이지 않았다.
+
+### Exact final candidate
+
+| Item | Verified value |
+| --- | --- |
+| Runtime source | `8e9018d4b8061cde6006eee47fa4103522f77718` |
+| Immutable candidate | `r-8e9018d4b8061cde-3dac82a792fad576` |
+| Source ZIP SHA256 | `f58327f1ac36f8722f5fe1b5650b521e1c586cdf727699681c8a08746d995f70` |
+| Manifest SHA256 | `b4a9cb2c92390b06098ba872dae6f1d6189fb95f61a004a89a7f67a1a1baa751` |
+| Manifest inventory | 17424 files, schema compatibility [5,5] |
+| Dependency hash | `3dac82a792fad5769f4e6b32cdd0c294fbfbb4863500e8e232f85b47b3297cc6` unchanged |
+| Windows final strict | 1009 PASS /0 skip /0 error /0 failure, one run, 69.64s |
+| Pi final strict | 979 PASS /30 intentional skip /0 error /0 failure, one run |
+| Pi build + suite + publish-validation duration | 171.871s; not suite-only duration |
+| Candidate provenance | candidate venv; all127 imported runtime modules from candidate `app/src` |
+
+- 전체 Pi suite를 source 경로와 release 경로에서 두 번 돌리지 않았다. Operator-only verifier의
+  `build_worker` test command만 release-local runner로 바꿨다. 같은1회 suite가 runtime origin과 venv를
+  검사하며, 다른 verifier function의 AST는 원본과 동일하다. Exact Git archive/runtime/dependency 변경0.
+  Operator helper SHA256 `bb80ac2b14b7a6e3c4167d1a619b44884c98b59802677dcdb3f41f7ea965ac36`.
+- 30skip은 기존 closed Node-less inventory와 정확히 일치. 같은 Windows XML에서 해당30case 모두 PASS를
+  재대조했다. 새로운 skip/미대응 skip0. 실제 Chrome evidence는 별도 opt-in 검사이며 fake Node PASS와 구분한다.
+- Discord/Watch/operations 각각 configuration·secret format·exact scope·readonly mount PASS,
+  원본 credential 직접 접근 denied. Root observer의 같은3scope view/ACL/readonly PASS.
+  Credential probe 자체 network login/DB open0. Credential 값/UID/경로는 결과 전달에서 제외했다.
+- Candidate manifest/schema/dependency/immutable 검증 PASS. 빌드 전후 나머지 online releases와 retained2개
+  전체 inventory 불변, current/rollback pointer 불변, production/staging/ops inactive/MainPID0,
+  boot/timers disabled, Python/media writer0/runtime listener0. Auto-update OFF 유지.
+
+### Latest canonical state remains authoritative
+
+- Canonical 전후 **`860f5fcc96ae25322c392bffc65930923a7634229dc4c6294662c54d0529b647`** 일치,
+  schema5/integrity ok; favorites40/owners3/play_counts53/settings1/users15/Watch0/0.
+- Data checksum `c52382d5edf3c80d2e06dfbaa27a850bf04aaae6f77a73942fc8dc7a7937d386`,
+  metadata checksum `f20317d783d9a168f84bdbdfc96152c3a7e3f6e6f6cae5fb81b516fe5d77cb63` 전후 일치.
+  Config `41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40` 및10preservation 불변.
+  현재 production pin은 계속 **`r-de3aae30a8282843-3dac82a792fad576`**, 정지 상태다.
+- 자동 승인 검토가 credential 관련 객체 전체 복사/출력을 차단했다. 생성 코드의 고정 판정 반환 구조를
+  확인하고, Pi의 jq allowlist로 hash/schema/count와 credential boolean만 추출하는 안전한 방식이 승인됐다.
+  Raw JSON 전체를 복사하지 않았고 비밀값을 읽어 출력하는 우회도 하지 않았다. 결과 검토 blocker는 해소됐다.
+
+### Stage D integrated approval boundary
+
+다음은 아직 실행하지 않았으며 exact 최종 docs-only HEAD와 위 pin으로 한 번의 통합 승인을 요청한다.
+
+1. 8e9018d 이후 report/current-plan만 변경한 최종 HEAD를 `codex/rebuild-v2`에 정상 FF push.
+   Push 직전 runtime/dependency 불변, 전체 새 range secret/artifact, remote/main identity 재확인.
+2. Current DB860f/config41ed/10preservation을 유지하며 새 exact pin activation, compatibility 재검증,
+   70s readiness와 단일 bounded30-gate full-sweep. 실제 PC Chrome public response의 revision/hash/cache,
+   playing/paused refresh, 독립 participant2개 play/pause/seek, 실제 WS 단절/reconnect를 포함한다.
+   User-audible Music/TTS·pause intent 및 종료 경로도 필수이며 기존 PASS를 새 pin의 PASS로 승계하지 않는다.
+3. 전 필수 gate PASS일 때만 newest canonical encrypted backup → private Bot-Data publish/read-back →
+   independent download/decrypt/isolated restore → schema/count/data/metadata/semantic/application reconciliation →
+   canonical 불변 확인 → production pair boot enable/4h backup timer enable → bounded final observation.
+   Auto-update는 OFF. 최종화까지 PASS한 뒤에만 PHASE10B COMPLETE를 기록한다.
+
+일반 SOFT FAIL은 재시도 없이 독립 gate를 계속하고 통합 보고한다. Genuine HARD STOP, exact scope 변경,
+새 runtime 수정 필요 시 중단·최신 상태의 새로운 preservation으로 보존하며 old restore/replay/V1 start/
+down-migration/blind retry를 하지 않는다. 운영 활성 중 auxiliary Python은 실행하지 않고 기존 observer의
+safe 결과를 cat/SCP/jq로만 읽는다. PHASE11/Audit0–10/Integrated Audit/V1삭제/legacy cleanup 미착수.
+
+Safe evidence: `watch-approved-cold-archive-20260920.json`, `watch-candidate-safe-final.json`,
+`watch-stage-c-comparison.json`, `watch-final-git-audit.json`. Pi 원본 검증 결과는 WORK에 그대로 보존한다.
+
 ## Continuation — 실제 Chrome warm refresh FAIL → PASS / 최소 Watch 수정 (2026-09-20)
 
 **PHASE 10B INCOMPLETE — Stage A/B 완료. 실제 설치 Chrome + 실제 YouTube iframe에서 기존 코드 FAIL,
