@@ -8,6 +8,177 @@
 과거 본문의 이전 보존 이력 참조는 부모 보고서에 남아 있다. 이후 상세 full-sweep 근거는 이 파일에만 추가한다.
 문서 분리는 production 상태 변경이나 새로운 runtime 활성화 승인이 아니다.
 
+## Continuation — 승인된 cold archive 완료 / exact immutable candidate 검증 (2026-09-20)
+
+**PHASE 10B INCOMPLETE — candidate `verified_not_activated`, 단일 통합 push/pin 승인 대기.**
+사용자가 c724 하나의 cold archive와 후속 exact candidate 검증을 승인했다. 승인된 atomic 이동 뒤 멈추지 않고
+새 release build → 새 venv full strict → credential/root observer → 실제 immutable runtime 경로 full strict →
+protected-state 재검증을 완료했다. 이번 작업의 production activation/push는0회다.
+과거 ECD의26PASS/3FAIL/1NOTTESTED를 새 후보의 live PASS로 승계하지 않는다.
+
+### 승인된 retention 예외: 삭제 없는 단일 atomic 이동
+
+- 상태 **`cold_archived_retention_exception`**. 정확한 원본
+  `/opt/discordbot/releases/r-c72428e7db42e6ab-3dac82a792fad576` →
+  `/opt/discordbot/retained/releases/r-c72428e7db42e6ab-3dac82a792fad576`.
+- 직전 실제 online release16개 identity/manifest, current 및 activation/rollback 참조,
+  newest-four 보호 집합을 재계산했다. 보호 집합은 ECD/1014a085/92c25546/787b317이며 c724는 미포함.
+  Operations lock 아래 대상 inventory/보호 상태를 이동 직전에 다시 비교했다.
+  Destination 미존재·source/parent 동일 filesystem·보호된 root 소유 parent 권한 확인 후 atomic rename,
+  양쪽 parent fsync. 다른 release 이동/삭제·retention 기간 변경·capacity16 확대는 하지 않았다.
+- c724 manifest SHA256 **`0a4d1d22e7c2561fcaab7c5906e92188e4bf6a309020773f21e9fee7e2ab6d2c`** 불변.
+  Manifest payload17410files, manifest 자체를 포함한 전체 **17411files/19016entries/377118991bytes**.
+  **이동 전=이동 후=build 후** 전체 inventory+metadata SHA256
+  **`545f768741216ff9618d5406828ecaf05d9d1c59db0b96e475927426eb2f4aeb`**.
+  상대경로·file type·byte hash·mode·uid/gid·ACL/xattr hash·mtime·inode/device/link count를 전부 대조했다.
+  읽기에 따른 atime과 rename에 따른 root ctime은 불변 비교 대상에서 제외했으며 권한/내용 변화로 숨기지 않았다.
+- Online count **16 →15 →16**: c724 이동으로 한 슬롯 확보, 새 de3aae3 후보 하나 생성.
+  나머지15개 online identity/manifest는 그대로다. Cold archive의 실행 파일/venv는 실행하지 않았다.
+  되돌릴 때는 원래 경로의 미점유·보호 상태를 재검토하고 같은 경로로 복귀·검증해야 한다.
+- 이전 capacity 실패 work는 `/var/lib/discordbot/phase10-retry-build-de3aae30a828-capacity-failed`,
+  실패 JSON은 `retry-build-de3aae30a828-capacity-failed.json`으로 byte/metadata를 보존했다.
+  기존 failed evidence를 덮어쓰거나 DB/preservation 경로를 옮기지 않았다.
+  Operator 도구의 합성 inventory/rename·reference/newest 보호·exact source 검사3개 PASS.
+
+### Exact immutable candidate
+
+| 항목 | 실제 검증 결과 |
+|---|---|
+| Runtime source | **`de3aae30a82828433666c872b6789abfbb19648b`** |
+| Source archive SHA256 | `5e14d8a0a30680831e8825186ea4f21233ae95bedb4c0fb3f59ab0d712903ab7` |
+| Immutable release | **`r-de3aae30a8282843-3dac82a792fad576`** |
+| Dependency SHA256 | `3dac82a792fad5769f4e6b32cdd0c294fbfbb4863500e8e232f85b47b3297cc6` |
+| Manifest SHA256 | **`e70649a2607c642b08cd11399c1a081de05250560abbd5101be3e231d55a4c57`** |
+| Manifest files / schema range | **17419 / [5, 5]** |
+| Final Windows exact archive full strict | **1009 PASS /0skip/0xfail/0fail/0error**,71.16초; 기존 audioop warning1 |
+| 새 release venv build/full strict/immutable | **979 PASS /30 intentional skip/0fail/0error/0xfail**, build 전체 167.776초 |
+| 새 release venv + immutable runtime 경로 full strict | **979 PASS /30 intentional skip/0fail/0error/0xfail**,74.946초 |
+| Runtime 경로 검증 | **127 modules** 모두 새 release `app/src`에서 import; sys.prefix 새 release `.venv` |
+| 최종 상태 | **verified_not_activated**; production current는 ECD 유지 |
+
+Archive/source/dependency는 앞선1009 Windows 검증과 동일하며 capacity 때문에 runtime을 변경하지 않았다.
+Builder는 기존 hash-pinned wheelhouse로 offline build했다. 첫 full suite는 새 release venv와 exact exported tree,
+추가 full suite는 그 새 venv와 **새 immutable release의 runtime import 경로**를 강제하고 module origin을 확인했다.
+Legacy characterization/doc/test support는 exact export를 사용한다. 이 source origin 확인이 기존 ECD venv를 썼던
+직전 continuation의 source-only Pi979/30과 다른 candidate-level 근거다.
+두 새 Pi suite 모두 RuntimeWarning/PytestUnraisableExceptionWarning를 error, xfail_strict=true로 실행했다.
+Private network/nonroot unit이며 실제 canonical DB/config/state/cache는 검사 fixture로 쓰지 않았다.
+후속 suite는 backup/audit 경로도 차단했다. Test 임시 데이터는 분리된 run 경로에만 생성했다.
+
+세 service scope(discord-bot/watch-web/operations)의 config/secret format/schema preflight,
+exact read-only systemd credential mount, direct credential-source denial 모두 PASS.
+각 scope의 root observer/proc view도 exact ACL/read-only/namespace PASS, credential 원문 출력0.
+최종 manifest 전체 hash inventory 재검증으로 추가 suite가 immutable release를 수정하지 않았음을 확인했다.
+
+### Regression 범위 및 skip 대조
+
+동일 source 전체 검사에 A1의 stale View/actor toggle/지연 audio effect/역순 dashboard edit,
+TTS ordering/pause intent/Favorites/queue/stop/disconnect, C1 playing·paused refresh/ready 순서/같은 초대 재입장,
+C2 독립2clients/늦은ACK/이전video·revision 거부/autoplay 직접복구, reconnect/terminal/bounded retry가 포함된다.
+구현과 수정 전 재현은 바로 다음 A1/C1/C2 continuation이 기준이다. Source 변경 없이 전부 다시 검사했다.
+
+Windows Music154/Watch102/data127/operations248 PASS. H1 ACL10+observer credential24,
+H2 data probe57+observer policy23, full-sweep observer24를 포함하며 후보 Pi에서도 Node 이외의 skip은 없다.
+H1/H2, storage/operations runtime, schema/journal/busy-timeout/dependency 정책 diff0 유지.
+
+**Pi intentional skip30개 전부 classname+testcase name으로 최종 Windows PASS와 일대일 대조**했다.
+두 새 Pi suite의 skip 집합도 같다. 전부 `pytest.skip`, unexpected skip0/xfail0.
+아래 각 testcase의 원인은 Pi Node 미설치이며 runtime Node dependency를 추가하지 않았다.
+
+| Testcase | Windows / 새 Pi |
+|---|---|
+| `test_shipped_watch_browser_client[iframe-independent-presence]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_browser_client[empty-player-protocol]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_browser_client[hydrate-before-player]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_browser_client[recoverable-return]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_browser_client[terminal-stays-closed]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_browser_client[page-lifecycle]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_browser_client[bounded-reconnect]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_browser_client[return-open-probe]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_browser_client[select-before-player]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[playing-refresh]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[paused-refresh]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[hydrate-before-ready]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[ready-before-hydrate]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[same-invite-return]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[latest-before-ready]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[late-iframe-ack]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[peer-cannot-overwrite-authority]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[multi-client-timing]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[autoplay-recovery]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[unacknowledged-playback]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[reconnect-hydration]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[video-change-before-ack]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[seek-ack-is-asynchronous]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[reconnect-paused]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[paused-cue-reports-zero]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[terminal-4001]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[terminal-4002]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[terminal-4003]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[stale-revision]` | PASS / intentional Node-less skip |
+| `test_shipped_watch_playback_reconciliation[empty-session]` | PASS / intentional Node-less skip |
+
+Classname은 기존9개 `tests.integration.watch.test_browser_client`, 새21개
+`tests.integration.watch.test_playback_browser`다. Safe pairing은 `candidate-cross-platform-final.json`에 보존한다.
+실제 Chrome network drop/reconnect·playback hydration/multi-client 성공을 synthetic PASS로 대체하지 않는다.
+
+### 작업 전후 production reconciliation
+
+- Current source **`ecd391ff4548b7bda572ef916c30be296b714f94`**, pin
+  **`r-ecd391ff4548b7bd-3dac82a792fad576`** 유지. Current/activation/rollback pointer hash 전후 동일.
+- Canonical **`e5661a0256c9873941db974019f30256c9ed9e3d2f2559cb2eecd06b259c2e52`**,
+  config **`41edd03aa0c022e7d52bbe8da0814029ab3477eb66824fba438f67a78fd85f40`** 불변.
+  Schema5/integrity PASS, favorites40/owners3, play_counts53/settings1/users15, Watch0/0.
+  Data checksum `fb56b2bcb5c77b76cef837c5f22f6f6ddbe2dd24ed80d21c33b24e599a87dd36`,
+  metadata `a30f3cabc852e189acef8841c9f3832ff5c5bbba6bd88d48d1e8454089b29745` 전후 일치.
+  WAL/SHM/journal sidecar 없음; journal header rollback 유지. Migration/restore/replay0.
+- Data/state/cache/backups/audit/config 및 **9개 preservation** 전체 byte/metadata inventory 불변.
+  집계 SHA256 전후 **`69b09b7272c5e05ce90df357f33da9193aed5e7999043ec0f1928f98826b0dfa`**.
+  최신 ECD preservation과 기존8개를 그대로 보존했다. Retained c724도 최종 inventory 동일.
+- Production/staging/operations stopped/MainPID0, boot·backup/update/manual timers disabled/inactive, auto-update OFF.
+  전후 다른 Python/media process0, runtime listener0. V1 시작/실행 관찰0.
+  후보 생성 외 production 활성화·새 production DB write·새 preservation 생성은0이다.
+
+### Final Git publication boundary
+
+- 현재 remote base **`99d80c6b5fc9aeddaf5ebd416539dfe7aa5a1ceb`**,
+  main **`8432fdef40cddc131176fa875e350660dc897e12`** 불변. 이번 작업 push0/force0/rebase0/history rewrite0.
+- Runtime endpoint는 de3aae30 그대로이며 이후 모든 commit의 변경 파일을 개별 확인한다.
+  허용 tail은 full-sweep report/current-plan 두 문서뿐이다. 이 continuation을 담은 최종 docs-only HEAD까지
+  **6 commits/22 new blobs**의 모든 새 tree/blob/message와 금지 artifact 경로를 검사한다.
+  정확한 최종 HEAD와 scan 결과는 commit 뒤 `batch-git-audit-<HEAD12>.json` 및 최종 승인 요청에 명시한다.
+  새 내용을 직접 검토하고 secret/token/private key pattern/.env/DB/SQL/backup/binary/credential/운영 data·log artifact를 검사한다.
+  사용자 handoff/zip은 계속 미추적이며 포함하지 않는다. 현재 Git 변경은 보고서와 current-plan만이다.
+
+### 단일 통합 승인 요청과 다음 live 실행
+
+사용자 이번 첨부 §11에 따라 **후보를 활성화하지 않고** 다음을 한 번에 승인 요청한다:
+최종 docs-only HEAD까지 기존 `codex/rebuild-v2` 일반 FF push → 정확한 위 immutable pin activation →
+단일 bounded30-gate full-sweep → 모든 필수 기능 gate PASS 시 조건부 actual finalization.
+Push 직전 remote/최종 range/secret/artifact/runtime 이후 docs-only 여부를 다시 확인한다.
+
+새 release의 live gates는 모두 NOT TESTED다. 70초 readiness/Gateway/command sync부터 기존30gate 전체를
+재검사하며, A1 **한 클릭 pause/resume의 실제 audio+UI**, Music URL/search/실제청취,
+사용자가 실제로 듣는 TTS/겹침없음/이후Music/연속TTS·pause intent를 포함한다.
+PC Chrome public path에서 playing·paused refresh/hydration, **실제 network disconnect/reconnect**,
+둘 이상의 참여자 play/pause/seek sync, tab return, 필요 시 autoplay 차단 직접복구,
+normal close/private admin close/Cloudflare 경로까지 확인한다. 과거 ECD PASS를 승계하지 않는다.
+
+일반 SOFT FAIL은 blind retry 없이 가능한 독립 gate를 계속한다. 진짜 HARD STOP은 즉시 안전 정지·
+newest state의 새 unique preservation·fsync/inventory 검증이며 기존 보존본 overwrite/old DB restore/replay/V1 시작 금지.
+
+모든 필수30gate와 A1 실제 동작 PASS 후에는 후속 production guard 인계를 확인하고 승인 중단 없이:
+newest canonical encrypted backup → private Bot-Data publication/read-back → independent download →
+decrypt/isolated restore/schema5/count/data/metadata/semantic/application reconciliation → canonical 불변 확인 →
+production pair boot enable/4시간 backup timer enable → bounded final observation을 이어간다.
+Auto-update/manual source polling OFF 유지. Ready/live/NRestarts/DB probe/RSS/FD/threads/Music child·cache/
+Watch sessions·clients/backup age/audit/disk·journal/temperature·throttling을 실제 관찰 기간만큼 기록한다.
+이 모든 단계가 PASS해야 PHASE10B COMPLETE다. 현재 actual production backup/restore/enable/final observation0,
+**PHASE10B INCOMPLETE**. Audit0–10/Integrated Audit/PHASE11/V1 삭제/legacy cleanup 미착수.
+
+Safe evidence: `batch-cold-archive-candidate-20260920.json`, `retry-build-de3aae30a828.json`,
+`candidate-local-suite.xml/json`, `candidate-cross-platform-final.json`. 이전 capacity 실패 evidence도 보존했다.
+
 ## Continuation — A1 / C1 / C2 통합 수정 후보 검증 (2026-09-20)
 
 **PHASE 10B INCOMPLETE — 통합 수정·양 플랫폼 소스 검사 완료, RELEASE CAPACITY BLOCKED.**
