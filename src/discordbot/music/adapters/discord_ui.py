@@ -13,7 +13,7 @@ from discordbot.music.domain.model import LoopMode, Track
 from discordbot.music.domain.pages import SongPages
 from discordbot.music.ports.repository import Favorite
 from discordbot.platform.errors import AppError, AuthorizationError, CapacityError, ConflictError, ExternalPermanentError
-from discordbot.platform.tasks import TaskSpec, TaskSupervisor
+from discordbot.platform.tasks import TaskSpec, TaskSupervisor, require_tasks_stopped
 from discordbot.storage.ports.contracts import DatabaseRequest
 
 logger = logging.getLogger(__name__)
@@ -133,7 +133,7 @@ class MusicController:
 
     async def stop(self) -> None:
         self.close()
-        await self._deletions.shutdown(grace_seconds=0)
+        require_tasks_stopped(await self._deletions.shutdown(grace_seconds=0))
 
     async def actor(self, guild_id: int) -> Any:
         if guild_id not in self.channels:

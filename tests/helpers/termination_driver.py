@@ -72,6 +72,12 @@ def main():
         name = 'synthetic-resource'
 
         async def start(self):
+            if mode == 'music-nested-incomplete':
+                from discordbot.music.adapters.discord_ui import MusicController
+                self.controller = MusicController(None, None, runtime.clock, {}, 1)
+                self.controller._delete_later(SimpleNamespace(delete=lambda: resistant(directory)), 0)
+                while not (directory / 'armed.json').exists():
+                    await asyncio.sleep(0)
             if mode == 'nested-incomplete':
                 self.children = TaskSupervisor(capacity=1, history_capacity=4, clock=runtime.clock)
                 self.children.start(TaskSpec('nested', 'synthetic', 'one', 'one', 30,
@@ -133,6 +139,11 @@ def main():
             record(directory, 'armed')
 
         async def stop(self):
+            if mode == 'music-nested-incomplete':
+                try:
+                    await self.controller.stop()
+                finally:
+                    record(directory, 'nested-owned', remaining=len(self.controller._deletions.snapshot().active))
             if mode == 'nested-incomplete':
                 report = await self.children.shutdown(grace_seconds=.02)
                 record(directory, 'nested-owned', remaining=report.remaining)
@@ -145,7 +156,7 @@ def main():
 
     resource = Resource()
     runtime = ProcessRuntime(config=config, resources=(resource,))
-    if mode == 'nested-incomplete':
+    if mode in ('nested-incomplete', 'music-nested-incomplete'):
         class Dependency:
             name, required = 'dependency', True
             async def start(self):
