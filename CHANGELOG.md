@@ -1,5 +1,11 @@
 # Changelog
 
+## A2R4 nested cleanup ownership
+
+- 내부 supervisor의 미완료 정리를 typed 오류로 전파하고 의존 리소스의 조기 종료를 막습니다.
+- 필수 집합의 실패한 자식과 부분 초기화 소유권을 유지하며, 정리 완료 때만 정상 종료로 표시합니다.
+- 실제 어댑터·집합 회귀와 기존 Linux guardian 통합 검증을 추가했습니다. 운영 배포는 없습니다.
+
 ## A2R3 optional resource startup
 
 - 선택 리소스 시작 실패는 부분 정리가 확인되면 정상 필수 리소스를 유지하고 degraded 상태로 계속합니다.

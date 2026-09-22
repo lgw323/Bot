@@ -114,3 +114,36 @@ process에서 모든 V2 module을 import해 DB/network/server/subprocess/thread/
   real guardian/systemd cases PASS (22 deselected), platform 50 PASS.
   Rollback: revert the runtime candidate commit; no schema/data/deployment changes.
   A2-M1 and A2-M2 are remediated pending independent A2V; A2 remains FAIL.
+
+## A2R4 nested cleanup propagation (2026-09-22)
+
+A bounded child shutdown returning is not proof of release. Lifecycle consumers use
+`require_tasks_stopped(ShutdownReport)` to raise existing `ShutdownError` when remaining
+work is nonzero. Private supervisors keep their active task records, and dependent
+clients/stores are not closed below that work. Errors from child cleanup propagate.
+
+Resource admission/stopping state is distinct from completed closure. A failed cleanup
+attempt remains terminal for that resource; repeat runtime shutdown reuses the owned
+report rather than retrying already-closed children. Work completing during the original
+bounded observation window can still close cleanly exactly once. After that window,
+existing worker/guardian containment remains responsible; no new unbounded wait or retry.
+
+Required self-cleaning resources now expose the existing startup cleanup-completion
+marker. A failed required start with incomplete cleanup remains a partial runtime owner.
+The Discord aggregate retains a member before start, removes it only after proven cleanup,
+and stops reverse traversal on failure, retaining that child and its prerequisites.
+The independent optional classification/degradation policy is unchanged.
+
+All directly equivalent private supervisor consumers in Watch, Summary, Engagement and
+Music check outcomes. Watch-web/database and gateway/deferred cleanup no longer use a
+finally block to close a dependency below failed cleanup. Existing Watch lease/session
+reconciliation semantics remain unchanged; this is an ownership propagation repair.
+No guardian, worker, process-group, systemd or 20/40/70/90 policy change.
+
+Runtime candidate `dab8e5b9a29e8edd83f90e184851c3e97cafe740`: Windows focused 64 PASS,
+dependent 95 PASS, A0 isolation 5 PASS, collection 1,078 plus one later case verified separately. Linux exact-candidate nested
+incomplete/optional-degraded/rollback cases: 3 PASS, 23 deselected. At pre-fix HEAD the
+initial five discriminating cases produced 3 FAIL / 2 PASS. No new full strict run;
+previous 1,037 PASS / 2 FAIL / 25 SKIP remains historical evidence (Deno/A2-N1).
+A2-M1-R is remediated pending independent A2V2; A2 remains FAIL. Rollback is local revert
+of the two A2R4 implementation commits in reverse order, with no data migration or production operation.
