@@ -33,7 +33,8 @@ def eventually(predicate, bound=4):
 @pytest.mark.parametrize('mode', ['clean', 'capacity', 'task', 'thread', 'retained', 'default-executor',
     'interpreter', 'asyncgen', 'resource', 'rollback', 'startup', 'blocked-loop', 'tree',
     'internal-tree', 'escape', 'internal-restart', 'crash', 'worker-crash', 'asyncgen-error',
-    'close-error', 'parent-death', 'external-stop', 'repeated-stop', 'optional-degraded', 'optional-resistant'])
+    'close-error', 'parent-death', 'external-stop', 'repeated-stop', 'optional-degraded', 'optional-resistant',
+    'nested-incomplete'])
 def test_real_guardian_worker_under_systemd(tmp_path, mode):
     unit = 'a2r2-' + uuid.uuid4().hex + '.service'
     sentinel = subprocess.Popen([sys.executable, '-I', '-c', 'import time; time.sleep(10)'])
@@ -103,6 +104,11 @@ def test_real_guardian_worker_under_systemd(tmp_path, mode):
             if mode == 'task':
                 assert (tmp_path / 'resisted.json').exists()
                 assert 'worker.application_timeout' in events
+            if mode == 'nested-incomplete':
+                assert json.loads((tmp_path / 'nested-owned.json').read_text())['remaining'] == 1
+                assert 'worker.failed' in events and 'guardian.clean' not in events
+                assert not (tmp_path / 'dependency-stopped.json').exists()
+                assert not (tmp_path / 'resource-stopped.json').exists()
             if mode in ('task', 'asyncgen', 'default-executor', 'resource', 'rollback'):
                 assert 'worker.loop_timeout' in events
             if mode == 'interpreter':

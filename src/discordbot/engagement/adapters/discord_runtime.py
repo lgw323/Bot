@@ -18,8 +18,8 @@ from discordbot.engagement.adapters.sqlite_repository import SqliteEngagementRep
 from discordbot.engagement.application.service import EngagementService
 from discordbot.engagement.ports.events import EngagementConfig
 from discordbot.platform.clock import Clock
-from discordbot.platform.errors import AppError, ConfigurationError
-from discordbot.platform.tasks import TaskSupervisor
+from discordbot.platform.errors import ShutdownError, AppError, ConfigurationError
+from discordbot.platform.tasks import require_tasks_stopped, TaskSupervisor
 from discordbot.storage.adapters.execution import SqliteDatabase
 
 logger = logging.getLogger(__name__)
@@ -81,6 +81,7 @@ class VoiceGateway:
 class EngagementResource:
     name = "engagement"
     required = True
+    startup_cleanup_complete = False
 
     def __init__(self, bot: commands.Bot, database: SqliteDatabase, config: EngagementConfig,
                  clock: Clock, supervisor: TaskSupervisor, epoch: str) -> None:
@@ -114,18 +115,22 @@ class EngagementResource:
             raise
 
     async def stop(self) -> None:
+        if self.startup_cleanup_complete:
+            return
+        if getattr(self, "_stopping", False):
+            raise ShutdownError("Engagement cleanup already incomplete")
+        self._stopping = True
         was_started = self._service_started
         self._service_started = False
         self.bot.remove_listener(self.gateway.receive, "on_socket_raw_receive")
         self.bot.remove_listener(self.ready, "on_ready")
-        try:
-            await self.bot.remove_cog(self.cog.qualified_name)
-            await self.scheduler.stop()
-            await self.supervisor.shutdown(grace_seconds=2)
-            if was_started:
-                await self.service.stop()
-        finally:
-            await self.bot.close()
+        await self.bot.remove_cog(self.cog.qualified_name)
+        await self.scheduler.stop()
+        require_tasks_stopped(await self.supervisor.shutdown(grace_seconds=2))
+        if was_started:
+            await self.service.stop()
+        await self.bot.close()
+        self.startup_cleanup_complete = True
 
 
 def create_engagement_bot() -> commands.Bot:

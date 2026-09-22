@@ -19,7 +19,7 @@ from discordbot.composition.guardian import receive_control, supervise
 from discordbot.composition.main import run_process
 from discordbot.composition.runtime import ProcessRuntime
 from discordbot.composition.worker import run_managed
-from discordbot.platform.tasks import TaskSpec, CancellationBehavior
+from discordbot.platform.tasks import TaskSpec, CancellationBehavior, TaskSupervisor, require_tasks_stopped
 from discordbot.platform.termination import TerminationPolicy
 
 
@@ -72,6 +72,11 @@ def main():
         name = 'synthetic-resource'
 
         async def start(self):
+            if mode == 'nested-incomplete':
+                self.children = TaskSupervisor(capacity=1, history_capacity=4, clock=runtime.clock)
+                self.children.start(TaskSpec('nested', 'synthetic', 'one', 'one', 30,
+                    cancellation_behavior=CancellationBehavior.CANCEL_ON_SHUTDOWN), lambda: resistant(directory))
+                await asyncio.sleep(0)
             if mode == 'startup':
                 await resistant(directory)
             if mode == 'rollback':
@@ -128,6 +133,10 @@ def main():
             record(directory, 'armed')
 
         async def stop(self):
+            if mode == 'nested-incomplete':
+                report = await self.children.shutdown(grace_seconds=.02)
+                record(directory, 'nested-owned', remaining=report.remaining)
+                require_tasks_stopped(report)
             if mode in ('resource', 'rollback'):
                 await resistant(directory)
             if mode == 'close-error':
@@ -136,6 +145,14 @@ def main():
 
     resource = Resource()
     runtime = ProcessRuntime(config=config, resources=(resource,))
+    if mode == 'nested-incomplete':
+        class Dependency:
+            name, required = 'dependency', True
+            async def start(self):
+                return
+            async def stop(self):
+                record(directory, 'dependency-stopped')
+        runtime = ProcessRuntime(config=config, resources=(Dependency(), resource))
     if mode.startswith('optional-'):
         class Optional:
             name, required = 'optional', False

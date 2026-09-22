@@ -4,7 +4,7 @@ from typing import Any
 
 from discordbot.platform.clock import Clock, Uuid4Generator
 from discordbot.platform.telemetry import TelemetryEmitter
-from discordbot.platform.errors import ConflictError
+from discordbot.platform.errors import ConflictError, ShutdownError
 from discordbot.watch.adapters.control_client import LoopbackClient
 from discordbot.watch.adapters.discord_io import DiscordAdminMessages, build_watch_cog
 from discordbot.watch.adapters.security import public_origin
@@ -46,7 +46,9 @@ class DiscordWatchResource:
     async def stop(self) -> None:
         if self.closed:
             return
-        self.closed = True
+        if getattr(self, "_stopping", False):
+            raise ShutdownError("Watch cleanup already incomplete")
+        self._stopping = True
         try:
             if self.cog is not None:
                 await self.bot.remove_cog(self.cog.qualified_name)
@@ -55,3 +57,5 @@ class DiscordWatchResource:
             await self.controller.stop()
             self.messages.stop()
             await self.client.stop()
+        self.closed = True
+        self.startup_cleanup_complete = True

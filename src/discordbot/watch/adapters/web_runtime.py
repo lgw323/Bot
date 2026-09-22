@@ -15,6 +15,7 @@ from discordbot.watch.domain.policy import WatchLimits
 class WatchWebResource:
     name = "watch-web"
     required = True
+    startup_cleanup_complete = False
 
     def __init__(self, database: SqliteDatabase, origin: str, capability_secret: str, control_secret: str,
                  clock: Clock, telemetry: TelemetryEmitter, metadata=None, limits: WatchLimits = WatchLimits()) -> None:
@@ -38,15 +39,11 @@ class WatchWebResource:
             self.service.schedule()
             self.started = True
         except BaseException:
-            try:
-                await self.service.stop()
-            finally:
-                await self.database.stop()
+            await self.stop()
             raise
 
     async def stop(self) -> None:
-        try:
-            await self.service.stop()
-        finally:
-            await self.database.stop()
-            self.started = False
+        await self.service.stop()
+        await self.database.stop()
+        self.started = False
+        self.startup_cleanup_complete = True

@@ -16,6 +16,7 @@ from discordbot.platform.errors import (
     CapacityError,
     ConflictError,
     DeadlineExceededError,
+    ShutdownError,
 )
 
 T = TypeVar("T")
@@ -124,6 +125,12 @@ class ShutdownReport:
     completed: int
     cancelled: int
     remaining: int
+
+
+def require_tasks_stopped(report: ShutdownReport) -> None:
+    """A bounded observation is not proof that child ownership was released."""
+    if report.remaining:
+        raise ShutdownError("child tasks still owned", context={"remaining_tasks": report.remaining})
 
 
 @dataclass(slots=True)

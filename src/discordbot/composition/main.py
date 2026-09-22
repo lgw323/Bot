@@ -45,11 +45,9 @@ async def run_process(config, settings, control: WorkerControl | None = None):
         stopped.set()
         if config.service is ServiceKind.DISCORD_BOT:
             async def close_gateway():
-                try:
-                    if feature.deferred is not None:
-                        await feature.deferred.stop()
-                finally:
-                    await feature.bot.close()
+                if feature.deferred is not None:
+                    await feature.deferred.stop()
+                await feature.bot.close()
             gateway = runtime.lifecycle.start(close_gateway(), name="gateway-stop")
         if cancel_application and application is not None:
             application.cancel()

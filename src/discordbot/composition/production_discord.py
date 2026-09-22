@@ -21,6 +21,7 @@ from discordbot.watch.adapters.discord_runtime import DiscordWatchResource
 class DiscordFeatures:
     name = "discord-features"
     required = True
+    startup_cleanup_complete = False
 
     def __init__(self, config, settings, database, clock):
         self.config, self.settings, self.database, self.clock = config, settings, database, clock
@@ -44,13 +45,17 @@ class DiscordFeatures:
             fail_fast=lambda: Path('/run/discordbot-live-smoke').is_file(),
             full_sweep=lambda: full_sweep_active(self.config.release))
         self.deferred = DeferredMusic(self.music, self.bot, r.supervisor)
-        try:
-            for resource in (engagement, self.summary, watch, Gateway(self.bot, s.secrets.discord_token), self.deferred):
+        for resource in (engagement, self.summary, watch, Gateway(self.bot, s.secrets.discord_token), self.deferred):
+            self.started.append(resource)
+            try:
                 await resource.start()
-                self.started.append(resource)
-        except BaseException:
-            await self.stop()
-            raise
+            except BaseException:
+                if getattr(resource, "startup_cleanup_complete", None) is False:
+                    # Keep the partial child and its dependencies for escalation.
+                    raise
+                self.started.pop()  # Failed start has completed its own cleanup.
+                await self.stop()
+                raise
 
     def ready(self):
         return bool(self.bot.is_ready() and self.deferred and self.deferred.started
@@ -64,16 +69,10 @@ class DiscordFeatures:
                 "summary_waiting": self.summary.service.waiting if self.summary else 0}
 
     async def stop(self):
-        errors = []
-        for resource in reversed(self.started):
-            try:
-                await resource.stop()
-            except Exception as error:
-                errors.append(type(error).__name__)
-        self.started.clear()
-        if errors:
-            from discordbot.platform.errors import ShutdownError
-            raise ShutdownError("Discord feature shutdown failed")
+        while self.started:
+            await self.started[-1].stop()
+            self.started.pop()
+        self.startup_cleanup_complete = True
 
 
 def assemble(config, settings):

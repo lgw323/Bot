@@ -101,11 +101,24 @@ async def test_dashboard_delete_recovery_failure_health_and_cleanup_timing(rig, 
         await asyncio.wait_for(asyncio.shield(runtime._refresh_task), 2)
         assert runtime.error == "dashboard_failed"
         bot.remove_cog.side_effect = RuntimeError("synthetic cog removal failure")
-        await runtime.stop()
-        assert not runtime.supervisor.snapshot().active
+        with pytest.raises(RuntimeError, match="synthetic cog removal failure"):
+            await runtime.stop()
+        assert not runtime.closed and runtime.cog is not None and runtime.actors
+        from discordbot.platform.errors import ShutdownError
+        with pytest.raises(ShutdownError):
+            await runtime.stop()
+        bot.remove_cog.assert_awaited_once()
     finally:
-        await runtime.stop()
+        # Synthetic resources retained after the injected terminal failure are
+        # explicitly released by the harness, not falsely closed by the runtime.
+        for actor in runtime.actors.values():
+            await actor.close()
+        await runtime.supervisor.shutdown(grace_seconds=2)
+        await runtime.processes.close()
+        await runtime.ffmpeg.close()
+        await runtime.cache.close()
         await executor.close(grace_seconds=2)
+
 
 
 async def test_dashboard_refresh_retains_real_discord_component_dispatch(rig, tmp_path):

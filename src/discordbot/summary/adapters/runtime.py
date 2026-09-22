@@ -6,8 +6,8 @@ import asyncio
 from typing import Any
 
 from discordbot.platform.clock import Clock, Uuid4Generator
-from discordbot.platform.errors import AppError, ConflictError
-from discordbot.platform.tasks import CancellationBehavior, TaskSpec, TaskSupervisor
+from discordbot.platform.errors import AppError, ConflictError, ShutdownError
+from discordbot.platform.tasks import require_tasks_stopped, CancellationBehavior, TaskSpec, TaskSupervisor
 from discordbot.platform.telemetry import TelemetryEmitter
 from discordbot.summary.application.capture import Capture
 from discordbot.summary.application.service import SummaryService
@@ -20,6 +20,7 @@ from discordbot.summary.ports.io import Provider
 class SummaryResource:
     name = "summary"
     required = True
+    startup_cleanup_complete = False
 
     def __init__(self, bot: Any, config: SummaryConfig, provider: Provider,
                  clock: Clock, telemetry: TelemetryEmitter, *, owns_bot: bool = False) -> None:
@@ -116,22 +117,23 @@ class SummaryResource:
     async def stop(self) -> None:
         if self._closed:
             return
+        if getattr(self, "_stopping", False):
+            raise ShutdownError("Summary cleanup already incomplete")
+        self._stopping = True
         self._running = False
-        self._closed = True
         self.bot.remove_listener(self.message, "on_message")
         self.bot.remove_listener(self.ready, "on_ready")
         self.bot.remove_listener(self.ready, "on_resumed")
-        try:
-            if self.cog is not None:
-                await self.bot.remove_cog(self.cog.qualified_name)
-        finally:
-            await self.background.shutdown(grace_seconds=2)
-            self.controller.close()
-            try:
-                await self.service.stop()
-            finally:
-                if self._owns_bot:
-                    await self.bot.close()
+        if self.cog is not None:
+            await self.bot.remove_cog(self.cog.qualified_name)
+            self.cog = None
+        require_tasks_stopped(await self.background.shutdown(grace_seconds=2))
+        await self.service.stop()
+        self.controller.close()
+        if self._owns_bot:
+            await self.bot.close()
+        self._closed = True
+        self.startup_cleanup_complete = True
 
 
 def create_summary_bot() -> Any:

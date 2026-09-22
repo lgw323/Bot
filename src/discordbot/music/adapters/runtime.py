@@ -13,8 +13,8 @@ from discordbot.music.adapters.providers import CachedMediaLibrary, YtDlpProvide
 from discordbot.music.adapters.snapshots import SnapshotStore
 from discordbot.music.application.actor import MusicActor
 from discordbot.music.domain.model import Bounds
-from discordbot.platform.errors import CapacityError, ConflictError
-from discordbot.platform.tasks import TaskSpec, TaskSupervisor
+from discordbot.platform.errors import ShutdownError, CapacityError, ConflictError
+from discordbot.platform.tasks import require_tasks_stopped, TaskSpec, TaskSupervisor
 from discordbot.storage.ports.contracts import DatabaseRequest
 
 
@@ -60,6 +60,7 @@ class MusicResource:
         self._refresh_task = self._tick_task = None
         self.controller = MusicController(self.actor, repository, clock, channels, master)
         self.started = self.closed = self.restoring = False
+        self._stopping = False
         self.error: str | None = None
         self.failed_restore: set[int] = set()
         self.cog = None
@@ -70,7 +71,7 @@ class MusicResource:
 
     async def actor(self, guild: int) -> MusicActor:
         async with self._lock:
-            if self.closed or guild not in self.channels or guild in self.failed_restore:
+            if self.closed or self._stopping or guild not in self.channels or guild in self.failed_restore:
                 raise ConflictError("Music guild is unavailable")
             if guild not in self.actors:
                 if len(self.actors) >= self.bounds.actors:
@@ -83,7 +84,7 @@ class MusicResource:
             return self.actors[guild]
 
     def changed(self, state: Any) -> None:
-        if self.closed or self.restoring or state.guild_id in self.failed_restore:
+        if self.closed or self._stopping or self.restoring or state.guild_id in self.failed_restore:
             return
         self._dirty[state.guild_id] = state
         if self._refresh_task is None:
@@ -104,7 +105,7 @@ class MusicResource:
                     self.error = "dashboard_failed"
         finally:
             self._refresh_task = None
-            if self._dirty and not self.closed:
+            if self._dirty and not self.closed and not self._stopping:
                 self._refresh_task = self._spawn("dashboard-checkpoint", self._refresh)
 
     async def dashboard(self, guild: int, state: Any) -> None:
@@ -167,14 +168,14 @@ class MusicResource:
                     self.bot.add_view(old_view, message_id=previous_message.id)
 
     async def ready(self) -> None:
-        if self.closed: return
+        if self.closed or self._stopping: return
         for guild in self.channels:
             if guild in self.failed_restore: continue
             actor = await self.actor(guild)
             self.changed(actor.projection())
 
     def _schedule_tick(self) -> None:
-        if self.closed or self._tick_task is not None: return
+        if self.closed or self._stopping or self._tick_task is not None: return
         async def tick():
             try:
                 await asyncio.sleep(10)
@@ -182,12 +183,12 @@ class MusicResource:
                 await self.ready()
             finally:
                 self._tick_task = None
-                if not self.closed: self._schedule_tick()
+                if not self.closed and not self._stopping: self._schedule_tick()
         self._tick_task = self._spawn("periodic-checkpoint-cache", tick, 30)
 
     async def start(self) -> None:
         if self.started: return
-        if self.closed: raise ConflictError("Music resource closed")
+        if self.closed or self._stopping: raise ConflictError("Music resource closed")
         try:
             await self.cache.start()
             self.restoring = True
@@ -222,39 +223,37 @@ class MusicResource:
             raise
 
     async def stop(self) -> None:
-        if self.closed: return
-        self.closed = True
+        if self.closed:
+            return
+        if getattr(self, "_stopping", False):
+            raise ShutdownError("Music cleanup already incomplete")
+        self._stopping = True
         await self.controller.stop()
         if self.cog:
-            try:
-                await self.bot.remove_cog(self.cog.qualified_name)
-            except Exception:
-                self.error = "cog_removal_failed"
+            await self.bot.remove_cog(self.cog.qualified_name)
+            self.cog = None
         for task in (self._tick_task, self._refresh_task):
-            if task: task.cancel()
-        await asyncio.gather(*(task for task in (self._tick_task, self._refresh_task) if task), return_exceptions=True)
+            if task:
+                task.cancel()
+        await asyncio.gather(*(task for task in (self._tick_task, self._refresh_task) if task),
+                             return_exceptions=True)
+        # The enclosing lifecycle retains this coroutine if any actor resists.
         for guild, actor in self.actors.items():
-            try:
-                if guild not in self.failed_restore:
+            if guild not in self.failed_restore:
+                try:
                     await self.snapshots.save(actor.projection())
-            except Exception:
-                self.error = "shutdown_checkpoint_failed"
-            finally:
-                try:
-                    await actor.close()
-                except Exception:
-                    self.error = "actor_close_failed"
-        for view in self.dashboard_views.values(): view.stop()
-        try:
-            await self.supervisor.shutdown(grace_seconds=2)
-        finally:
-            try:
-                await self.processes.close()
-            finally:
-                try:
-                    await self.ffmpeg.close()
-                finally:
-                    await self.cache.close()
+                except Exception as exc:
+                    self.error = "shutdown_checkpoint_failed"
+                    raise ShutdownError("Music checkpoint failed") from exc
+            await actor.close()
+        require_tasks_stopped(await self.supervisor.shutdown(grace_seconds=2))
+        for view in self.dashboard_views.values():
+            view.stop()
+        await self.processes.close()
+        await self.ffmpeg.close()
+        await self.cache.close()
+        self.closed = True
+        self.startup_cleanup_complete = True
 
 
 def build_music_cog(resource: MusicResource) -> Any:

@@ -154,6 +154,9 @@ class ProcessRuntime:
                     await self.lifecycle.run(resource.start(), name="resource-start", deadline=deadline)
                 except asyncio.CancelledError as exc:
                     self.health.update(resource.name, HealthStatus.DOWN, detail="CancelledError")
+                    if resource.required and getattr(resource, "startup_cleanup_complete", None) is False:
+                        self._partial_resources.append(resource)
+                        self._cleanup_failed = True
                     if not resource.required:
                         deadline = min(deadline, self.begin_shutdown())
                         try:
@@ -165,6 +168,9 @@ class ProcessRuntime:
                 except Exception as exc:
                     self.health.update(resource.name, HealthStatus.DOWN, detail=type(exc).__name__)
                     if resource.required:
+                        if getattr(resource, "startup_cleanup_complete", None) is False:
+                            self._partial_resources.append(resource)
+                            self._cleanup_failed = True
                         raise
                     await self._optional_start_failed(resource, exc, deadline)
                     continue

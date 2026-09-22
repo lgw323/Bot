@@ -13,7 +13,7 @@ import json
 from discordbot.platform.clock import Clock, IdGenerator
 from discordbot.platform.errors import (AppError, AuthorizationError, CapacityError,
     ConflictError, DeadlineExceededError, ExternalPermanentError, ShutdownError, ValidationError)
-from discordbot.platform.tasks import CancellationBehavior, TaskSpec, TaskSupervisor
+from discordbot.platform.tasks import require_tasks_stopped, CancellationBehavior, TaskSpec, TaskSupervisor
 from discordbot.platform.telemetry import TelemetryEmitter
 from discordbot.summary.application.capture import Capture
 from discordbot.summary.domain.failures import safe_failure_fields
@@ -212,7 +212,7 @@ class SummaryService:
 
     async def stop(self) -> None:
         self._accepting = False
-        await self.supervisor.shutdown(grace_seconds=2)
+        require_tasks_stopped(await self.supervisor.shutdown(grace_seconds=2))
         self.capture.clear()
         self._results.clear()
         async with asyncio.timeout(2):

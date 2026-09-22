@@ -5,7 +5,7 @@ import asyncio
 from discordbot.platform.clock import Clock, IdGenerator
 from discordbot.platform.errors import AppError, AuthorizationError, CapacityError, ExternalTemporaryError
 from discordbot.platform.health import HealthRegistry, HealthStatus
-from discordbot.platform.tasks import CancellationBehavior, TaskSpec, TaskSupervisor
+from discordbot.platform.tasks import require_tasks_stopped, CancellationBehavior, TaskSpec, TaskSupervisor
 from discordbot.platform.telemetry import TelemetryEmitter
 from discordbot.watch.ports.discord import AdminMessages, Interaction
 from discordbot.watch.ports.runtime import Control
@@ -137,6 +137,6 @@ class DiscordWatch:
     async def stop(self) -> None:
         self._stopped = True
         self.health.stop_accepting()
-        await self.supervisor.shutdown(grace_seconds=2)
+        require_tasks_stopped(await self.supervisor.shutdown(grace_seconds=2))
         self._operations.clear()
         self.health.stop_liveness()

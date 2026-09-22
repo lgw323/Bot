@@ -6,7 +6,7 @@ from dataclasses import asdict
 from discordbot.platform.clock import Clock, IdGenerator
 from discordbot.platform.errors import AppError, CapacityError, ConflictError, ExternalTemporaryError, ShutdownError, ValidationError
 from discordbot.platform.health import HealthRegistry, HealthStatus
-from discordbot.platform.tasks import CancellationBehavior, TaskSpec, TaskSupervisor
+from discordbot.platform.tasks import require_tasks_stopped, CancellationBehavior, TaskSpec, TaskSupervisor
 from discordbot.platform.telemetry import TelemetryEmitter
 from discordbot.watch.application.session import Peer, WatchSession
 from discordbot.watch.domain.policy import ClosedSession, Intent, Invite, InvalidCapability, WatchLimits, display, video_id
@@ -185,6 +185,8 @@ class WatchService:
 
     async def stop(self) -> None:
         if self._stopped:
+            if not getattr(self, "_cleanup_complete", False):
+                raise ShutdownError("Watch service cleanup incomplete")
             return
         self._stopped = True
         self.health.stop_accepting()
@@ -201,10 +203,9 @@ class WatchService:
         except TimeoutError:
             self.telemetry.emit("watch.shutdown", component="watch", result="deadline")
         finally:
-            await self.supervisor.shutdown(grace_seconds=1)
+            require_tasks_stopped(await self.supervisor.shutdown(grace_seconds=1))
             self.sessions.clear()
-            try:
-                await self.writer.release(self.epoch)
-            finally:
-                await self.metadata.close()
-                self.health.stop_liveness()
+            await self.writer.release(self.epoch)
+            await self.metadata.close()
+            self.health.stop_liveness()
+            self._cleanup_complete = True

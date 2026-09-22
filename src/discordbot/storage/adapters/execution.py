@@ -121,6 +121,7 @@ class SqliteDatabase:
 
     name = "database"
     required = True
+    startup_cleanup_complete = False
 
     def __init__(self, config: DatabaseConfig) -> None:
         self.config = config
@@ -223,6 +224,7 @@ class SqliteDatabase:
         )
         if any(isinstance(result, BaseException) for result in results):
             raise ConflictError("database workers did not drain")
+        self.startup_cleanup_complete = True
 
     async def maintenance(self, request: DatabaseRequest, work: Callable[[WorkControl], T]) -> T:
         """Explicit copy/bootstrap operations; never accepted after runtime start."""
