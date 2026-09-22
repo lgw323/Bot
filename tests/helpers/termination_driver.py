@@ -115,11 +115,13 @@ def main():
                                  start_new_session=mode in ('escape', 'internal-restart'), close_fds=True)
                 while not (directory / 'descendant-0.json').exists():
                     await asyncio.sleep(.001)
-            if mode == 'asyncgen':
+            if mode in ('asyncgen', 'asyncgen-error'):
                 async def generator():
                     try:
                         yield 1
                     finally:
+                        if mode == 'asyncgen-error':
+                            raise RuntimeError('synthetic async-generator close failure')
                         await resistant(directory)
                 self.generator = generator()
                 await anext(self.generator)

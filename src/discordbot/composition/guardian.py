@@ -63,6 +63,7 @@ def supervise(command: Callable[[int], Sequence[str]], *,
     requested = False
     stop_sent = False
     exit_observed = False
+    reported_failure = False
     # Datagram telemetry cannot block the guardian on application logging I/O.
     journal = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
     journal.setblocking(False)
@@ -112,6 +113,7 @@ def supervise(command: Callable[[int], Sequence[str]], *,
                         complete = True
                         requested = True
                     elif packet in (b"F", b"A", b"L"):
+                        reported_failure = True
                         failed = True
                         requested = True
                         emit({b"F": "worker.failed", b"A": "worker.application_timeout", b"L": "worker.loop_timeout"}[packet])
@@ -128,7 +130,7 @@ def supervise(command: Callable[[int], Sequence[str]], *,
             if code is not None:
                 if not exit_observed:
                     exit_observed = True
-                    if code != 0 and not failed:
+                    if code != 0 and not forced and not reported_failure:
                         emit("guardian.worker_crash")
                 if code != 0 or not complete or not ready:
                     failed = True

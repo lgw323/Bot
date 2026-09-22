@@ -32,7 +32,8 @@ def eventually(predicate, bound=4):
 
 @pytest.mark.parametrize('mode', ['clean', 'capacity', 'task', 'thread', 'retained', 'default-executor',
     'interpreter', 'asyncgen', 'resource', 'rollback', 'startup', 'blocked-loop', 'tree',
-    'internal-tree', 'escape', 'internal-restart', 'crash', 'close-error', 'parent-death', 'external-stop', 'repeated-stop'])
+    'internal-tree', 'escape', 'internal-restart', 'crash', 'worker-crash', 'asyncgen-error',
+    'close-error', 'parent-death', 'external-stop', 'repeated-stop'])
 def test_real_guardian_worker_under_systemd(tmp_path, mode):
     unit = 'a2r2-' + uuid.uuid4().hex + '.service'
     sentinel = subprocess.Popen([sys.executable, '-I', '-c', 'import time; time.sleep(10)'])
@@ -64,6 +65,8 @@ def test_real_guardian_worker_under_systemd(tmp_path, mode):
                 eventually(lambda: 'guardian.ready' in (tmp_path / 'events').read_text())
             if mode == 'parent-death':
                 os.kill(guardian, signal.SIGKILL)
+            elif mode == 'worker-crash':
+                os.kill(worker, signal.SIGKILL)
             elif mode == 'external-stop':
                 command('systemctl', '--user', 'stop', unit)
             else:
@@ -86,7 +89,7 @@ def test_real_guardian_worker_under_systemd(tmp_path, mode):
             if clean:
                 assert 'guardian.clean' in events and 'guardian.escalation' not in events
                 assert (tmp_path / 'resource-stopped.json').exists()
-            elif mode not in ('crash', 'close-error', 'escape', 'internal-restart'):
+            elif mode not in ('crash', 'worker-crash', 'asyncgen-error', 'close-error', 'escape', 'internal-restart'):
                 assert 'guardian.escalation' in events, events
             stamps = {row['name']: row['time'] for row in map(json.loads, (tmp_path / 'timings').read_text().splitlines())}
             if 'guardian.escalation' in stamps:
@@ -98,6 +101,10 @@ def test_real_guardian_worker_under_systemd(tmp_path, mode):
                 assert 'worker.loop_timeout' in events
             if mode == 'interpreter':
                 assert (tmp_path / 'worker-returned.json').exists()
+            if mode == 'worker-crash':
+                assert 'guardian.worker_crash' in events
+            if mode == 'asyncgen-error':
+                assert 'worker.failed' in events and 'guardian.clean' not in events
         if mode not in ('clean', 'capacity', 'external-stop', 'repeated-stop'):
             # Prove automatic failure/deactivation cleanup BEFORE an explicit stop.
             eventually(lambda: not cgroup.exists())

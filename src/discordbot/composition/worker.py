@@ -21,6 +21,13 @@ def run_managed(application: Callable[[WorkerControl], Awaitable[None]], control
     main: asyncio.Task | None = None
     stop_requested = False
 
+    def loop_failure(_loop: asyncio.AbstractEventLoop, _context: dict) -> None:
+        nonlocal failed
+        failed = True
+        control.send(b"F")
+
+    loop.set_exception_handler(loop_failure)
+
     def stop(epoch: float | None = None) -> None:
         nonlocal stop_requested
         already_stopping = control.epoch is not None
@@ -67,6 +74,7 @@ def run_managed(application: Callable[[WorkerControl], Awaitable[None]], control
             control.stopping()
 
     async def finalize() -> bool:
+        nonlocal failed
         deadline = control.stopping() + control.policy.loop
         pending = {task for task in asyncio.all_tasks(loop) if task is not asyncio.current_task() and not task.done()}
         for task in pending:
@@ -75,7 +83,9 @@ def run_managed(application: Callable[[WorkerControl], Awaitable[None]], control
             done, pending = await asyncio.wait(pending, timeout=max(0, deadline-loop.time()))
             for task in done:
                 if not task.cancelled():
-                    task.exception()
+                    if task.exception() is not None:
+                        failed = True
+                        control.send(b"F")
         if pending:
             return False
         try:
