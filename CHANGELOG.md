@@ -1,5 +1,10 @@
 # Changelog
 
+## A2R5 Music reply-deletion cleanup
+
+- MusicController의 내부 삭제 supervisor 결과를 기존 정리 검증기로 전달해 미완료 작업이 있으면 부모의 정상 종료를 차단합니다.
+- 실제 Music 경로 회귀와 Linux guardian 종료 검증을 추가했습니다. 운영 배포 없이 독립 재감사를 기다립니다.
+
 ## A2R4 nested cleanup ownership
 
 - 내부 supervisor의 미완료 정리를 typed 오류로 전파하고 의존 리소스의 조기 종료를 막습니다.

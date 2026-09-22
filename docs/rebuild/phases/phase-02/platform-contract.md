@@ -147,3 +147,16 @@ initial five discriminating cases produced 3 FAIL / 2 PASS. No new full strict r
 previous 1,037 PASS / 2 FAIL / 25 SKIP remains historical evidence (Deno/A2-N1).
 A2-M1-R is remediated pending independent A2V2; A2 remains FAIL. Rollback is local revert
 of the two A2R4 implementation commits in reverse order, with no data migration or production operation.
+
+## A2R5 Music reply-deletion ownership (2026-09-22)
+
+A2V2 found that the A2R4 consumer inventory missed MusicController's private deletion
+supervisor. Its stop now uses the same require_tasks_stopped validator before MusicResource
+can release dependencies or mark completion. Zero-grace observation, task handles and the
+existing parent failure/guardian escalation path are preserved. No shared helper, startup,
+guardian or user-facing feature behavior changed.
+
+Runtime `3a4058caca4e6b9b4b900c458a0e98a825d13d44`: real-controller regression fails before
+the fix; focused 81 PASS, A0 5 PASS, collection 1,085, exact Linux 10 PASS/17 deselected.
+One strict suite: 1,056 PASS/2 known FAIL/27 SKIP (A2-N1 and Deno). M1-R remediated pending
+independent A2V3; A2 remains FAIL. Production unchanged. Rollback: revert that runtime commit.
