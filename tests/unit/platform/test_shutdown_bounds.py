@@ -1,4 +1,5 @@
 import asyncio
+import threading
 
 import pytest
 
@@ -53,6 +54,65 @@ async def test_resistant_work_returns_remaining_without_closing_its_dependency()
         await asyncio.wait_for(work, 1)
         await asyncio.wait_for(shutdown, 1)
         await runtime.executor.close()
+
+
+@pytest.mark.asyncio
+async def test_cancelled_shutdown_caller_does_not_cancel_the_cleanup_owner():
+    release, started = asyncio.Event(), asyncio.Event()
+    stops = []
+
+    class Resource:
+        name, required = 'resource', True
+        async def start(self):
+            return
+        async def stop(self):
+            stops.append(True)
+            started.set()
+            await release.wait()
+
+    runtime = ProcessRuntime(config=PlatformConfig(ServiceKind.WATCH_WEB, Environment.TEST, 'test',
+        runtime=RuntimePolicy(1, .1)), resources=(Resource(),))
+    await runtime.start()
+    caller = asyncio.create_task(runtime.shutdown())
+    await started.wait()
+    caller.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await caller
+    release.set()
+    require_clean_shutdown(await runtime.shutdown())
+    assert stops == [True]
+
+
+@pytest.mark.asyncio
+async def test_finite_thread_gets_remaining_grace_before_dependency_close():
+    started, release = threading.Event(), threading.Event()
+    stops = []
+
+    class Resource:
+        name, required = 'resource', True
+        async def start(self):
+            return
+        async def stop(self):
+            assert runtime.executor.admitted == 0
+            stops.append(True)
+
+    runtime = ProcessRuntime(config=PlatformConfig(ServiceKind.WATCH_WEB, Environment.TEST, 'test',
+        runtime=RuntimePolicy(1, .2)), resources=(Resource(),))
+    await runtime.start()
+    def block():
+        started.set()
+        release.wait(1)
+    work = runtime.supervisor.start(TaskSpec('finite', 'test', 'one', 'one', 2,
+        cancellation_behavior=CancellationBehavior.CANCEL_ON_SHUTDOWN), lambda: runtime.executor.run(block))
+    try:
+        while not started.is_set():
+            await asyncio.sleep(.001)
+        asyncio.get_running_loop().call_later(.02, release.set)
+        require_clean_shutdown(await runtime.shutdown())
+        assert stops == [True] and work.cancelled()
+    finally:
+        release.set()
+        await runtime.executor.close(grace_seconds=1)
 
 
 @pytest.mark.asyncio

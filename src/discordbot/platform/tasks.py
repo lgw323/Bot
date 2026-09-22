@@ -312,6 +312,11 @@ class TaskSupervisor:
         # done callbacks are scheduled by the event loop; yield once so the
         # returned report and snapshot reflect every observed terminal state.
         await asyncio.sleep(0)
+        for task in initial_tasks:
+            if task.done():
+                # Completion callbacks may still be queued behind this waiter,
+                # especially with zero grace. Observe only actually done tasks.
+                self._observe_completion(task)
         cancelled = sum(task.cancelled() for task in initial_tasks)
         return ShutdownReport(
             completed=sum(task.done() and not task.cancelled() for task in initial_tasks),

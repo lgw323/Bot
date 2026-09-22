@@ -102,8 +102,12 @@ def test_real_guardian_worker_under_systemd(tmp_path, mode):
             # Prove automatic failure/deactivation cleanup BEFORE an explicit stop.
             eventually(lambda: not cgroup.exists())
         if mode == 'internal-restart':
-            eventually(lambda: 'Result=start-limit-hit' in command('systemctl', '--user', 'show', unit,
-                '--property=Result', check=False).stdout)
+            def restart_was_bounded():
+                state = command('systemctl', '--user', 'show', unit,
+                    '--property=NRestarts,ActiveState,MainPID', check=False).stdout
+                return all(value in state for value in ('NRestarts=1', 'ActiveState=failed', 'MainPID=0'))
+            eventually(restart_was_bounded)
+            assert (tmp_path / 'events').read_text().splitlines().count('guardian.started') == 1
         command('systemctl', '--user', 'stop', unit, check=False)
         pids = [json.loads(file.read_text())['pid'] for file in tmp_path.glob('*.json')]
         eventually(lambda: all(not Path(f'/proc/{pid}').exists() for pid in pids))

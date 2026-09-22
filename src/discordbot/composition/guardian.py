@@ -134,7 +134,7 @@ def supervise(command: Callable[[int], Sequence[str]], *,
                     failed = True
                 requested = True
                 # Reap only our process group, never unrelated children.
-                while True:
+                for _ in range(64):
                     try:
                         pid, _ = os.waitpid(-worker.pid, os.WNOHANG)
                     except ChildProcessError:

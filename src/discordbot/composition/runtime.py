@@ -216,6 +216,11 @@ class ProcessRuntime:
         task_report = await self.supervisor.shutdown(
             grace_seconds=max(0, deadline - asyncio.get_running_loop().time())
         )
+        if not task_report.remaining and not self.lifecycle.pending and not self._cleanup_failed:
+            # A cancelled awaiter may leave finite blocking work behind. Give it
+            # the remaining common grace before deciding dependencies are unsafe.
+            while self.executor.admitted and asyncio.get_running_loop().time() < deadline:
+                await asyncio.sleep(min(.01, max(0, deadline - asyncio.get_running_loop().time())))
         if task_report.remaining or self.lifecycle.pending or self._cleanup_failed or self.executor.admitted:
             errors.append("outstanding_owners")
         else:

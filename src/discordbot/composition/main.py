@@ -90,9 +90,9 @@ async def run_process(config, settings, control: WorkerControl | None = None):
             require_clean_shutdown(report)
             if errors:
                 raise ShutdownError("entrypoint cleanup failed")
-        except (Exception, asyncio.CancelledError):
+        except (Exception, asyncio.CancelledError) as exc:
             if control is not None:
-                control.send(b"A")
+                control.send(b"A" if loop.time() >= deadline or isinstance(exc, TimeoutError) else b"F")
             raise
         finally:
             for sig, handler in previous.items():
