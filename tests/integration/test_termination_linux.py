@@ -32,7 +32,7 @@ def eventually(predicate, bound=4):
 
 @pytest.mark.parametrize('mode', ['clean', 'capacity', 'task', 'thread', 'retained', 'default-executor',
     'interpreter', 'asyncgen', 'resource', 'rollback', 'startup', 'blocked-loop', 'tree',
-    'internal-tree', 'escape', 'crash', 'close-error', 'parent-death', 'external-stop', 'repeated-stop'])
+    'internal-tree', 'escape', 'internal-restart', 'crash', 'close-error', 'parent-death', 'external-stop', 'repeated-stop'])
 def test_real_guardian_worker_under_systemd(tmp_path, mode):
     unit = 'a2r2-' + uuid.uuid4().hex + '.service'
     sentinel = subprocess.Popen([sys.executable, '-I', '-c', 'import time; time.sleep(10)'])
@@ -41,9 +41,11 @@ def test_real_guardian_worker_under_systemd(tmp_path, mode):
     try:
         # Even a broken guardian is contained by the external manager. Triggering
         # this safety deadline is a test failure, never remediation evidence.
+        restart = ['--property=Restart=on-failure', '--property=RestartSec=100ms',
+                   '--property=StartLimitIntervalSec=10', '--property=StartLimitBurst=1'] if mode == 'internal-restart' else []
         command('systemd-run', '--user', '--unit=' + unit, '--property=RuntimeMaxSec=5',
             '--property=TimeoutStopSec=1200ms', '--property=KillMode=control-group',
-            '--property=RemainAfterExit=yes', sys.executable, '-I', '-B', str(DRIVER),
+            '--property=RemainAfterExit=yes', *restart, sys.executable, '-I', '-B', str(DRIVER),
             'guardian', mode, str(tmp_path))
         eventually(lambda: (tmp_path / 'worker.json').exists())
         worker = json.loads((tmp_path / 'worker.json').read_text())['pid']
@@ -56,7 +58,7 @@ def test_real_guardian_worker_under_systemd(tmp_path, mode):
         members = {int(v) for v in (cgroup / 'cgroup.procs').read_text().split()}
         assert {guardian, worker} <= members
         (tmp_path / 'go').touch()
-        if mode not in ('rollback', 'startup', 'internal-tree', 'escape', 'crash'):
+        if mode not in ('rollback', 'startup', 'internal-tree', 'escape', 'internal-restart', 'crash'):
             eventually(lambda: (tmp_path / 'armed.json').exists())
             if mode != 'blocked-loop':
                 eventually(lambda: 'guardian.ready' in (tmp_path / 'events').read_text())
@@ -84,8 +86,11 @@ def test_real_guardian_worker_under_systemd(tmp_path, mode):
             if clean:
                 assert 'guardian.clean' in events and 'guardian.escalation' not in events
                 assert (tmp_path / 'resource-stopped.json').exists()
-            elif mode not in ('crash', 'close-error', 'escape'):
+            elif mode not in ('crash', 'close-error', 'escape', 'internal-restart'):
                 assert 'guardian.escalation' in events, events
+            stamps = {row['name']: row['time'] for row in map(json.loads, (tmp_path / 'timings').read_text().splitlines())}
+            if 'guardian.escalation' in stamps:
+                assert .70 <= stamps['guardian.escalation'] - stamps['guardian.stopping'] <= 1.05
             if mode == 'task':
                 assert (tmp_path / 'resisted.json').exists()
                 assert 'worker.application_timeout' in events
@@ -93,8 +98,12 @@ def test_real_guardian_worker_under_systemd(tmp_path, mode):
                 assert 'worker.loop_timeout' in events
             if mode == 'interpreter':
                 assert (tmp_path / 'worker-returned.json').exists()
-        # Stop also handles a deliberately setsid-escaped descendant and guardian
-        # death: that last containment owner is systemd, not process-name matching.
+        if mode not in ('clean', 'capacity', 'external-stop', 'repeated-stop'):
+            # Prove automatic failure/deactivation cleanup BEFORE an explicit stop.
+            eventually(lambda: not cgroup.exists())
+        if mode == 'internal-restart':
+            eventually(lambda: 'Result=start-limit-hit' in command('systemctl', '--user', 'show', unit,
+                '--property=Result', check=False).stdout)
         command('systemctl', '--user', 'stop', unit, check=False)
         pids = [json.loads(file.read_text())['pid'] for file in tmp_path.glob('*.json')]
         eventually(lambda: all(not Path(f'/proc/{pid}').exists() for pid in pids))

@@ -62,6 +62,7 @@ def supervise(command: Callable[[int], Sequence[str]], *,
     eof = False
     requested = False
     stop_sent = False
+    exit_observed = False
     # Datagram telemetry cannot block the guardian on application logging I/O.
     journal = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
     journal.setblocking(False)
@@ -95,6 +96,8 @@ def supervise(command: Callable[[int], Sequence[str]], *,
                         packet = parent.recv(64)
                     except BlockingIOError:
                         break
+                    except ConnectionResetError:
+                        packet = b""  # A force-killed peer may leave unread stop data.
                     if not packet:
                         eof = True
                         if not complete:
@@ -123,6 +126,10 @@ def supervise(command: Callable[[int], Sequence[str]], *,
                         requested = True
             code = worker.poll()  # Reaps only the direct worker first.
             if code is not None:
+                if not exit_observed:
+                    exit_observed = True
+                    if code != 0 and not failed:
+                        emit("guardian.worker_crash")
                 if code != 0 or not complete or not ready:
                     failed = True
                 requested = True
@@ -150,7 +157,7 @@ def supervise(command: Callable[[int], Sequence[str]], *,
                     stop_sent = True
                     try:
                         parent.send(b"T" + struct.pack("!d", epoch))
-                    except (BrokenPipeError, BlockingIOError):
+                    except (BrokenPipeError, BlockingIOError, ConnectionResetError):
                         pass  # Signal and independent deadlines remain armed.
                     if code is None:
                         try:
@@ -194,7 +201,7 @@ class WorkerControl:
     def send(self, packet: bytes) -> None:
         try:
             self.channel.send(packet)
-        except (BlockingIOError, BrokenPipeError):
+        except (BlockingIOError, BrokenPipeError, ConnectionResetError):
             self.failed = True  # Guardian sees EOF/exit or its startup/stop timeout.
 
     def stopping(self, epoch: float | None = None) -> float:

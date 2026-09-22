@@ -23,8 +23,9 @@ def run_managed(application: Callable[[WorkerControl], Awaitable[None]], control
 
     def stop(epoch: float | None = None) -> None:
         nonlocal stop_requested
+        already_stopping = control.epoch is not None
         control.stopping(epoch)
-        if not stop_requested and main is not None and not main.done():
+        if not stop_requested and not already_stopping and main is not None and not main.done():
             main.cancel()
         stop_requested = True
 
@@ -33,6 +34,8 @@ def run_managed(application: Callable[[WorkerControl], Awaitable[None]], control
             packet = control.channel.recv(64)
         except BlockingIOError:
             return
+        except ConnectionResetError:
+            packet = b""
         if len(packet) == 9 and packet[:1] == b"T":
             stamp = struct.unpack("!d", packet[1:])[0]
             stop(min(time.monotonic(), stamp))

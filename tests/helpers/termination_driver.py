@@ -53,6 +53,8 @@ def main():
         def event(name):
             with (directory / 'events').open('a') as stream:
                 stream.write(name + '\n')
+            with (directory / 'timings').open('a') as stream:
+                stream.write(json.dumps({'name': name, 'time': time.monotonic()}) + '\n')
         result = supervise(lambda fd: [sys.executable, '-I', '-B', __file__, 'worker', mode, path, str(fd)],
                            policy=TerminationPolicy(.6, .15, .9), event=event)
         record(directory, 'result', code=result)
@@ -108,9 +110,9 @@ def main():
                 threading.Thread(target=block, daemon=False).start()
                 while not started.is_set():
                     await asyncio.sleep(.001)
-            if mode in ('tree', 'internal-tree', 'escape', 'parent-death'):
+            if mode in ('tree', 'internal-tree', 'escape', 'internal-restart', 'parent-death'):
                 subprocess.Popen([sys.executable, '-I', '-B', __file__, 'descendant', mode, path, '1'],
-                                 start_new_session=mode == 'escape', close_fds=True)
+                                 start_new_session=mode in ('escape', 'internal-restart'), close_fds=True)
                 while not (directory / 'descendant-0.json').exists():
                     await asyncio.sleep(.001)
             if mode == 'asyncgen':
@@ -151,7 +153,7 @@ def main():
 
     class Listener(Component):
         async def start(self):
-            if mode in ('internal-tree', 'escape', 'crash'):
+            if mode in ('internal-tree', 'escape', 'internal-restart', 'crash'):
                 raise RuntimeError('synthetic internal failure')
             if mode == 'blocked-loop':
                 # Started marker is absent; guardian startup timeout must still work.
