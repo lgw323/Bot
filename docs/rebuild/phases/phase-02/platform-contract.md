@@ -87,3 +87,30 @@ process에서 모든 V2 module을 import해 DB/network/server/subprocess/thread/
   Non-Linux managed startup fails closed; direct async application calls remain
   test seams, not a process-containment guarantee. Optional-start failure semantics
   are unchanged and remain the separate A2-M2 remediation.
+
+## A2R3 optional startup contract (2026-09-22)
+
+- `ManagedResource.required` governs both startup and readiness. Top-level optional
+  declarations assert independence: every survivor must operate without that resource.
+  No dependency graph exists. Ordered dependencies remain inside mandatory aggregates
+  (including `DiscordFeatures`); a nested optional flag does not weaken the aggregate.
+- Successful resources remain in reverse-order shutdown ownership. A required failure
+  still fails startup and rolls back prior owners using A2R2 lifecycle deadlines.
+- An optional exception sets its capability DOWN and emits fixed classification events.
+  After proven partial cleanup, startup continues; required capabilities can be ready
+  with an optional capability DOWN, without changing the public health representation.
+- Failed optional starts default to one runtime-owned stop. Self-cleaning adapters expose
+  `startup_cleanup_complete`, initially false and true only after cleanup is proven.
+  Watch and Music participate explicitly; cleanup is never repeated after self-cleanup.
+  Music conservatively refuses continuation while shared executor work remains admitted.
+- Failed/timed-out cleanup retains the partial resource and healthy dependencies for
+  existing outer containment, fails startup and cannot report readiness or clean shutdown.
+  Cancellation remains cancellation. Cleanup uses the existing LifecycleTasks owner and
+  startup/grace budget; no guardian, worker, process-group or 20/40/70/90 change.
+- Candidate `7a29a4c9f7038c0fa15406d7021518e16e10874f`: Windows platform 50 PASS,
+  directly dependent 77 PASS, collection 1,064, A0 isolation 5 PASS. One strict suite:
+  1,037 PASS / 2 FAIL / 25 SKIP (70.22s). Failures are existing A2-N1 document inventory
+  and missing Deno executable; no full-suite PASS claim. Linux exact export: 3 selected
+  real guardian/systemd cases PASS (22 deselected), platform 50 PASS.
+  Rollback: revert the runtime candidate commit; no schema/data/deployment changes.
+  A2-M1 and A2-M2 are remediated pending independent A2V; A2 remains FAIL.

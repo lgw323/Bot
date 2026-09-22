@@ -1,5 +1,11 @@
 # Changelog
 
+## A2R3 optional resource startup
+
+- 선택 리소스 시작 실패는 부분 정리가 확인되면 정상 필수 리소스를 유지하고 degraded 상태로 계속합니다.
+- 정리가 실패하거나 기한을 넘으면 소유권을 유지한 채 시작을 실패시키며 기존 A2R2 종료 경계를 사용합니다.
+- Watch/Music 자체 정리 완료 표시와 필수 롤백·선택 실패·후속 종료 회귀를 추가했습니다. 운영 배포는 없습니다.
+
 ## A2R2 bounded service termination
 
 - Linux guardian이 한 worker의 정상 종료, process-group 강제 종료와 reap을 소유합니다.
