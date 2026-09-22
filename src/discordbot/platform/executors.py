@@ -85,6 +85,9 @@ class BoundedExecutor:
             raise ValueError("grace_seconds must be non-negative")
         with self._lock:
             self._closed = True
+        # Never join interpreter threads on the event loop. Real futures retain
+        # their admission until completion; the guardian owns eventual exit.
+        self._executor.shutdown(wait=False, cancel_futures=True)
         loop = asyncio.get_running_loop()
         deadline = loop.time() + grace_seconds
         while self.admitted and loop.time() < deadline:
@@ -95,4 +98,3 @@ class BoundedExecutor:
                 "executor still owns admitted work",
                 context={"admitted": admitted},
             )
-        self._executor.shutdown(wait=True, cancel_futures=True)

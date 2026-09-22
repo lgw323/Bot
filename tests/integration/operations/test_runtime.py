@@ -53,11 +53,13 @@ def test_secret_permissions_are_fail_closed(mode, owner):
 
 
 def test_missing_secret_fails_before_assembly_or_login(config_files, monkeypatch):
-    from discordbot.composition.main import main
+    from discordbot.composition.main import worker_main
+    from discordbot.platform.termination import TerminationPolicy
     file, credentials = config_files
     (credentials / "discord_token").unlink()
     monkeypatch.setattr("discordbot.composition.production_discord.assemble", lambda *a: pytest.fail("login/assembly"))
-    assert main(["discord-bot", "--config", str(file), "--credentials", str(credentials), "--release", str(credentials)]) == 1
+    control = SimpleNamespace(policy=TerminationPolicy(), stopping=lambda: None, send=lambda _: None)
+    assert worker_main(["discord-bot", "--config", str(file), "--credentials", str(credentials), "--release", str(credentials)], control) == 1
 
 
 @pytest.mark.asyncio

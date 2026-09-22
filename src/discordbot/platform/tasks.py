@@ -309,14 +309,53 @@ class TaskSupervisor:
         _, pending = await asyncio.wait(initial_tasks, timeout=grace_seconds)
         for task in pending:
             task.cancel()
-        if pending:
-            await asyncio.gather(*pending, return_exceptions=True)
         # done callbacks are scheduled by the event loop; yield once so the
         # returned report and snapshot reflect every observed terminal state.
         await asyncio.sleep(0)
         cancelled = sum(task.cancelled() for task in initial_tasks)
         return ShutdownReport(
-            completed=len(initial_tasks) - cancelled,
+            completed=sum(task.done() and not task.cancelled() for task in initial_tasks),
             cancelled=cancelled,
             remaining=len(self._active),
         )
+
+
+class LifecycleTasks:
+    """Reserved lifecycle ownership, independent of ordinary admission capacity.
+
+    Timeout requests cancellation without surrendering ownership or waiting for
+    cancellation acknowledgement. Completed failures are always retrieved.
+    """
+
+    def __init__(self, capacity: int = 8) -> None:
+        self.capacity = capacity
+        self.pending: set[asyncio.Task[Any]] = set()
+
+    def start(self, work: Awaitable[T], *, name: str) -> asyncio.Task[T]:
+        if len(self.pending) >= self.capacity:
+            if hasattr(work, "close"):
+                work.close()
+            raise CapacityError("lifecycle capacity exhausted")
+        task = asyncio.get_running_loop().create_task(work, name=name)
+        self.pending.add(task)
+        task.add_done_callback(self._done)
+        return task
+
+    def _done(self, task: asyncio.Task[Any]) -> None:
+        self.pending.discard(task)
+        if not task.cancelled():
+            task.exception()
+
+    async def observe(self, task: asyncio.Task[T], *, deadline: float) -> T:
+        try:
+            done, _ = await asyncio.wait({task}, timeout=max(0, deadline - asyncio.get_running_loop().time()))
+        except asyncio.CancelledError:
+            task.cancel()
+            raise
+        if not done:
+            task.cancel()
+            raise TimeoutError("lifecycle observation deadline exceeded")
+        return task.result()
+
+    async def run(self, work: Awaitable[T], *, name: str, deadline: float) -> T:
+        return await self.observe(self.start(work, name=name), deadline=deadline)
