@@ -50,9 +50,14 @@ class DiscordFeatures:
             try:
                 await resource.start()
             except BaseException:
-                if getattr(resource, "startup_cleanup_complete", None) is False:
+                cleaned = getattr(resource, "startup_cleanup_complete", None)
+                if cleaned is False:
                     # Keep the partial child and its dependencies for escalation.
                     raise
+                if cleaned is not True:
+                    # Unmarked members (e.g. Gateway) delegate partial cleanup
+                    # to this aggregate, still under its lifecycle deadline.
+                    await resource.stop()
                 self.started.pop()  # Failed start has completed its own cleanup.
                 await self.stop()
                 raise

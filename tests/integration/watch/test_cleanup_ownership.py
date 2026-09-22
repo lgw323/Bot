@@ -97,7 +97,7 @@ async def test_degraded_start_nested_cleanup_propagates(monkeypatch, outcome):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('cleanup', ['clean', 'incomplete', 'failure'])
+@pytest.mark.parametrize('cleanup', ['clean', 'incomplete', 'failure', 'unmarked-failure'])
 async def test_required_aggregate_retains_failed_partial_child(monkeypatch, cleanup):
     from discordbot.composition import production_discord as composition
     config, shell, bot, watch = setup_watch(monkeypatch)
@@ -121,6 +121,14 @@ async def test_required_aggregate_retains_failed_partial_child(monkeypatch, clea
         DeferredMusic=lambda *a: Resource('deferred', events), Gateway=lambda *a: Resource('gateway', events))
     for name, value in replacements.items():
         monkeypatch.setattr(composition, name, value)
+    if cleanup == 'unmarked-failure':
+        class Unmarked(Resource):
+            async def start(self):
+                raise RuntimeError('synthetic partial member')
+            async def stop(self):
+                raise ShutdownError('synthetic member cleanup failure')
+        watch = Unmarked('unmarked', events)
+        monkeypatch.setattr(composition, 'DiscordWatchResource', lambda *a: watch)
     database = Resource('database', events)
     features = composition.DiscordFeatures(config, settings, database, SystemClock())
     app = ProcessRuntime(config=config, resources=(database, features))
@@ -143,7 +151,7 @@ async def test_required_aggregate_retains_failed_partial_child(monkeypatch, clea
             if cleanup == 'incomplete':
                 assert watch.controller.supervisor.snapshot().active
                 watch.client.stop.assert_not_awaited()
-            else:
+            elif cleanup == 'failure':
                 watch.client.stop.assert_awaited_once()
     finally:
         release.set()
