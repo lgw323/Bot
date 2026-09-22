@@ -57,6 +57,17 @@ python -m pytest tests/
 사용합니다. 실제 `data/bot_database.db`, 실제 SQL 백업, Discord, Gemini,
 YouTube, GitHub와 systemd에는 접근하지 않습니다.
 
+Linux process 종료 회귀는 명시적으로 선택한 비운영 Linux/systemd 환경에서만 실행합니다.
+기본 suite에서는 건너뛰며, 선택 실행은 임시 사용자 systemd 단위를 실제로 만들고 정리합니다.
+검증한 Ubuntu WSL의 native Linux 후보 소스 디렉터리에서 해당 Python 3.12 venv를 사용합니다.
+
+```bash
+A2_LINUX_PROCESS_TESTS=1 ../.venv/bin/python -B -m pytest tests/integration/test_termination_linux.py -q -p no:cacheprovider
+```
+
+운영 서비스 이름이나 자격증명은 사용하지 않습니다. Windows는 일반 단위·통합 테스트 환경이며,
+관리된 V2 실행 진입점의 process-tree 종료 보장은 Linux guardian과 systemd를 요구합니다.
+
 종료되지 않은 비동기 작업을 더 엄격하게 검사하려면 다음 명령을 사용합니다.
 
 ```powershell

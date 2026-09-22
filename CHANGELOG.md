@@ -1,5 +1,12 @@
 # Changelog
 
+## A2R2 bounded service termination
+
+- Linux guardian이 한 worker의 정상 종료, process-group 강제 종료와 reap을 소유합니다.
+- application/loop의 공통 종료 기한과 별도 lifecycle 작업 소유권을 추가하고, 미완료 작업·thread·resource의 소유권을 유지합니다.
+- 생산 기본 기한은 20/40/70/90초이며 짧은 정책은 테스트 코드에서만 주입합니다. 강제 종료·finalizer 오류는 성공으로 기록하지 않습니다.
+- 기존 Ubuntu WSL의 합성 process/systemd 회귀를 추가했습니다. 운영 배포와 A2-M2 수정은 포함하지 않습니다.
+
 ## A0R test credential isolation
 
 - pytest 수집 전 자동 dotenv 로딩과 저장소 credential 파일 접근을 차단하고 상속된 앱 설정을 제거한다.

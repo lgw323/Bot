@@ -50,3 +50,40 @@ Executable rule은 `tests/architecture/test_import_rules.py`에 있다. V2 sourc
 밖 blocking dispatch와 Discord/Watch composition 결합을 거부한다. 같은 test가 fresh Python
 process에서 모든 V2 module을 import해 DB/network/server/subprocess/thread/logging side effect가
 없는지도 확인한다.
+
+## A2R2 managed termination contract (2026-09-22 candidate)
+
+- `composition.main.main` always enters the Linux synchronous guardian, including
+  `deploy/launch.py` and module invocation. The worker requires an inherited
+  AF_UNIX sequenced-packet socket whose peer is its parent; no public worker or
+  timing flag exists. Worker control descriptors are non-inheritable, and Linux
+  parent-death handling is armed before application initialization.
+- `TerminationPolicy` centralizes S=60, G=20, H=90 with `0 < 3G < H`:
+  application T0+G, loop T0+2G, owned-group kill T0+(H-G), reap ceiling T0+H.
+  Repeated signals and cleanup stages do not restart T0. Unit templates retain
+  TimeoutStopSec=90 and KillMode=control-group; MainPID is now the guardian and
+  HTTP release/readiness identity remains the worker's.
+- Lifecycle work has reserved, bounded ownership outside ordinary admission.
+  Observation timeout requests cancellation without waiting for acknowledgement.
+  Unfinished tasks/futures/resources retain ownership; unsafe dependencies are not
+  closed underneath them. A cancelled shutdown caller cannot cancel the single
+  runtime cleanup owner. A degraded shutdown remains FAILED on repeated calls.
+- Executor close never joins threads on the event loop. Retained atomic-file
+  ownership remains unchanged. The explicit loop owner observes task, asyncgen and
+  default-executor cleanup to the shared loop deadline. Outstanding work remains
+  owned until the independent guardian terminates the worker; no thread killing,
+  asyncio internals patch or false interpreter-exit guarantee is used.
+- The guardian owns one worker session/group, forwards stop, reaps group children
+  as a Linux subreaper, and emits fixed non-secret outcome labels through a
+  nonblocking local datagram sink. Sink unavailability never blocks termination.
+  Clean completion requires successful worker exit, the completion marker and an
+  empty owned group. Timeout, forced kill, unexpected crash and reap failure fail.
+- Systemd owns the entire cgroup, including descendants that call setsid and
+  cleanup after guardian death. Internal failure can additionally incur the unit
+  stop budget, conservatively up to 2H overall. Kernel scheduling and killable
+  tasks are assumptions; uninterruptible kernel I/O is never claimed bounded.
+- Tests inject a short policy into the same guardian/worker implementation using
+  fake assembly, temporary paths and independent transient-unit cleanup deadlines.
+  Non-Linux managed startup fails closed; direct async application calls remain
+  test seams, not a process-containment guarantee. Optional-start failure semantics
+  are unchanged and remain the separate A2-M2 remediation.
