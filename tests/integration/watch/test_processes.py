@@ -94,3 +94,26 @@ async def test_startup_control_failure_is_optional_for_discord_process(service, 
         assert not resource.controller.health.snapshot().ready
     finally:
         await runtime.shutdown()
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('cleanup_fails', [False, True])
+async def test_optional_cog_failure_cleanup_contract(service, clock, cleanup_fails):
+    from discordbot.platform.errors import StartupError
+    bot = MagicMock()
+    bot.add_cog = AsyncMock(side_effect=RuntimeError('synthetic add failure'))
+    bot.remove_cog = AsyncMock(side_effect=RuntimeError('synthetic close failure') if cleanup_fails else None)
+    resource = DiscordWatchResource(bot, 'https://watch.example.test', 'http://127.0.0.1:9001', SECRET,
+        2000, 42, clock, service.telemetry, MagicMock())
+    resource.client.start, resource.client.stop = AsyncMock(), AsyncMock()
+    runtime = build_discord_runtime(PlatformConfig(ServiceKind.DISCORD_BOT, Environment.TEST, 'synthetic'), watch=resource, clock=clock)
+    if cleanup_fails:
+        with pytest.raises(StartupError):
+            await asyncio.wait_for(runtime.start(), 1)
+        assert not runtime.health.snapshot().ready
+    else:
+        await asyncio.wait_for(runtime.start(), 1)
+        assert runtime.health.snapshot().ready
+    assert resource.startup_cleanup_complete is (not cleanup_fails)
+    await asyncio.wait_for(runtime.shutdown(), 1)
+    bot.remove_cog.assert_awaited_once()
+    resource.client.stop.assert_awaited_once()

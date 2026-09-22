@@ -26,6 +26,7 @@ class Sleeper:
 class MusicResource:
     name = "music"
     required = False
+    startup_cleanup_complete = False
 
     def __init__(self, bot: Any, repository: Any, clock: Any, executor: Any, *, cache_path: Path,
                  snapshot_path: Path, channels: dict[int, int], master: int, bounds: Bounds = Bounds(),
@@ -212,6 +213,12 @@ class MusicResource:
             self._schedule_tick()
         except BaseException:
             await self.stop()
+            self.startup_cleanup_complete = (
+                not self.supervisor.snapshot().active
+                and not self.processes.children and not self.ffmpeg.children
+                and self.executor.admitted == 0
+                and self.error not in {"cog_removal_failed", "actor_close_failed", "shutdown_checkpoint_failed"}
+            )
             raise
 
     async def stop(self) -> None:

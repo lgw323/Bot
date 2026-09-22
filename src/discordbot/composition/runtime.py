@@ -22,6 +22,13 @@ from discordbot.platform.telemetry import (
 
 
 class ManagedResource(Protocol):
+    """Composition declares optional resources independent of every survivor.
+
+    Required start implementations own their failed-initialization rollback.
+    Optional failed starts default to runtime-owned stop. Adapters already owning
+    that cleanup expose startup_cleanup_complete: False while unresolved, True
+    only once all partial ownership is released. Runtime never repeats that stop.
+    """
     name: str
     required: bool
 
@@ -90,6 +97,7 @@ class ProcessRuntime:
         )
         self.state = RuntimeState.NEW
         self._started_resources: list[ManagedResource] = []
+        self._partial_resources: list[ManagedResource] = []
         self.lifecycle = LifecycleTasks()
         self._shutdown_report: RuntimeShutdownReport | None = None
         self._deadline: float | None = None
@@ -142,7 +150,24 @@ class ProcessRuntime:
             deadline = asyncio.get_running_loop().time() + self.config.runtime.startup_timeout_seconds
             self.health.update("platform", HealthStatus.OK)
             for resource in self.resources:
-                await self.lifecycle.run(resource.start(), name="resource-start", deadline=deadline)
+                try:
+                    await self.lifecycle.run(resource.start(), name="resource-start", deadline=deadline)
+                except asyncio.CancelledError as exc:
+                    self.health.update(resource.name, HealthStatus.DOWN, detail="CancelledError")
+                    if not resource.required:
+                        deadline = min(deadline, self.begin_shutdown())
+                        try:
+                            await self._optional_start_failed(resource, exc, deadline)
+                        except Exception:
+                            # Cleanup failure retains ownership; preserve caller cancellation.
+                            raise exc
+                    raise
+                except Exception as exc:
+                    self.health.update(resource.name, HealthStatus.DOWN, detail=type(exc).__name__)
+                    if resource.required:
+                        raise
+                    await self._optional_start_failed(resource, exc, deadline)
+                    continue
                 self._started_resources.append(resource)
                 self.health.update(resource.name, HealthStatus.OK)
         except asyncio.CancelledError:
@@ -173,11 +198,38 @@ class ProcessRuntime:
         self.state = RuntimeState.RUNNING
         self.telemetry.emit("runtime.started", component="composition", result="ok")
 
+    async def _optional_start_failed(self, resource: ManagedResource, error: BaseException,
+                                     startup_deadline: float) -> None:
+        self._partial_resources.append(resource)
+        self.telemetry.emit("runtime.optional_start_failed", component="composition", result="degraded",
+                            fields={"resource": resource.name, "error_type": type(error).__name__})
+        try:
+            # A start still running after cancellation must not race another stop.
+            if self.lifecycle.pending:
+                raise ShutdownError("optional startup still owns work")
+            cleaned = getattr(resource, "startup_cleanup_complete", None)
+            if cleaned is False:
+                raise ShutdownError("adapter startup cleanup incomplete")
+            if cleaned is not True:
+                deadline = min(startup_deadline, asyncio.get_running_loop().time()
+                               + self.config.runtime.shutdown_grace_seconds)
+                await self.lifecycle.run(resource.stop(), name="optional-start-cleanup", deadline=deadline)
+        except (Exception, asyncio.CancelledError):
+            self._cleanup_failed = True
+            self.telemetry.emit("runtime.optional_cleanup_failed", component="composition", result="failed",
+                                fields={"resource": resource.name})
+            raise
+        self._partial_resources.remove(resource)
+        self.telemetry.emit("runtime.optional_cleanup_completed", component="composition", result="ok",
+                            fields={"resource": resource.name})
+        if asyncio.get_running_loop().time() >= startup_deadline:
+            raise TimeoutError("startup budget exhausted")
+
     async def _rollback_startup(self) -> None:
         deadline = self.begin_shutdown()
         # A resistant start still owns its dependencies. Do not roll them back
         # underneath it, or start a second cleanup owner after timeout.
-        if self.lifecycle.pending:
+        if self.lifecycle.pending or self._cleanup_failed:
             self._cleanup_failed = True
             return
         errors = await self._stop_resources(deadline)

@@ -14,6 +14,7 @@ from discordbot.watch.application.discord_control import DiscordWatch
 class DiscordWatchResource:
     name = "watch-loopback"
     required = False
+    startup_cleanup_complete = False
 
     def __init__(self, bot: Any, origin: str, control_url: str, control_secret: str, admin_channel: int,
                  master: int, clock: Clock, telemetry: TelemetryEmitter, session: Any = None) -> None:
@@ -39,6 +40,7 @@ class DiscordWatchResource:
             self.started = True
         except BaseException:
             await self.stop()
+            self.startup_cleanup_complete = not self.controller.supervisor.snapshot().active
             raise
 
     async def stop(self) -> None:

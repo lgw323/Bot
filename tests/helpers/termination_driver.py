@@ -136,6 +136,17 @@ def main():
 
     resource = Resource()
     runtime = ProcessRuntime(config=config, resources=(resource,))
+    if mode.startswith('optional-'):
+        class Optional:
+            name, required = 'optional', False
+            async def start(self):
+                raise RuntimeError('synthetic optional failure')
+            async def stop(self):
+                assert not (directory / 'optional-stopped.json').exists()
+                if mode == 'optional-resistant':
+                    await resistant(directory)
+                record(directory, 'optional-stopped')
+        runtime = ProcessRuntime(config=config, resources=(resource, Optional()))
     if mode == 'rollback':
         class Broken:
             name, required = 'broken', True
@@ -155,6 +166,11 @@ def main():
 
     class Listener(Component):
         async def start(self):
+            if mode == 'optional-degraded':
+                assert runtime.health.snapshot().ready
+                assert len(runtime._started_resources) == 1
+                assert not (directory / 'resource-stopped.json').exists()
+                record(directory, 'degraded-ready')
             if mode in ('internal-tree', 'escape', 'internal-restart', 'crash'):
                 raise RuntimeError('synthetic internal failure')
             if mode == 'blocked-loop':

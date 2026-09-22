@@ -33,7 +33,7 @@ def eventually(predicate, bound=4):
 @pytest.mark.parametrize('mode', ['clean', 'capacity', 'task', 'thread', 'retained', 'default-executor',
     'interpreter', 'asyncgen', 'resource', 'rollback', 'startup', 'blocked-loop', 'tree',
     'internal-tree', 'escape', 'internal-restart', 'crash', 'worker-crash', 'asyncgen-error',
-    'close-error', 'parent-death', 'external-stop', 'repeated-stop'])
+    'close-error', 'parent-death', 'external-stop', 'repeated-stop', 'optional-degraded', 'optional-resistant'])
 def test_real_guardian_worker_under_systemd(tmp_path, mode):
     unit = 'a2r2-' + uuid.uuid4().hex + '.service'
     sentinel = subprocess.Popen([sys.executable, '-I', '-c', 'import time; time.sleep(10)'])
@@ -59,7 +59,7 @@ def test_real_guardian_worker_under_systemd(tmp_path, mode):
         members = {int(v) for v in (cgroup / 'cgroup.procs').read_text().split()}
         assert {guardian, worker} <= members
         (tmp_path / 'go').touch()
-        if mode not in ('rollback', 'startup', 'internal-tree', 'escape', 'internal-restart', 'crash'):
+        if mode not in ('rollback', 'startup', 'internal-tree', 'escape', 'internal-restart', 'crash', 'optional-resistant'):
             eventually(lambda: (tmp_path / 'armed.json').exists())
             if mode != 'blocked-loop':
                 eventually(lambda: 'guardian.ready' in (tmp_path / 'events').read_text())
@@ -84,11 +84,17 @@ def test_real_guardian_worker_under_systemd(tmp_path, mode):
             eventually(lambda: (tmp_path / 'result.json').exists())
             result = json.loads((tmp_path / 'result.json').read_text())['code']
             events = (tmp_path / 'events').read_text().splitlines()
-            clean = mode in ('clean', 'capacity', 'external-stop', 'repeated-stop')
+            clean = mode in ('clean', 'capacity', 'external-stop', 'repeated-stop', 'optional-degraded')
             assert result == (0 if clean else 1), events
             if clean:
                 assert 'guardian.clean' in events and 'guardian.escalation' not in events
                 assert (tmp_path / 'resource-stopped.json').exists()
+                if mode == 'optional-degraded':
+                    assert (tmp_path / 'degraded-ready.json').exists()
+                    assert (tmp_path / 'optional-stopped.json').exists()
+            elif mode == 'optional-resistant':
+                assert 'guardian.escalation' in events
+                assert not (tmp_path / 'resource-stopped.json').exists()
             elif mode not in ('crash', 'worker-crash', 'asyncgen-error', 'close-error', 'escape', 'internal-restart'):
                 assert 'guardian.escalation' in events, events
             stamps = {row['name']: row['time'] for row in map(json.loads, (tmp_path / 'timings').read_text().splitlines())}
@@ -105,7 +111,7 @@ def test_real_guardian_worker_under_systemd(tmp_path, mode):
                 assert 'guardian.worker_crash' in events
             if mode == 'asyncgen-error':
                 assert 'worker.failed' in events and 'guardian.clean' not in events
-        if mode not in ('clean', 'capacity', 'external-stop', 'repeated-stop'):
+        if mode not in ('clean', 'capacity', 'external-stop', 'repeated-stop', 'optional-degraded'):
             # Prove automatic failure/deactivation cleanup BEFORE an explicit stop.
             eventually(lambda: not cgroup.exists())
         if mode == 'internal-restart':

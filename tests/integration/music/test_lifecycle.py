@@ -195,3 +195,31 @@ async def test_cf02_cf20_ffmpeg_adapter_local_child_ownership(rig, tmp_path, mon
         await audio.stop()
         await pool.close()
         await executor.close(grace_seconds=2)
+
+@pytest.mark.parametrize('cleanup_fails', [False, True])
+async def test_optional_start_cleanup_marker(rig, tmp_path, cleanup_fails):
+    from discordbot.composition.config import Environment, PlatformConfig, ServiceKind
+    from discordbot.composition.runtime import ProcessRuntime
+    from discordbot.platform.errors import StartupError
+    bot, _ = fake_bot()
+    bot.add_cog.side_effect = RuntimeError('synthetic add failure')
+    if cleanup_fails:
+        bot.remove_cog.side_effect = RuntimeError('synthetic close failure')
+    app = ProcessRuntime(config=PlatformConfig(ServiceKind.DISCORD_BOT, Environment.TEST, 'synthetic'))
+    resource = MusicResource(bot, rig[6], rig[1], app.executor, cache_path=tmp_path/'cache',
+        snapshot_path=tmp_path/'synthetic.json', channels={}, master=99, provider=rig[5], library=rig[4])
+    app = ProcessRuntime(config=app.config, resources=(resource,))
+    try:
+        if cleanup_fails:
+            with pytest.raises(StartupError):
+                await asyncio.wait_for(app.start(), 2)
+        else:
+            await asyncio.wait_for(app.start(), 2)
+            assert app.health.snapshot().ready
+        assert resource.startup_cleanup_complete is (not cleanup_fails)
+        await asyncio.wait_for(app.shutdown(), 2)
+        bot.remove_cog.assert_awaited_once()
+        assert not resource.supervisor.snapshot().active
+        assert not resource.processes.children and not resource.ffmpeg.children
+    finally:
+        await resource.executor.close(grace_seconds=1)
