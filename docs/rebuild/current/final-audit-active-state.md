@@ -463,3 +463,36 @@ A0/A1/A2 remain PASS; A4–A10 remain NOT_AUDITED.
 
 **NEXT SESSION: FINAL AUDIT A3V — PHASE 3 INDEPENDENT RE-AUDIT**
 Not started. Do not start A4, Integrated Audit, Phase 11 or V1 cleanup.
+
+## Z. A3R2 SQLite constraint validation remediation — COMPLETE (2026-09-27)
+
+**A3-M1 CLOSED; A3-M2 REMEDIATED — INDEPENDENT A3V2 REQUIRED.**
+**PHASE 3 remains FAIL.** This supersedes Y's A3R2-next-session disposition.
+A0/A1/A2 remain PASS; A4–A10 remain NOT_AUDITED.
+
+- Reproduced A3-M2 before changing runtime: `CHECK (xp < 2)` passed all
+  admission/recovery gates, replaced a real synthetic encrypted last-good backup,
+  then caused the ordinary XP 1→2 mutation to fail with `DataIntegrityError`.
+- Shared lexical/group comparison now checks legacy and ledger CHECKs against
+  existing reviewed DDL. Extensions retain their exact DDL gate. Unknown CHECKs
+  fail before readiness, migration/rehearsal, backup and isolated restore publication.
+- All four supported nullable-pair combinations pass. Original sources, real
+  last-good encrypted artifacts and latest metadata remain unchanged on rejection.
+  A3-M1 generated/hidden protection and A0/A2 invariant checks still pass.
+- Runtime candidate: `44c8b1aaaaaca71ec58bf6402f8dc86b4e0f75d5` (not deployed).
+  Entry HEAD `93d05ee7b946148bcc2b2db5235a118c97ac35cd` was docs-only after
+  prior runtime `b7eecccf7c56613ac7bfc5d6bb78376eef1db48e`.
+- Final data **258 PASS**; dependent **84 PASS**; collection once **1,216**;
+  strict once **1,187 PASS / 2 known FAIL / 27 SKIP**. A2-N1 inventory/Deno
+  failures and audioop warning remain; no new unexplained runtime/storage failure.
+- Schema version 5, user_version 0, migration SQL/checksums and formats unchanged.
+  A3-N1 MINOR and A3-I1 INFO retained. [A3R2 evidence](../final-audit/a3-phase-3-report.md#a3r2--sqlite-constraint-validation-remediation).
+- Production untouched: documentary source `8e9018d4b8061cde6006eee47fa4103522f77718`,
+  pin `r-8e9018d4b8061cde-3dac82a792fad576`. Synthetic/local DBs only; no
+  credential access, production operation, package install, remote publication or push.
+- Runtime and A3R2 documentation changes are separate local commits. Existing
+  unrelated and earlier audit worktree edits are preserved; no history rewrite.
+
+**NEXT SESSION: FINAL AUDIT A3V2 — PHASE 3 INDEPENDENT RE-AUDIT**
+
+STOP. Do not start A3V2 or A4 in this remediation session.

@@ -441,3 +441,211 @@ revertible and makes no runtime change. No rollback was executed.
 **NEXT SESSION: FINAL AUDIT A3V — PHASE 3 INDEPENDENT RE-AUDIT**
 
 Stop. A3V and A4 were not started.
+
+## A3R2 — SQLite Constraint Validation Remediation
+
+Date: 2026-09-27. **A3R2 COMPLETE. A3-M1 CLOSED; A3-M2 REMEDIATED —
+INDEPENDENT A3V2 REQUIRED. PHASE 3 remains FAIL.** A0/A1/A2 remain PASS;
+A4–A10 remain NOT_AUDITED. A3-N1 MINOR and A3-I1 INFO are retained.
+
+### Authority, candidate and production boundary
+
+Read the working-tree active-state, ledger and original A3/A3R/A3V evidence,
+including the A3-M2 counterexample, before implementation. C4's validation,
+migration and backup sections and the legacy B06 model govern this change.
+The current authoritative working tree includes pre-existing A3V documentation.
+
+- Entry HEAD: `93d05ee7b946148bcc2b2db5235a118c97ac35cd`, a documentation-only
+  successor to the expected runtime candidate
+  `b7eecccf7c56613ac7bfc5d6bb78376eef1db48e`. Git confirmed that difference.
+- **New audit-candidate runtime SHA:
+  `44c8b1aaaaaca71ec58bf6402f8dc86b4e0f75d5`.** This is a local, undeployed candidate.
+- Production documentary source: `8e9018d4b8061cde6006eee47fa4103522f77718`;
+  pin: `r-8e9018d4b8061cde-3dac82a792fad576`. No new host observation was made.
+- A separate docs-only commit records this A3R2 appendix, routing and ledger update;
+  its exact identity is available from Git history and the session completion response.
+  Earlier uncommitted audit/history changes remain in the working tree.
+
+All SQLite inputs, encrypted artifacts and keys were synthetic, in memory or OS
+temporary directories. No operational DB, SQL backup, credential file, SSH,
+deployment, remote publication, service, systemd, release or preservation action occurred.
+
+### Exact pre-remediation reproduction
+
+Create the other five tables unchanged from `LEGACY_DDL`, and create users with
+this exact declaration (the sole change is the CHECK on the ordinary XP column):
+
+```sql
+CREATE TABLE users (user_id INTEGER, guild_id INTEGER, xp INTEGER DEFAULT 0 CHECK (xp < 2), level INTEGER DEFAULT 1, total_vc_seconds INTEGER DEFAULT 0, birth_month INTEGER, birth_day INTEGER, PRIMARY KEY(user_id,guild_id));
+INSERT INTO users(user_id,guild_id,xp,total_vc_seconds) VALUES (10,100,1,1.25);
+```
+
+A fresh inline process installed the repository's test credential boundary before
+application imports and exercised actual adapters with SQLite **3.53.1**. The first
+probe correctly encountered the existing offline-maintenance admission guard when
+using a started worker; the completed probe used a separate stopped maintenance
+worker. No validator was mocked and no runtime source had been changed.
+
+| Pre-fix boundary | Measured result |
+| --- | --- |
+| Canonical inspection | Canonical and constrained DBs had equal seven-row `table_xinfo(users)` results and equal successful `checked_validation` reports; integrity was `ok`. |
+| Startup / feature admission | Real ProcessRuntime became ready and started the next synthetic feature. |
+| Migration / candidate / rehearsal | Published a version-5 copy; actual `validate_candidate` accepted it; `check_copy` passed reconciliation, repeat migration and retained-reader comparison. |
+| Backup | First created and independently decrypted a valid encrypted last-good backup. Backing up the constrained DB replaced that artifact; its decrypted SQL retained `CHECK (xp < 2)`. |
+| Restore | Decrypted, validated, published and started the isolated constrained DB. |
+| Actual application mutation | `SqliteEngagementRepository.add_progress(100,10,1,0.5,request)` attempted XP 1→2 and seconds 1.25→1.75. Both constrained source and restored DB raised `DataIntegrityError` and rolled back to 1/1.25. The same mutation on canonical schema succeeded with 2/1.75. |
+
+Source bytes were identical after the completed probe; workers and candidates were
+cleaned up. The first 42 permanent regressions, run before the runtime change,
+produced **27 FAIL / 15 PASS in 2.22s**. The failures exposed the six legacy tables,
+ledger and affected public gates; the seven extension tables were already protected.
+
+### Root cause and narrow canonical comparison
+
+`table_xinfo` exposes complete column metadata, but no CHECK expressions.
+`schema.validate` compared column order/type/default/nullability/PK and existing
+rows without checking legacy table constraints. `validate_ledger` likewise compared
+its layout and recorded rows but omitted its own CHECK definition. Extension tables
+already used exact reviewed DDL comparison. Valid existing data and identical row
+digests therefore did not prove compatible future writes.
+
+The new `storage/adapters/constraints.py` reads `sqlite_master.sql` with a bound table
+name and extracts unquoted CHECK keywords and balanced expression groups. It uses
+the existing reviewed `LEGACY_DDL` and `LEDGER_DDL` as authority, never arbitrary
+live SQL. No second manually maintained constraint registry or schema model was added:
+
+- Every legacy table's canonical CHECK list is empty; any column/table CHECK is rejected.
+- The ledger must have exactly its reviewed `CHECK(state='applied')`; missing,
+  additional, duplicated or changed expressions are rejected.
+- Extensions retain their existing exact reviewed DDL and applied-migration checks.
+
+This is a limited lexical/group comparison, not regex DDL parsing or a general SQL
+equivalence engine. It ignores whitespace and comments, folds ASCII identifier case,
+recognizes double-quote/backtick/bracket identifier forms, handles doubled quote
+escapes and removes redundant singleton/outer parentheses. Literal contents and case,
+operators, grouping and expression order remain significant. It does not authorize
+algebraic rewrites, unknown functions/operators or double-quoted-string fallback.
+Malformed inspection text fails closed. SQLite still parses executable SQL itself.
+Lexical handling was checked against the
+[SQLite tokenizer description](https://www.sqlite.org/draft/tokenreq.html), with
+actual SQLite fixtures verifying supported spelling and decoy/escape cases.
+The observed write failure also agrees with
+[SQLite CHECK semantics](https://www.sqlite.org/lang_createtable.html#check_constraints).
+
+Constraint-scope decision: the Phase 3 column/default/nullability/PK compatibility
+rules and reviewed extension definitions remain in force. DEFAULT, NOT NULL and
+PRIMARY KEY use the existing column/DDL checks and were not changed. UNIQUE and
+FOREIGN KEY are distinct index/reference semantics, not expressions supplied by this
+CHECK comparison; adding a new general index/FK equivalence validator is outside
+this A3-M2-only remediation. Existing reviewed ledger/extension declarations remain
+unchanged. This session does not claim general SQL DDL equivalence or a new audit of
+all possible constraint classes.
+
+### Boundary and behavioral regression results
+
+| Boundary | Post-fix synthetic result |
+| --- | --- |
+| Constraint discovery | Column-level and table-level additions on all **14 governed tables** are rejected. Quoted names/comments cannot disguise the keyword; literals/quoted decoys do not invent constraints. |
+| Canonical variants | All four independent birthday-pair/Watch-pair combinations pass startup, migration, encrypted backup/restore and XP tests retained from A3R. Four new real `check_copy` cases also pass repeat migration and old-reader parity with byte-identical sources. |
+| Startup | Legacy CHECK → `wrong_schema`; ledger CHECK → `invalid_ledger`. `start` raises typed `DataIntegrityError`, drains lanes and closes admission. Real ProcessRuntime stays not-ready and never starts the next feature; repository calls are denied. |
+| Migration / rehearsal / candidate | Reject before public expansion/publication; no destination or candidate residue, source bytes unchanged. No constraint removal, normalization, down-migration or automatic repair. Private `apply_pending` also rejects an invalid ledger before a step. |
+| Backup | Actual valid encrypted backup succeeds and independently decrypts/validates. Invalid users/ledger sources cannot replace it. The real local `Backups.create` wrapper also preserves every existing artifact/metadata byte including `latest.json`; users are tested at version 5 to exclude version mismatch as the rejection reason. No remote adapter is supplied. |
+| Restore | Independently encrypted invalid SQL decrypts, passes the restricted SQL loader and SQLite quick/integrity checks, then fails canonical validation before publication. Input artifacts are unchanged. Valid roundtrips pass decrypt, integrity, schema, application read and another XP write. |
+| Discriminating XP proof | A permanent test first verifies actual early rejection, then deliberately bypasses only startup inspection for the causal counterexample: real repository SQL fails with `DataIntegrityError` and rolls back to 1/1.25. The same write under normal canonical admission succeeds at 2/1.75. All rejection/publication tests use the real validator without this bypass. |
+
+A3-M1's **50 generated/hidden-column regressions** remain in the executed data suite,
+including VIRTUAL/STORED across 14 tables and the real FTS5 hidden-column case.
+No such case failed or skipped. No continuous external-DDL monitoring is promised.
+
+### Targeted equivalent CHECK blind-spot review
+
+Searched the current storage, composition, recovery/candidate and rehearsal paths
+for schema SQL inspection, CHECK, table metadata and ledger validation.
+
+| Current path | Classification |
+| --- | --- |
+| `schema.validate` legacy branch | Same A3-M2 defect; fixed through shared reviewed-CHECK comparison. |
+| `migrations.validate_ledger` | Equivalent CHECK omission; fixed through the same helper, including direct ledger/apply validation. |
+| Extension DDL / applied migration definitions | Correct; exact reviewed definitions already protect approved CHECKs and reject extra ones. |
+| `checked_validation`, inspect/start and real ProcessRuntime | Correct delegation after the fix; ledger state conversion and typed startup failure remain unchanged. |
+| Snapshot, migrated copy, encrypted backup source/exact-output validation, isolated restore | Same inherited defect; corrected through shared validation. No independent weaker acceptance gate added. |
+| `check_copy`, candidate CLI, candidate preparation, operations backup/recovery and production composition | Correct consumers of the shared gate; directly affected tests pass. Operational entrypoints/production were not executed. |
+| `columns`/`projection`, applied nullable-pair presence checks | Intentionally different helpers, not whole-schema admission authorities. |
+| Restricted restore SQL authorizer | Intentionally a syntax/action boundary; canonical schema validation still follows it before publication. |
+| `sweep-safety.check_database` | Intentionally narrower historical observation (quick-check + ledger), not whole-schema admission. Read only; not executed. |
+| Retained V1 historical builders | Not current V2 admission authority; not re-audited or modified. |
+
+No equivalent **current V2 CHECK acceptance omission** remains in the reviewed
+admission/publication paths. No Phase 4–10 feature audit or persistence redesign was done.
+
+### Fresh verification receipts
+
+Commands used `.venv/Scripts/python.exe -B -m pytest`, `PYTHON_DOTENV_DISABLED=1`,
+`PYTHONDONTWRITEBYTECODE=1` and common flags
+`-q -p no:cacheprovider -W error::RuntimeWarning -W error::pytest.PytestUnraisableExceptionWarning`
+(`--tb=short` for executed suites; the initial red run used `--tb=no`).
+Root pre-collection dotenv blocking, synthetic DB/backup fixtures and fake external
+adapters were reviewed; Linux process/systemd integration remains opt-in.
+
+| Run | Exact result |
+| --- | --- |
+| Initial pre-fix regression file | **27 failed / 15 passed**, 2.22s |
+| First post-fix 42 cases | **42 passed**, 2.16s |
+| Expanded intermediate data suite | **254 passed**, 11.75s |
+| Final `tests/integration/data/` | **258 passed**, 12.57s: 177 prior + **81 new A3R2** |
+| Dependent/invariant selection below | **84 passed / 1 existing warning**, 13.33s |
+| Repository-wide collection, once | **1,216 collected / 1 existing warning**, 2.69s; exactly prior 1,135 + 81 |
+| Full strict `tests/`, once | **1,187 passed / 2 known failed / 27 skipped / 1 warning**, 81.82s |
+
+The 84-test dependent selection was exactly:
+
+```text
+tests/unit/platform/test_executors.py
+tests/characterization/test_database_recovery_contracts.py
+tests/architecture/test_import_rules.py
+tests/integration/engagement/test_compatibility.py
+tests/integration/music/test_data.py
+tests/integration/watch/test_data.py
+tests/integration/operations/test_recovery.py
+tests/integration/operations/test_pipeline.py
+tests/integration/operations/test_offhost_wiring.py
+tests/integration/operations/test_candidate_restore_tool.py
+tests/test_collection_environment.py
+tests/test_test_environment.py
+tests/unit/platform/test_runtime.py
+tests/unit/platform/test_optional_start.py
+tests/integration/music/test_cleanup_ownership.py
+tests/integration/watch/test_cleanup_ownership.py
+```
+
+A0 credential isolation is intact; A2 required/optional startup and Music/Watch
+cleanup checks pass with no concrete lifecycle regression. A0–A2 were not re-audited.
+Known full-suite failures remain the documentation inventory assertion at
+`test_rebuild_documentation.py:92` (A2-N1) and the missing local
+`.venv/Scripts/deno.exe` at `test_resources.py:178`. File absence was checked;
+nothing was installed. The warning is the existing `audioop` deprecation.
+There is no new unexplained failure, RuntimeWarning or unraisable error.
+No full-suite retry or clean whole-suite PASS claim.
+
+### Disposition, hygiene and rollback
+
+**A3-M2 = REMEDIATED — pending A3V2. A3-M1 = CLOSED. PHASE 3 = FAIL.**
+Migration definitions/checksums and current maximum version **5** are unchanged;
+`PRAGMA user_version=0`, all table DDL, backup envelope and stored formats are unchanged.
+No production migration, backup, restore, publication, deployment or service action.
+
+The full A3R2 source/test diff and staged files were reviewed; `git diff --check`
+and `git diff --cached --check` passed before the runtime commit. Only this session's
+changelog hunk was staged. The documentation commit isolates this A3R2 appendix,
+active-state appendix and Phase 3 ledger row; pre-existing A3V/history edits stay in
+the working tree. No real DB/SQL data, secret, dotenv, log/cache or backup artifact is
+added; no push or history rewrite. The worktree is intentionally not claimed clean.
+
+Rollback: revert runtime commit `44c8b1aaaaaca71ec58bf6402f8dc86b4e0f75d5`
+before future deployment; no schema/data rollback is required. This would restore
+the known A3-M2 defect. The documentation update can be reverted independently.
+No rollback was executed.
+
+**NEXT SESSION: FINAL AUDIT A3V2 — PHASE 3 INDEPENDENT RE-AUDIT**
+
+STOP. A3V2, A4, Integrated Audit and Phase 11 were not started.
