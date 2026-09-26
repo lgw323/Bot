@@ -1,5 +1,11 @@
 # Changelog
 
+## A3R2 SQLite CHECK constraint validation
+
+- Compare legacy and migration-ledger CHECK constraints against reviewed DDL before writable readiness or recovery publication; preserve approved extension DDL checks and all four nullable-pair variants.
+- Cover column/table constraints, safe SQL spelling differences, startup, migration/rehearsal, encrypted last-good backup/metadata preservation, restore and real XP writes with synthetic regressions.
+- Schema version, migration definitions and stored formats are unchanged. Production is untouched; A3-M1 remains CLOSED, A3-M2 is remediated pending independent A3V2, and Phase 3 remains FAIL.
+
 ## A3R SQLite schema validation
 
 - Use one complete column inspector and reject unsupported generated/hidden columns in schema and migration-ledger validation.

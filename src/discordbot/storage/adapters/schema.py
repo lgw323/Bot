@@ -10,6 +10,7 @@ from datetime import date
 from typing import NamedTuple
 
 from discordbot.storage.ports.contracts import DatabaseState, ValidationReport
+from discordbot.storage.adapters.constraints import checks_match
 from discordbot.storage.adapters.engagement_schema import ENGAGEMENT_DDL, ENGAGEMENT_TABLES
 from discordbot.storage.adapters.watch_schema import WATCH_DDL, WATCH_TABLES
 from discordbot.storage.adapters.music_schema import MUSIC_DDL, MUSIC_TABLES
@@ -38,6 +39,7 @@ LEGACY_DDL = (
     "CREATE TABLE watch_sessions (session_id TEXT PRIMARY KEY, guild_id INTEGER, created_by INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, channel_id INTEGER, message_id INTEGER)",
     "CREATE TABLE watch_playlists (session_id TEXT, video_url TEXT, video_title TEXT, added_by TEXT, order_index INTEGER, PRIMARY KEY(session_id,video_url))",
 )
+LEGACY_DEFINITIONS = {ddl.split()[2]: ddl for ddl in LEGACY_DDL}
 DEFAULTS = {
     ("users", "xp"): "0", ("users", "level"): "1", ("users", "total_vc_seconds"): "0",
     ("music_settings", "volume"): "1.0", ("music_play_counts", "play_count"): "1",
@@ -125,6 +127,8 @@ def validate(conn: sqlite3.Connection) -> ValidationReport:
         return ValidationReport(DatabaseState.WRONG_SCHEMA)
     old_pairs = []
     for table, expected in SCHEMA.items():
+        if not checks_match(conn, table, LEGACY_DEFINITIONS[table]):
+            return ValidationReport(DatabaseState.WRONG_SCHEMA)
         info = table_columns(conn, table)
         actual = tuple((r.name, r.declared_type.upper(), r.pk) for r in info)
         if any(r.hidden != 0 or r.not_null != 0

@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from typing import Callable
 
 from discordbot.platform.errors import DataIntegrityError
+from discordbot.storage.adapters.constraints import checks_match
 from discordbot.storage.adapters.engagement_schema import ENGAGEMENT_DDL, ENGAGEMENT_TABLES
 from discordbot.storage.adapters.watch_schema import WATCH_DDL, WATCH_TABLES
 from discordbot.storage.adapters.music_schema import MUSIC_DDL, MUSIC_TABLES
@@ -83,6 +84,8 @@ def validate_ledger(conn: sqlite3.Connection, migrations: tuple[Migration, ...] 
         ("state", "TEXT", 0), ("applied_at", "TEXT", 0),
     ):
         raise DataIntegrityError("invalid migration ledger layout")
+    if not checks_match(conn, "v2_migrations", LEDGER_DDL):
+        raise DataIntegrityError("invalid migration ledger CHECK constraints")
     rows = conn.execute("SELECT version,identity,checksum,state,applied_at FROM v2_migrations ORDER BY version").fetchall()
     extensions = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")} & ENGAGEMENT_TABLES
     if extensions and not any(row[0] == 3 for row in rows):
