@@ -7,6 +7,7 @@ import json
 import math
 import sqlite3
 from datetime import date
+from typing import NamedTuple
 
 from discordbot.storage.ports.contracts import DatabaseState, ValidationReport
 from discordbot.storage.adapters.engagement_schema import ENGAGEMENT_DDL, ENGAGEMENT_TABLES
@@ -50,10 +51,31 @@ def create_legacy_schema(conn: sqlite3.Connection) -> None:
         conn.execute(statement)
 
 
+class TableColumn(NamedTuple):
+    cid: int
+    name: str
+    declared_type: str
+    not_null: int
+    default: str | None
+    pk: int
+    hidden: int  # SQLite: 0 ordinary, 1 hidden, 2 virtual generated, 3 stored generated.
+
+
+def table_columns(conn: sqlite3.Connection, table: str) -> tuple[TableColumn, ...]:
+    """Complete column metadata for fixed, governed identifiers; never table_info.
+
+    Compatibility validators must reject nonzero hidden classifications: none of
+    the supported legacy, ledger or extension columns is hidden or generated.
+    """
+    if table not in set(SCHEMA) | {"v2_migrations"} | ENGAGEMENT_TABLES | WATCH_TABLES | MUSIC_TABLES:
+        raise ValueError("unknown governed table")
+    return tuple(TableColumn(*row) for row in conn.execute(f'PRAGMA table_xinfo("{table}")'))
+
+
 def columns(conn: sqlite3.Connection, table: str) -> tuple[str, ...]:
     if table not in SCHEMA:
         raise ValueError("unknown legacy table")
-    return tuple(row[1] for row in conn.execute(f'PRAGMA table_info("{table}")'))
+    return tuple(column.name for column in table_columns(conn, table))
 
 
 def projection(conn: sqlite3.Connection, table: str) -> str:
@@ -103,9 +125,10 @@ def validate(conn: sqlite3.Connection) -> ValidationReport:
         return ValidationReport(DatabaseState.WRONG_SCHEMA)
     old_pairs = []
     for table, expected in SCHEMA.items():
-        info = conn.execute(f'PRAGMA table_info("{table}")').fetchall()
-        actual = tuple((r[1], r[2].upper(), r[5]) for r in info)
-        if any(r[3] != 0 or (r[4].upper() if r[4] is not None else None) != DEFAULTS.get((table, r[1])) for r in info):
+        info = table_columns(conn, table)
+        actual = tuple((r.name, r.declared_type.upper(), r.pk) for r in info)
+        if any(r.hidden != 0 or r.not_null != 0
+               or (r.default.upper() if r.default is not None else None) != DEFAULTS.get((table, r.name)) for r in info):
             return ValidationReport(DatabaseState.WRONG_SCHEMA)
         if actual == expected:
             continue
@@ -149,8 +172,10 @@ def validate(conn: sqlite3.Connection) -> ValidationReport:
             if actual != (ddl,):
                 return ValidationReport(DatabaseState.WRONG_SCHEMA)
     for table in sorted(tables & (ENGAGEMENT_TABLES | WATCH_TABLES | MUSIC_TABLES)):
-        info = conn.execute(f'PRAGMA table_info("{table}")').fetchall()
-        keys = ",".join(f'"{r[1]}"' for r in sorted(info, key=lambda r: r[5]) if r[5])
+        info = table_columns(conn, table)
+        if any(r.hidden != 0 for r in info):
+            return ValidationReport(DatabaseState.WRONG_SCHEMA)
+        keys = ",".join(f'"{r.name}"' for r in sorted(info, key=lambda r: r.pk) if r.pk)
         for row in conn.execute(f'SELECT * FROM "{table}" ORDER BY {keys}'):
             if not _valid_metadata(table, row):
                 return ValidationReport(DatabaseState.INVALID_DATA)

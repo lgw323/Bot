@@ -1,5 +1,11 @@
 # Changelog
 
+## A3R SQLite schema validation
+
+- Use one complete column inspector and reject unsupported generated/hidden columns in schema and migration-ledger validation.
+- Cover startup, copy-only migration/rehearsal, encrypted backup/restore and XP writes with synthetic regressions. Schema versions and stored formats are unchanged.
+- Production is untouched; A3-M1 is remediated pending independent A3V. Phase 3 remains FAIL.
+
 ## A2R5 Music reply-deletion cleanup
 
 - MusicController의 내부 삭제 supervisor 결과를 기존 정리 검증기로 전달해 미완료 작업이 있으면 부모의 정상 종료를 차단합니다.

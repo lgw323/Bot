@@ -14,6 +14,7 @@ from discordbot.platform.errors import DataIntegrityError
 from discordbot.storage.adapters.engagement_schema import ENGAGEMENT_DDL, ENGAGEMENT_TABLES
 from discordbot.storage.adapters.watch_schema import WATCH_DDL, WATCH_TABLES
 from discordbot.storage.adapters.music_schema import MUSIC_DDL, MUSIC_TABLES
+from discordbot.storage.adapters.schema import table_columns
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,9 +76,12 @@ def validate_ledger(conn: sqlite3.Connection, migrations: tuple[Migration, ...] 
         if {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")} & (ENGAGEMENT_TABLES | WATCH_TABLES | MUSIC_TABLES):
             raise DataIntegrityError("engagement expansion has no migration ledger")
         return 0
-    layout = tuple((r[1], r[2], r[5]) for r in conn.execute("PRAGMA table_info(v2_migrations)"))
-    if layout != (("version", "INTEGER", 1), ("identity", "TEXT", 0), ("checksum", "TEXT", 0),
-                  ("state", "TEXT", 0), ("applied_at", "TEXT", 0)):
+    info = table_columns(conn, "v2_migrations")
+    layout = tuple((r.name, r.declared_type, r.pk) for r in info)
+    if any(r.hidden != 0 for r in info) or layout != (
+        ("version", "INTEGER", 1), ("identity", "TEXT", 0), ("checksum", "TEXT", 0),
+        ("state", "TEXT", 0), ("applied_at", "TEXT", 0),
+    ):
         raise DataIntegrityError("invalid migration ledger layout")
     rows = conn.execute("SELECT version,identity,checksum,state,applied_at FROM v2_migrations ORDER BY version").fetchall()
     extensions = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")} & ENGAGEMENT_TABLES
@@ -103,7 +107,7 @@ def validate_ledger(conn: sqlite3.Connection, migrations: tuple[Migration, ...] 
         for statement in migration.statements:
             if statement.startswith("ALTER TABLE"):
                 _, _, table, _, _, column, _ = statement.split()
-                if column not in {r[1] for r in conn.execute(f'PRAGMA table_info("{table}")')}:
+                if column not in {r.name for r in table_columns(conn, table) if r.hidden == 0}:
                     raise DataIntegrityError("applied expansion is missing")
             else:
                 name = statement.split()[2]
@@ -135,7 +139,7 @@ def apply_pending(conn: sqlite3.Connection, checkpoint: Callable[[], None], migr
                 checkpoint()
                 if statement.startswith("ALTER TABLE"):
                     _, _, table, _, _, column, _ = statement.split()
-                    if column in {r[1] for r in conn.execute(f'PRAGMA table_info("{table}")')}:
+                    if column in {r.name for r in table_columns(conn, table) if r.hidden == 0}:
                         continue
                 conn.execute(statement)
             conn.execute("INSERT INTO v2_migrations VALUES (?,?,?,?,?)", (
