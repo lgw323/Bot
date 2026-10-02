@@ -50,6 +50,11 @@ class VoiceGateway:
                 self.stream = hashlib.sha256(data["session_id"].encode()).hexdigest()
                 self.service.gateway_session(self.stream)
                 return
+            if kind == "RESUMED":
+                # Discord replays missed dispatches before this marker. Reopen
+                # live time here, not on socket connect or each replay receipt.
+                self.service.gateway_resumed()
+                return
             if kind != "VOICE_STATE_UPDATE":
                 return
             guild = self.bot.get_guild(int(data["guild_id"]))
@@ -64,6 +69,12 @@ class VoiceGateway:
             logger.warning("engagement voice failed: %s", exc.code.value)
         except (TypeError, ValueError, KeyError, AttributeError):
             logger.warning("invalid engagement gateway event")
+
+    async def disconnected(self) -> None:
+        try:
+            self.service.gateway_disconnected()
+        except AppError as exc:
+            logger.warning("engagement voice disconnect failed: %s", exc.code.value)
 
     async def ready(self) -> None:
         # Capture the cache without awaiting; reconciliation and seeding share one
@@ -115,6 +126,7 @@ class EngagementResource:
             self._service_started = True
             await self.bot.add_cog(self.cog)
             self.bot.add_listener(self.gateway.receive, "on_socket_raw_receive")
+            self.bot.add_listener(self.gateway.disconnected, "on_disconnect")
             self.bot.add_listener(self.ready, "on_ready")
         except BaseException:
             await self.stop()
@@ -129,6 +141,7 @@ class EngagementResource:
         was_started = self._service_started
         self._service_started = False
         self.bot.remove_listener(self.gateway.receive, "on_socket_raw_receive")
+        self.bot.remove_listener(self.gateway.disconnected, "on_disconnect")
         self.bot.remove_listener(self.ready, "on_ready")
         await self.bot.remove_cog(self.cog.qualified_name)
         await self.scheduler.stop()

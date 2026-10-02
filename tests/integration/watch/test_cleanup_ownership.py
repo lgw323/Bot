@@ -177,7 +177,7 @@ async def test_equivalent_nested_report_consumers_preserve_dependencies(kind):
         metadata=NS(close=dependency), epoch='synthetic', bot=MagicMock(), cog=None,
         controller=NS(close=MagicMock(), stop=AsyncMock()), service=NS(stop=dependency),
         startup_cleanup_complete=False, _service_started=True, scheduler=NS(stop=AsyncMock()),
-        gateway=NS(receive=object()), ready=object(), message=object(), closed=False,
+        gateway=NS(receive=object(), disconnected=object()), ready=object(), message=object(), closed=False,
         _tick_task=None, _refresh_task=None, actors={}, dashboard_views={},
         processes=NS(close=dependency), ffmpeg=NS(close=dependency), cache=NS(close=dependency))
     owner.bot.remove_cog, owner.bot.close = AsyncMock(), dependency

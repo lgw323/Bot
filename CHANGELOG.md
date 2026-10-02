@@ -1,5 +1,11 @@
 # Changelog
 
+## A4R3 disconnected voice observation time
+
+- Freeze voice elapsed time at disconnect through replay completion; resume live accrual at RESUMED or replacement READY without adding the transport gap. Preserve sequence dedupe, M1 reconciliation and M2 shutdown outcome handling.
+- Add 15 synthetic regressions including actual offline SDK callback scheduling. Original A4V2 timing probe now records 100 seconds / 5 XP on both formerly failing paths; formula and schema unchanged.
+- Local remediation only; Phase 4 remains FAIL pending independent A4V3. No deployment or rollout.
+
 ## A3R2 SQLite CHECK constraint validation
 
 - Compare legacy and migration-ledger CHECK constraints against reviewed DDL before writable readiness or recovery publication; preserve approved extension DDL checks and all four nullable-pair variants.

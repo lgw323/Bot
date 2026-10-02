@@ -26,6 +26,8 @@ class EngagementService:
         self._accepting = False
         self._voice_faulted = False
         self._voice_stream: str | None = None
+        self._voice_disconnected_at: float | None = None
+        self._voice_offline_seconds = 0.0
         self._voice_pending = 0
         self._voice_drained = asyncio.Event()
         self._voice_drained.set()
@@ -44,7 +46,7 @@ class EngagementService:
 
     async def stop(self) -> None:
         self._accepting = False
-        tick, request = self.clock.monotonic(), self.request()
+        tick, request = self._voice_tick(), self.request()
         # SQL ordering alone does not order the callers' failure handling. Close
         # admission, then drain those outcomes before choosing the flush policy.
         try:
@@ -77,6 +79,28 @@ class EngagementService:
         # Set before any await: shutdown between raw READY and the cache snapshot
         # must not extrapolate rows belonging to the lost Gateway session.
         self._voice_stream = stream
+        self.gateway_resumed()
+
+    def gateway_disconnected(self) -> None:
+        # Capture before any await. Retries must not move the first boundary.
+        self._admit()
+        if self._voice_disconnected_at is None:
+            self._voice_disconnected_at = self.clock.monotonic()
+
+    def gateway_resumed(self) -> None:
+        self._admit()
+        if self._voice_disconnected_at is not None:
+            self._voice_offline_seconds += self.clock.monotonic() - self._voice_disconnected_at
+            self._voice_disconnected_at = None
+
+    def _voice_tick(self, tick: float | None = None) -> float:
+        # A process-local monotonic timeline excluding unobservable transport
+        # gaps. Buffered updates keep their sequence but share the disconnect
+        # boundary until RESUMED; they have no trustworthy occurrence timestamp.
+        tick = self.clock.monotonic() if tick is None else tick
+        if self._voice_disconnected_at is not None:
+            tick = min(tick, self._voice_disconnected_at)
+        return tick - self._voice_offline_seconds
 
     async def voice_ready(self, stream: str, members: tuple[VoicePresence, ...]) -> None:
         self._admit()
@@ -84,7 +108,7 @@ class EngagementService:
             raise ConflictError("voice observation incomplete; restart reconciliation required")
         if self._voice_stream is not None and stream != self._voice_stream:
             raise ConflictError("voice snapshot belongs to an inactive Gateway session")
-        tick = self.clock.monotonic()
+        tick = self._voice_tick()
         events = tuple(VoiceEvent(member.guild_id, member.user_id, self.epoch, stream, 0,
             member.channel_id, member.muted, tick) for member in members)
         with self._voice_observation():
@@ -109,7 +133,7 @@ class EngagementService:
         if self._voice_stream is not None and stream != self._voice_stream:
             raise ConflictError("voice event belongs to an inactive Gateway session")
         event = VoiceEvent(guild_id, user_id, self.epoch, stream, sequence, channel_id, muted,
-                           self.clock.monotonic() if tick is None else tick)
+                           self._voice_tick(tick))
         with self._voice_observation():
             return await self.events.apply_voice(event, self.config.voice_capacity, self.request())
 
