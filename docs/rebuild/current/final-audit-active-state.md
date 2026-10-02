@@ -651,3 +651,25 @@ STOP. Do not start A3V2 or A4 in this remediation session.
   Friend activation HELD; Integrated Audit deployment condition unmet; My Food paused.
 - **STOP A5. NEXT: parent review of A5-M1, separate authorized remediation, then fresh
   independent A5 verification.** A6/Integrated Audit/Phase 11 not started.
+
+## AN. A5R1 Summary cancellation notification remediation - PASS (2026-10-02)
+
+- **A5R1 local remediation PASS; Phase 5 remains FAIL pending fresh independent A5V1.**
+  A5-M1 remediated, not independently CLOSED. Parent authorized only this bounded fix.
+  [Cause, exact RED/PASS, ownership and limits](../final-audit/a5r1-cancellation-report.md).
+- Candidate `40db561f95b01408139430829d374b1e39c5d95c`, local `codex/rebuild-v2`.
+  Failed/expired single private cancellation feedback emits fixed delivery-failure
+  telemetry and native cancellation propagates. No broad catch, retry or contract change.
+- Unchanged original probe: 1 PASS/1 FAIL before, 2 PASS after. New 11 cases: 8 PASS/3 FAIL
+  before, 11 PASS after. Final disjoint evidence **96 + 2 = 98 PASS / 0 FAIL / 0 SKIP**;
+  96 includes original 85 plus new 11. Cleanup, second cancel, handoff, deadline/provider
+  errors, response semantics and privacy pass. No clean full-suite or live claim.
+- Entry 11 modified/59 untracked, empty index; 70 inherited contents preserved except
+  separately owned additions. Scoped runtime/tests/changelog and evidence/authority
+  commits only; mixed A5/index navigation preserved uncommitted. No remote push.
+- Inventory/Deno/audioop and A3 minor/info limits remain. Production source
+  `8e9018d4b8061cde6006eee47fa4103522f77718`, pin `r-8e9018d4b8061cde-3dac82a792fad576`
+  unchanged. No production/data/provider/deploy action. Friend activation HELD;
+  Integrated Audit deployment condition unmet, MyFood paused. A0-A4 stay PASS.
+- **STOP A5R1. NEXT: parent review, then fresh independent A5V1.** No A5V1, A6,
+  Integrated Audit, Phase 11 or cleanup performed in this microphase.
