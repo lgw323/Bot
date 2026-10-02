@@ -523,3 +523,25 @@ STOP. Do not start A3V2 or A4 in this remediation session.
 - **NEXT: parent review of A4-M3 only; separate remediation/re-audit authorization
   required. STOP A4V2.** No next microphase, A5, Integrated Audit, Phase 11 or cleanup.
   Keep the dirty worktree and audit documents before shutdown; no test process remains.
+
+## AI. A4R3 disconnected voice observation time - PASS (2026-10-02)
+
+- **A4R3 local remediation PASS; PHASE 4 remains FAIL pending independent A4V3.**
+  M1/M2 remain CLOSED; M3 remediated, not independently CLOSED. Supersedes AH NEXT.
+  [Narrow evidence, limits and ownership](../final-audit/a4r3-voice-disconnect-report.md).
+- Runtime candidate `3aa5f73919967a7d41d509c75db627637d37c46c`, local only.
+  Disconnect freezes voice elapsed time through replay; RESUMED/READY reopens live
+  accrual with the gap excluded. Existing SQLite owner, formula/schema, M1 and M2 retained.
+- Unchanged exact A4V2 probe RED: 1 FAIL, both paths 700s/55 XP. After repair both
+  paths are 100s/5 XP. Final focused+probe 136 PASS; dependency 26 PASS, each 0 FAIL /
+  0 SKIP. Earlier cleanup-fake failure corrected; runner setup errors disclosed.
+  No full-suite/live Gateway rerun. Inventory/Deno/audioop/A3 minor/info limits unchanged.
+- Entry 11 modified/67 untracked, empty index. Historical A4 evidence preserved in
+  `914367d53d8689ef1afba5da0a805574fd61974d`; scoped R3 evidence committed separately.
+  Inherited mixed work remains; final 11 modified/59 untracked, empty index.
+- Production source `8e9018d4b8061cde6006eee47fa4103522f77718`, pin
+  `r-8e9018d4b8061cde-3dac82a792fad576` unchanged. No production/deploy/push/data work.
+  Friend rollout HELD; Integrated Audit deployment condition unmet; My Food paused.
+- **NEXT: parent review, then fresh independent A4V3 only; not started here. STOP A4R3.**
+  Challenge disconnect/replay/RESUMED ordering, delayed observation outcomes and stop
+  capture while retaining M1/M2, idempotence and guild isolation. No A5 or cleanup.
