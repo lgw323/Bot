@@ -1,14 +1,16 @@
 """Engagement use cases; no Discord, SQL, process-global lock or task creation."""
 
 import asyncio
+from contextlib import contextmanager
 from datetime import datetime
+from typing import Iterator
 
 from discordbot.engagement.domain.policy import Progress, birthday_due, notification_date, text_xp, valid_birthday
 from discordbot.engagement.ports.events import Authorization, BirthdayDelivery, EngagementConfig, EngagementEvents, VoiceEvent, VoicePresence
 from discordbot.engagement.ports.repository import EngagementRepository, MemberData
 from discordbot.platform.clock import Clock
 from discordbot.platform.context import current_correlation
-from discordbot.platform.errors import AppError, AuthorizationError, CapacityError, ConflictError, ExternalTemporaryError, ValidationError
+from discordbot.platform.errors import AppError, AuthorizationError, CapacityError, ConflictError, ExternalTemporaryError, ShutdownError, ValidationError
 from discordbot.storage.ports.contracts import DatabaseRequest
 
 
@@ -24,6 +26,9 @@ class EngagementService:
         self._accepting = False
         self._voice_faulted = False
         self._voice_stream: str | None = None
+        self._voice_pending = 0
+        self._voice_drained = asyncio.Event()
+        self._voice_drained.set()
 
     def request(self) -> DatabaseRequest:
         correlation = current_correlation()
@@ -39,10 +44,33 @@ class EngagementService:
 
     async def stop(self) -> None:
         self._accepting = False
+        tick, request = self.clock.monotonic(), self.request()
+        # SQL ordering alone does not order the callers' failure handling. Close
+        # admission, then drain those outcomes before choosing the flush policy.
+        try:
+            async with asyncio.timeout(self.config.request_seconds):
+                await self._voice_drained.wait()
+        except TimeoutError:
+            raise ShutdownError("voice observations did not drain") from None
         # A missed mute/leave makes extrapolation unsafe. Keep observed segments
         # only at an uncertain boundary; a new epoch reconciles live presence.
-        await self.events.flush_voice(self.epoch, self.clock.monotonic(), self.request(),
+        await self.events.flush_voice(self.epoch, tick, request,
             observed_only=self._voice_faulted, stream=self._voice_stream)
+
+    @contextmanager
+    def _voice_observation(self) -> Iterator[None]:
+        # Event-loop owned; no await between admission and registering this work.
+        self._voice_pending += 1
+        self._voice_drained.clear()
+        try:
+            yield
+        except (AppError, asyncio.CancelledError):
+            self._voice_faulted = True
+            raise
+        finally:
+            self._voice_pending -= 1
+            if not self._voice_pending:
+                self._voice_drained.set()
 
     def gateway_session(self, stream: str) -> None:
         self._admit()
@@ -59,12 +87,9 @@ class EngagementService:
         tick = self.clock.monotonic()
         events = tuple(VoiceEvent(member.guild_id, member.user_id, self.epoch, stream, 0,
             member.channel_id, member.muted, tick) for member in members)
-        try:
+        with self._voice_observation():
             await self.events.reconcile_voice(self.epoch, stream, events,
                 self.config.voice_capacity, self.request())
-        except (AppError, asyncio.CancelledError):
-            self._voice_faulted = True
-            raise
 
     async def message(self, guild_id: int | None, user_id: int, event_id: str, content: str,
                       created: datetime, *, bot: bool = False) -> bool:
@@ -85,11 +110,8 @@ class EngagementService:
             raise ConflictError("voice event belongs to an inactive Gateway session")
         event = VoiceEvent(guild_id, user_id, self.epoch, stream, sequence, channel_id, muted,
                            self.clock.monotonic() if tick is None else tick)
-        try:
+        with self._voice_observation():
             return await self.events.apply_voice(event, self.config.voice_capacity, self.request())
-        except (AppError, asyncio.CancelledError):
-            self._voice_faulted = True
-            raise
 
     def profile_target(self, requester: int, requested: int | None) -> int:
         return requested if requested is not None and self.authorization.is_master(requester) else requester

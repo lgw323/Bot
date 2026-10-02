@@ -226,7 +226,10 @@ async def test_queued_reconciliation_precedes_shutdown_flush_once(service, datab
         queued.clear()
         clock.advance(61)
         tasks.append(asyncio.create_task(service.stop()))
-        await asyncio.wait_for(queued.wait(), 2)
+        await asyncio.sleep(0)  # Stop closes admission and waits for reconciliation.
+        assert not service._accepting
+        assert not tasks[-1].done()
+        assert not queued.is_set()  # Flush cannot choose policy before the outcome.
     finally:
         release.set()
         await asyncio.gather(*tasks)
