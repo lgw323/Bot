@@ -1,5 +1,11 @@
 # Changelog
 
+## A5R1 Summary cancellation notification failure
+
+- Preserve native cancellation when its single private Discord notification fails or times out; retain bounded delivery and redacted delivery-failure telemetry.
+- Add 11 synthetic cancellation, notification, deadline/provider-error and result-handoff regressions. Existing Summary contracts and cleanup remain unchanged.
+- Local remediation only; Phase 5 remains FAIL pending fresh independent A5V1. No production access or deployment.
+
 ## A4R4 cancelled voice shutdown retry
 
 - Retain the first closed-admission effective voice tick across cancelled or timed-out drains and failed/cancelled flush retries. Renew request deadlines without adding unobserved elapsed time; retain M1/M2/M3, fault policy, formula and schema.

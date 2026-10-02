@@ -107,7 +107,11 @@ class SummaryController:
             except AppError as exc:
                 await responder.error(exc)
             except asyncio.CancelledError:
-                await responder.error(CancellationError("Summary cancelled"))
+                try:
+                    await responder.error(CancellationError("Summary cancelled"))
+                except ResponderFailure:
+                    # Best-effort feedback must not replace native cancellation.
+                    self.service.telemetry.emit("summary.response", component="summary", result="delivery_failed")
                 raise
             except Exception:
                 await responder.error(InternalError("Summary UI failed"))
