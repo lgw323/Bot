@@ -545,3 +545,29 @@ STOP. Do not start A3V2 or A4 in this remediation session.
 - **NEXT: parent review, then fresh independent A4V3 only; not started here. STOP A4R3.**
   Challenge disconnect/replay/RESUMED ordering, delayed observation outcomes and stop
   capture while retaining M1/M2, idempotence and guild isolation. No A5 or cleanup.
+
+## AJ. A4V3 independent Phase 4 audit - FAIL (2026-10-02)
+
+- **PHASE 4 FAIL. M1/M2 remain CLOSED; original M3 independently CLOSED;
+  new A4-M4 MATERIAL OPEN.** Latest scoped routing supersedes earlier NEXT text.
+  [Exact reproduction, counts and ownership](../final-audit/a4v3-phase-4-verification-report.md).
+- Audited HEAD `8a5a86422f7e63e9aaa96e79b39eb05733196011`, runtime
+  `3aa5f73919967a7d41d509c75db627637d37c46c`, branch `codex/rebuild-v2`.
+  Following documentation commit does not change the runtime.
+- Fresh focused 120 PASS; unchanged A4V2 probe 16 PASS; new independent 13 PASS /
+  1 FAIL; all 0 SKIP, disjoint selections. No full-suite/adjacent rerun after finding.
+  Original M3 paths now 100s/5 XP; repeated gaps, READY, SQL ordering and guild isolation pass.
+- M4: cancel stop while an unmuted replay observation is pending after RESUMED,
+  then explicitly retry service.stop after 600s of closed admission: **761s/60 XP
+  vs 161s/10 XP**. Retry recaptures tick instead of preserving initial stop boundary.
+  Real service/SQLite, synthetic transport; current resource's guard disallows automatic
+  reentry, so no live/automatic retry occurrence is claimed. No fix performed.
+- Entry 11 modified/59 untracked, empty index; all 70 inherited hashes verified before
+  docs. Select only new audit evidence and A4V3 authority changes for local commit;
+  mixed prior work remains. Inventory/Deno/audioop and A3 minor/info limits unchanged.
+- Production source `8e9018d4b8061cde6006eee47fa4103522f77718`, pin
+  `r-8e9018d4b8061cde-3dac82a792fad576` untouched. Friend rollout HELD;
+  Integrated Audit deployment condition unmet, My Food paused. No access/deploy/push/data work.
+- **STOP A4V3.** Parent may separately review/scope further A4 work under the user's
+  finish-A4 direction; this auditor starts no remediation, re-audit, A5 or next task.
+  All commands/tests ended; no audit process needs to stay alive for computer shutdown.
