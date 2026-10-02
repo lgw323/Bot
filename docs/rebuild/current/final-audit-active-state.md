@@ -599,3 +599,33 @@ STOP. Do not start A3V2 or A4 in this remediation session.
   cancellation/retry cutoff, admitted outcomes and flush ownership; retain M1/M2/M3,
   connected/gap accounting and guild isolation. No automatic/live retry claim.
   A4V4, A5, Integrated Audit, Phase 11 and cleanup are not started here.
+
+## AL. A4V4 independent Phase 4 verification - PASS (2026-10-02)
+
+- **PHASE 4 PASS. A4-M4 independently CLOSED; M1/M2/M3 remain CLOSED.**
+  No new MATERIAL/DRIFT/BLOCKED finding. Latest scoped routing supersedes AK NEXT.
+  [Closure, complete gate matrix, exact new probes and limits](../final-audit/a4v4-phase-4-verification-report.md).
+- Audited evidence HEAD `9aef15c6ec5def59a93b68fb06a196d3706b9d40`, runtime
+  `c6da7eba800de9816f0c9b7ffb73ca4599f5e3f6`, branch `codex/rebuild-v2`.
+  Original unchanged M4 probe now 161s/10 XP; disconnected control 100s/5 XP.
+- Fresh disjoint selections: **172 + 11 + 14 = 197 PASS / 0 FAIL / 0 SKIP**.
+  Includes 22 repair regressions, 16 A4V2 drain-barrier cases, 14 unchanged A4V3,
+  11 new independent cases and 14 boundary/cleanup cases. Historical counts not added.
+  Real temporary SQLite flush timeout/cancel with retry queued before worker release,
+  pending READY outcomes, same-user two-guild totals, short-stay and new lifecycle pass.
+- One effective admission-close cutoff persists across drain/flush retries; request
+  deadlines renew, pending outcomes determine conservative settlement, atomic deletion
+  prevents double credit. Text/profile/ranking/birthday/data/architecture gates pass.
+  Synthetic only; no live Gateway/HTTP/Pi or automatic resource retry proof.
+- Entry and final residual ownership: 11 modified/59 untracked, empty index;
+  all 70 inherited contents preserved apart from explicitly owned audit additions.
+  Report/inventory and scoped AL/Phase 4 ledger delta committed locally; mixed index
+  navigation stays uncommitted. Runtime/product tests unchanged; no push.
+- Known inventory/Deno failures, audioop warning, A3-N1 MINOR/A3-I1 INFO retained;
+  no clean full-suite claim. Original Phase 4 later-live boundaries remain explicit.
+- Production source `8e9018d4b8061cde6006eee47fa4103522f77718`, pin
+  `r-8e9018d4b8061cde-3dac82a792fad576` unchanged; no production/data/deploy access.
+  Friend activation HELD; final Integrated Audit deployment condition unmet.
+  My Food paused/unrelated. A0-A3 unchanged; A5-A10/Integrated Audit/Phase 11 unstarted.
+- **STOP A4V4. NEXT: parent review of this closure only.** A5 requires a separate
+  assigned microphase and was not started. All test commands/owned workers completed.
