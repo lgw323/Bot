@@ -717,3 +717,24 @@ STOP. Do not start A3V2 or A4 in this remediation session.
   action; friend activation HELD; Integrated Audit condition unmet; MyFood paused.
 - **STOP A6. NEXT: parent review of A6-M1, separately authorized remediation, then
   independent Phase6 verification.** A7/Integrated Audit/Phase11 not started.
+
+## AQ. A6R1 terminal playback remediation - local PASS (2026-10-02)
+
+- **Phase 6 remains FAIL; A6-M1 remediated, pending independent A6V1 closure.**
+  [A6R1 report](../final-audit/a6r1-terminal-playback-report.md), candidate
+  `ecd8ef2d69d27199c41eb8941615fa177d1e8834`. Original A6/D7 history retained.
+- Owned iframe is destroyed/unloaded on terminal events; playback/reconnect timers
+  and page listeners released; late initialization/callbacks cannot restart media.
+  Transient reconnect, retired sockets, authorization and unrelated rooms preserved.
+- Exact A6 appendix unchanged: RED1 PASS/1 FAIL ->2 PASS. Final disjoint pytest
+  **148 PASS/0 FAIL/0 SKIP**, plus **1 real Chrome synthetic HTTP/WS/media PASS**.
+  Same Chrome probe FAILS on entry template. No live YouTube/Discord/Pi or full-suite claim.
+- Entry/residual11 modified/59 untracked, empty index;70 inherited contents preserved
+  after excluding only owned doc deltas. Scoped implementation/evidence commits only;
+  mixed prior authority/index work retained. Known inventory/Deno/audioop/A3 limits remain.
+- Production source `8e9018d4b8061cde6006eee47fa4103522f77718`, pin
+  `r-8e9018d4b8061cde-3dac82a792fad576` unchanged; no deploy/production operation.
+  A0-A5 PASS; Integrated Audit deployment condition unmet; friend activation HELD;
+  MyFood paused and localhost3000 untouched.
+- **STOP A6R1. NEXT: parent review, then separately authorized independent A6V1.**
+  No A6V1/A7/Integrated Audit/Phase11 started.
