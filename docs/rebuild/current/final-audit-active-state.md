@@ -572,3 +572,30 @@ STOP. Do not start A3V2 or A4 in this remediation session.
   No remediation, re-audit, A5 or next task until the user resumes; earlier finish-A4
   direction is superseded for tonight.
   All commands/tests ended; no audit process needs to stay alive for computer shutdown.
+
+## AK. A4R4 cancelled voice shutdown retry - PASS (2026-10-02)
+
+- **A4R4 local remediation PASS; PHASE 4 remains FAIL pending fresh independent
+  A4V4.** M1/M2/M3 stay independently CLOSED; M4 remediated, not independently CLOSED.
+  User resumed verification overnight; this scope supersedes AJ's sleep pause only
+  for A4R4. Parent supervision and the one-microphase STOP remain in force.
+  [Cause, common invariant, exact RED and ownership](../final-audit/a4r4-voice-stop-retry-report.md).
+- Candidate `c6da7eba800de9816f0c9b7ffb73ca4599f5e3f6`, local `codex/rebuild-v2`.
+  First admission closure retains one effective voice cutoff across all drain/flush
+  retries; fresh request deadlines and post-drain failure policy remain intact.
+  No SQL/schema/formula/adapter or resource automatic-retry policy change.
+- Unchanged M4 RED: 1 PASS / 1 FAIL, 761s/60 XP vs 161s/10 XP; now 161s/10 XP.
+  Final **172 PASS / 0 FAIL / 0 SKIP**: 120 existing, 22 new, 16 A4V2 cases with
+  drain-entry synchronization only, 14 unchanged A4V3. Intermediate 168 PASS/4 FAIL
+  disclosed: three deadline-clock assumptions and old concurrent-stop clock hook.
+  No clean full-suite/live claim; inventory/Deno/audioop/A3 minor/info limits retained.
+- Entry 11 modified/59 untracked, empty index; 70 inherited hashes recorded/preserved.
+  Runtime/tests/changelog and scoped evidence committed separately. Mixed inherited
+  authority/history/index and unrelated files remain uncommitted; no remote push.
+- Production source `8e9018d4b8061cde6006eee47fa4103522f77718`, pin
+  `r-8e9018d4b8061cde-3dac82a792fad576` unchanged. No production/data/deploy action.
+  Friend rollout HELD; Integrated Audit deployment condition unmet; My Food untouched.
+- **STOP A4R4. NEXT: parent review, then fresh independent A4V4 only.** Challenge the
+  cancellation/retry cutoff, admitted outcomes and flush ownership; retain M1/M2/M3,
+  connected/gap accounting and guild isolation. No automatic/live retry claim.
+  A4V4, A5, Integrated Audit, Phase 11 and cleanup are not started here.
