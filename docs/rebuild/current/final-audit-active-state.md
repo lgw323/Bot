@@ -496,3 +496,30 @@ A0/A1/A2 remain PASS; A4–A10 remain NOT_AUDITED.
 **NEXT SESSION: FINAL AUDIT A3V2 — PHASE 3 INDEPENDENT RE-AUDIT**
 
 STOP. Do not start A3V2 or A4 in this remediation session.
+
+## AH. A4V2 independent Phase 4 audit - FAIL (2026-10-02)
+
+- **A4V2 / PHASE 4 FAIL. A4-M1 remains CLOSED; A4-M2 independently CLOSED;
+  new A4-M3 MATERIAL OPEN.** Latest scoped Phase 4 routing supersedes earlier NEXT text.
+  [Report, full gate matrix and exact probe](../final-audit/a4v2-phase-4-verification-report.md).
+- Audited runtime HEAD `7ead8a2fae5501f384c26e6d894e5b6ca9a906e9`, branch
+  `codex/rebuild-v2`. Following A4V2 commit is documentation only, not a new runtime.
+- Fresh focused 105 PASS / 0 FAIL / 0 SKIP; independent ownership/M1/guild probes
+  15 PASS / 0 FAIL / 0 SKIP; timing probe 0 PASS / 1 FAIL / 0 SKIP (15 deselected).
+  All commands ended. No full-suite/host rerun; known nonmaterial findings retained.
+- M2 synchronization adjustment is sound: flush waits for service outcome handling.
+  Independent transaction and failure-propagation barriers prove 70s/5 XP on failure/
+  cancellation, captured stop tick and success/retry/idempotence within stated limits.
+- M3: same-stream delayed leave after disconnect, or disconnected shutdown, credits
+  **700s/55 XP instead of at most 100s/5 XP**. Connected control is 100s/5 XP.
+  Missing disconnect uncertainty plus receipt-time replay accrual; simulated transport
+  through real resource/service/SQLite, not live Gateway/Pi proof. No silent fix.
+- Entry 11 modified/67 untracked, empty index; 78 inherited hashes verified before docs.
+  Local commit selects report/inventory and A4V2-only active-state/Phase 4 ledger changes.
+  Mixed prior authority/history/index and unrelated files remain uncommitted/preserved.
+- Production source `8e9018d4b8061cde6006eee47fa4103522f77718`, pin
+  `r-8e9018d4b8061cde-3dac82a792fad576` unchanged; no access/deploy/push/DB work.
+  Friend rollout HELD; Integrated Audit deployment condition unmet. MyFood untouched.
+- **NEXT: parent review of A4-M3 only; separate remediation/re-audit authorization
+  required. STOP A4V2.** No next microphase, A5, Integrated Audit, Phase 11 or cleanup.
+  Keep the dirty worktree and audit documents before shutdown; no test process remains.
