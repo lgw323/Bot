@@ -28,6 +28,7 @@ class EngagementService:
         self._voice_stream: str | None = None
         self._voice_disconnected_at: float | None = None
         self._voice_offline_seconds = 0.0
+        self._voice_stop_tick: float | None = None
         self._voice_pending = 0
         self._voice_drained = asyncio.Event()
         self._voice_drained.set()
@@ -42,11 +43,17 @@ class EngagementService:
 
     async def start(self) -> None:
         await self.events.begin_epoch(self.epoch, self.request())
+        self._voice_stop_tick = None
         self._accepting = True
 
     async def stop(self) -> None:
         self._accepting = False
-        tick, request = self._voice_tick(), self.request()
+        # Closing admission ends observable time for this lifecycle. Retain that
+        # effective tick across cancelled drains/flushes and explicit retries;
+        # each attempt gets a fresh DB deadline, but cannot earn more voice time.
+        if self._voice_stop_tick is None:
+            self._voice_stop_tick = self._voice_tick()
+        tick, request = self._voice_stop_tick, self.request()
         # SQL ordering alone does not order the callers' failure handling. Close
         # admission, then drain those outcomes before choosing the flush policy.
         try:

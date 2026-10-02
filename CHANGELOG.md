@@ -1,5 +1,11 @@
 # Changelog
 
+## A4R4 cancelled voice shutdown retry
+
+- Retain the first closed-admission effective voice tick across cancelled or timed-out drains and failed/cancelled flush retries. Renew request deadlines without adding unobserved elapsed time; retain M1/M2/M3, fault policy, formula and schema.
+- Add 22 deterministic synthetic regression cases for repeated interruption, connected/resumed/disconnected accounting, failed observations, transactional rollback/commit ambiguity, idempotence and same-user guild isolation.
+- Local remediation only; Phase 4 remains FAIL until fresh independent A4V4. No production action, deployment or rollout.
+
 ## A4R3 disconnected voice observation time
 
 - Freeze voice elapsed time at disconnect through replay completion; resume live accrual at RESUMED or replacement READY without adding the transport gap. Preserve sequence dedupe, M1 reconciliation and M2 shutdown outcome handling.
