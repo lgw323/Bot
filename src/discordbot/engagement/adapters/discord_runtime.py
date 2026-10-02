@@ -16,7 +16,7 @@ from discordbot.engagement.adapters.event_repository import SqliteEngagementEven
 from discordbot.engagement.adapters.scheduler import BirthdayScheduler
 from discordbot.engagement.adapters.sqlite_repository import SqliteEngagementRepository
 from discordbot.engagement.application.service import EngagementService
-from discordbot.engagement.ports.events import EngagementConfig
+from discordbot.engagement.ports.events import EngagementConfig, VoicePresence
 from discordbot.platform.clock import Clock
 from discordbot.platform.errors import ShutdownError, AppError, ConfigurationError
 from discordbot.platform.tasks import require_tasks_stopped, TaskSupervisor
@@ -48,6 +48,7 @@ class VoiceGateway:
             kind, data, sequence = packet.get("t"), packet.get("d"), packet.get("s")
             if kind == "READY":
                 self.stream = hashlib.sha256(data["session_id"].encode()).hexdigest()
+                self.service.gateway_session(self.stream)
                 return
             if kind != "VOICE_STATE_UPDATE":
                 return
@@ -65,17 +66,22 @@ class VoiceGateway:
             logger.warning("invalid engagement gateway event")
 
     async def ready(self) -> None:
-        # Sequence zero seeds only missing sessions. Repeated ready never resets
-        # a session whose sequenced events were already observed in this stream.
+        # Capture the cache without awaiting; reconciliation and seeding share one
+        # writer transaction. Current-stream events win over sequence-zero seeds.
+        stream = self.stream
+        members = []
         for guild in self.bot.guilds:
             for channel in guild.voice_channels:
                 for member in channel.members:
+                    if member.bot:
+                        continue
                     state = member.voice
-                    try:
-                        await self.service.voice(guild.id, member.id, self.stream, 0, channel.id,
-                            bool(state and (state.self_mute or state.mute or state.self_deaf or state.deaf)), bot=member.bot)
-                    except AppError as exc:
-                        logger.warning("engagement voice recovery failed: %s", exc.code.value)
+                    members.append(VoicePresence(guild.id, member.id, channel.id,
+                        bool(state and (state.self_mute or state.mute or state.self_deaf or state.deaf))))
+        try:
+            await self.service.voice_ready(stream, tuple(members))
+        except AppError as exc:
+            logger.warning("engagement voice recovery failed: %s", exc.code.value)
 
 
 class EngagementResource:

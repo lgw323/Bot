@@ -68,6 +68,11 @@ class SqliteEngagementEvents:
         return await self._db.write(request, work)
 
     async def apply_voice(self, event: VoiceEvent, capacity: int, request: DatabaseRequest) -> bool:
+        self._validate_voice(event)
+        return await self._db.write(request, lambda conn: self._apply_voice(conn, event, capacity))
+
+    @staticmethod
+    def _validate_voice(event: VoiceEvent) -> None:
         identifier(event.guild_id)
         identifier(event.user_id)
         if event.channel_id is not None:
@@ -76,37 +81,64 @@ class SqliteEngagementEvents:
         nonnegative(event.sequence, integer=True)
         text_value(event.epoch, nonempty=True)
         text_value(event.stream, nonempty=True)
-        def work(conn: sqlite3.Connection) -> bool:
-            runtime = conn.execute("SELECT epoch FROM v2_engagement_runtime WHERE id=1").fetchone()
-            if runtime != (event.epoch,):
-                raise ConflictError("voice event belongs to an inactive process epoch")
-            row = conn.execute("SELECT stream,sequence,channel_id,muted,tick,duration FROM v2_engagement_voice WHERE guild_id=? AND user_id=?", (event.guild_id, event.user_id)).fetchone()
-            if row and row[0] == event.stream and event.sequence <= row[1]:
-                return False
-            if not row and conn.execute("SELECT count(*) FROM v2_engagement_voice").fetchone()[0] >= capacity:
-                raise CapacityError("voice session capacity exhausted")
-            duration = 0.0 if not row else row[5]
-            if row and event.tick < row[4]:
-                raise ConflictError("voice event time moved backwards")
-            if row and row[2] is not None and not row[3]:
-                duration += event.tick - row[4]
-            if event.channel_id is None:
-                if duration >= 60:
-                    _progress(conn, event.guild_id, event.user_id, seconds=int(duration))
-                duration = 0.0
-            conn.execute("INSERT INTO v2_engagement_voice VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(guild_id,user_id) DO UPDATE SET epoch=excluded.epoch,stream=excluded.stream,sequence=excluded.sequence,channel_id=excluded.channel_id,muted=excluded.muted,tick=excluded.tick,duration=excluded.duration", (
-                event.guild_id, event.user_id, event.epoch, event.stream, event.sequence,
-                event.channel_id, int(event.muted), event.tick, duration))
-            return True
-        return await self._db.write(request, work)
 
-    async def flush_voice(self, epoch: str, tick: float, request: DatabaseRequest, *, observed_only: bool = False) -> None:
+    @staticmethod
+    def _apply_voice(conn: sqlite3.Connection, event: VoiceEvent, capacity: int) -> bool:
+        runtime = conn.execute("SELECT epoch FROM v2_engagement_runtime WHERE id=1").fetchone()
+        if runtime != (event.epoch,):
+            raise ConflictError("voice event belongs to an inactive process epoch")
+        row = conn.execute("SELECT stream,sequence,channel_id,muted,tick,duration FROM v2_engagement_voice WHERE guild_id=? AND user_id=?", (event.guild_id, event.user_id)).fetchone()
+        if row and row[0] == event.stream and event.sequence <= row[1]:
+            return False
+        if not row and conn.execute("SELECT count(*) FROM v2_engagement_voice").fetchone()[0] >= capacity:
+            raise CapacityError("voice session capacity exhausted")
+        duration = 0.0 if not row else row[5]
+        if row and event.tick < row[4]:
+            raise ConflictError("voice event time moved backwards")
+        if row and row[0] == event.stream and row[2] is not None and not row[3]:
+            duration += event.tick - row[4]
+        if event.channel_id is None:
+            if duration >= 60:
+                _progress(conn, event.guild_id, event.user_id, seconds=int(duration))
+            duration = 0.0
+        conn.execute("INSERT INTO v2_engagement_voice VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(guild_id,user_id) DO UPDATE SET epoch=excluded.epoch,stream=excluded.stream,sequence=excluded.sequence,channel_id=excluded.channel_id,muted=excluded.muted,tick=excluded.tick,duration=excluded.duration", (
+            event.guild_id, event.user_id, event.epoch, event.stream, event.sequence,
+            event.channel_id, int(event.muted), event.tick, duration))
+        return True
+
+    async def reconcile_voice(self, epoch: str, stream: str, members: tuple[VoiceEvent, ...],
+                              capacity: int, request: DatabaseRequest) -> None:
+        text_value(epoch, nonempty=True)
+        text_value(stream, nonempty=True)
+        for event in members:
+            self._validate_voice(event)
+            if event.epoch != epoch or event.stream != stream or event.sequence != 0 or event.channel_id is None:
+                raise ConflictError("invalid voice READY snapshot")
+        present = {(event.guild_id, event.user_id) for event in members}
+        def work(conn: sqlite3.Connection) -> None:
+            if conn.execute("SELECT epoch FROM v2_engagement_runtime WHERE id=1").fetchone() != (epoch,):
+                raise ConflictError("voice snapshot belongs to an inactive process epoch")
+            rows = conn.execute("SELECT guild_id,user_id,duration FROM v2_engagement_voice WHERE stream<>?", (stream,)).fetchall()
+            for guild, user, duration in rows:
+                if (guild, user) not in present:
+                    # The replacement snapshot proves absence, not when they left.
+                    # Settle only persisted observations, once, without offline time.
+                    if duration >= 60:
+                        _progress(conn, guild, user, seconds=int(duration))
+                    conn.execute("DELETE FROM v2_engagement_voice WHERE guild_id=? AND user_id=?", (guild, user))
+            for event in members:
+                # Cross-stream rebasing retains observed duration (even <60s).
+                # Same-stream seeds cannot override sequenced events/tombstones.
+                self._apply_voice(conn, event, capacity)
+        await self._db.write(request, work)
+
+    async def flush_voice(self, epoch: str, tick: float, request: DatabaseRequest, *, observed_only: bool = False, stream: str | None = None) -> None:
         nonnegative(tick)
         def work(conn: sqlite3.Connection) -> None:
             if conn.execute("SELECT epoch FROM v2_engagement_runtime WHERE id=1").fetchone() != (epoch,):
                 return
-            for guild, user, channel, muted, previous, duration in conn.execute("SELECT guild_id,user_id,channel_id,muted,tick,duration FROM v2_engagement_voice"):
-                if channel is not None and not muted and not observed_only:
+            for guild, user, channel, muted, previous, duration, row_stream in conn.execute("SELECT guild_id,user_id,channel_id,muted,tick,duration,stream FROM v2_engagement_voice"):
+                if channel is not None and not muted and not observed_only and (stream is None or row_stream == stream):
                     duration += max(0, tick - previous)
                 if duration >= 60:
                     _progress(conn, guild, user, seconds=int(duration))

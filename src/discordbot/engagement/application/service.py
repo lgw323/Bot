@@ -4,7 +4,7 @@ import asyncio
 from datetime import datetime
 
 from discordbot.engagement.domain.policy import Progress, birthday_due, notification_date, text_xp, valid_birthday
-from discordbot.engagement.ports.events import Authorization, BirthdayDelivery, EngagementConfig, EngagementEvents, VoiceEvent
+from discordbot.engagement.ports.events import Authorization, BirthdayDelivery, EngagementConfig, EngagementEvents, VoiceEvent, VoicePresence
 from discordbot.engagement.ports.repository import EngagementRepository, MemberData
 from discordbot.platform.clock import Clock
 from discordbot.platform.context import current_correlation
@@ -23,6 +23,7 @@ class EngagementService:
         self.epoch = epoch
         self._accepting = False
         self._voice_faulted = False
+        self._voice_stream: str | None = None
 
     def request(self) -> DatabaseRequest:
         correlation = current_correlation()
@@ -40,7 +41,30 @@ class EngagementService:
         self._accepting = False
         # A missed mute/leave makes extrapolation unsafe. Keep observed segments
         # only at an uncertain boundary; a new epoch reconciles live presence.
-        await self.events.flush_voice(self.epoch, self.clock.monotonic(), self.request(), observed_only=self._voice_faulted)
+        await self.events.flush_voice(self.epoch, self.clock.monotonic(), self.request(),
+            observed_only=self._voice_faulted, stream=self._voice_stream)
+
+    def gateway_session(self, stream: str) -> None:
+        self._admit()
+        # Set before any await: shutdown between raw READY and the cache snapshot
+        # must not extrapolate rows belonging to the lost Gateway session.
+        self._voice_stream = stream
+
+    async def voice_ready(self, stream: str, members: tuple[VoicePresence, ...]) -> None:
+        self._admit()
+        if self._voice_faulted:
+            raise ConflictError("voice observation incomplete; restart reconciliation required")
+        if self._voice_stream is not None and stream != self._voice_stream:
+            raise ConflictError("voice snapshot belongs to an inactive Gateway session")
+        tick = self.clock.monotonic()
+        events = tuple(VoiceEvent(member.guild_id, member.user_id, self.epoch, stream, 0,
+            member.channel_id, member.muted, tick) for member in members)
+        try:
+            await self.events.reconcile_voice(self.epoch, stream, events,
+                self.config.voice_capacity, self.request())
+        except (AppError, asyncio.CancelledError):
+            self._voice_faulted = True
+            raise
 
     async def message(self, guild_id: int | None, user_id: int, event_id: str, content: str,
                       created: datetime, *, bot: bool = False) -> bool:
@@ -57,6 +81,8 @@ class EngagementService:
             return False
         if self._voice_faulted:
             raise ConflictError("voice observation incomplete; restart reconciliation required")
+        if self._voice_stream is not None and stream != self._voice_stream:
+            raise ConflictError("voice event belongs to an inactive Gateway session")
         event = VoiceEvent(guild_id, user_id, self.epoch, stream, sequence, channel_id, muted,
                            self.clock.monotonic() if tick is None else tick)
         try:
