@@ -696,3 +696,24 @@ STOP. Do not start A3V2 or A4 in this remediation session.
   Friend activation HELD; Integrated Audit deployment condition unmet; MyFood paused.
 - **STOP A5V1. NEXT: parent review of this independent PASS only.** A6 requires a new
   assignment. No A6, Integrated Audit, Phase 11, remediation or cleanup performed.
+
+## AP. A6 independent Phase 6 Watch audit - FAIL (2026-10-02)
+
+- **PHASE 6 FAIL; A6-M1 MATERIAL OPEN.** [Report and exact synthetic reproduction](../final-audit/a6-phase-6-report.md).
+  Target HEAD `97f332225c204de02ae6933e4526b7c2f113987c`, `codex/rebuild-v2`.
+- Terminal4001 stops reconnection but the shipped browser never stops active iframe
+  media: terminal=true, target still PLAYING42->44s; unrelated control continues.
+  Server master-close/known-message cleanup and cross-guild isolation pass independently.
+  Historical D7 human PASS preserved; it does not establish the absent media-stop path.
+- Fresh unique **133 PASS /1 FAIL /0 SKIP /0 XFAIL**: existing132, independent1/1.
+  Three incomplete TEMP launcher attempts disclosed, not counted; final explicit-config
+  run completes. No product/test fixes or full-suite/live/Pi/production proof.
+- Entry11 modified/59 untracked/empty index; all70 inherited contents preserved except
+  owned audit deltas. Only report/inventory and scoped AP/Phase6 row committed locally;
+  mixed prior authority/index work remains uncommitted. No push. Known inventory/Deno,
+  audioop and A3-N1/A3-I1 limits unchanged. A0-A5 PASS retained.
+- Recorded production source `8e9018d4b8061cde6006eee47fa4103522f77718`, pin
+  `r-8e9018d4b8061cde-3dac82a792fad576` unchanged. No production/data/permission/deploy
+  action; friend activation HELD; Integrated Audit condition unmet; MyFood paused.
+- **STOP A6. NEXT: parent review of A6-M1, separately authorized remediation, then
+  independent Phase6 verification.** A7/Integrated Audit/Phase11 not started.
