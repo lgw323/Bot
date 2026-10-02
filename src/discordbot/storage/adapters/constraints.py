@@ -1,4 +1,4 @@
-"""Conservative CHECK comparison against reviewed DDL, not SQL equivalence.
+"""Conservative CHECK and UNIQUE comparison against reviewed DDL.
 
 SQLite column pragmas omit CHECK expressions. Lex stored CREATE TABLE text so
 comments, literals and quoted identifiers cannot hide or invent a CHECK keyword.
@@ -9,6 +9,7 @@ schema properties remain the responsibility of the existing metadata/DDL gates.
 from __future__ import annotations
 
 import sqlite3
+from contextlib import closing
 from typing import NamedTuple
 
 
@@ -126,3 +127,41 @@ def checks_match(conn: sqlite3.Connection, table: str, reviewed_ddl: str) -> boo
         return check_expressions(row[0]) == expected
     except ValueError:
         return False
+
+
+type UniqueKey = tuple[str | None, int, str]
+type UniqueIndex = tuple[str, int, tuple[UniqueKey, ...]]
+
+
+def _unique_indexes(conn: sqlite3.Connection, table: str) -> tuple[UniqueIndex, ...]:
+    """Names are not identity; compare SQLite's effective unique key metadata.
+
+    Parameterized pragma functions keep even hostile index names out of SQL.
+    Include origin, partial flag, key order/direction and collation. Explicit
+    unique indexes and expression keys cannot masquerade as reviewed autoindexes.
+    Nonunique query indexes do not constrain writes and remain allowed.
+    """
+    result: list[UniqueIndex] = []
+    for _, name, unique, origin, partial in conn.execute(
+        "SELECT * FROM pragma_index_list(?)", (table,),
+    ):
+        if unique:
+            keys = tuple(
+                (None if column is None else _fold(column), descending, _fold(collation))
+                for _, _, column, descending, collation, key in conn.execute(
+                    "SELECT * FROM pragma_index_xinfo(?)", (name,),
+                ) if key
+            )
+            result.append((origin, partial, keys))
+    return tuple(sorted(result, key=repr))
+
+
+def uniques_match(conn: sqlite3.Connection, table: str, reviewed_ddl: str) -> bool:
+    """Compare against reviewed DDL in a disposable, empty in-memory database.
+
+    Never execute source DDL here. SQLite resolves supported quoting/constraint
+    placement itself; names of constraints and autoindexes are immaterial.
+    """
+    with closing(sqlite3.connect(":memory:")) as reference:
+        reference.execute(reviewed_ddl)
+        return _unique_indexes(conn, table) == _unique_indexes(reference, table)

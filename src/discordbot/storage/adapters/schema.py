@@ -10,7 +10,7 @@ from datetime import date
 from typing import NamedTuple
 
 from discordbot.storage.ports.contracts import DatabaseState, ValidationReport
-from discordbot.storage.adapters.constraints import checks_match
+from discordbot.storage.adapters.constraints import checks_match, uniques_match
 from discordbot.storage.adapters.engagement_schema import ENGAGEMENT_DDL, ENGAGEMENT_TABLES
 from discordbot.storage.adapters.watch_schema import WATCH_DDL, WATCH_TABLES
 from discordbot.storage.adapters.music_schema import MUSIC_DDL, MUSIC_TABLES
@@ -127,7 +127,8 @@ def validate(conn: sqlite3.Connection) -> ValidationReport:
         return ValidationReport(DatabaseState.WRONG_SCHEMA)
     old_pairs = []
     for table, expected in SCHEMA.items():
-        if not checks_match(conn, table, LEGACY_DEFINITIONS[table]):
+        if (not checks_match(conn, table, LEGACY_DEFINITIONS[table])
+                or not uniques_match(conn, table, LEGACY_DEFINITIONS[table])):
             return ValidationReport(DatabaseState.WRONG_SCHEMA)
         info = table_columns(conn, table)
         actual = tuple((r.name, r.declared_type.upper(), r.pk) for r in info)
@@ -173,7 +174,7 @@ def validate(conn: sqlite3.Connection) -> ValidationReport:
         for ddl in definitions:
             name = ddl.split()[2]
             actual = conn.execute("SELECT sql FROM sqlite_master WHERE name=?", (name,)).fetchone()
-            if actual != (ddl,):
+            if actual != (ddl,) or (name in extension_tables and not uniques_match(conn, name, ddl)):
                 return ValidationReport(DatabaseState.WRONG_SCHEMA)
     for table in sorted(tables & (ENGAGEMENT_TABLES | WATCH_TABLES | MUSIC_TABLES)):
         info = table_columns(conn, table)
