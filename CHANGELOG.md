@@ -444,3 +444,10 @@
 
 ### Security
 - 봇의 데이터 복구 동작 수행 중, 발생할 수 있는 메인 브랜치의 **Git Index(Staging 영역) 오염(Pollution)**사태로 인해 사용자의 암호화 정보가 엉뚱한 브랜치에 노출될 수 있는 치명적 엣지 케이스를 막기 위해, 파일 복원 방식 로직을 일차원적인 `git checkout`에서 `git show` 기반의 데이터 스트림 추출 방식으로 대폭 강화했습니다.
+
+## A6R1 - Watch terminal media lifecycle (2026-10-02)
+
+- Release the owned iframe on terminal closure, including delayed initialization and
+  session_closed delivery; cancel playback/reconnect work and reject late playback callbacks.
+- Preserve transient reconnect and unrelated rooms. Local synthetic validation only;
+  Phase 6 stays FAIL pending independent A6V1. No production deployment.

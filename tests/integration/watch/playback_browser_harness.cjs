@@ -32,15 +32,20 @@ class Room {
     }
 }
 function client(room, blocked=false) {
-    const elements=new Map(), listeners=new Map(), timers=new Map(), sockets=[], intervals=[];
-    let serial=0, options;
+    // Keep callback handles for deliberately delivering already queued events;
+    // activeListeners separately models actual add/removeEventListener ownership.
+    const elements=new Map(), listeners=new Map(), activeListeners=new Map(), timers=new Map(), sockets=[], intervals=new Map();
+    const on=(n,f)=>{listeners.set(n,f);activeListeners.set(n,f);};
+    const off=(n,f)=>{if(activeListeners.get(n)===f)activeListeners.delete(n);};
+    let serial=0, options, constructions=0;
     function element() {return {children:[],style:{},hidden:true,value:'',innerText:'',textContent:'',className:'',
         set innerHTML(v){this.children=[];},classList:{add(){},remove(){}},addEventListener(){},
         appendChild(v){this.children.push(v);},append(...v){this.children.push(...v);},replaceChildren(...v){this.children=v;},remove(){}};}
-    const document={visibilityState:'visible',addEventListener:(n,f)=>listeners.set(n,f),
+    const document={visibilityState:'visible',addEventListener:on,removeEventListener:off,
         getElementById(n){if(!elements.has(n))elements.set(n,element());return elements.get(n);},
         createElement:element,querySelectorAll:()=>[]};
-    const frame={id:null,time:0,state:-1,at:room.now,pending:null,blocked,gesture:false,commands:[],
+    const frame={id:null,time:0,state:-1,at:room.now,pending:null,blocked,gesture:false,commands:[],destroyed:false,
+        destroy(){this.commands.push('destroy');this.time=this.getCurrentTime();this.at=room.now;this.state=-1;this.pending=null;this.destroyed=true;},
         getCurrentTime(){return this.time+(this.state===1?(room.now-this.at)/1000:0);},getPlayerState(){return this.state;},
         // The real iframe API clears metadata synchronously while loading and
         // fills it again in a later message. It is not always an object.
@@ -67,17 +72,20 @@ function client(room, blocked=false) {
         close(code=1000){this.readyState=3;room.peers.delete(this);this.onclose({code});}
     }
     const window={location:{search:'?session=synthetic-capability',protocol:'https:',host:'watch.example.test',origin:'https://watch.example.test'},
-        stop(){},addEventListener:(n,f)=>listeners.set(n,f)};
+        stop(){},addEventListener:on,removeEventListener:off};
     const ctx=vm.createContext({window,document,URLSearchParams,WebSocket:Socket,console,
         Date:class extends Date {static now(){return room.now;}},
-        YT:{PlayerState:{UNSTARTED:-1,PLAYING:1,PAUSED:2,ENDED:0,BUFFERING:3,CUED:5},Player:function(_,value){options=value;return frame;}},
+        YT:{PlayerState:{UNSTARTED:-1,PLAYING:1,PAUSED:2,ENDED:0,BUFFERING:3,CUED:5},Player:function(_,value){constructions++;options=value;return frame;}},
         setTimeout:(f,delay)=>{timers.set(++serial,{f,delay,at:room.now+delay});return serial;},clearTimeout:n=>timers.delete(n),
-        setInterval:f=>{intervals.push(f);return intervals.length;},alert(){},AbortSignal:{timeout:()=>undefined},fetch:async()=>({ok:true,status:200,json:async()=>({playlist:[]})})});
+        setInterval:f=>{intervals.set(++serial,f);return serial;},clearInterval:n=>intervals.delete(n),alert(){},AbortSignal:{timeout:()=>undefined},fetch:async()=>({ok:true,status:200,json:async()=>({playlist:[]})})});
     vm.runInContext(source,ctx);
-    return {ctx,frame,elements,listeners,timers,sockets,
-        ready(){ctx.onYouTubeIframeAPIReady();options.events.onReady({target:frame});},
+    return {ctx,frame,elements,listeners,activeListeners,timers,sockets,intervals,
+        get constructions(){return constructions;},
+        initialize(){ctx.onYouTubeIframeAPIReady();},
+        ready(){ctx.onYouTubeIframeAPIReady();options?.events.onReady({target:frame});},
+        lateCallbacks(){options?.events.onReady({target:frame});options?.events.onStateChange({target:frame,data:1});options?.events.onAutoplayBlocked?.({target:frame});options?.events.onError?.({target:frame});},
         open(){sockets.at(-1).open();room.drain();},
-        tick(ms){room.now+=ms;for(const [id,t] of [...timers])if(t.at<=room.now){timers.delete(id);t.f();}for(const f of intervals)f();room.drain();},
+        tick(ms){room.now+=ms;for(const [id,t] of [...timers])if(t.at<=room.now){timers.delete(id);t.f();}for(const f of intervals.values())f();room.drain();},
         receive(message){room.emit(sockets.at(-1),message);room.drain();},
         recover(){frame.gesture=true;frame.blocked=false;elements.get('resume-playback-btn').onclick();frame.complete();room.drain();}
     };

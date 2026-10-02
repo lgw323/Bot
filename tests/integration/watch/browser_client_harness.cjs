@@ -22,19 +22,21 @@ class Socket {
     receive(value) {this.onmessage({data: JSON.stringify(value)});}
 }
 const on = (name, callback) => listeners.set(name, callback);
-const document = {visibilityState: 'visible', addEventListener: on,
+const off = (name, callback) => {if(listeners.get(name)===callback)listeners.delete(name);};
+const document = {visibilityState: 'visible', addEventListener: on, removeEventListener: off,
     getElementById(id) {if (!elements.has(id)) elements.set(id, element()); return elements.get(id);},
     createElement: element, querySelectorAll: () => []};
 const window = {location: {search:'?session=synthetic-capability',protocol:'https:',host:'watch.example.test',origin:'https://watch.example.test'},
-    stop() {}, addEventListener: on};
+    stop() {}, addEventListener: on, removeEventListener: off};
 let state = 5, time = 0, loaded = null;
 const player = {getPlayerState:()=>state, getCurrentTime:()=>time,
+    destroy() {loaded=null;state=-1;},
     getVideoData:()=>({video_id:loaded}),
     loadVideoById(media) {loaded=media.videoId;time=media.startSeconds;state=1;},
     cueVideoById(media) {loaded=media.videoId;time=media.startSeconds;state=5;}, seekTo(value) {time=value;}, playVideo() {state=1;}, pauseVideo() {state=2;}};
 const context = vm.createContext({window,document,URLSearchParams,WebSocket:Socket,console,
     YT:{PlayerState:{UNSTARTED:-1,PLAYING:1,PAUSED:2,ENDED:0,CUED:5},Player:function(){return player;}},
-    setInterval:()=>0, setTimeout:(callback,delay)=>{timers.set(++sequence,{callback,delay});return sequence;},
+    setInterval:()=>0, clearInterval(){}, setTimeout:(callback,delay)=>{timers.set(++sequence,{callback,delay});return sequence;},
     clearTimeout:id=>timers.delete(id), alert(){}, AbortSignal:{timeout:()=>undefined},
     fetch:async()=>({ok:true,status:200,json:async()=>({playlist:[]})})});
 vm.runInContext(source,context);

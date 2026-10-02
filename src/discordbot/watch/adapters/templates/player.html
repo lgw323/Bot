@@ -1118,9 +1118,47 @@
         let returnTimer;
         let reconnectAttempts = 0;
         let pageSuspended = false;
+        const pendingLoads = new Set();
+
+        function terminatePlayback() {
+            if (terminal) return;
+            // Revoke local ownership before destroy can deliver iframe callbacks.
+            terminal = true;
+            playerReady = false;
+            pendingPlayback = cuedPlayback = null;
+            isSyncing = false;
+            playlistAgain = false;
+            clearTimeout(reconnectTimer);
+            clearTimeout(returnTimer);
+            clearTimeout(playbackTimer);
+            clearTimeout(toastTimer);
+            clearInterval(playbackInterval);
+            for (const timer of pendingLoads) clearTimeout(timer);
+            pendingLoads.clear();
+            document.removeEventListener("visibilitychange", returnToPage);
+            window.removeEventListener("online", returnToPage);
+            window.removeEventListener("pagehide", suspendPage);
+            window.removeEventListener("pageshow", resumePage);
+            document.getElementById("resume-playback-btn").hidden = true;
+            const ownedPlayer = player;
+            const iframe = document.getElementById("yt-player");
+            player = null;
+            try {
+                ownedPlayer?.destroy();
+            } catch (err) {
+                console.error("Watch player cleanup failed");
+            } finally {
+                // Unload even if a partially initialized provider cannot destroy.
+                iframe?.remove();
+            }
+            document.getElementById("connection-badge").className = "badge badge-ws disconnected";
+            document.getElementById("ws-status-text").innerText = "세션 종료";
+            showToast("시청 세션이 종료되었습니다.");
+        }
 
         // 1. YouTube IFrame API 로드 성공 시 호출되는 콜백
         function onYouTubeIframeAPIReady() {
+            if (terminal || player) return;
             player = new YT.Player('yt-player', {
                 height: '100%',
                 width: '100%',
@@ -1142,6 +1180,7 @@
         }
 
         function onPlayerReady(event) {
+            if (terminal) return;
             playerReady = true;
             if (pendingPlayback) {
                 applyPlayback();
@@ -1189,7 +1228,7 @@
 
         // 주기적인 재생 지점(Seek) 동기화 트리거
         let prevTime = 0;
-        setInterval(() => {
+        const playbackInterval = setInterval(() => {
             if (isSyncing) { acknowledgePlayback(); return; }
             if (!canPublishPlayback()) return;
             const currTime = player.getCurrentTime();
@@ -1242,11 +1281,7 @@
                 if (socket !== ws) return;
                 clearTimeout(returnTimer);
                 if (terminal || [4001, 4002, 4003].includes(event.code)) {
-                    terminal = true;
-                    clearTimeout(reconnectTimer);
-                    badge.className = "badge badge-ws disconnected";
-                    badgeText.innerText = "세션 종료";
-                    showToast("시청 세션이 종료되었습니다.");
+                    terminatePlayback();
                     return;
                 }
                 badge.className = "badge badge-ws disconnected";
@@ -1279,6 +1314,7 @@
 
                 switch (message.type) {
                     case "session_closed":
+                        terminatePlayback();
                         ws.close(4001);
                         break;
                     case "user_joined":
@@ -1375,6 +1411,7 @@
         }
 
         function receivePlayback(message) {
+            if (terminal) return;
             if (message.type === "sync_response") awaitingHydration = false;
             const state = message.state ?? (typeof message.playing === "boolean" ?
                 (message.playing ? "playing" : "paused") : pendingPlayback?.state);
@@ -1435,16 +1472,23 @@
 
         document.addEventListener("visibilitychange", returnToPage);
         window.addEventListener("online", returnToPage);
-        window.addEventListener("pagehide", () => {
+        function suspendPage() {
+            if (terminal) return;
             pageSuspended = true;
             clearTimeout(reconnectTimer);
             clearTimeout(returnTimer);
             if (ws) ws.close(1000);
-        });
-        window.addEventListener("pageshow", () => { pageSuspended = false; returnToPage(); });
+        }
+        function resumePage() {
+            if (terminal) return;
+            pageSuspended = false;
+            returnToPage();
+        }
+        window.addEventListener("pagehide", suspendPage);
+        window.addEventListener("pageshow", resumePage);
 
         function sendWsMessage(obj) {
-            if (ws && ws.readyState === WebSocket.OPEN) {
+            if (!terminal && ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify(obj));
             }
         }
@@ -1480,6 +1524,7 @@
         }
 
         function loadVideoById(videoId, triggerWs = true) {
+            if (terminal) return;
             awaitingHydration = false;
             receivePlayback({videoId, state: "playing", time: 0});
             const activeItem = playlist.find(item => extractVideoId(item.video_url) === videoId);
@@ -1499,7 +1544,7 @@
                 do {
                     playlistAgain = false;
                     const response = await fetch(`/api/playlist/${sessionId}`, { signal: AbortSignal.timeout(5000) });
-                    if ([403, 404].includes(response.status)) { terminal = true; ws?.close(4003); return; }
+                    if ([403, 404].includes(response.status)) { terminatePlayback(); ws?.close(4003); return; }
                     if (response.ok && !terminal) {
                         const data = await response.json();
                         if (!terminal) { playlist = data.playlist; renderPlaylist(); }
@@ -1607,6 +1652,7 @@
 
         // 비디오 추가 기능 수행
         async function addVideoFromInput() {
+            if (terminal) return;
             const input = document.getElementById("youtube-url-input");
             const url = input.value.trim();
             if (!url) return;
@@ -1627,15 +1673,17 @@
                     })
                 });
 
-                if (response.ok) {
+                if (response.ok && !terminal) {
                     input.value = "";
                     fetchPlaylist();
                     showToast("대기열에 동영상을 성공적으로 추가했습니다.");
 
                     if (!currentVideoId) {
-                        setTimeout(() => {
+                        const timer = setTimeout(() => {
+                            pendingLoads.delete(timer);
                             loadVideoById(videoId, true);
                         }, 500);
+                        pendingLoads.add(timer);
                     }
                 }
             } catch (err) {
