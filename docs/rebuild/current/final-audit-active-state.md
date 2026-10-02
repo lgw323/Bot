@@ -629,3 +629,25 @@ STOP. Do not start A3V2 or A4 in this remediation session.
   My Food paused/unrelated. A0-A3 unchanged; A5-A10/Integrated Audit/Phase 11 unstarted.
 - **STOP A4V4. NEXT: parent review of this closure only.** A5 requires a separate
   assigned microphase and was not started. All test commands/owned workers completed.
+
+## AM. A5 independent Phase 5 Summary audit - FAIL (2026-10-02)
+
+- **PHASE 5 FAIL; A5-M1 MATERIAL OPEN.** Cancellation is swallowed when the one
+  private cancellation notification fails: caller returns normally, `cancelled=False`
+  despite `cancelling=1`. Successful-notification control propagates cancellation.
+  [Exact synthetic reproducer, source/history comparison and limits](../final-audit/a5-phase-5-report.md).
+- Entry HEAD `816c258df5c4e17414fa0f0e2e9ab5dfd40794ef`, branch `codex/rebuild-v2`.
+  Fresh existing scoped tests **85 PASS / 0 FAIL / 0 SKIP**; independent probe
+  **1 PASS / 1 FAIL / 0 SKIP**. No provider orphan/data leak/duplicate send demonstrated.
+  Original Phase 5 adapter defect; later diagnostics/cleanup changes do not waive it.
+- Material STOP: no runtime/test fixes, broad suite or A6. A0-A4 remain PASS.
+  Known inventory/Deno failures, audioop warning and A3 minor/info limits retained.
+  No whole-suite clean or fresh live Gateway/HTTP/Pi/provider/ACL deployment claim.
+- Entry 11 modified/59 untracked, empty index; 70 inherited contents preserved except
+  owned audit deltas. Report/inventory and scoped AM/Phase 5 row committed locally;
+  mixed authority/index work remains uncommitted. No remote push.
+- Recorded production source `8e9018d4b8061cde6006eee47fa4103522f77718`, pin
+  `r-8e9018d4b8061cde-3dac82a792fad576` unchanged; no production/data/deploy action.
+  Friend activation HELD; Integrated Audit deployment condition unmet; My Food paused.
+- **STOP A5. NEXT: parent review of A5-M1, separate authorized remediation, then fresh
+  independent A5 verification.** A6/Integrated Audit/Phase 11 not started.
