@@ -2,8 +2,8 @@
 
 2026-10-02. **PHASE 4 FAIL. A4-M1/M2 remain independently CLOSED; original A4-M3
 independently CLOSED; new A4-M4 MATERIAL OPEN.** This audit stops without remediation.
-The parent's later user scope update (finish A4) does not authorize this auditor to
-start another task; any repair/re-audit belongs to a separately reviewed session.
+The user's latest instruction supersedes finishing A4 tonight: finish only this
+audit and stop for sleep. No remediation or next task until the user resumes.
 
 ## Candidate, authority and ownership
 

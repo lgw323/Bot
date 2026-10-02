@@ -568,6 +568,7 @@ STOP. Do not start A3V2 or A4 in this remediation session.
 - Production source `8e9018d4b8061cde6006eee47fa4103522f77718`, pin
   `r-8e9018d4b8061cde-3dac82a792fad576` untouched. Friend rollout HELD;
   Integrated Audit deployment condition unmet, My Food paused. No access/deploy/push/data work.
-- **STOP A4V3.** Parent may separately review/scope further A4 work under the user's
-  finish-A4 direction; this auditor starts no remediation, re-audit, A5 or next task.
+- **STOP A4V3.** Latest user instruction: finish only this audit and stop for sleep.
+  No remediation, re-audit, A5 or next task until the user resumes; earlier finish-A4
+  direction is superseded for tonight.
   All commands/tests ended; no audit process needs to stay alive for computer shutdown.
