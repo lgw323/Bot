@@ -673,3 +673,26 @@ STOP. Do not start A3V2 or A4 in this remediation session.
   Integrated Audit deployment condition unmet, MyFood paused. A0-A4 stay PASS.
 - **STOP A5R1. NEXT: parent review, then fresh independent A5V1.** No A5V1, A6,
   Integrated Audit, Phase 11 or cleanup performed in this microphase.
+
+## AO. A5V1 independent Phase 5 verification - PASS (2026-10-02)
+
+- **PHASE 5 PASS; A5-M1 independently CLOSED.** No new MATERIAL/DRIFT/BLOCKED finding.
+  [Complete gate matrix, exact probes and limitations](../final-audit/a5v1-phase-5-verification-report.md).
+  Entry HEAD `34416e13a11f3ef4db7e94c2e31b6435a838352f`, branch `codex/rebuild-v2`;
+  implementation `40db561f95b01408139430829d374b1e39c5d95c`. Latest scoped routing supersedes AN NEXT.
+- Fresh disjoint **2 + 11 + 85 + 21 + 3 + 14 = 136 PASS / 0 FAIL / 0 SKIP**.
+  Original unchanged M1 probe propagates cancellation for successful/failed notice.
+  Queue cancellation/deadline plus failed notice retains FIFO/capacity; all component
+  ACLs, 100 topics, scoped bounded prompt, streaming HTTP faults and real resource
+  shutdown cleanup pass. Initial TEMP mixed collection error is separately disclosed.
+- Full Phase 5 synthetic contracts covered; no fresh live Discord/Gemini/Pi/permission
+  deployment claim. Known inventory/Deno/audioop and A3 minor/info limits retained;
+  no clean full-suite claim. A0-A4 PASS unchanged; A6-A10 NOT_AUDITED.
+- Entry/residual ownership 11 modified/59 untracked, empty index; 70 inherited hashes
+  preserved excluding owned audit deltas. Only report/inventory and scoped AO/Phase 5
+  row committed locally; mixed document index/navigation remains uncommitted. No push.
+- Production source `8e9018d4b8061cde6006eee47fa4103522f77718`, pin
+  `r-8e9018d4b8061cde-3dac82a792fad576` unchanged; no production/data/deploy operations.
+  Friend activation HELD; Integrated Audit deployment condition unmet; MyFood paused.
+- **STOP A5V1. NEXT: parent review of this independent PASS only.** A6 requires a new
+  assignment. No A6, Integrated Audit, Phase 11, remediation or cleanup performed.
