@@ -871,3 +871,25 @@ STOP. Do not start A3V2 or A4 in this remediation session.
   `r-8e9018d4b8061cde-3dac82a792fad576` unchanged; no production, remote or deployment action.
 - **STOP A7V2; NEXT supervisor review, then separately authorized A8.** No A8/Integrated Audit/
   Phase11; friend activation HELD, deployment condition unmet, My Food untouched.
+
+## AX. A8 independent operations audit - FAIL (2026-10-03)
+
+- **Phase 8 FAIL; A8-M1 MATERIAL OPEN.** [A8 report and exact RED probe](../final-audit/a8-phase-8-report.md).
+  Audited HEAD `d07412c968c2274948d1c9af3c2e835369226173`, branch `codex/rebuild-v2`.
+- Incomplete candidate directories count against the four newest published release floor.
+  Both CLI cleanup and post-deploy retention delete all four valid published alternatives
+  in the temporary reproduction; active and incomplete candidates survive. No product fix.
+- Existing focused64 PASS; independent2 PASS/2 MATERIAL FAIL; distinct66 PASS/2 FAIL/0 SKIP.
+  Real retention/filesystem with synthetic manifests and Windows link model. No full-suite,
+  Linux/systemd/Pi/live claim. Other Phase8 gates stopped at material RED; report lists each.
+- All70 inherited contents preserved:68 exact hashes and2 reconstructed owned authority
+  deltas. Document index unchanged. A8 evidence and AX/Phase8 row only; scoped local commit
+  if completed is recorded in final handoff. No push. Both owned pytest sessions exited;
+  no owned server/browser automation, lingering test worker or pending test writes.
+- Checkpoint started03:43 UTC, before03:48/03:50 limits. No PC shutdown. Existing unrelated
+  Node processes untouched. Inventory/Deno/Linux skips/audioop/A3 limitations retained.
+- A0-A7 results retained. Recorded production source `8e9018d4b8061cde6006eee47fa4103522f77718`
+  and pin `r-8e9018d4b8061cde-3dac82a792fad576` unchanged; no production/remote/deployment action.
+- **STOP A8 for supervisor review; next separate boundary is authorized A8-M1 remediation,
+  then independent A8 verification of retention and remaining gates.** No A9/Integrated Audit/
+  Phase11. Friend activation HELD; deployment condition unmet; My Food untouched.
