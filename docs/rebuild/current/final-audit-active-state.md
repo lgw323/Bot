@@ -779,3 +779,26 @@ STOP. Do not start A3V2 or A4 in this remediation session.
   saved before12:45 KST; no shutdown issued. Safe from A7 to restart/update/turn off after handoff.
 - **STOP A7. NEXT: supervisor review of A7-M1, separate authorized remediation, then independent
   Phase7 verification.** No A8/Integrated Audit/Phase11; friend activation HELD, MyFood untouched.
+
+## AT. A7R1 paused music through TTS reconnect - remediation PASS (2026-10-03)
+
+- **Scoped remediation PASS; PHASE 7 stays FAIL. A7-M1 OPEN, remediated pending independent
+  verification.** [Root cause, RED/GREEN, commands and limits](../final-audit/a7r1-paused-reconnect-report.md).
+  Entry `04f6b8db456c91dcd443f70b5c89cc3be9dc1731`; implementation
+  `12a42ef9168da0540825fa1cb12f2c189da95411` on `codex/rebuild-v2`.
+- Disconnect now retains pause intent already saved by TTS/reconnect preparation. One runtime
+  assignment plus comment; queue/session/position, timers, cancellation and formats unchanged.
+- Original unchanged probe: 1 PASS/1 FAIL before, 2 PASS after. New 20 cases: 8 PASS/12 FAIL
+  before, 20 PASS after, no assertion/fixture changes. Focused22 PASS; broader199 PASS/1 known
+  missing-Deno FAIL. Unique union **201 PASS/1 known FAIL/0 SKIP/0 XFAIL**, repeats excluded.
+  Synthetic Cog/Actor effects, temporary data and local children; no live/full-suite claim.
+- Inherited11 modified/59 untracked preserved;67 exact entry byte hashes plus3 owned mixed-doc
+  deltas reconstruct all70. Original A7 report/probe and index untouched; scoped commits only,
+  empty residual index, no push. Inventory/audioop/A3 limitations retained; A0-A6 PASS unchanged.
+- All owned tests exited/cleanup completed; no owned server/browser or pending test writes.
+  Pre-existing node processes untouched. Finished before shutdown cutoff; no PC shutdown.
+  Production source `8e9018d4b8061cde6006eee47fa4103522f77718`, pin
+  `r-8e9018d4b8061cde-3dac82a792fad576` unchanged; no production access/deployment.
+- **STOP A7R1 for supervisor review. NEXT separate boundary: independent A7V1 of A7-M1 and
+  remaining Phase7 gates.** No A7V1/A8/Integrated Audit/Phase11 performed here; friend
+  activation HELD; MyFood untouched.
