@@ -847,3 +847,27 @@ STOP. Do not start A3V2 or A4 in this remediation session.
   `r-8e9018d4b8061cde-3dac82a792fad576` unchanged; no production/remote/deployment action.
 - **STOP A7R2 for supervisor review; next separate independent M1/M2 and remaining Phase7 verification.**
   No A7V2/A8/Integrated Audit/Phase11; friend activation HELD; MyFood untouched.
+
+## AW. A7V2 independent Phase 7 verification - PASS (2026-10-03)
+
+- **Phase 7 PASS for repository/synthetic contracts; M1 remains CLOSED, M2 independently CLOSED.**
+  [A7V2 report, full gate matrix and limits](../final-audit/a7v2-phase-7-verification-report.md).
+  Audited HEAD `d9d0141f70be165d030fc1bfed5538fea312730b`; M2 repair
+  `b914200e20905179f16a7f98ffca8d841db07746`, M1 repair `12a42ef9168da0540825fa1cb12f2c189da95411`.
+- Unchanged M1 baseline1 PASS/1 FAIL ->current2 PASS; unchanged M2 baseline1/1 ->current2/0;
+  A7R2 regressions22/8 ->30/0. Focused54 PASS; affected229 PASS/1 known Deno FAIL.
+- Nine new independent cases PASS: full MusicResource restart plus temporary SQLite receipts,
+  clear confirmation/revision/expiry, autoplay boundaries and actual abrupt snapshot-writer exit.
+  Selected21 cases x100 rounds =2100 PASS executions, separate from unique counts.
+- Full1389 PASS/2 known inventory-Deno FAIL/27 existing Linux SKIP. Final distinct union
+  **1402 PASS/2 FAIL/27 SKIP/0 XFAIL**. Two initial SQLite harness synchronization failures and
+  baseline negative controls disclosed separately. No clean full-suite/live/Pi/long-soak claim.
+- All70 inherited contents preserved; only AW/Phase7 row owned deltas in mixed docs; original
+  probes/reports/index unchanged. Scoped local audit commit only; residual11 modified/59 untracked,
+  empty index. All task-owned tests/children exited, no pending test writes or servers/browser/WSL.
+  Existing Node processes untouched. Final checkpoint before12:45 KST; PC safe to turn off after
+  handoff from this task. No shutdown issued. Inventory/audioop/A3 limitations remain explicit.
+- A0-A6 PASS retained. Recorded production source `8e9018d4b8061cde6006eee47fa4103522f77718`, pin
+  `r-8e9018d4b8061cde-3dac82a792fad576` unchanged; no production, remote or deployment action.
+- **STOP A7V2; NEXT supervisor review, then separately authorized A8.** No A8/Integrated Audit/
+  Phase11; friend activation HELD, deployment condition unmet, My Food untouched.
