@@ -828,3 +828,22 @@ STOP. Do not start A3V2 or A4 in this remediation session.
 - **STOP A7V1. NEXT: supervisor review of A7-M2, separately authorized A7R2, then fresh
   independent Phase7 verification.** No A8/Integrated Audit/Phase11; friend activation
   HELD, deployment condition unmet, MyFood untouched.
+
+## AV. A7R2 successor pause lifetime - scoped remediation PASS (2026-10-03)
+
+- **Phase 7 stays FAIL; M1 independently CLOSED; M2 remediated, OPEN pending independent verification.**
+  [A7R2 report, exact commands and limits](../final-audit/a7r2-successor-pause-report.md).
+  Entry `22736424a32991d480ca3518085e948292eb40db`; implementation `b914200e20905179f16a7f98ffca8d841db07746`.
+- Retire saved pause intent when replacing the logical session; preserve M1 pause during
+  same-session recovery/TTS. One assignment/comment, 30 new synthetic cases; formats unchanged.
+- Unchanged M2 1 PASS/1 FAIL -> 2 PASS; new cases 22 PASS/8 FAIL ->30 PASS; focused54 PASS.
+  Affected229 PASS/1 known Deno FAIL; full1389 PASS/2 known inventory-Deno FAIL/27 existing Linux SKIP.
+  Distinct final union1393 PASS/2 FAIL/27 SKIP/0 XFAIL. Initial30 harness synchronization failures
+  separately disclosed; no clean full-suite, live or independent whole-Phase7 claim.
+- Inherited11 modified/59 untracked preserved through exact hashes/reconstructed owned doc deltas;
+  scoped local commits only, residual index empty. No owned test/process/pending test write remains.
+  Checkpoint before shutdown cutoffs; no shutdown issued. Inventory/audioop/A3 limits retained.
+- A0-A6 PASS retained. Production source `8e9018d4b8061cde6006eee47fa4103522f77718`, pin
+  `r-8e9018d4b8061cde-3dac82a792fad576` unchanged; no production/remote/deployment action.
+- **STOP A7R2 for supervisor review; next separate independent M1/M2 and remaining Phase7 verification.**
+  No A7V2/A8/Integrated Audit/Phase11; friend activation HELD; MyFood untouched.
