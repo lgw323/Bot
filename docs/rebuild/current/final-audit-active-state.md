@@ -738,3 +738,25 @@ STOP. Do not start A3V2 or A4 in this remediation session.
   MyFood paused and localhost3000 untouched.
 - **STOP A6R1. NEXT: parent review, then separately authorized independent A6V1.**
   No A6V1/A7/Integrated Audit/Phase11 started.
+
+## AR. A6V1 independent Phase 6 verification - PASS (2026-10-03)
+
+- **PHASE 6 PASS; A6-M1 independently CLOSED.** No new MATERIAL/required DRIFT/BLOCKED.
+  [Full gate matrix, fixture review, exact probes and limits](../final-audit/a6v1-phase-6-verification-report.md).
+  Entry/resumed HEAD `e12b6e4fb3263eb702752d872ce902625785a0d9`; implementation
+  `ecd8ef2d69d27199c41eb8941615fa177d1e8834`. Original A6/A6R1/D7 history preserved.
+- Disjoint **184 pytest PASS/0 FAIL/0 SKIP/0 XFAIL**, completed before user-requested pause;
+  saved probes/inventory and all70 hashes verified on resume, outputs retained in tool receipts.
+  **6 unique actual Chrome synthetic-media PASS** including initialization boundaries, late
+  callbacks, delayed close event, throwing destroy and transient/retired socket distinction.
+  Repeats excluded. Original target stops42s/control44s; actual iframe unloads while control
+  advances. Same browser probe fails on pre-fix template. No live YouTube/Discord/full-suite claim.
+- Full scoped Phase6 repository contracts covered. Operational/live/Pi/proxy gates remain
+  deferred as C8/C9 specify; inventory/Deno/audioop/A3 limits unchanged. A0-A5 PASS unchanged.
+- Only owned audit evidence plus AR/Phase6 row committed locally; mixed inherited11 modified/
+  59 untracked contents preserved excluding scoped additions. Empty residual index; no push.
+- Production source `8e9018d4b8061cde6006eee47fa4103522f77718`, pin
+  `r-8e9018d4b8061cde-3dac82a792fad576` unchanged. No production/data/deploy action.
+  Integrated Audit deployment condition unmet; friend activation HELD; MyFood untouched.
+- **STOP A6V1 for supervisor review; pause for the user's desktop-app update.** No A7,
+  other microphase, updater, Integrated Audit, Phase11 or deployment started.
