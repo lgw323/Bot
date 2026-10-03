@@ -217,6 +217,8 @@ class MusicActor:
     def _advance(self, previous: Track | None = None) -> None:
         self._current, self._session, self._attempt = None, None, None
         self._offset, self._started_at, self._failures = 0, None, 0
+        # Saved pause intent belongs to the retired session, never its successor.
+        self._resume_paused = False
         self._status = "idle"
         if self._queue:
             self._current = self._queue.pop(0)

@@ -1,5 +1,11 @@
 # Changelog
 
+## A7R2 retire pause intent with its music session
+
+- Clear saved pause intent at logical session retirement, so exhausted reconnect recovery cannot silence a queued or later successor. Same-session retries, TTS and reconnect still retain user pause intent.
+- Add 30 synthetic regression cases for acquisition/start failures, retry exhaustion/success, successor timing, stale callbacks, TTS and loop transitions; preserve the unchanged A7/A7V1 probes.
+- Local remediation only; Phase 7 remains FAIL, M1 stays independently CLOSED and M2 awaits independent verification. No production access or deployment.
+
 ## A7R1 preserve paused music across TTS reconnect
 
 - Retain saved music pause intent when voice disconnects during TTS or reconnect preparation; queue, logical session, position and cancellation ordering stay unchanged.
