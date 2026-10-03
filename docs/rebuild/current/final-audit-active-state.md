@@ -802,3 +802,29 @@ STOP. Do not start A3V2 or A4 in this remediation session.
 - **STOP A7R1 for supervisor review. NEXT separate boundary: independent A7V1 of A7-M1 and
   remaining Phase7 gates.** No A7V1/A8/Integrated Audit/Phase11 performed here; friend
   activation HELD; MyFood untouched.
+
+## AU. A7V1 independent Phase 7 verification - FAIL (2026-10-03)
+
+- **Phase 7 FAIL; A7-M1 independently CLOSED; new A7-M2 MATERIAL OPEN.**
+  [Independent report, RED probe and remaining gates](../final-audit/a7v1-phase-7-verification-report.md).
+  Audited HEAD `9987e10896aaf11616edf228f7c2c010b6c0ae54`; A7R1 implementation
+  `12a42ef9168da0540825fa1cb12f2c189da95411`. Actual entry agrees with briefing.
+- Unchanged M1 probe: original actor 1 PASS/1 FAIL, current 2 PASS. A7R1's 20 cases PASS.
+  New M2: paused song -> TTS disconnect/reconnect -> 3s/8s/third acquisition failure
+  retires original session, but queued successor inherits paused intent and is silent.
+  Playing control and unrelated guild pass. No implementation or contract change.
+- Final distinct current checks **23 PASS/1 MATERIAL FAIL/0 SKIP/0 XFAIL**. Separate
+  baseline negative control and two initial harness synchronization failures disclosed.
+  Real Cog/Actor, synthetic audio/provider/clock; no live/full-suite/WSL/Pi claim.
+  Remaining whole-Phase7 gates stopped at M2; historical remediation PASS not inherited.
+- Entry11 modified/59 untracked/empty index; all70 inherited contents preserved by exact
+  hashes after excluding only AU/Phase7 deltas. Original A7/A7R1/index untouched. Scoped
+  local audit commit only, no push. Known inventory/Deno/audioop/A3 limitations retained.
+- All four owned test sessions exited; no owned process or pending test writes. Existing
+  node processes untouched. Checkpoint/commit/cleanup complete before shutdown cutoffs;
+  no PC shutdown. Safe from A7V1 work to turn off after handoff.
+- A0-A6 PASS retained. Production source `8e9018d4b8061cde6006eee47fa4103522f77718`, pin
+  `r-8e9018d4b8061cde-3dac82a792fad576` unchanged; no production access or deployment.
+- **STOP A7V1. NEXT: supervisor review of A7-M2, separately authorized A7R2, then fresh
+  independent Phase7 verification.** No A8/Integrated Audit/Phase11; friend activation
+  HELD, deployment condition unmet, MyFood untouched.

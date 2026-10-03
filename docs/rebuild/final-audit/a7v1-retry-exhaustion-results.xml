@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="0.419" timestamp="2026-10-03T11:41:27.179738+09:00" hostname="TUF"><testcase classname="docs.rebuild.final-audit.a7v1-retry-exhaustion-probe" name="test_exhausted_reconnect_does_not_pause_successor[playing-control]" time="0.271" /><testcase classname="docs.rebuild.final-audit.a7v1-retry-exhaustion-probe" name="test_exhausted_reconnect_does_not_pause_successor[paused-session]" time="0.004"><failure message="AssertionError: ('2', 'paused', True, False)&#10;assert ('2', 'paused', True, False) == ('2', 'playing', False, True)&#10;  &#10;  At index 1 diff: 'paused' != 'playing'&#10;  Use -v to get more diff">docs\rebuild\final-audit\a7v1-retry-exhaustion-probe.py:97: in test_exhausted_reconnect_does_not_pause_successor
+    assert observed == ("2", "playing", False, True), observed
+E   AssertionError: ('2', 'paused', True, False)
+E   assert ('2', 'paused', True, False) == ('2', 'playing', False, True)
+E
+E     At index 1 diff: 'paused' != 'playing'
+E     Use -v to get more diff</failure></testcase></testsuite></testsuites>

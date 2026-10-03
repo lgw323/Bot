@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="0.416" timestamp="2026-10-03T11:40:48.177790+09:00" hostname="TUF"><testcase classname="docs.rebuild.final-audit.a7v1-retry-exhaustion-probe" name="test_exhausted_reconnect_does_not_pause_successor[playing-control]" time="0.260"><failure message="AssertionError: deterministic work did not settle">docs\rebuild\final-audit\a7v1-retry-exhaustion-probe.py:84: in test_exhausted_reconnect_does_not_pause_successor
+    await settle(lambda: actor.projection().current.item_id == "2"
+tests\integration\music\conftest.py:38: in settle
+    raise AssertionError("deterministic work did not settle")
+E   AssertionError: deterministic work did not settle</failure></testcase><testcase classname="docs.rebuild.final-audit.a7v1-retry-exhaustion-probe" name="test_exhausted_reconnect_does_not_pause_successor[paused-session]" time="0.005"><failure message="AssertionError: deterministic work did not settle">docs\rebuild\final-audit\a7v1-retry-exhaustion-probe.py:84: in test_exhausted_reconnect_does_not_pause_successor
+    await settle(lambda: actor.projection().current.item_id == "2"
+tests\integration\music\conftest.py:38: in settle
+    raise AssertionError("deterministic work did not settle")
+E   AssertionError: deterministic work did not settle</failure></testcase></testsuite></testsuites>
