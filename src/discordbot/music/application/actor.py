@@ -455,7 +455,8 @@ class MusicActor:
                     self._queue.insert(0, item)
             self._cancel("autoplay")
         elif op == "disconnected":
-            self._resume_paused = self._status == "paused"
+            # TTS/reconnect preparation may already hold the music pause intent.
+            self._resume_paused = self._resume_paused or self._status == "paused"
             await self._stop_audio()
             self._connected, self._status = False, "disconnected"
             self._generation += 1

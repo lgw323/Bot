@@ -1,5 +1,11 @@
 # Changelog
 
+## A7R1 preserve paused music across TTS reconnect
+
+- Retain saved music pause intent when voice disconnects during TTS or reconnect preparation; queue, logical session, position and cancellation ordering stay unchanged.
+- Add 20 synthetic Cog/Actor regression cases covering playing/paused music, TTS phases, repeated disconnects, stale callbacks, reconnect announcements and session termination.
+- Local remediation only; Phase 7 remains FAIL and A7-M1 awaits independent verification. No production access or deployment.
+
 ## A5R1 Summary cancellation notification failure
 
 - Preserve native cancellation when its single private Discord notification fails or times out; retain bounded delivery and redacted delivery-failure telemetry.
