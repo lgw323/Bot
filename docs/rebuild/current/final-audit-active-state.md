@@ -760,3 +760,22 @@ STOP. Do not start A3V2 or A4 in this remediation session.
   Integrated Audit deployment condition unmet; friend activation HELD; MyFood untouched.
 - **STOP A6V1 for supervisor review; pause for the user's desktop-app update.** No A7,
   other microphase, updater, Integrated Audit, Phase11 or deployment started.
+
+## AS. A7 independent Phase 7 music audit - FAIL (2026-10-03)
+
+- **PHASE 7 FAIL; A7-M1 MATERIAL OPEN.** [Report and exact RED probe](../final-audit/a7-phase-7-report.md).
+  Audit HEAD `3092f49ce82ac44232535b39b779718a5bd0f414`, `codex/rebuild-v2`.
+- Paused music -> TTS -> voice disconnect/reconnect discards paused intent and starts music
+  without resume input. Real Cog/Actor, synthetic audio/provider/repository; ordinary control
+  and separate-guild preservation pass. Expected paused/silent, actual playing/audible.
+- Fresh disjoint **9 PASS / 1 FAIL / 0 SKIP / 0 XFAIL** (existing8; new1/1). Transport outage
+  recovered before execution; no duplicate test/write. No fixes or further tests after RED.
+  Remaining Phase7 gates uncompleted; no full-suite/live/Linux/production claim.
+- Inherited11 modified/59 untracked/empty index preserved; only owned audit evidence and
+  AS/Phase7 deltas staged locally. Known inventory/Deno/audioop/A3 limits retained; A0-A6 PASS.
+  Recorded production source `8e9018d4b8061cde6006eee47fa4103522f77718`, pin
+  `r-8e9018d4b8061cde-3dac82a792fad576` untouched; no production access or push.
+- Both owned test processes exited; no test/server/browser work remains. Durable evidence
+  saved before12:45 KST; no shutdown issued. Safe from A7 to restart/update/turn off after handoff.
+- **STOP A7. NEXT: supervisor review of A7-M1, separate authorized remediation, then independent
+  Phase7 verification.** No A8/Integrated Audit/Phase11; friend activation HELD, MyFood untouched.
