@@ -1,0 +1,460 @@
+{
+  "task": "A8R1",
+  "implementation_head": "403c453855e1b39126efb8d72390737aba5e5def",
+  "inherited_count": 70,
+  "byte_identical": 67,
+  "reconstructed": 3,
+  "owned_deltas": [
+    {
+      "path": "CHANGELOG.md",
+      "old": "",
+      "new": "## A8R1 published release retention\n\n- Count only published manifests without `.building` toward the four newest release floor; retain the existing directory-mtime ordering.\n- Reuse cleanup policy after deployment, preserving current/rollback/activation targets, seven-day published retention and one-day incomplete grace. Add 78 synthetic boundary cases; no real release cleanup or deployment.\n- Local remediation only; Phase 8 stays FAIL and A8-M1 remains OPEN pending independent verification.\n\n"
+    },
+    {
+      "path": "docs/rebuild/current/final-audit-active-state.md",
+      "old": "",
+      "new": "\n## AY. A8R1 release retention - scoped remediation PASS (2026-10-04)\n\n- **Phase 8 stays FAIL; A8-M1 OPEN, remediated pending independent verification.**\n  [A8R1 report, RED/GREEN and limits](../final-audit/a8r1-release-retention-report.md).\n  Entry `f34ef43e8edee503ead5aa5d2e9f8e297450adec`; implementation\n  `403c453855e1b39126efb8d72390737aba5e5def`, branch `codex/rebuild-v2`.\n- Filter publication markers before the four-release floor; post-deploy retention\n  reuses cleanup with current/rollback/activation protection and contract age grace.\n  Original unchanged probe 2 PASS/2 FAIL ->4 PASS; new78 cases 31 PASS/47 FAIL ->78 PASS.\n  Focused82 PASS; shared operations/data/platform/architecture714 PASS/1 known inventory FAIL.\n  Full-suite counts, overlap and initial harness/documentation failures are explicit in the report.\n- Windows synthetic temporary releases only; real filesystem removal and modeled links.\n  No independent whole-Phase8/live/Linux/systemd/Pi claim; inventory/Deno/Linux skips,\n  audioop/A3 limits retained. A0-A7 independent PASS unchanged. Original A8 evidence preserved.\n- Inherited11 modified/59 untracked preserved via67 byte-identical hashes and3 reversible\n  owned doc deltas. Index/document exports unchanged except scoped staging; local commits only.\n  Final index/process/preservation checks are in the handoff; no push or production action.\n- Production source `8e9018d4b8061cde6006eee47fa4103522f77718`, pin\n  `r-8e9018d4b8061cde-3dac82a792fad576` untouched and distinct. No actual release/backup/history\n  cleanup, DB/credentials/deploy/systemd/Cloudflare/network/security changes. MyFood/my_money untouched.\n- **STOP A8R1 for parent review.** Next separate authorization: independent A8 verification\n  of M1 and every remaining original A8 gate. No A8V1/A9/Integrated Audit/Phase11 performed.\n  Friend activation HELD; deployment condition unmet. October4 resumption has no new deadline.\n"
+    },
+    {
+      "path": "docs/rebuild/current/final-audit-ledger.md",
+      "old": "| 8 | FAIL | [docs/rebuild/phases/phase-08/phase-8-report.md](../phases/phase-08/phase-8-report.md) | B03, B05\u2013B07, B09\u2013B21, D22, D23, S3, C3, C4, C9, C12\u2013C15, T; relevant O rows | src/discordbot/operations/, src/discordbot/composition/; deploy/systemd/, deploy/polkit/, deploy/; tests/integration/operations/ | [A8 independent report](../final-audit/a8-phase-8-report.md): MATERIAL A8-M1 OPEN. Incomplete candidates displace four newest published releases; CLI cleanup and post-deploy retention both delete all four temporary validated alternatives. Existing64 PASS; independent2 PASS/2 FAIL; distinct66 PASS/2 FAIL/0 SKIP. Audited d07412c968c2274948d1c9af3c2e835369226173. | STOP at material RED; no implementation fix. Separate authorized remediation then independent retention and remaining Phase8 gates. Linux/systemd/live and full-suite unrun; known inventory/Deno/audioop/A3 limits retained. A0-A7 unchanged, no production/deploy/A9/Phase11. |",
+      "new": "| 8 | FAIL | [docs/rebuild/phases/phase-08/phase-8-report.md](../phases/phase-08/phase-8-report.md) | B03, B05\u2013B07, B09\u2013B21, D22, D23, S3, C3, C4, C9, C12\u2013C15, T; relevant O rows | src/discordbot/operations/, src/discordbot/composition/; deploy/systemd/, deploy/polkit/, deploy/; tests/integration/operations/ | [A8 independent report](../final-audit/a8-phase-8-report.md): MATERIAL A8-M1 OPEN. Incomplete candidates displace four newest published releases; CLI cleanup and post-deploy retention both delete all four temporary validated alternatives. Existing64 PASS; independent2 PASS/2 FAIL; distinct66 PASS/2 FAIL/0 SKIP. Audited d07412c968c2274948d1c9af3c2e835369226173. | [A8R1 remediation](../final-audit/a8r1-release-retention-report.md): local PASS, implementation 403c453855e1b39126efb8d72390737aba5e5def. Original unchanged probe2 PASS/2 FAIL ->4 PASS; new78 PASS; shared714 PASS/1 known inventory FAIL. Phase8 remains FAIL and M1 OPEN pending independent verification. Full-suite counts/harness corrections and inventory/Deno/Linux/audioop/A3 limits in report. STOP for parent review, then separately authorized independent M1 and remaining Phase8 gates. No A8V1/A9/deploy/Phase11. |"
+    }
+  ],
+  "checks": [
+    {
+      "path": "CHANGELOG.md",
+      "entry_sha256": "87d9c982153ba61c112d9ac63392234bbe0b2ddf7faf060c7f408489928bad01",
+      "reconstructed_sha256": "87d9c982153ba61c112d9ac63392234bbe0b2ddf7faf060c7f408489928bad01",
+      "mode": "reverse_owned_delta"
+    },
+    {
+      "path": "README.md",
+      "entry_sha256": "9f1ee4c189b402e407f0e52e7c18109bc185e63b2701e60a69a8f1f6af7a1c4d",
+      "reconstructed_sha256": "9f1ee4c189b402e407f0e52e7c18109bc185e63b2701e60a69a8f1f6af7a1c4d",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/product-spec.md",
+      "entry_sha256": "87b31c254feb2dace9580ca1794ee097fb9ec151987ab60559d6112f12ca6fc8",
+      "reconstructed_sha256": "87b31c254feb2dace9580ca1794ee097fb9ec151987ab60559d6112f12ca6fc8",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/README.md",
+      "entry_sha256": "e2324d804ac1e13d7f7dc465f122b4d91f451b4cb8157efa7494b28b8d85888c",
+      "reconstructed_sha256": "e2324d804ac1e13d7f7dc465f122b4d91f451b4cb8157efa7494b28b8d85888c",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/current/current-plan.md",
+      "entry_sha256": "c2c23764a604d7e94b6dd3a5a87c6c36c3896d40801618c446f4287b1d478914",
+      "reconstructed_sha256": "c2c23764a604d7e94b6dd3a5a87c6c36c3896d40801618c446f4287b1d478914",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/current/final-audit-active-state.md",
+      "entry_sha256": "9ff468521f8ae01c1dbf8abce29f35c31fcc704b68c7c5cfe95289fc83785b61",
+      "reconstructed_sha256": "9ff468521f8ae01c1dbf8abce29f35c31fcc704b68c7c5cfe95289fc83785b61",
+      "mode": "reverse_owned_delta"
+    },
+    {
+      "path": "docs/rebuild/current/final-audit-ledger.md",
+      "entry_sha256": "4bb46aa50375f1dba469240fae5a8d154c72d674dd226ccb031e415b6e520d9d",
+      "reconstructed_sha256": "4bb46aa50375f1dba469240fae5a8d154c72d674dd226ccb031e415b6e520d9d",
+      "mode": "reverse_owned_delta"
+    },
+    {
+      "path": "docs/rebuild/final-audit/a3-phase-3-report.md",
+      "entry_sha256": "e3ed14b7ed7929098d991e090449ce093defd2a187c19ad676ad179c70349ef9",
+      "reconstructed_sha256": "e3ed14b7ed7929098d991e090449ce093defd2a187c19ad676ad179c70349ef9",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/phase-10-full-sweep-report.md",
+      "entry_sha256": "3329647383bf71f442e15d848ccaaa9686775fe4ef414e6b3c032956b6c751ef",
+      "reconstructed_sha256": "3329647383bf71f442e15d848ccaaa9686775fe4ef414e6b3c032956b6c751ef",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/phases/phase-10/phase-10-report.md",
+      "entry_sha256": "2663ce5d13506ccd9d9a8b3ec67e32b190cc449de203ae10e140c10250930118",
+      "reconstructed_sha256": "2663ce5d13506ccd9d9a8b3ec67e32b190cc449de203ae10e140c10250930118",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "tests/browser/watch_fixture.py",
+      "entry_sha256": "1cca7cf0cc5f9c3b8c1b6081292c3a12badc3c977b9ebe284275705319c82a47",
+      "reconstructed_sha256": "1cca7cf0cc5f9c3b8c1b6081292c3a12badc3c977b9ebe284275705319c82a47",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/current/final-audit-document-index.md",
+      "entry_sha256": "2c36ba9b1bcaa70cc54a8f6dc8aca05ca54f6ec21b9770b4b77a0374c8f89969",
+      "reconstructed_sha256": "2c36ba9b1bcaa70cc54a8f6dc8aca05ca54f6ec21b9770b4b77a0374c8f89969",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-active-state.md",
+      "entry_sha256": "55d0a15e4c4940f805b4876ad876cdb59e6c4cf6b47e1f946225fba4825ad6eb",
+      "reconstructed_sha256": "55d0a15e4c4940f805b4876ad876cdb59e6c4cf6b47e1f946225fba4825ad6eb",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d4c-evidence.json",
+      "entry_sha256": "616f1d81094fceddd5c0e689081667c8dfb3d8237df3254c2880ebf328c83984",
+      "reconstructed_sha256": "616f1d81094fceddd5c0e689081667c8dfb3d8237df3254c2880ebf328c83984",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d4r-browser-evidence.json",
+      "entry_sha256": "3cbac1af2ed816eaf3cd7f1d20828160bba967f0457d85bce33786c581d80fa2",
+      "reconstructed_sha256": "3cbac1af2ed816eaf3cd7f1d20828160bba967f0457d85bce33786c581d80fa2",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d4r2-p-evidence.json",
+      "entry_sha256": "dfbfd49897c08b9e18e0655805fa89363ab2681edaaad43bd164697c9c5bb01f",
+      "reconstructed_sha256": "dfbfd49897c08b9e18e0655805fa89363ab2681edaaad43bd164697c9c5bb01f",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d5-evidence.json",
+      "entry_sha256": "97f00af6285d66fe7009bd14bb50fbc5752228e0fd0f4cc6145221ca2f83a6b2",
+      "reconstructed_sha256": "97f00af6285d66fe7009bd14bb50fbc5752228e0fd0f4cc6145221ca2f83a6b2",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d6-evidence.json",
+      "entry_sha256": "02d33066e6a1d0c701c4568d7c19919a72cafc474cde4a32c8f9255aaee33e78",
+      "reconstructed_sha256": "02d33066e6a1d0c701c4568d7c19919a72cafc474cde4a32c8f9255aaee33e78",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d7-evidence.json",
+      "entry_sha256": "8ddc17df545880c4fe50fd259f9103d8dbb8a75ffb9c9ff1c6b4e6c09bc2a015",
+      "reconstructed_sha256": "8ddc17df545880c4fe50fd259f9103d8dbb8a75ffb9c9ff1c6b4e6c09bc2a015",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-e1-evidence.json",
+      "entry_sha256": "1bdd878f5206e19c1d2ae73a58d306c20af963b2f72ca2eba90ffb55275a64be",
+      "reconstructed_sha256": "1bdd878f5206e19c1d2ae73a58d306c20af963b2f72ca2eba90ffb55275a64be",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-e2-evidence.json",
+      "entry_sha256": "7a80560599f97f79c2c41ffb51a316b57ea60da0f83986bc6a182372c6689158",
+      "reconstructed_sha256": "7a80560599f97f79c2c41ffb51a316b57ea60da0f83986bc6a182372c6689158",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-e3-evidence.json",
+      "entry_sha256": "8b0b39492fe75481576c8587c20b96095d703e94ef1ace547a9093cecdca62da",
+      "reconstructed_sha256": "8b0b39492fe75481576c8587c20b96095d703e94ef1ace547a9093cecdca62da",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-e4-evidence.json",
+      "entry_sha256": "3ebe435f2873e84e5094b833df5678df1a0052dc350f1f991eb0d83b455410ff",
+      "reconstructed_sha256": "3ebe435f2873e84e5094b833df5678df1a0052dc350f1f991eb0d83b455410ff",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-gate-ledger.md",
+      "entry_sha256": "d5eb52741647f8d6a2f07b05972af8e28cf2326e3ca270334b362f7b3ff0bd48",
+      "reconstructed_sha256": "d5eb52741647f8d6a2f07b05972af8e28cf2326e3ca270334b362f7b3ff0bd48",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/final-audit/a0-phase-0-report.md",
+      "entry_sha256": "9fed83ee412725a83e780d986003c7ca523fbb2ec0870cdd82bd026387afee05",
+      "reconstructed_sha256": "9fed83ee412725a83e780d986003c7ca523fbb2ec0870cdd82bd026387afee05",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/final-audit/a1-phase-1-report.md",
+      "entry_sha256": "a689a3b90b673382505d97e56eac91686a4009c5d42b461e5cf71b74211d1ab0",
+      "reconstructed_sha256": "a689a3b90b673382505d97e56eac91686a4009c5d42b461e5cf71b74211d1ab0",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/final-audit/a2-phase-2-report.md",
+      "entry_sha256": "603e715ab57298f6587ab5b03f3aa254cedf34ca2c94634c5887fd0d70a6cdf5",
+      "reconstructed_sha256": "603e715ab57298f6587ab5b03f3aa254cedf34ca2c94634c5887fd0d70a6cdf5",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff.zip",
+      "entry_sha256": "5c18fccf77ee421c62ff05eaa072fc0d760011a0663bb8c972e05cc9c0304f91",
+      "reconstructed_sha256": "5c18fccf77ee421c62ff05eaa072fc0d760011a0663bb8c972e05cc9c0304f91",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/00-executive-summary.md",
+      "entry_sha256": "df447f1847094a6810e8a436cf168fd4f17019a9aef375b45ce69d6612147041",
+      "reconstructed_sha256": "df447f1847094a6810e8a436cf168fd4f17019a9aef375b45ce69d6612147041",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/01-current-system-overview.md",
+      "entry_sha256": "5955951c6c71993edc5d126b4f97640920aa1877002bb19c9fb91735910ba53a",
+      "reconstructed_sha256": "5955951c6c71993edc5d126b4f97640920aa1877002bb19c9fb91735910ba53a",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/02-repository-map.md",
+      "entry_sha256": "61283fd671587d5c340b48c0e7392547f437d166b3418126d781cb821d94854c",
+      "reconstructed_sha256": "61283fd671587d5c340b48c0e7392547f437d166b3418126d781cb821d94854c",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/03-feature-inventory.md",
+      "entry_sha256": "32baa829002d74715964a43838afe0414376d70c79a7ed3cae77c606cd8132f9",
+      "reconstructed_sha256": "32baa829002d74715964a43838afe0414376d70c79a7ed3cae77c606cd8132f9",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/04-command-event-inventory.md",
+      "entry_sha256": "1c997d1cab0d8810279ca66524eed35d1186783389001a2e564aea6d1129b95d",
+      "reconstructed_sha256": "1c997d1cab0d8810279ca66524eed35d1186783389001a2e564aea6d1129b95d",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/05-runtime-flow.md",
+      "entry_sha256": "671d1024f846dd0b42539cefcaf7c4e3f021851a61e8e8172880e3dd1b536349",
+      "reconstructed_sha256": "671d1024f846dd0b42539cefcaf7c4e3f021851a61e8e8172880e3dd1b536349",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/06-data-model.md",
+      "entry_sha256": "1256b318675d74fab926ac665c94952a9352fa0c2268766f8259b03bab11bbb7",
+      "reconstructed_sha256": "1256b318675d74fab926ac665c94952a9352fa0c2268766f8259b03bab11bbb7",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/07-external-dependencies.md",
+      "entry_sha256": "f3917d1425e1d5927c1156986d7285bc7faa984f4d696fe5a371c1a5ce32707c",
+      "reconstructed_sha256": "f3917d1425e1d5927c1156986d7285bc7faa984f4d696fe5a371c1a5ce32707c",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/08-business-rules.md",
+      "entry_sha256": "3f3017b56f39842bf49ea51354e250432892da43a21090943174315be8714f57",
+      "reconstructed_sha256": "3f3017b56f39842bf49ea51354e250432892da43a21090943174315be8714f57",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/09-performance-reliability-audit.md",
+      "entry_sha256": "607dad0a8aac83d3836a46370c7549608152cb75d29d451a54d0ebd59d1f789d",
+      "reconstructed_sha256": "607dad0a8aac83d3836a46370c7549608152cb75d29d451a54d0ebd59d1f789d",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/10-architecture-problems.md",
+      "entry_sha256": "d48a50a45e9fa4cf54b43bd00c30af30329c88c9a4ff3dde9875946400f5f4a7",
+      "reconstructed_sha256": "d48a50a45e9fa4cf54b43bd00c30af30329c88c9a4ff3dde9875946400f5f4a7",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/11-prd.md",
+      "entry_sha256": "44d90adefd311facf5569c9a628125dc3eb1666f28b126e62c855c755b2151aa",
+      "reconstructed_sha256": "44d90adefd311facf5569c9a628125dc3eb1666f28b126e62c855c755b2151aa",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/12-functional-requirements.md",
+      "entry_sha256": "d8b26e47abfab9665f68da97e8b57d2d6ad5a5b5ad3621174d32f9cb6db6e600",
+      "reconstructed_sha256": "d8b26e47abfab9665f68da97e8b57d2d6ad5a5b5ad3621174d32f9cb6db6e600",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/13-non-functional-requirements.md",
+      "entry_sha256": "39c1f6045e9193162405272ca065d002062196d1d1e654c2fa028174165c4487",
+      "reconstructed_sha256": "39c1f6045e9193162405272ca065d002062196d1d1e654c2fa028174165c4487",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/14-target-architecture.md",
+      "entry_sha256": "018a68b3bf6c858ca0dd28a8a92422df23f3f8c2b30edad2aac02e9ed34b7bc3",
+      "reconstructed_sha256": "018a68b3bf6c858ca0dd28a8a92422df23f3f8c2b30edad2aac02e9ed34b7bc3",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/15-async-concurrency-design.md",
+      "entry_sha256": "86914523b607f482ba017c74cfde3c3b9ce68e80185a9d6370fcf1a8d8bb5c8a",
+      "reconstructed_sha256": "86914523b607f482ba017c74cfde3c3b9ce68e80185a9d6370fcf1a8d8bb5c8a",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/16-error-handling-policy.md",
+      "entry_sha256": "d28a36e0f5feaa695dd6ebf47c8c1b4f73bd6b7c2697fc7db56af78195aa4a6d",
+      "reconstructed_sha256": "d28a36e0f5feaa695dd6ebf47c8c1b4f73bd6b7c2697fc7db56af78195aa4a6d",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/17-observability.md",
+      "entry_sha256": "bb630cdc01d02a2b05308f8a53d26f43ccf99be5436029e377dfb578304c3c1e",
+      "reconstructed_sha256": "bb630cdc01d02a2b05308f8a53d26f43ccf99be5436029e377dfb578304c3c1e",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/18-security-review.md",
+      "entry_sha256": "cc785cb23e8b957f5e9d3d9de1db5ef1d90b42493a018c4718df3b91527f1c53",
+      "reconstructed_sha256": "cc785cb23e8b957f5e9d3d9de1db5ef1d90b42493a018c4718df3b91527f1c53",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/19-testing-strategy.md",
+      "entry_sha256": "d3a2c9940bf48c6a1dce594f307752b13f75918469fc2acc3a758e91daa354d7",
+      "reconstructed_sha256": "d3a2c9940bf48c6a1dce594f307752b13f75918469fc2acc3a758e91daa354d7",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/20-migration-plan.md",
+      "entry_sha256": "fbfb6d3fbb1f047a40945e3ccc6f2d21d104ea3ae2aa0404456e0bc37e1a4c94",
+      "reconstructed_sha256": "fbfb6d3fbb1f047a40945e3ccc6f2d21d104ea3ae2aa0404456e0bc37e1a4c94",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/21-target-repository-structure.md",
+      "entry_sha256": "b108d404503d7e874c612ebe807e3013a4ce1d06e34e92634f78f915fd1917ab",
+      "reconstructed_sha256": "b108d404503d7e874c612ebe807e3013a4ce1d06e34e92634f78f915fd1917ab",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/README.md",
+      "entry_sha256": "58609e453f2861fb227ecf9b606cd0264fddfcf4b36c3b074fe3c7e4d8114562",
+      "reconstructed_sha256": "58609e453f2861fb227ecf9b606cd0264fddfcf4b36c3b074fe3c7e4d8114562",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/current/architecture-decision-log.md",
+      "entry_sha256": "71039ddb38b57df33f91084f97880c56682a98189da60c5e9c1252ed4d63bafc",
+      "reconstructed_sha256": "71039ddb38b57df33f91084f97880c56682a98189da60c5e9c1252ed4d63bafc",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/current/current-plan.md",
+      "entry_sha256": "53ee6fca9ec5979c8a0c1668eebc61a36a8ffeac29dec43afec89081fa2d0705",
+      "reconstructed_sha256": "53ee6fca9ec5979c8a0c1668eebc61a36a8ffeac29dec43afec89081fa2d0705",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/current/open-questions.md",
+      "entry_sha256": "261d44a18e9aa51b78bbbc74005b37777be38a63a4187b8801cdffb1fbacc54c",
+      "reconstructed_sha256": "261d44a18e9aa51b78bbbc74005b37777be38a63a4187b8801cdffb1fbacc54c",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/current/requirement-test-trace.md",
+      "entry_sha256": "ae19e1f2bd21880df364f9b0642dc1eac693e0030040cc9548a9ad2228bed5d2",
+      "reconstructed_sha256": "ae19e1f2bd21880df364f9b0642dc1eac693e0030040cc9548a9ad2228bed5d2",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/master_prompt.txt",
+      "entry_sha256": "ce2bb85f6aca5e6c70508d08d033fa7dd1f337c42b65d163c9d3a22cb2525a7b",
+      "reconstructed_sha256": "ce2bb85f6aca5e6c70508d08d033fa7dd1f337c42b65d163c9d3a22cb2525a7b",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-0-report.md",
+      "entry_sha256": "d8a311c8d690d782b2f0c9a2228bbbb09b7a81bb439284bc3b49acec0a809e02",
+      "reconstructed_sha256": "d8a311c8d690d782b2f0c9a2228bbbb09b7a81bb439284bc3b49acec0a809e02",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-1-report.md",
+      "entry_sha256": "c6a61e3fe6c28be06e0f094ce4f1aa8e62a0b921e7c019838a3c12dea6716308",
+      "reconstructed_sha256": "c6a61e3fe6c28be06e0f094ce4f1aa8e62a0b921e7c019838a3c12dea6716308",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-10-report.md",
+      "entry_sha256": "9b751aebf337b39ea80769d8197be83e02a4da7ca109700b22ce2f425bcf7a73",
+      "reconstructed_sha256": "9b751aebf337b39ea80769d8197be83e02a4da7ca109700b22ce2f425bcf7a73",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-2-report.md",
+      "entry_sha256": "405d6b1d4486085d0919820f09e336a59cd361775e489e51b570e0cf0566d736",
+      "reconstructed_sha256": "405d6b1d4486085d0919820f09e336a59cd361775e489e51b570e0cf0566d736",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-3-report.md",
+      "entry_sha256": "6687e74efa8ccd37221f43ef6cc687abff1cd5e9a151aa210c16e8d2f8e07bc7",
+      "reconstructed_sha256": "6687e74efa8ccd37221f43ef6cc687abff1cd5e9a151aa210c16e8d2f8e07bc7",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-4-report.md",
+      "entry_sha256": "0fafc805332a5966ffae887900f2a78f8432c5b15eeb82817bbed94a968ab40f",
+      "reconstructed_sha256": "0fafc805332a5966ffae887900f2a78f8432c5b15eeb82817bbed94a968ab40f",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-5-report.md",
+      "entry_sha256": "0bcf7f07de5670dc491f9f20c18e26ba7834d8a973e8b784768cb07bf24d9931",
+      "reconstructed_sha256": "0bcf7f07de5670dc491f9f20c18e26ba7834d8a973e8b784768cb07bf24d9931",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-6-report.md",
+      "entry_sha256": "028647c2b4bf3a0260b26510c0433cacd5612f413fdf0e7839ec422d0a417ef8",
+      "reconstructed_sha256": "028647c2b4bf3a0260b26510c0433cacd5612f413fdf0e7839ec422d0a417ef8",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-7-report.md",
+      "entry_sha256": "c7aab332ea674e606623f0606df04cd1769f4dcd6d71cf23a2ad932bb900cb80",
+      "reconstructed_sha256": "c7aab332ea674e606623f0606df04cd1769f4dcd6d71cf23a2ad932bb900cb80",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-8-report.md",
+      "entry_sha256": "153a7c84eb8bdf6a5f18a34f6a84321fbc222b7c25d21d1b6fe38d22c732e6f8",
+      "reconstructed_sha256": "153a7c84eb8bdf6a5f18a34f6a84321fbc222b7c25d21d1b6fe38d22c732e6f8",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-9-report.md",
+      "entry_sha256": "6cd700931bba699c4889c584339cfb63af278150092ef1078fe60cd86bc43664",
+      "reconstructed_sha256": "6cd700931bba699c4889c584339cfb63af278150092ef1078fe60cd86bc43664",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "docs/server-invite-guide.md",
+      "entry_sha256": "faff0a04cb0246f77cfb5c85a45000bb1faf24188a0dd52e97e0e0f14e63c978",
+      "reconstructed_sha256": "faff0a04cb0246f77cfb5c85a45000bb1faf24188a0dd52e97e0e0f14e63c978",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "tests/browser/watch_intent_chrome.cjs",
+      "entry_sha256": "d753ca05dc682158869b2becec18c4e2a11f360ae9c637cc58d4a36f618fb4dc",
+      "reconstructed_sha256": "d753ca05dc682158869b2becec18c4e2a11f360ae9c637cc58d4a36f618fb4dc",
+      "mode": "byte_identical"
+    },
+    {
+      "path": "tests/browser/watch_refresh_chrome.cjs",
+      "entry_sha256": "dab8e20e4bd1cb0f654607933ab678c1d7cde4a890475baf7a1e8d187e60c25b",
+      "reconstructed_sha256": "dab8e20e4bd1cb0f654607933ab678c1d7cde4a890475baf7a1e8d187e60c25b",
+      "mode": "byte_identical"
+    }
+  ],
+  "original_probe": {
+    "path": "docs/rebuild/final-audit/a8-retention-probe.py",
+    "working_sha256": "b45b2bbc410be8f9f713d4cc020ab2b84dc0946d5f5146fbed1fbad1bef8b9e1",
+    "unchanged_from_entry_git_blob": true
+  },
+  "final_evidence_union": {
+    "pass_count": 1471,
+    "fail_count": 2,
+    "skip_count": 27,
+    "xfail_count": 0,
+    "full_cases": 1496,
+    "extra_original_cases": 4,
+    "regression_subset_of_full": true
+  }
+}

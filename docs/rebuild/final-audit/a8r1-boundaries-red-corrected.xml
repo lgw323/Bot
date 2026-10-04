@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="47" skipped="0" tests="78" time="20.514" timestamp="2026-10-04T10:05:55.812580+09:00" hostname="TUF"><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-building-0]" time="0.126" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-building-1]" time="0.199"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}
+
+      Extra items in the right set:
+      'published-0'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-building-3]" time="0.336"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-building-4]" time="0.408"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-3'
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-building-6]" time="0.564"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-3'
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-candidate-only-0]" time="0.127" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-candidate-only-1]" time="0.200"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}
+
+      Extra items in the right set:
+      'published-0'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-candidate-only-3]" time="0.372"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-candidate-only-4]" time="0.464"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-3'
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-candidate-only-6]" time="0.568"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-3'
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-empty-0]" time="0.121" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-empty-1]" time="0.216"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}
+
+      Extra items in the right set:
+      'published-0'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-empty-3]" time="0.345"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-empty-4]" time="0.402"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-3'
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-empty-6]" time="0.550"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-3'
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-manifest-building-0]" time="0.168" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-manifest-building-1]" time="0.232"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}
+
+      Extra items in the right set:
+      'published-0'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-manifest-building-3]" time="0.381"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-manifest-building-4]" time="0.454"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-3'
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-manifest-building-6]" time="0.598"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-3'
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-building-0]" time="0.117" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-building-1]" time="0.186"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}
+
+      Extra items in the right set:
+      'published-0'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-building-3]" time="0.331"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-building-4]" time="0.414"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-3'
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-building-6]" time="0.550"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-3'
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-candidate-only-0]" time="0.131" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-candidate-only-1]" time="0.209"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}
+
+      Extra items in the right set:
+      'published-0'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-candidate-only-3]" time="0.352"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-candidate-only-4]" time="0.426"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-3'
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-candidate-only-6]" time="0.578"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-3'
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-empty-0]" time="0.112" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-empty-1]" time="0.185"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}
+
+      Extra items in the right set:
+      'published-0'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-empty-3]" time="0.328"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-empty-4]" time="0.407"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-3'
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-empty-6]" time="0.557"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-3'
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-manifest-building-0]" time="0.164" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-manifest-building-1]" time="0.237"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}
+
+      Extra items in the right set:
+      'published-0'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-manifest-building-3]" time="0.385"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-manifest-building-4]" time="0.457"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-3'
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-manifest-building-6]" time="0.605"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-1'&#10;  'published-0'&#10;  'published-2'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+
+      Extra items in the right set:
+      'published-3'
+      'published-1'
+      'published-0'
+      'published-2'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup--1-True-published-604800]" time="0.205" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup--1-True-building-86400]" time="0.161" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup--1-True-candidate-only-86400]" time="0.166" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup--1-True-empty-86400]" time="0.158" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup--1-True-manifest-building-86400]" time="0.170" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-0-False-published-604800]" time="0.225" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-0-False-building-86400]" time="0.190" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-0-False-candidate-only-86400]" time="0.142"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid7/releases/boundary').exists">E   AssertionError: assert True is False
+     +  where True = exists()
+     +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid7/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-0-False-empty-86400]" time="0.140"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid8/releases/boundary').exists">E   AssertionError: assert True is False
+     +  where True = exists()
+     +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid8/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-0-False-manifest-building-86400]" time="0.207" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-1-False-published-604800]" time="0.225" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-1-False-building-86400]" time="0.187" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-1-False-candidate-only-86400]" time="0.143"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid12/releases/boundary').exists">E   AssertionError: assert True is False
+     +  where True = exists()
+     +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid12/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-1-False-empty-86400]" time="0.139"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid13/releases/boundary').exists">E   AssertionError: assert True is False
+     +  where True = exists()
+     +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid13/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-1-False-manifest-building-86400]" time="0.213" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy--1-True-published-604800]" time="0.202" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy--1-True-building-86400]" time="0.165" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy--1-True-candidate-only-86400]" time="0.168" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy--1-True-empty-86400]" time="0.162" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy--1-True-manifest-building-86400]" time="0.185" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-0-False-published-604800]" time="0.261" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-0-False-building-86400]" time="0.150"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid21/releases/boundary').exists">E   AssertionError: assert True is False
+     +  where True = exists()
+     +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid21/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-0-False-candidate-only-86400]" time="0.147"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid22/releases/boundary').exists">E   AssertionError: assert True is False
+     +  where True = exists()
+     +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid22/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-0-False-empty-86400]" time="0.150"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid23/releases/boundary').exists">E   AssertionError: assert True is False
+     +  where True = exists()
+     +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid23/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-0-False-manifest-building-86400]" time="0.155"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid24/releases/boundary').exists">E   AssertionError: assert True is False
+     +  where True = exists()
+     +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid24/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-1-False-published-604800]" time="0.237" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-1-False-building-86400]" time="0.146"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid26/releases/boundary').exists">E   AssertionError: assert True is False
+     +  where True = exists()
+     +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid26/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-1-False-candidate-only-86400]" time="0.146"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid27/releases/boundary').exists">E   AssertionError: assert True is False
+     +  where True = exists()
+     +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid27/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-1-False-empty-86400]" time="0.143"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid28/releases/boundary').exists">E   AssertionError: assert True is False
+     +  where True = exists()
+     +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid28/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-1-False-manifest-building-86400]" time="0.160"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid29/releases/boundary').exists">E   AssertionError: assert True is False
+     +  where True = exists()
+     +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1380/test_age_grace_boundary_outsid29/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_current_counts_in_publication_floor_and_old_intent_pins_are_additive[cleanup]" time="0.322" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_current_counts_in_publication_floor_and_old_intent_pins_are_additive[post-deploy]" time="0.469"><failure message="AssertionError: assert {'active', 'p...ack-previous'} == {'active', 'p...ished-1', ...}&#10;  &#10;  Extra items in the right set:&#10;  'pin-current'&#10;  'pin-previous'&#10;  'pin-target'&#10;  Use -v to get more diff">E   AssertionError: assert {'active', 'p...ack-previous'} == {'active', 'p...ished-1', ...}
+
+      Extra items in the right set:
+      'pin-current'
+      'pin-previous'
+      'pin-target'
+      Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_invalid_activation_intent_fails_before_deletion[cleanup]" time="0.100" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_invalid_activation_intent_fails_before_deletion[post-deploy]" time="0.077"><failure message="Failed: DID NOT RAISE DataIntegrityError">E   Failed: DID NOT RAISE DataIntegrityError</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_nested_link_is_rejected_before_removal[cleanup]" time="0.106" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_nested_link_is_rejected_before_removal[post-deploy]" time="0.080"><failure message="Failed: DID NOT RAISE DataIntegrityError">E   Failed: DID NOT RAISE DataIntegrityError</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_sixteen_directory_admission_cap_preserves_all_protected_releases" time="0.315" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_cleanup_without_current_keeps_four_publications" time="0.096" /></testsuite></testsuites>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="4" time="1.530" timestamp="2026-10-04T10:04:07.667645+09:00" hostname="TUF"><testcase classname="docs.rebuild.final-audit.a8-retention-probe" name="test_four_newest_published_survive_incomplete_candidates[cleanup-published-only-control]" time="0.305" /><testcase classname="docs.rebuild.final-audit.a8-retention-probe" name="test_four_newest_published_survive_incomplete_candidates[cleanup-newer-incomplete]" time="0.417"><failure message="AssertionError: Four newest published releases were deleted: ['published-0', 'published-1', 'published-2', 'published-3']&#10;assert not ['published-0', 'published-1', 'published-2', 'published-3']">tmp_path = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1378/test_four_newest_published_sur1')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000023885CBD610&gt;
+incomplete_count = 4, entrypoint = 'cleanup'
+
+    @pytest.mark.parametrize("incomplete_count", [0, 4], ids=["published-only-control", "newer-incomplete"])
+    @pytest.mark.parametrize("entrypoint", ["cleanup", "post-deploy"])
+    def test_four_newest_published_survive_incomplete_candidates(tmp_path, monkeypatch, incomplete_count, entrypoint):
+        now = 2_000_000_000.0
+        monkeypatch.setattr("time.time", lambda: now)
+        store = release(tmp_path, "active")
+        published = ["published-" + str(i) for i in range(4)]
+        for index, identity in enumerate(published):
+            release(tmp_path, identity)
+            # All published releases exceed seven days: the four-release floor,
+            # not age protection, must preserve these independently usable releases.
+            old = now - (10 + index) * 86400
+            os.utime(store.path(identity), (old, old))
+        store.activate("active")
+        # Active is protected explicitly and older than all four other publications.
+        os.utime(store.path("active"), (now - 20 * 86400, now - 20 * 86400))
+        state = tmp_path / "state"
+        state.mkdir()
+        for index in range(incomplete_count):
+            candidate = store.path("incomplete-" + str(index))
+            candidate.mkdir()
+            (candidate / ".building").write_text("synthetic interrupted build")
+            os.utime(candidate, (now - index * 60, now - index * 60))
+        for identity in published:
+            store.validate(identity)
+
+        if entrypoint == "cleanup":
+            cleanup_releases(store, state, now=now)
+        else:
+            # Exercise the real post-deploy retention method without any build,
+            # service invocation, credentials, database or network adapter.
+            port = LocalDeployment(SimpleNamespace(state=state), SimpleNamespace(store=store), None, None)
+            port.retain(Release("active"), None)
+
+        assert store.current() == "active"
+        for index in range(incomplete_count):
+            assert store.path("incomplete-" + str(index)).exists()
+        missing = [identity for identity in published if not store.path(identity).exists()]
+&gt;       assert not missing, f"Four newest published releases were deleted: {missing}"
+E       AssertionError: Four newest published releases were deleted: ['published-0', 'published-1', 'published-2', 'published-3']
+E       assert not ['published-0', 'published-1', 'published-2', 'published-3']
+
+docs\rebuild\final-audit\a8-retention-probe.py:51: AssertionError</failure></testcase><testcase classname="docs.rebuild.final-audit.a8-retention-probe" name="test_four_newest_published_survive_incomplete_candidates[post-deploy-published-only-control]" time="0.241" /><testcase classname="docs.rebuild.final-audit.a8-retention-probe" name="test_four_newest_published_survive_incomplete_candidates[post-deploy-newer-incomplete]" time="0.391"><failure message="AssertionError: Four newest published releases were deleted: ['published-0', 'published-1', 'published-2', 'published-3']&#10;assert not ['published-0', 'published-1', 'published-2', 'published-3']">tmp_path = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1378/test_four_newest_published_sur3')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000023885CBEB10&gt;
+incomplete_count = 4, entrypoint = 'post-deploy'
+
+    @pytest.mark.parametrize("incomplete_count", [0, 4], ids=["published-only-control", "newer-incomplete"])
+    @pytest.mark.parametrize("entrypoint", ["cleanup", "post-deploy"])
+    def test_four_newest_published_survive_incomplete_candidates(tmp_path, monkeypatch, incomplete_count, entrypoint):
+        now = 2_000_000_000.0
+        monkeypatch.setattr("time.time", lambda: now)
+        store = release(tmp_path, "active")
+        published = ["published-" + str(i) for i in range(4)]
+        for index, identity in enumerate(published):
+            release(tmp_path, identity)
+            # All published releases exceed seven days: the four-release floor,
+            # not age protection, must preserve these independently usable releases.
+            old = now - (10 + index) * 86400
+            os.utime(store.path(identity), (old, old))
+        store.activate("active")
+        # Active is protected explicitly and older than all four other publications.
+        os.utime(store.path("active"), (now - 20 * 86400, now - 20 * 86400))
+        state = tmp_path / "state"
+        state.mkdir()
+        for index in range(incomplete_count):
+            candidate = store.path("incomplete-" + str(index))
+            candidate.mkdir()
+            (candidate / ".building").write_text("synthetic interrupted build")
+            os.utime(candidate, (now - index * 60, now - index * 60))
+        for identity in published:
+            store.validate(identity)
+
+        if entrypoint == "cleanup":
+            cleanup_releases(store, state, now=now)
+        else:
+            # Exercise the real post-deploy retention method without any build,
+            # service invocation, credentials, database or network adapter.
+            port = LocalDeployment(SimpleNamespace(state=state), SimpleNamespace(store=store), None, None)
+            port.retain(Release("active"), None)
+
+        assert store.current() == "active"
+        for index in range(incomplete_count):
+            assert store.path("incomplete-" + str(index)).exists()
+        missing = [identity for identity in published if not store.path(identity).exists()]
+&gt;       assert not missing, f"Four newest published releases were deleted: {missing}"
+E       AssertionError: Four newest published releases were deleted: ['published-0', 'published-1', 'published-2', 'published-3']
+E       assert not ['published-0', 'published-1', 'published-2', 'published-3']
+
+docs\rebuild\final-audit\a8-retention-probe.py:51: AssertionError</failure></testcase></testsuite></testsuites>

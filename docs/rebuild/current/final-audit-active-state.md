@@ -893,3 +893,27 @@ STOP. Do not start A3V2 or A4 in this remediation session.
 - **STOP A8 for supervisor review; next separate boundary is authorized A8-M1 remediation,
   then independent A8 verification of retention and remaining gates.** No A9/Integrated Audit/
   Phase11. Friend activation HELD; deployment condition unmet; My Food untouched.
+
+## AY. A8R1 release retention - scoped remediation PASS (2026-10-04)
+
+- **Phase 8 stays FAIL; A8-M1 OPEN, remediated pending independent verification.**
+  [A8R1 report, RED/GREEN and limits](../final-audit/a8r1-release-retention-report.md).
+  Entry `f34ef43e8edee503ead5aa5d2e9f8e297450adec`; implementation
+  `403c453855e1b39126efb8d72390737aba5e5def`, branch `codex/rebuild-v2`.
+- Filter publication markers before the four-release floor; post-deploy retention
+  reuses cleanup with current/rollback/activation protection and contract age grace.
+  Original unchanged probe 2 PASS/2 FAIL ->4 PASS; new78 cases 31 PASS/47 FAIL ->78 PASS.
+  Focused82 PASS; shared operations/data/platform/architecture714 PASS/1 known inventory FAIL.
+  Full-suite counts, overlap and initial harness/documentation failures are explicit in the report.
+- Windows synthetic temporary releases only; real filesystem removal and modeled links.
+  No independent whole-Phase8/live/Linux/systemd/Pi claim; inventory/Deno/Linux skips,
+  audioop/A3 limits retained. A0-A7 independent PASS unchanged. Original A8 evidence preserved.
+- Inherited11 modified/59 untracked preserved via67 byte-identical hashes and3 reversible
+  owned doc deltas. Index/document exports unchanged except scoped staging; local commits only.
+  Final index/process/preservation checks are in the handoff; no push or production action.
+- Production source `8e9018d4b8061cde6006eee47fa4103522f77718`, pin
+  `r-8e9018d4b8061cde-3dac82a792fad576` untouched and distinct. No actual release/backup/history
+  cleanup, DB/credentials/deploy/systemd/Cloudflare/network/security changes. MyFood/my_money untouched.
+- **STOP A8R1 for parent review.** Next separate authorization: independent A8 verification
+  of M1 and every remaining original A8 gate. No A8V1/A9/Integrated Audit/Phase11 performed.
+  Friend activation HELD; deployment condition unmet. October4 resumption has no new deadline.

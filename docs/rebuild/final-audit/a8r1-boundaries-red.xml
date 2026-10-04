@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="48" skipped="0" tests="78" time="20.862" timestamp="2026-10-04T10:05:14.478692+09:00" hostname="TUF"><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-building-0]" time="0.120" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-building-1]" time="0.182"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}
+E
+E     Extra items in the right set:
+E     'published-0'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-building-3]" time="0.339"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-building-4]" time="0.401"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-3'
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-building-6]" time="0.618"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-3'
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-candidate-only-0]" time="0.131" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-candidate-only-1]" time="0.204"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}
+E
+E     Extra items in the right set:
+E     'published-0'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-candidate-only-3]" time="0.352"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-candidate-only-4]" time="0.423"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-3'
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-candidate-only-6]" time="0.567"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-3'
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-empty-0]" time="0.105" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-empty-1]" time="0.181"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}
+E
+E     Extra items in the right set:
+E     'published-0'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-empty-3]" time="0.331"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-empty-4]" time="0.399"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-3'
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-empty-6]" time="0.551"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-3'
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-manifest-building-0]" time="0.179" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-manifest-building-1]" time="0.235"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}
+E
+E     Extra items in the right set:
+E     'published-0'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-manifest-building-3]" time="0.381"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-manifest-building-4]" time="0.455"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-3'
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[cleanup-manifest-building-6]" time="0.628"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-3'
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-building-0]" time="0.119" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-building-1]" time="0.188"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}
+E
+E     Extra items in the right set:
+E     'published-0'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-building-3]" time="0.337"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-building-4]" time="0.410"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-3'
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-building-6]" time="0.558"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-3'
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-candidate-only-0]" time="0.135" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-candidate-only-1]" time="0.210"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}
+E
+E     Extra items in the right set:
+E     'published-0'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-candidate-only-3]" time="0.357"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-candidate-only-4]" time="0.426"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-3'
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-candidate-only-6]" time="0.581"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-3'
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-empty-0]" time="0.111" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-empty-1]" time="0.183"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}
+E
+E     Extra items in the right set:
+E     'published-0'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-empty-3]" time="0.336"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-empty-4]" time="0.413"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-3'
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-empty-6]" time="0.553"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-3'
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-manifest-building-0]" time="0.167" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-manifest-building-1]" time="0.239"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...'published-0'}
+E
+E     Extra items in the right set:
+E     'published-0'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-manifest-building-3]" time="0.391"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-manifest-building-4]" time="0.459"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-3'
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_only_publications_count_toward_four_newest[post-deploy-manifest-building-6]" time="0.608"><failure message="AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}&#10;  &#10;  Extra items in the right set:&#10;  'published-3'&#10;  'published-0'&#10;  'published-2'&#10;  'published-1'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:69: in test_only_publications_count_toward_four_newest
+    assert {p.name for p in store.releases.iterdir()} == (
+E   AssertionError: assert {'active', 'i...incomplete-3'} == {'active', 'i...ished-0', ...}
+E
+E     Extra items in the right set:
+E     'published-3'
+E     'published-0'
+E     'published-2'
+E     'published-1'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup--1-True-published-604800]" time="0.212" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup--1-True-building-86400]" time="0.161" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup--1-True-candidate-only-86400]" time="0.166" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup--1-True-empty-86400]" time="0.159" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup--1-True-manifest-building-86400]" time="0.174" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-0-False-published-604800]" time="0.231" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-0-False-building-86400]" time="0.198" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-0-False-candidate-only-86400]" time="0.146"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid7/releases/boundary').exists">tests\integration\operations\test_retention_contract.py:93: in test_age_grace_boundary_outside_four_release_floor
+    assert target.exists() is survives
+E   AssertionError: assert True is False
+E    +  where True = exists()
+E    +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid7/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-0-False-empty-86400]" time="0.140"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid8/releases/boundary').exists">tests\integration\operations\test_retention_contract.py:93: in test_age_grace_boundary_outside_four_release_floor
+    assert target.exists() is survives
+E   AssertionError: assert True is False
+E    +  where True = exists()
+E    +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid8/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-0-False-manifest-building-86400]" time="0.214" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-1-False-published-604800]" time="0.232" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-1-False-building-86400]" time="0.202" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-1-False-candidate-only-86400]" time="0.167"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid12/releases/boundary').exists">tests\integration\operations\test_retention_contract.py:93: in test_age_grace_boundary_outside_four_release_floor
+    assert target.exists() is survives
+E   AssertionError: assert True is False
+E    +  where True = exists()
+E    +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid12/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-1-False-empty-86400]" time="0.162"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid13/releases/boundary').exists">tests\integration\operations\test_retention_contract.py:93: in test_age_grace_boundary_outside_four_release_floor
+    assert target.exists() is survives
+E   AssertionError: assert True is False
+E    +  where True = exists()
+E    +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid13/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[cleanup-1-False-manifest-building-86400]" time="0.228" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy--1-True-published-604800]" time="0.204" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy--1-True-building-86400]" time="0.166" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy--1-True-candidate-only-86400]" time="0.174" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy--1-True-empty-86400]" time="0.167" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy--1-True-manifest-building-86400]" time="0.183" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-0-False-published-604800]" time="0.240" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-0-False-building-86400]" time="0.144"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid21/releases/boundary').exists">tests\integration\operations\test_retention_contract.py:93: in test_age_grace_boundary_outside_four_release_floor
+    assert target.exists() is survives
+E   AssertionError: assert True is False
+E    +  where True = exists()
+E    +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid21/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-0-False-candidate-only-86400]" time="0.152"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid22/releases/boundary').exists">tests\integration\operations\test_retention_contract.py:93: in test_age_grace_boundary_outside_four_release_floor
+    assert target.exists() is survives
+E   AssertionError: assert True is False
+E    +  where True = exists()
+E    +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid22/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-0-False-empty-86400]" time="0.145"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid23/releases/boundary').exists">tests\integration\operations\test_retention_contract.py:93: in test_age_grace_boundary_outside_four_release_floor
+    assert target.exists() is survives
+E   AssertionError: assert True is False
+E    +  where True = exists()
+E    +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid23/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-0-False-manifest-building-86400]" time="0.158"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid24/releases/boundary').exists">tests\integration\operations\test_retention_contract.py:93: in test_age_grace_boundary_outside_four_release_floor
+    assert target.exists() is survives
+E   AssertionError: assert True is False
+E    +  where True = exists()
+E    +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid24/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-1-False-published-604800]" time="0.244" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-1-False-building-86400]" time="0.147"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid26/releases/boundary').exists">tests\integration\operations\test_retention_contract.py:93: in test_age_grace_boundary_outside_four_release_floor
+    assert target.exists() is survives
+E   AssertionError: assert True is False
+E    +  where True = exists()
+E    +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid26/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-1-False-candidate-only-86400]" time="0.152"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid27/releases/boundary').exists">tests\integration\operations\test_retention_contract.py:93: in test_age_grace_boundary_outside_four_release_floor
+    assert target.exists() is survives
+E   AssertionError: assert True is False
+E    +  where True = exists()
+E    +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid27/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-1-False-empty-86400]" time="0.145"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid28/releases/boundary').exists">tests\integration\operations\test_retention_contract.py:93: in test_age_grace_boundary_outside_four_release_floor
+    assert target.exists() is survives
+E   AssertionError: assert True is False
+E    +  where True = exists()
+E    +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid28/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_age_grace_boundary_outside_four_release_floor[post-deploy-1-False-manifest-building-86400]" time="0.157"><failure message="AssertionError: assert True is False&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid29/releases/boundary').exists">tests\integration\operations\test_retention_contract.py:93: in test_age_grace_boundary_outside_four_release_floor
+    assert target.exists() is survives
+E   AssertionError: assert True is False
+E    +  where True = exists()
+E    +    where exists = WindowsPath('C:/Users/dlrjs/AppData/Local/Temp/pytest-of-dlrjs/pytest-1379/test_age_grace_boundary_outsid29/releases/boundary').exists</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_current_counts_in_publication_floor_and_old_intent_pins_are_additive[cleanup]" time="0.322" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_current_counts_in_publication_floor_and_old_intent_pins_are_additive[post-deploy]" time="0.477"><failure message="AssertionError: assert {'active', 'p...ack-previous'} == {'active', 'p...ished-1', ...}&#10;  &#10;  Extra items in the right set:&#10;  'pin-target'&#10;  'pin-current'&#10;  'pin-previous'&#10;  Use -v to get more diff">tests\integration\operations\test_retention_contract.py:121: in test_current_counts_in_publication_floor_and_old_intent_pins_are_additive
+    assert {p.name for p in store.releases.iterdir()} == expected
+E   AssertionError: assert {'active', 'p...ack-previous'} == {'active', 'p...ished-1', ...}
+E
+E     Extra items in the right set:
+E     'pin-target'
+E     'pin-current'
+E     'pin-previous'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_invalid_activation_intent_fails_before_deletion[cleanup]" time="0.106" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_invalid_activation_intent_fails_before_deletion[post-deploy]" time="0.080"><failure message="Failed: DID NOT RAISE DataIntegrityError">tests\integration\operations\test_retention_contract.py:131: in test_invalid_activation_intent_fails_before_deletion
+    with pytest.raises(DataIntegrityError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE DataIntegrityError</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_nested_link_is_rejected_before_removal[cleanup]" time="0.111" /><testcase classname="tests.integration.operations.test_retention_contract" name="test_nested_link_is_rejected_before_removal[post-deploy]" time="0.081"><failure message="Failed: DID NOT RAISE DataIntegrityError">tests\integration\operations\test_retention_contract.py:146: in test_nested_link_is_rejected_before_removal
+    with pytest.raises(DataIntegrityError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE DataIntegrityError</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_sixteen_directory_admission_cap_preserves_all_protected_releases" time="0.350"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'retention'&#10;  Actual message: 'release capacity reached; retain rollback evidence before cleanup'">tests\integration\operations\test_retention_contract.py:156: in test_sixteen_directory_admission_cap_preserves_all_protected_releases
+    with pytest.raises(DataIntegrityError, match="retention"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'retention'
+E     Actual message: 'release capacity reached; retain rollback evidence before cleanup'</failure></testcase><testcase classname="tests.integration.operations.test_retention_contract" name="test_cleanup_without_current_keeps_four_publications" time="0.100" /></testsuite></testsuites>
