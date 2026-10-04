@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="4" time="0.245" timestamp="2026-10-04T13:33:49.143822+09:00" hostname="TUF"><testcase classname="docs.rebuild.final-audit.a8t1-backup-freshness-probe" name="test_intended_latch_and_healthy_metric_negative_control[historical]" file="docs\rebuild\final-audit\a8t1-backup-freshness-probe.py" line="167" time="0.053" /><testcase classname="docs.rebuild.final-audit.a8t1-backup-freshness-probe" name="test_intended_latch_and_healthy_metric_negative_control[current]" file="docs\rebuild\final-audit\a8t1-backup-freshness-probe.py" line="167" time="0.001"><failure message="TypeError: An asyncio.Future, a coroutine or an awaitable is required">docs\rebuild\final-audit\a8t1-backup-freshness-probe.py:137: in exercise
+    await sample(at, busy)
+docs\rebuild\final-audit\a8t1-backup-freshness-probe.py:128: in sample
+    await factory()
+ecc7674a59150c280bca15031f51eb7ec1015a7a:src/discordbot/operations/adapters/probe.py:40: in sample
+    ???
+C:\Users\dlrjs\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\asyncio\tasks.py:659: in sleep
+    loop = events.get_running_loop()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+docs\rebuild\final-audit\a8t1-backup-freshness-probe.py:171: in test_intended_latch_and_healthy_metric_negative_control
+    latched = complete(exercise(module, terminal=True))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+docs\rebuild\final-audit\a8t1-backup-freshness-probe.py:82: in complete
+    coroutine.send(None)
+docs\rebuild\final-audit\a8t1-backup-freshness-probe.py:164: in exercise
+    await probe.stop()
+ecc7674a59150c280bca15031f51eb7ec1015a7a:src/discordbot/operations/adapters/probe.py:95: in stop
+    ???
+C:\Users\dlrjs\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\asyncio\tasks.py:831: in gather
+    fut = ensure_future(arg, loop=loop)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\dlrjs\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\asyncio\tasks.py:689: in ensure_future
+    raise TypeError('An asyncio.Future, a coroutine or an awaitable '
+E   TypeError: An asyncio.Future, a coroutine or an awaitable is required</failure></testcase><testcase classname="docs.rebuild.final-audit.a8t1-backup-freshness-probe" name="test_backup_freshness_must_not_remain_false_healthy_after_latch[historical]" file="docs\rebuild\final-audit\a8t1-backup-freshness-probe.py" line="180" time="0.050"><failure message="AssertionError: actual_age=25320.0, reported_age=120.0, rpo_exceeded=0.0&#10;assert (0.0 == 1)">docs\rebuild\final-audit\a8t1-backup-freshness-probe.py:186: in test_backup_freshness_must_not_remain_false_healthy_after_latch
+    assert result["rpo_exceeded"] == 1 and (
+E   AssertionError: actual_age=25320.0, reported_age=120.0, rpo_exceeded=0.0
+E   assert (0.0 == 1)</failure></testcase><testcase classname="docs.rebuild.final-audit.a8t1-backup-freshness-probe" name="test_backup_freshness_must_not_remain_false_healthy_after_latch[current]" file="docs\rebuild\final-audit\a8t1-backup-freshness-probe.py" line="180" time="0.001"><failure message="TypeError: An asyncio.Future, a coroutine or an awaitable is required">docs\rebuild\final-audit\a8t1-backup-freshness-probe.py:137: in exercise
+    await sample(at, busy)
+docs\rebuild\final-audit\a8t1-backup-freshness-probe.py:128: in sample
+    await factory()
+ecc7674a59150c280bca15031f51eb7ec1015a7a:src/discordbot/operations/adapters/probe.py:40: in sample
+    ???
+C:\Users\dlrjs\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\asyncio\tasks.py:659: in sleep
+    loop = events.get_running_loop()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+docs\rebuild\final-audit\a8t1-backup-freshness-probe.py:183: in test_backup_freshness_must_not_remain_false_healthy_after_latch
+    result = complete(exercise(load_module(version), terminal=True))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+docs\rebuild\final-audit\a8t1-backup-freshness-probe.py:82: in complete
+    coroutine.send(None)
+docs\rebuild\final-audit\a8t1-backup-freshness-probe.py:164: in exercise
+    await probe.stop()
+ecc7674a59150c280bca15031f51eb7ec1015a7a:src/discordbot/operations/adapters/probe.py:95: in stop
+    ???
+C:\Users\dlrjs\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\asyncio\tasks.py:831: in gather
+    fut = ensure_future(arg, loop=loop)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\dlrjs\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\asyncio\tasks.py:689: in ensure_future
+    raise TypeError('An asyncio.Future, a coroutine or an awaitable '
+E   TypeError: An asyncio.Future, a coroutine or an awaitable is required</failure></testcase></testsuite></testsuites>

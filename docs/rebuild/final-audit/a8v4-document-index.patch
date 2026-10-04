@@ -1,0 +1,20 @@
+--- a/docs/rebuild/current/final-audit-document-index.md
++++ b/docs/rebuild/current/final-audit-document-index.md
+@@ -281,3 +281,17 @@
+ - Latest routing: active-state BG and Phase8 ledger row. All70 inherited contents retained;
+   this inherited untracked index receives only a committed appendix patch. No independent
+   verification, deployment, production action or A9 campaign starts here.
++
++## A8V4 independent backup freshness verification - 2026-10-04
++
++- [Independent report](../final-audit/a8v4-backup-freshness-report.md): M4 CLOSED;
++  Phase8 repository PASS restored; M1-M3 closures and unaffected A8V3 gates retained.
++- [Original baseline runner](../final-audit/a8v4-baseline-runner.py),
++  [independent real-task/HTTP probe](../final-audit/a8v4-contract-probe.py),
++  [fresh numeric evidence](../final-audit/a8v4-freshness-evidence.json), and
++  [deduplicated counts](../final-audit/a8v4-test-evidence.json): current1615 PASS/2 known FAIL/27 SKIP.
++  Historical negative control remains RED; unknown -1/RPO1 preserves intended H2 policy.
++- [Prior receipt verification](../final-audit/a8v4-prior-receipt-check.json) and
++  [ownership receipt](../final-audit/a8v4-ownership-receipt.json) retain all70 inherited contents.
++  Latest routing: active-state BH and Phase8 ledger row. A9 remains separately BLOCKED;
++  no A9 campaign/A10/Integrated/Phase11, production action or live acceptance claim.

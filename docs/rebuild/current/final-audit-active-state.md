@@ -1097,3 +1097,28 @@ STOP. Do not start A3V2 or A4 in this remediation session.
 - **STOP A8R4 for separate independent M4 verification.** No independent audit/A9 campaign here.
   No SSH/network/live/Pi/actual DB/backup/service/config/security/credential/restart/deploy/install,
   other-project action or archive cleanup. Friend activation HELD; no Integrated Audit/Phase11.
+
+## BH. A8V4 independent backup freshness verification - PASS (2026-10-04)
+
+- **A8-M4 independently CLOSED; Phase 8 PASS restored within original repository scope.**
+  [A8V4 report, exact controls and limits](../final-audit/a8v4-backup-freshness-report.md).
+  Audited HEAD26d9d5c25e60fd1a0c73c25b4eab60b27075d14a; repair0640f70b37a60c614f4658d4c7cce7f55b51d756.
+- Unchanged original pre-M4 baseline2 PASS/2 expected FAIL; current3 PASS/1 historical FAIL.
+  Actual age25320 formerly reported120/RPO0; current stopped sampler explicitly unknown -1/RPO1.
+  Healthy control ages correctly; H2 terminal latch/readiness/probe count unchanged, no extra DB probes.
+- Fresh focused264 PASS (including30 M4 regressions and14 prior audit probes), independent7 PASS
+  through real tasks/executor/temp files/in-process HTTP; full1592 PASS/2 known FAIL/27 SKIP.
+  Distinct current union1615 PASS/2 FAIL/27 SKIP/0 XFAIL; docs2 overlap full. No clean-suite/live claim.
+- Unknown is unavailable local-mtime observation, not measured actual age or proof of remote validity.
+  JSON content is not parsed; replacement/removal appears at next healthy sample. Operator semantics
+  are explicit; cancelled/failed/stopped/hard sampling cannot retain a safe stale age/RPO pair.
+- M1/M2/M3 remain independently CLOSED; unaffected A8V3 gates and their limits retained.
+  A0-A7 PASS retained. **A9 separately BLOCKED B1/B2/B3/D1**, with no host/soak waiver.
+- Prior70 preservation independently verified66 exact+4 inverse deltas; this audit preserves67 exact
+  plus3 reversible authority deltas. Inherited index remains untracked; only appendix patch committed.
+  Scoped local audit commit only, no implementation edits/push/reset/bulkstage. Final HEAD in handoff.
+- Known inventory/Deno/Linux/systemd/audioop/A3 and180s backup-budget limits remain explicit.
+  Production8e9018d4b8061cde6006eee47fa4103522f77718 / r-8e9018d4b8061cde-3dac82a792fad576 untouched.
+- **STOP A8V4 for supervisor review.** No A9 campaign/A10/Integrated/Phase11, SSH/Pi/network/live
+  providers/production DB/config/service/security/restart/deploy/install/real cleanup/other projects.
+  Friend activation HELD. Owned tests/tasks/executors exited; final cleanup/index proof in handoff.
