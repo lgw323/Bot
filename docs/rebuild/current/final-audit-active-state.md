@@ -983,3 +983,26 @@ STOP. Do not start A3V2 or A4 in this remediation session.
 - **STOP A8V2. NEXT supervisor review of M3, separate authorized remediation, then independent
   M1/M2/M3 and remaining Phase8 gates.** No A9/Integrated/Phase11; friend activation HELD;
   deployment condition unmet; MyFood/my_money untouched.
+
+## BC. A8R3 release inventory - scoped remediation PASS (2026-10-04)
+
+- **Phase 8 remains FAIL; M1/M2 independently CLOSED; M3 remediated, OPEN pending independent verification.**
+  [A8R3 report, exact RED/GREEN and limits](../final-audit/a8r3-release-inventory-report.md).
+  Entry 5e846ae6a08e8fda210e6e4a06c457387012604f; implementation 0ac1ab55a0748320a56ff54809813663ac149943.
+- Exclude only root manifest metadata during validation and root .building during build inventory;
+  all nested payload names retain exact checksum coverage. No manifest format/publishing redesign.
+- Original unchanged M3 probe1 PASS/1 FAIL ->2 PASS; new59 boundaries25/34 ->59 PASS.
+  Focused86 PASS; affected823 PASS/1 known inventory FAIL; full1562 PASS/2 known FAIL/27 Linux SKIP.
+  Distinct corrected union1576 PASS/2 FAIL/27 SKIP/0 XFAIL; documentation2 PASS overlaps full.
+- M1 original4/remediation78/independent4 and M2 original2/remediation36/independent2 PASS.
+  Synthetic filesystem/SQLite/encryption/restore workers, fake commands/services, modeled Windows links.
+  Linux-shaped venv fixtures are not Linux execution. Known inventory/Deno/Linux/systemd/audioop/A3
+  and unmeasured backup timing limits retained; no clean-suite/live/Pi or independent Phase8 claim.
+- Inherited70 contents preserved:67 exact hashes plus3 reversible owned documentation deltas.
+  Document index/exports/original evidence untouched; scoped local commits only, no push/reset/bulkstage.
+  All owned pytest/children exited; no persistent server/browser/WSL or pending test write remains.
+- Production source8e9018d4b8061cde6006eee47fa4103522f77718 and pin
+  r-8e9018d4b8061cde-3dac82a792fad576 remain distinct/untouched. No production/data/deploy/service action.
+  A0-A7 PASS retained; MyFood/my_money untouched; friend activation HELD; deployment condition unmet.
+- **STOP A8R3 for supervisor review.** Next separate boundary: independent M1/M2/M3 verification
+  and remaining original Phase8 gates from A8V2. No A8V3/A9/Integrated Audit/Phase11 performed here.
