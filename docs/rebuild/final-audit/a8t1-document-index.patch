@@ -1,0 +1,19 @@
+--- a/docs/rebuild/current/final-audit-document-index.md
++++ b/docs/rebuild/current/final-audit-document-index.md
+@@ -255,3 +255,16 @@
+   [contract probe](../final-audit/a6v1-contract-probe.py),
+   [browser boundary probe](../final-audit/a6v1-browser-probe.py). Latest routing AR/Phase6 row.
+   Original history preserved. STOP for supervisor review and user's desktop-app update.
++
++## A8T1 scoped backup telemetry reopening - 2026-10-04
++
++- [A8T1 report and contract citations](../final-audit/a8t1-backup-freshness-report.md):
++  A8-M4 MATERIAL OPEN; Phase8 FAIL only for backup age/RPO freshness within the A8V3
++  Manual/health/telemetry/audit gate. H2 terminal latch is intended and unchanged.
++- [Portable synthetic probe](../final-audit/a8t1-backup-freshness-probe.py),
++  [fresh evidence](../final-audit/a8t1-freshness-evidence.json),
++  [retained discovery](../final-audit/a8t1-discovery-evidence.json), and
++  [ownership receipt](../final-audit/a8t1-ownership-receipt.json). Fresh17 PASS/2 expected
++  contract FAIL/0 SKIP; historical/current RED plus healthy controls. No live claim.
++- M1/M2/M3 CLOSED and unaffected evidence preserved; A9 separately BLOCKED.
++  Latest routing: active-state BF and Phase8 ledger row. STOP for separate remediation.

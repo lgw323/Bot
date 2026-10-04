@@ -1054,3 +1054,26 @@ STOP. Do not start A3V2 or A4 in this remediation session.
 - **STOP A9 for supervisor review.** Next requires exact missing evidence or separately approved
   isolated target-host/workload/soak/recovery campaign and explicit acceptance reconciliation.
   No A10/Integrated Audit/Phase11 or independent remediation starts here.
+
+## BF. A8T1 scoped backup telemetry reopening - FAIL (2026-10-04)
+
+- **Phase 8 FAIL only for backup telemetry freshness; A8-M4 MATERIAL OPEN.**
+  [Focused report, exact probe and control](../final-audit/a8t1-backup-freshness-report.md).
+  Audited HEAD3dc37e05c811d337b5515d00cbdd6841916a1b4d. M4 was the next unused material ID.
+- Historical/current BUSY recurrence latches readiness and stops probes by the explicit H2 policy;
+  this is intended, not an automatic recovery defect. No latch/retry/threshold change is authorized.
+- Reopened A8V3 Manual/health/telemetry/audit **backup age/RPO freshness portion only**: after hard,
+  actual synthetic age25320s reports120s/RPO0; a healthy control reports25320s/RPO1 and sees new metadata.
+  M1/M2/M3 stay independently CLOSED; all unaffected gate evidence and historical reports remain intact.
+- Fresh17 PASS/2 expected contract FAIL/0 SKIP (historical/current RED, two controls,13 policy,2 docs).
+  Prior six temporary SQLite cases retained separately. Fake clock/driver/metadata and synchronous
+  real probe factories/callbacks; no elapsed soak, live backup freshness or user-impact claim.
+- All70 inherited contents preserved:67 exact plus3 reversible owned authority deltas. Index appendix
+  stays in the inherited untracked document; its exact patch is committed, not the inherited file.
+  Scoped audit docs/evidence only; local Conventional Commit, no implementation fix/push/bulkstage.
+- A0-A7 PASS retained; **A9 remains separately BLOCKED** with B1/B2/B3/D1 unchanged. This overlay
+  supersedes only the earlier A8 PASS retention wording, not A9's evidence or status. Known limits remain.
+  Production8e9018d4b8061cde6006eee47fa4103522f77718 / r-8e9018d4b8061cde-3dac82a792fad576 untouched.
+- **STOP for separately authorized A8-M4 remediation and independent verification.** No SSH/network/
+  production/DB/service/restart/install or other-project action. Test work exited; no pending workers.
+  No A10/Integrated/Phase11; friend activation HELD and deployment condition unmet.
