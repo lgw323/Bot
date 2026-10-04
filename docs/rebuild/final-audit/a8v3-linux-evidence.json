@@ -1,0 +1,17 @@
+{
+  "source_sha256": "dac70fa1e781c4c970c8cbeec5f48fa96d382e8722ff0217b0729a90906b6810",
+  "python": "/home/dlrjsdn/discordbot-a2-linux-verify/.venv/bin/python",
+  "platform": "linux",
+  "returncode": 0,
+  "tests": [
+    "docs/rebuild/final-audit/a8v2-release-probe.py",
+    "docs/rebuild/final-audit/a8v3-contract-probe.py",
+    "docs/rebuild/final-audit/a8v3-linux-probe.py",
+    "tests/integration/operations/test_release_inventory_contract.py",
+    "tests/integration/operations/test_filesystem.py",
+    "tests/integration/operations/test_build.py"
+  ],
+  "systemd_executed": false,
+  "package_installation": false,
+  "temporary_workspace_removed": true
+}

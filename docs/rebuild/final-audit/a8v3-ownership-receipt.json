@@ -1,0 +1,505 @@
+{
+  "entry_head": "f0d0065f7d2f6bf8a767f8af7e77cbcd6ca7d726",
+  "inherited_files": 70,
+  "byte_identical": 68,
+  "inverse_owned_delta": 2,
+  "latest_a8r3_receipt_verified": "67 exact final hashes plus three reversible deltas",
+  "all_inherited_preserved": true,
+  "document_index_unchanged": true,
+  "checks": [
+    {
+      "status": " M",
+      "path": "CHANGELOG.md",
+      "sha256": "816384c2a688fde82b9d77b19fbe1859cd146e77a3fc186ce6fac1ef79d65135",
+      "final_sha256": "816384c2a688fde82b9d77b19fbe1859cd146e77a3fc186ce6fac1ef79d65135",
+      "method": "byte_identical"
+    },
+    {
+      "status": " M",
+      "path": "README.md",
+      "sha256": "9f1ee4c189b402e407f0e52e7c18109bc185e63b2701e60a69a8f1f6af7a1c4d",
+      "final_sha256": "9f1ee4c189b402e407f0e52e7c18109bc185e63b2701e60a69a8f1f6af7a1c4d",
+      "method": "byte_identical"
+    },
+    {
+      "status": " M",
+      "path": "docs/product-spec.md",
+      "sha256": "87b31c254feb2dace9580ca1794ee097fb9ec151987ab60559d6112f12ca6fc8",
+      "final_sha256": "87b31c254feb2dace9580ca1794ee097fb9ec151987ab60559d6112f12ca6fc8",
+      "method": "byte_identical"
+    },
+    {
+      "status": " M",
+      "path": "docs/rebuild/README.md",
+      "sha256": "e2324d804ac1e13d7f7dc465f122b4d91f451b4cb8157efa7494b28b8d85888c",
+      "final_sha256": "e2324d804ac1e13d7f7dc465f122b4d91f451b4cb8157efa7494b28b8d85888c",
+      "method": "byte_identical"
+    },
+    {
+      "status": " M",
+      "path": "docs/rebuild/current/current-plan.md",
+      "sha256": "c2c23764a604d7e94b6dd3a5a87c6c36c3896d40801618c446f4287b1d478914",
+      "final_sha256": "c2c23764a604d7e94b6dd3a5a87c6c36c3896d40801618c446f4287b1d478914",
+      "method": "byte_identical"
+    },
+    {
+      "status": " M",
+      "path": "docs/rebuild/current/final-audit-active-state.md",
+      "sha256": "fdada853ab522fa73114de71d4506a29b1a52dc49a9f4c2d0108b7bc786fd86e",
+      "final_sha256": "4e9e6ab130686367898e6e2744f9eaedac159697a7f8bab5fd389cb6302d935e",
+      "method": "inverse_owned_delta",
+      "owned_after": "\n## BD. A8V3 independent Phase 8 verification - PASS (2026-10-04)\n\n- **Phase 8 PASS for original repository operations scope; M1/M2 remain CLOSED and M3 independently CLOSED.**\n  [A8V3 report, complete gate matrix and limitations](../final-audit/a8v3-phase-8-verification-report.md).\n  Audited f0d0065f7d2f6bf8a767f8af7e77cbcd6ca7d726; M3 repair 0ac1ab55a0748320a56ff54809813663ac149943.\n- Exact pre-M3 modules: original1 PASS/1 FAIL and remediation25 PASS/34 FAIL; current original2 and59 PASS.\n  M1 original4/remediation78/independent4 and M2 original2/remediation36/independent2 PASS unchanged.\n- Focused187 PASS; affected809 PASS/1 known inventory FAIL; new independent Windows9 PASS;\n  actual Linux97 PASS (93 repeated identities plus4 Linux-only checks). Full1562 PASS/2 known FAIL/27 SKIP.\n  Distinct union1589 PASS/2 FAIL/27 SKIP/0 XFAIL; no clean full-suite or production acceptance claim.\n- Real Linux links/lib64/modes/fsync/flock and killed synthetic owner; local Git export and temporary\n  SQLite/encryption/restore proof. Nine/32 archive validation stays sequential; tiny synthetic timing\n  does not prove production fit within180s. Host/systemd/ARM64/power-loss/live RPO/RTO remain deferred\n  under original Phase8/ADR-023 scope. Known inventory/Deno/audioop/A3 and Linux/systemd skip limits retained.\n- All70 inherited contents preserved:68 exact hashes plus2 reversible owned authority deltas.\n  Prior receipt67+3 independently verified; index/exports/original evidence untouched. Scoped local audit\n  commit only, no push. All owned tests/children finished; isolated Linux tree/transfer archive removed.\n- A0-A7 PASS retained. Production source8e9018d4b8061cde6006eee47fa4103522f77718 and pin\n  r-8e9018d4b8061cde-3dac82a792fad576 remain distinct/untouched. No production/data/service/network action.\n- **STOP A8V3 for supervisor review.** Any A9/live gate requires its separate assignment; no A9,\n  Integrated Audit or Phase11 started. Friend activation HELD; deployment condition unmet; MyFood untouched.\n",
+      "restore_before": ""
+    },
+    {
+      "status": " M",
+      "path": "docs/rebuild/current/final-audit-ledger.md",
+      "sha256": "e4a6b52006b0c4bf0906ab6cd501b6597546b22f495816637410ef533378ae9e",
+      "final_sha256": "be12427d5cbf55f4964019a3e08d5c884a7675cc5f9acbc472dd0aed041c1e9c",
+      "method": "inverse_owned_delta",
+      "owned_after": "| 8 | PASS | [docs/rebuild/phases/phase-08/phase-8-report.md](../phases/phase-08/phase-8-report.md) | B03, B05\u2013B07, B09\u2013B21, D22, D23, S3, C3, C4, C9, C12\u2013C15, T; relevant O rows | src/discordbot/operations/, src/discordbot/composition/; deploy/systemd/, deploy/polkit/, deploy/; tests/integration/operations/ | [A8V3 independent report](../final-audit/a8v3-phase-8-verification-report.md): Phase8 repository scope PASS; M1/M2 remain CLOSED; M3 independently CLOSED. Original M3 baseline1/1 ->current2 PASS; remediation25/34 ->59 PASS. Focused187 PASS; affected809 PASS/1 known FAIL; new Windows9 PASS; real Linux97 PASS. Full1562 PASS/2 known FAIL/27 SKIP; distinct1589 PASS/2 FAIL/27 SKIP/0 XFAIL. Original A8V2/A8R3 evidence retained. | All scoped repository operations gates verified; original Phase8/ADR-023 defers actual host/systemd/ARM64/live SLO. Tiny synthetic nine/32 restore timing does not establish production180s fit. Known inventory/Deno/audioop/A3/systemd limits retained; no clean-suite/production claim. All70 inherited contents preserved; local audit only. STOP A8V3 for supervisor; no A9/Integrated/Phase11; friend activation HELD. |",
+      "restore_before": "| 8 | FAIL | [docs/rebuild/phases/phase-08/phase-8-report.md](../phases/phase-08/phase-8-report.md) | B03, B05\u2013B07, B09\u2013B21, D22, D23, S3, C3, C4, C9, C12\u2013C15, T; relevant O rows | src/discordbot/operations/, src/discordbot/composition/; deploy/systemd/, deploy/polkit/, deploy/; tests/integration/operations/ | [A8R3 remediation report](../final-audit/a8r3-release-inventory-report.md): Phase8 remains FAIL; M1/M2 independently CLOSED; M3 remediated pending independent verification. Implementation 0ac1ab55a0748320a56ff54809813663ac149943. Unchanged M3 1/1 ->2 PASS; new59 boundaries25/34 ->59 PASS. Focused86 PASS; affected823 PASS/1 known FAIL; full1562 PASS/2 known FAIL/27 SKIP. Distinct corrected union1576 PASS/2 FAIL/27 SKIP/0 XFAIL. Original [A8V2 evidence](../final-audit/a8v2-phase-8-verification-report.md) retained. | Exempt only release-root manifest and build marker; preserve nested payload checksum coverage, M1/M2 retention and deployment/rollback. M3 OPEN pending independent verification; remaining A8V2 Phase8 gates incomplete. Synthetic Windows filesystem/SQLite/encryption/restore only; modeled links/fake external boundaries. Known inventory/Deno/Linux/systemd/audioop/A3 and backup timing limits retained; no clean-suite/live/Pi claim. STOP A8R3 for supervisor review; no A8V3/A9/Integrated/Phase11; friend activation HELD. |"
+    },
+    {
+      "status": " M",
+      "path": "docs/rebuild/final-audit/a3-phase-3-report.md",
+      "sha256": "e3ed14b7ed7929098d991e090449ce093defd2a187c19ad676ad179c70349ef9",
+      "final_sha256": "e3ed14b7ed7929098d991e090449ce093defd2a187c19ad676ad179c70349ef9",
+      "method": "byte_identical"
+    },
+    {
+      "status": " M",
+      "path": "docs/rebuild/phase-10-full-sweep-report.md",
+      "sha256": "3329647383bf71f442e15d848ccaaa9686775fe4ef414e6b3c032956b6c751ef",
+      "final_sha256": "3329647383bf71f442e15d848ccaaa9686775fe4ef414e6b3c032956b6c751ef",
+      "method": "byte_identical"
+    },
+    {
+      "status": " M",
+      "path": "docs/rebuild/phases/phase-10/phase-10-report.md",
+      "sha256": "2663ce5d13506ccd9d9a8b3ec67e32b190cc449de203ae10e140c10250930118",
+      "final_sha256": "2663ce5d13506ccd9d9a8b3ec67e32b190cc449de203ae10e140c10250930118",
+      "method": "byte_identical"
+    },
+    {
+      "status": " M",
+      "path": "tests/browser/watch_fixture.py",
+      "sha256": "1cca7cf0cc5f9c3b8c1b6081292c3a12badc3c977b9ebe284275705319c82a47",
+      "final_sha256": "1cca7cf0cc5f9c3b8c1b6081292c3a12badc3c977b9ebe284275705319c82a47",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/current/final-audit-document-index.md",
+      "sha256": "2c36ba9b1bcaa70cc54a8f6dc8aca05ca54f6ec21b9770b4b77a0374c8f89969",
+      "final_sha256": "2c36ba9b1bcaa70cc54a8f6dc8aca05ca54f6ec21b9770b4b77a0374c8f89969",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/current/phase-10b-active-state.md",
+      "sha256": "55d0a15e4c4940f805b4876ad876cdb59e6c4cf6b47e1f946225fba4825ad6eb",
+      "final_sha256": "55d0a15e4c4940f805b4876ad876cdb59e6c4cf6b47e1f946225fba4825ad6eb",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/current/phase-10b-d4c-evidence.json",
+      "sha256": "616f1d81094fceddd5c0e689081667c8dfb3d8237df3254c2880ebf328c83984",
+      "final_sha256": "616f1d81094fceddd5c0e689081667c8dfb3d8237df3254c2880ebf328c83984",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/current/phase-10b-d4r-browser-evidence.json",
+      "sha256": "3cbac1af2ed816eaf3cd7f1d20828160bba967f0457d85bce33786c581d80fa2",
+      "final_sha256": "3cbac1af2ed816eaf3cd7f1d20828160bba967f0457d85bce33786c581d80fa2",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/current/phase-10b-d4r2-p-evidence.json",
+      "sha256": "dfbfd49897c08b9e18e0655805fa89363ab2681edaaad43bd164697c9c5bb01f",
+      "final_sha256": "dfbfd49897c08b9e18e0655805fa89363ab2681edaaad43bd164697c9c5bb01f",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/current/phase-10b-d5-evidence.json",
+      "sha256": "97f00af6285d66fe7009bd14bb50fbc5752228e0fd0f4cc6145221ca2f83a6b2",
+      "final_sha256": "97f00af6285d66fe7009bd14bb50fbc5752228e0fd0f4cc6145221ca2f83a6b2",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/current/phase-10b-d6-evidence.json",
+      "sha256": "02d33066e6a1d0c701c4568d7c19919a72cafc474cde4a32c8f9255aaee33e78",
+      "final_sha256": "02d33066e6a1d0c701c4568d7c19919a72cafc474cde4a32c8f9255aaee33e78",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/current/phase-10b-d7-evidence.json",
+      "sha256": "8ddc17df545880c4fe50fd259f9103d8dbb8a75ffb9c9ff1c6b4e6c09bc2a015",
+      "final_sha256": "8ddc17df545880c4fe50fd259f9103d8dbb8a75ffb9c9ff1c6b4e6c09bc2a015",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/current/phase-10b-e1-evidence.json",
+      "sha256": "1bdd878f5206e19c1d2ae73a58d306c20af963b2f72ca2eba90ffb55275a64be",
+      "final_sha256": "1bdd878f5206e19c1d2ae73a58d306c20af963b2f72ca2eba90ffb55275a64be",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/current/phase-10b-e2-evidence.json",
+      "sha256": "7a80560599f97f79c2c41ffb51a316b57ea60da0f83986bc6a182372c6689158",
+      "final_sha256": "7a80560599f97f79c2c41ffb51a316b57ea60da0f83986bc6a182372c6689158",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/current/phase-10b-e3-evidence.json",
+      "sha256": "8b0b39492fe75481576c8587c20b96095d703e94ef1ace547a9093cecdca62da",
+      "final_sha256": "8b0b39492fe75481576c8587c20b96095d703e94ef1ace547a9093cecdca62da",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/current/phase-10b-e4-evidence.json",
+      "sha256": "3ebe435f2873e84e5094b833df5678df1a0052dc350f1f991eb0d83b455410ff",
+      "final_sha256": "3ebe435f2873e84e5094b833df5678df1a0052dc350f1f991eb0d83b455410ff",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/current/phase-10b-gate-ledger.md",
+      "sha256": "d5eb52741647f8d6a2f07b05972af8e28cf2326e3ca270334b362f7b3ff0bd48",
+      "final_sha256": "d5eb52741647f8d6a2f07b05972af8e28cf2326e3ca270334b362f7b3ff0bd48",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/final-audit/a0-phase-0-report.md",
+      "sha256": "9fed83ee412725a83e780d986003c7ca523fbb2ec0870cdd82bd026387afee05",
+      "final_sha256": "9fed83ee412725a83e780d986003c7ca523fbb2ec0870cdd82bd026387afee05",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/final-audit/a1-phase-1-report.md",
+      "sha256": "a689a3b90b673382505d97e56eac91686a4009c5d42b461e5cf71b74211d1ab0",
+      "final_sha256": "a689a3b90b673382505d97e56eac91686a4009c5d42b461e5cf71b74211d1ab0",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/final-audit/a2-phase-2-report.md",
+      "sha256": "603e715ab57298f6587ab5b03f3aa254cedf34ca2c94634c5887fd0d70a6cdf5",
+      "final_sha256": "603e715ab57298f6587ab5b03f3aa254cedf34ca2c94634c5887fd0d70a6cdf5",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff.zip",
+      "sha256": "5c18fccf77ee421c62ff05eaa072fc0d760011a0663bb8c972e05cc9c0304f91",
+      "final_sha256": "5c18fccf77ee421c62ff05eaa072fc0d760011a0663bb8c972e05cc9c0304f91",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/00-executive-summary.md",
+      "sha256": "df447f1847094a6810e8a436cf168fd4f17019a9aef375b45ce69d6612147041",
+      "final_sha256": "df447f1847094a6810e8a436cf168fd4f17019a9aef375b45ce69d6612147041",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/01-current-system-overview.md",
+      "sha256": "5955951c6c71993edc5d126b4f97640920aa1877002bb19c9fb91735910ba53a",
+      "final_sha256": "5955951c6c71993edc5d126b4f97640920aa1877002bb19c9fb91735910ba53a",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/02-repository-map.md",
+      "sha256": "61283fd671587d5c340b48c0e7392547f437d166b3418126d781cb821d94854c",
+      "final_sha256": "61283fd671587d5c340b48c0e7392547f437d166b3418126d781cb821d94854c",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/03-feature-inventory.md",
+      "sha256": "32baa829002d74715964a43838afe0414376d70c79a7ed3cae77c606cd8132f9",
+      "final_sha256": "32baa829002d74715964a43838afe0414376d70c79a7ed3cae77c606cd8132f9",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/04-command-event-inventory.md",
+      "sha256": "1c997d1cab0d8810279ca66524eed35d1186783389001a2e564aea6d1129b95d",
+      "final_sha256": "1c997d1cab0d8810279ca66524eed35d1186783389001a2e564aea6d1129b95d",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/05-runtime-flow.md",
+      "sha256": "671d1024f846dd0b42539cefcaf7c4e3f021851a61e8e8172880e3dd1b536349",
+      "final_sha256": "671d1024f846dd0b42539cefcaf7c4e3f021851a61e8e8172880e3dd1b536349",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/06-data-model.md",
+      "sha256": "1256b318675d74fab926ac665c94952a9352fa0c2268766f8259b03bab11bbb7",
+      "final_sha256": "1256b318675d74fab926ac665c94952a9352fa0c2268766f8259b03bab11bbb7",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/07-external-dependencies.md",
+      "sha256": "f3917d1425e1d5927c1156986d7285bc7faa984f4d696fe5a371c1a5ce32707c",
+      "final_sha256": "f3917d1425e1d5927c1156986d7285bc7faa984f4d696fe5a371c1a5ce32707c",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/08-business-rules.md",
+      "sha256": "3f3017b56f39842bf49ea51354e250432892da43a21090943174315be8714f57",
+      "final_sha256": "3f3017b56f39842bf49ea51354e250432892da43a21090943174315be8714f57",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/09-performance-reliability-audit.md",
+      "sha256": "607dad0a8aac83d3836a46370c7549608152cb75d29d451a54d0ebd59d1f789d",
+      "final_sha256": "607dad0a8aac83d3836a46370c7549608152cb75d29d451a54d0ebd59d1f789d",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/10-architecture-problems.md",
+      "sha256": "d48a50a45e9fa4cf54b43bd00c30af30329c88c9a4ff3dde9875946400f5f4a7",
+      "final_sha256": "d48a50a45e9fa4cf54b43bd00c30af30329c88c9a4ff3dde9875946400f5f4a7",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/11-prd.md",
+      "sha256": "44d90adefd311facf5569c9a628125dc3eb1666f28b126e62c855c755b2151aa",
+      "final_sha256": "44d90adefd311facf5569c9a628125dc3eb1666f28b126e62c855c755b2151aa",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/12-functional-requirements.md",
+      "sha256": "d8b26e47abfab9665f68da97e8b57d2d6ad5a5b5ad3621174d32f9cb6db6e600",
+      "final_sha256": "d8b26e47abfab9665f68da97e8b57d2d6ad5a5b5ad3621174d32f9cb6db6e600",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/13-non-functional-requirements.md",
+      "sha256": "39c1f6045e9193162405272ca065d002062196d1d1e654c2fa028174165c4487",
+      "final_sha256": "39c1f6045e9193162405272ca065d002062196d1d1e654c2fa028174165c4487",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/14-target-architecture.md",
+      "sha256": "018a68b3bf6c858ca0dd28a8a92422df23f3f8c2b30edad2aac02e9ed34b7bc3",
+      "final_sha256": "018a68b3bf6c858ca0dd28a8a92422df23f3f8c2b30edad2aac02e9ed34b7bc3",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/15-async-concurrency-design.md",
+      "sha256": "86914523b607f482ba017c74cfde3c3b9ce68e80185a9d6370fcf1a8d8bb5c8a",
+      "final_sha256": "86914523b607f482ba017c74cfde3c3b9ce68e80185a9d6370fcf1a8d8bb5c8a",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/16-error-handling-policy.md",
+      "sha256": "d28a36e0f5feaa695dd6ebf47c8c1b4f73bd6b7c2697fc7db56af78195aa4a6d",
+      "final_sha256": "d28a36e0f5feaa695dd6ebf47c8c1b4f73bd6b7c2697fc7db56af78195aa4a6d",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/17-observability.md",
+      "sha256": "bb630cdc01d02a2b05308f8a53d26f43ccf99be5436029e377dfb578304c3c1e",
+      "final_sha256": "bb630cdc01d02a2b05308f8a53d26f43ccf99be5436029e377dfb578304c3c1e",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/18-security-review.md",
+      "sha256": "cc785cb23e8b957f5e9d3d9de1db5ef1d90b42493a018c4718df3b91527f1c53",
+      "final_sha256": "cc785cb23e8b957f5e9d3d9de1db5ef1d90b42493a018c4718df3b91527f1c53",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/19-testing-strategy.md",
+      "sha256": "d3a2c9940bf48c6a1dce594f307752b13f75918469fc2acc3a758e91daa354d7",
+      "final_sha256": "d3a2c9940bf48c6a1dce594f307752b13f75918469fc2acc3a758e91daa354d7",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/20-migration-plan.md",
+      "sha256": "fbfb6d3fbb1f047a40945e3ccc6f2d21d104ea3ae2aa0404456e0bc37e1a4c94",
+      "final_sha256": "fbfb6d3fbb1f047a40945e3ccc6f2d21d104ea3ae2aa0404456e0bc37e1a4c94",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/21-target-repository-structure.md",
+      "sha256": "b108d404503d7e874c612ebe807e3013a4ce1d06e34e92634f78f915fd1917ab",
+      "final_sha256": "b108d404503d7e874c612ebe807e3013a4ce1d06e34e92634f78f915fd1917ab",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/baseline/README.md",
+      "sha256": "58609e453f2861fb227ecf9b606cd0264fddfcf4b36c3b074fe3c7e4d8114562",
+      "final_sha256": "58609e453f2861fb227ecf9b606cd0264fddfcf4b36c3b074fe3c7e4d8114562",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/current/architecture-decision-log.md",
+      "sha256": "71039ddb38b57df33f91084f97880c56682a98189da60c5e9c1252ed4d63bafc",
+      "final_sha256": "71039ddb38b57df33f91084f97880c56682a98189da60c5e9c1252ed4d63bafc",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/current/current-plan.md",
+      "sha256": "53ee6fca9ec5979c8a0c1668eebc61a36a8ffeac29dec43afec89081fa2d0705",
+      "final_sha256": "53ee6fca9ec5979c8a0c1668eebc61a36a8ffeac29dec43afec89081fa2d0705",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/current/open-questions.md",
+      "sha256": "261d44a18e9aa51b78bbbc74005b37777be38a63a4187b8801cdffb1fbacc54c",
+      "final_sha256": "261d44a18e9aa51b78bbbc74005b37777be38a63a4187b8801cdffb1fbacc54c",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/current/requirement-test-trace.md",
+      "sha256": "ae19e1f2bd21880df364f9b0642dc1eac693e0030040cc9548a9ad2228bed5d2",
+      "final_sha256": "ae19e1f2bd21880df364f9b0642dc1eac693e0030040cc9548a9ad2228bed5d2",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/master_prompt.txt",
+      "sha256": "ce2bb85f6aca5e6c70508d08d033fa7dd1f337c42b65d163c9d3a22cb2525a7b",
+      "final_sha256": "ce2bb85f6aca5e6c70508d08d033fa7dd1f337c42b65d163c9d3a22cb2525a7b",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/phase-0-report.md",
+      "sha256": "d8a311c8d690d782b2f0c9a2228bbbb09b7a81bb439284bc3b49acec0a809e02",
+      "final_sha256": "d8a311c8d690d782b2f0c9a2228bbbb09b7a81bb439284bc3b49acec0a809e02",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/phase-1-report.md",
+      "sha256": "c6a61e3fe6c28be06e0f094ce4f1aa8e62a0b921e7c019838a3c12dea6716308",
+      "final_sha256": "c6a61e3fe6c28be06e0f094ce4f1aa8e62a0b921e7c019838a3c12dea6716308",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/phase-10-report.md",
+      "sha256": "9b751aebf337b39ea80769d8197be83e02a4da7ca109700b22ce2f425bcf7a73",
+      "final_sha256": "9b751aebf337b39ea80769d8197be83e02a4da7ca109700b22ce2f425bcf7a73",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/phase-2-report.md",
+      "sha256": "405d6b1d4486085d0919820f09e336a59cd361775e489e51b570e0cf0566d736",
+      "final_sha256": "405d6b1d4486085d0919820f09e336a59cd361775e489e51b570e0cf0566d736",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/phase-3-report.md",
+      "sha256": "6687e74efa8ccd37221f43ef6cc687abff1cd5e9a151aa210c16e8d2f8e07bc7",
+      "final_sha256": "6687e74efa8ccd37221f43ef6cc687abff1cd5e9a151aa210c16e8d2f8e07bc7",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/phase-4-report.md",
+      "sha256": "0fafc805332a5966ffae887900f2a78f8432c5b15eeb82817bbed94a968ab40f",
+      "final_sha256": "0fafc805332a5966ffae887900f2a78f8432c5b15eeb82817bbed94a968ab40f",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/phase-5-report.md",
+      "sha256": "0bcf7f07de5670dc491f9f20c18e26ba7834d8a973e8b784768cb07bf24d9931",
+      "final_sha256": "0bcf7f07de5670dc491f9f20c18e26ba7834d8a973e8b784768cb07bf24d9931",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/phase-6-report.md",
+      "sha256": "028647c2b4bf3a0260b26510c0433cacd5612f413fdf0e7839ec422d0a417ef8",
+      "final_sha256": "028647c2b4bf3a0260b26510c0433cacd5612f413fdf0e7839ec422d0a417ef8",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/phase-7-report.md",
+      "sha256": "c7aab332ea674e606623f0606df04cd1769f4dcd6d71cf23a2ad932bb900cb80",
+      "final_sha256": "c7aab332ea674e606623f0606df04cd1769f4dcd6d71cf23a2ad932bb900cb80",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/phase-8-report.md",
+      "sha256": "153a7c84eb8bdf6a5f18a34f6a84321fbc222b7c25d21d1b6fe38d22c732e6f8",
+      "final_sha256": "153a7c84eb8bdf6a5f18a34f6a84321fbc222b7c25d21d1b6fe38d22c732e6f8",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/rebuild/gpt_handoff/phase-9-report.md",
+      "sha256": "6cd700931bba699c4889c584339cfb63af278150092ef1078fe60cd86bc43664",
+      "final_sha256": "6cd700931bba699c4889c584339cfb63af278150092ef1078fe60cd86bc43664",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "docs/server-invite-guide.md",
+      "sha256": "faff0a04cb0246f77cfb5c85a45000bb1faf24188a0dd52e97e0e0f14e63c978",
+      "final_sha256": "faff0a04cb0246f77cfb5c85a45000bb1faf24188a0dd52e97e0e0f14e63c978",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "tests/browser/watch_intent_chrome.cjs",
+      "sha256": "d753ca05dc682158869b2becec18c4e2a11f360ae9c637cc58d4a36f618fb4dc",
+      "final_sha256": "d753ca05dc682158869b2becec18c4e2a11f360ae9c637cc58d4a36f618fb4dc",
+      "method": "byte_identical"
+    },
+    {
+      "status": "??",
+      "path": "tests/browser/watch_refresh_chrome.cjs",
+      "sha256": "dab8e20e4bd1cb0f654607933ab678c1d7cde4a890475baf7a1e8d187e60c25b",
+      "final_sha256": "dab8e20e4bd1cb0f654607933ab678c1d7cde4a890475baf7a1e8d187e60c25b",
+      "method": "byte_identical"
+    }
+  ]
+}

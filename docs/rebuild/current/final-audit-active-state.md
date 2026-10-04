@@ -1006,3 +1006,25 @@ STOP. Do not start A3V2 or A4 in this remediation session.
   A0-A7 PASS retained; MyFood/my_money untouched; friend activation HELD; deployment condition unmet.
 - **STOP A8R3 for supervisor review.** Next separate boundary: independent M1/M2/M3 verification
   and remaining original Phase8 gates from A8V2. No A8V3/A9/Integrated Audit/Phase11 performed here.
+
+## BD. A8V3 independent Phase 8 verification - PASS (2026-10-04)
+
+- **Phase 8 PASS for original repository operations scope; M1/M2 remain CLOSED and M3 independently CLOSED.**
+  [A8V3 report, complete gate matrix and limitations](../final-audit/a8v3-phase-8-verification-report.md).
+  Audited f0d0065f7d2f6bf8a767f8af7e77cbcd6ca7d726; M3 repair 0ac1ab55a0748320a56ff54809813663ac149943.
+- Exact pre-M3 modules: original1 PASS/1 FAIL and remediation25 PASS/34 FAIL; current original2 and59 PASS.
+  M1 original4/remediation78/independent4 and M2 original2/remediation36/independent2 PASS unchanged.
+- Focused187 PASS; affected809 PASS/1 known inventory FAIL; new independent Windows9 PASS;
+  actual Linux97 PASS (93 repeated identities plus4 Linux-only checks). Full1562 PASS/2 known FAIL/27 SKIP.
+  Distinct union1589 PASS/2 FAIL/27 SKIP/0 XFAIL; no clean full-suite or production acceptance claim.
+- Real Linux links/lib64/modes/fsync/flock and killed synthetic owner; local Git export and temporary
+  SQLite/encryption/restore proof. Nine/32 archive validation stays sequential; tiny synthetic timing
+  does not prove production fit within180s. Host/systemd/ARM64/power-loss/live RPO/RTO remain deferred
+  under original Phase8/ADR-023 scope. Known inventory/Deno/audioop/A3 and Linux/systemd skip limits retained.
+- All70 inherited contents preserved:68 exact hashes plus2 reversible owned authority deltas.
+  Prior receipt67+3 independently verified; index/exports/original evidence untouched. Scoped local audit
+  commit only, no push. All owned tests/children finished; isolated Linux tree/transfer archive removed.
+- A0-A7 PASS retained. Production source8e9018d4b8061cde6006eee47fa4103522f77718 and pin
+  r-8e9018d4b8061cde-3dac82a792fad576 remain distinct/untouched. No production/data/service/network action.
+- **STOP A8V3 for supervisor review.** Any A9/live gate requires its separate assignment; no A9,
+  Integrated Audit or Phase11 started. Friend activation HELD; deployment condition unmet; MyFood untouched.
