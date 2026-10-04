@@ -940,3 +940,24 @@ STOP. Do not start A3V2 or A4 in this remediation session.
   MyFood and other projects untouched; friend activation HELD; deployment condition unmet.
 - **STOP A8V1; NEXT supervisor review of M2, separately authorized remediation, then
   independent M1/M2 and remaining Phase8 verification.** No A9/Integrated Audit/Phase11.
+
+## BA. A8R2 backup retention - scoped remediation PASS (2026-10-04)
+
+- **Phase 8 remains FAIL; M1 independently CLOSED; M2 remediated, OPEN pending independent verification.**
+  [A8R2 root cause, exact RED/GREEN and limits](../final-audit/a8r2-backup-retention-report.md).
+  Entry 01d848555cfbf35115523752982a7ddb711ce09f; implementation ca8078fc4b84e57b46a63ac534edc34480bce19f.
+- Reuse isolated recovery validation before the eight-backup floor and before latest publication;
+  preserve prior/latest snapshots and rejected artifacts. Plan before pruning; no format/policy change.
+- Unchanged M2 probe 1 PASS/1 FAIL -> 2 PASS. New 36 boundaries PASS; M1 original 4/remediation 78/independent 4
+  PASS. Affected 760 PASS/1 known inventory FAIL; full 1503 PASS/2 known inventory-Deno FAIL/27 Linux SKIP.
+  Distinct final union 1513 PASS/2 FAIL/27 SKIP/0 XFAIL. No clean-suite/live/Pi/independent audit claim.
+- Real synthetic SQLite/encryption/restore, fake remote/services; known audioop/A3 limits retained.
+  Added validation I/O has no production-scale timing proof; unchanged 180s service budget. No WSL needed.
+- Inherited 70 contents preserved: 67 exact hashes plus 3 reversible owned documentation deltas.
+  Document index/exports/original evidence unchanged; scoped local commits only, no push. All owned
+  tests/children exited; no persistent worker/server/browser/WSL or pending test write remains.
+- Production source 8e9018d4b8061cde6006eee47fa4103522f77718 and pin
+  r-8e9018d4b8061cde-3dac82a792fad576 remain distinct/untouched. No production/data/deploy/service action.
+  A0-A7 PASS retained; MyFood/my_money untouched; friend activation HELD; deployment condition unmet.
+- **STOP A8R2 for supervisor review.** Next separate boundary: independent M1/M2 verification plus
+  remaining Phase 8 gates from A8V1. No A8V2/A9/Integrated Audit/Phase11 performed here.
