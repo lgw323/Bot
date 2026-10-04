@@ -1,5 +1,11 @@
 # Changelog
 
+## A8R4 backup telemetry freshness
+
+- Advance backup age from sampled local metadata mtime; report existing unknown age -1 / RPO 1 when sampling stops, fails, or the intended H2 DB latch is terminal. No new DB probes or automatic recovery.
+- Validate missing/invalid mtime and cover clock passage, metadata publication, cancellation/shutdown and unchanged readiness/retention boundaries with synthetic regressions.
+- Local remediation only; Phase 8 stays FAIL and M4 awaits independent verification. M1-M3 stay CLOSED; A9 stays separately BLOCKED.
+
 ## A8R3 exact release inventory
 
 - Exclude only release-root manifest metadata during validation and only the root build marker during inventory creation. Nested manifest.json, candidate.json and .building payloads retain exact checksum coverage.

@@ -48,6 +48,14 @@ JSON telemetry flushes to journald using central redaction. Metrics preserve the
 cap and report task/capacity/drop signals, DB latency/admission/failure, backup age/RPO, Watch capacity,
 Summary waiting and Music actor/cache/process gauges. No user IDs, content or capability URLs are labels.
 
+Backup age uses the last sampled local `latest.json` filesystem mtime, advancing with the wall clock
+between scheduled samples. Missing/invalid mtime, an unstarted/stopped/failed sampler, or the H2
+terminal DB latch reports the existing unknown pair `backup_age_seconds=-1`, `backup_rpo_exceeded=1`.
+Metadata replacement/removal is observed on the next normal sample; after terminal handling it stays
+unknown, including after a new backup, until an explicitly corrected/restarted process samples again.
+This is not remote verification. The six-hour threshold and H2 stop/no-automatic-recovery policy stay
+unchanged; reading gauges performs no filesystem or DB work and cannot restore readiness.
+
 Runtime and operations errors expose safe fixed messages; raw command output is suppressed. Failed
 shutdown propagates a failure result to systemd. A stopped process cannot emit its own liveness:
 systemd status and local probe failures complement endpoint evidence. No hosted monitoring was added.

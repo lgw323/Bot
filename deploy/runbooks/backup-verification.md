@@ -12,7 +12,11 @@ curl --fail --max-time 3 http://127.0.0.1:9010/metrics
 
 Use a new rehearsal path each time. The timer proposes every four hours UTC, persistent catch-up,
 one-second accuracy, leaving headroom under initial RPO six hours. Failures/outages can still exceed
-RPO: `backup_rpo_exceeded` becomes 1 when latest is missing or older than six hours. Investigate local
+RPO: `backup_rpo_exceeded` becomes 1 when latest is missing, its observation is unavailable, or it is
+older than six hours. `backup_age_seconds=-1` means unknown, including after the terminal DB probe
+latch or sampler termination; it must not be read as proof of a known backup age. While sampling is
+active, age advances from the last observed local `latest.json` mtime; replacement/removal appears
+at the next sample. Publishing a backup does not clear the DB latch or unknown state. Investigate local
 audit and bounded journal diagnostics; no hosted monitoring was added.
 
 Backups are Phase 3 consistent snapshots, validated by decrypt/restore/reconciliation before publish.

@@ -1,6 +1,7 @@
 """Bounded operational samples. No feature imports, user labels or raw SQL output."""
 
 import asyncio
+import math
 
 from discordbot.platform.errors import AppError, DataIntegrityError
 from discordbot.platform.tasks import TaskSpec, CancellationBehavior
@@ -17,7 +18,7 @@ class Probe:
         self.closed = False
         self.checked = 0.0
         self.backup_latest = backup_latest
-        self.backup_age = -1.0
+        self._backup_modified: float | None = None
         self.policy = ProbePolicy()
 
     async def start(self):
@@ -68,22 +69,33 @@ class Probe:
             if self.backup_latest is not None:
                 try:
                     modified = await self.runtime.executor.run(lambda: self.backup_latest.stat().st_mtime)
-                    self.backup_age = max(0, self.runtime.clock.now().timestamp() - modified)
+                    self._backup_modified = (modified if type(modified) in (int, float)
+                                             and math.isfinite(modified) else None)
                 except OSError:
-                    self.backup_age = -1.0
+                    self._backup_modified = None
         self.task = self.runtime.supervisor.start(TaskSpec("database-probe", "operations", "probe", "health", 10,
             cancellation_behavior=CancellationBehavior.CANCEL_ON_SHUTDOWN, emit_routine_events=False), sample)
         self.task.add_done_callback(lambda task: self.schedule() if not task.cancelled() and task.exception() is None else None)
 
+    @property
+    def backup_age(self) -> float:
+        # A stopped sampler cannot observe replacement/removal of latest.json.
+        # Reuse the existing unknown sentinel; never present its old safe sample.
+        if (self.closed or self.policy.hard or self._backup_modified is None
+                or self.task is None or self.task.done()):
+            return -1.0
+        return max(0.0, self.runtime.clock.now().timestamp() - self._backup_modified)
+
     def gauges(self):
         observations = self.database.observations
+        backup_age = self.backup_age
         return {"process_ready": float(self.ready()), "tasks_active": len(self.runtime.supervisor.snapshot().active),
                 "database_read_admitted": self.database.admitted[0], "database_write_admitted": self.database.admitted[1],
                 "database_recent_failures": sum(item.result != "ok" for item in observations),
                 "database_probe_recovery_pending": float(self.policy.pending_since is not None),
                 "database_last_execution_seconds": observations[-1].execution_seconds if observations else 0,
-                "backup_age_seconds": self.backup_age,
-                "backup_rpo_exceeded": float(self.backup_age < 0 or self.backup_age > 6 * 3600),
+                "backup_age_seconds": backup_age,
+                "backup_rpo_exceeded": float(backup_age < 0 or backup_age > 6 * 3600),
                 "task_capacity": self.runtime.supervisor.capacity if hasattr(self.runtime.supervisor, "capacity") else self.runtime.config.limits.task_capacity,
                 "telemetry_dropped": self.runtime.telemetry_buffer.dropped_count,
                 "metric_series_dropped": self.runtime.metrics.dropped_series}
