@@ -190,7 +190,8 @@ class Builder:
             files = {}
             for node in path.rglob("*"):
                 contained(path, node)
-                if node.is_file() and node.name != ".building":
+                # Nested names are payload; only the root admission marker is transient.
+                if node.is_file() and node != path / ".building":
                     files[node.relative_to(path).as_posix()] = digest(node)
             value = dict(release=identity, commit=commit, python=".".join(map(str, sys.version_info[:3])),
                          dependency_hash=lock_hash, schema_min=5, schema_max=5,

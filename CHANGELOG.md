@@ -1,5 +1,11 @@
 # Changelog
 
+## A8R3 exact release inventory
+
+- Exclude only release-root manifest metadata during validation and only the root build marker during inventory creation. Nested manifest.json, candidate.json and .building payloads retain exact checksum coverage.
+- Add 59 synthetic validation, activation, current-pointer, build/publication/reuse and supported-layout regression cases; preserve release and backup retention and rollback contracts.
+- Local remediation only; Phase 8 remains FAIL, M1/M2 stay independently CLOSED and M3 awaits independent verification. No production cleanup or deployment.
+
 ## A8R2 verified backup retention
 
 - Validate recovery candidates before the eight-backup floor and before advancing latest; preserve the prior latest and the new snapshot even outside filename ordering.

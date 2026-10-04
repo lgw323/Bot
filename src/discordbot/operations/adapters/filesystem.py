@@ -195,7 +195,8 @@ class ReleaseStore:
         inventory = set()
         for node in path.rglob("*"):
             contained(path, node)
-            if node.is_file() and node.name != "manifest.json":
+            # Only release-root metadata is outside its own checksum inventory.
+            if node.is_file() and node != path / "manifest.json":
                 inventory.add(node.relative_to(path).as_posix())
         if inventory != set(value["files"]):
             raise DataIntegrityError("release contains unmanifested files")
