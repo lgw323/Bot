@@ -21,6 +21,14 @@ and optional remote publication. Eight validated alternatives are retained. At 6
 backup fails closed for inspection rather than growing without bound after repeated partial failures.
 Never remove latest or its valid predecessor to clear this condition.
 
+Local retention uses the same isolated decrypt/restore and application-compatibility checks as
+rehearsal before counting an archive toward eight. It plans deletion before success audit/latest
+publication, protects the previous latest and new snapshot, and retains rejected artifacts for
+operator inspection. Valid local orphans can count; failed publication alone is not proof of
+corruption. Disk/permission/cancellation faults during validation abort before pruning. Revalidation
+adds local I/O; the existing 180-second service budget is unchanged, and production-scale timing
+is not established by synthetic tests. No cleanup of existing archives is authorized by this note.
+
 Remote publication is an injected encrypted-object/digest port. `backup_remote:null` explicitly means
 local-only; off-host RPO/host-loss durability is not claimed. No code-remote fallback or force push
 exists. PHASE 10 selected private Bot-Data with a separate write deploy key. The opt-in object is

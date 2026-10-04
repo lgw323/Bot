@@ -1,5 +1,11 @@
 # Changelog
 
+## A8R2 verified backup retention
+
+- Validate recovery candidates before the eight-backup floor and before advancing latest; preserve the prior latest and the new snapshot even outside filename ordering.
+- Reuse isolated restore validation, retain rejected artifacts for operator inspection, and plan all deletion before pruning. Add 36 synthetic corruption, publication, cancellation and retention boundary tests.
+- Local remediation only; Phase 8 stays FAIL, M1 remains independently CLOSED and M2 awaits independent verification. No production cleanup or deployment.
+
 ## A8R1 published release retention
 
 - Count only published manifests without `.building` toward the four newest release floor; retain the existing directory-mtime ordering.

@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import os
 import shutil
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Protocol
+from typing import AsyncIterator, Protocol
 from uuid import uuid4
 
 from discordbot.operations.adapters.audit import Audit
@@ -53,9 +54,12 @@ class Backups:
             # artifacts remain recoverable; transport retry is an operator action.
             if self.remote:
                 await self.remote.publish(artifact, checksum, identity)
+            # Validate the exact local artifacts before committing latest or deleting
+            # anything. Failed publications may leave valid or corrupt orphans.
+            removals = await self._retention_plan(8, newest=identity)
             await self.executor.run_retained(self.audit.write, "backup", release, "ok", "verified")
             await self.executor.run_retained(atomic_json, self.root / "latest.json", {"identity": identity})
-            await self.executor.run_retained(self.retain, 8)
+            await self.executor.run_retained(self._prune, removals)
             return identity
         except BaseException:
             await self.executor.run_retained(self.audit.write, "backup", release, "failed", "snapshot_or_publish")
@@ -66,17 +70,74 @@ class Backups:
         # Timestamped archive order remains usable when latest itself is corrupt.
         return tuple(records[:8])
 
-    def retain(self, count: int) -> None:
+    async def _retention_plan(self, count: int, *, newest: str | None = None) -> tuple[str, ...]:
         if not 2 <= count <= 32:
             raise ValueError("backup retention must preserve alternatives")
-        latest = read_json(self.root / "latest.json")["identity"]
-        records = sorted((p.stem for p in self.root.glob("*.json") if p.name != "latest.json"), reverse=True)
-        for identity in records[count:]:
-            if identity == latest:
-                continue
+        try:
+            latest = identifier((await self.executor.run(read_json, self.root / "latest.json")).get("identity"))
+        except (DataIntegrityError, FileNotFoundError):
+            latest = None  # A missing/corrupt pointer cannot identify a protected archive.
+        records = await self.executor.run(
+            lambda: sorted((p.stem for p in self.root.glob("*.json") if p.name != "latest.json"), reverse=True)
+        )
+        verified: list[str] = []
+        for identity in records:
+            try:
+                async with self._validated_candidate(identity, self.root):
+                    verified.append(identity)
+            except (DataIntegrityError, FileNotFoundError):
+                if identity == newest:
+                    raise
+                # Unverified artifacts stay available for operator reconciliation;
+                # they cannot consume the recovery floor. I/O/cancellation propagates.
+        if newest is not None and newest not in verified:
+            raise DataIntegrityError("new backup is not recoverable")
+        protected = set(verified[:count]) | {latest, newest}
+        return tuple(identity for identity in verified if identity not in protected)
+
+    async def retain(self, count: int) -> None:
+        removals = await self._retention_plan(count)
+        await self.executor.run_retained(self._prune, removals)
+
+    def _prune(self, identities: tuple[str, ...]) -> None:
+        for identity in identities:
             identifier(identity)
             for suffix in (".json", ".enc"):
                 contained(self.root, self.root / (identity + suffix)).unlink(missing_ok=True)
+
+    @asynccontextmanager
+    async def _validated_candidate(self, identity: str, directory: Path) -> AsyncIterator[Path]:
+        identifier(identity)
+        isolated = directory / (".rehearsal-" + uuid4().hex + ".db")
+        try:
+            record = await self.executor.run(read_json, self.root / (identity + ".json"))
+            artifact = contained(self.root, self.root / (identity + ".enc"))
+            if (record.get("identity") != identity or record.get("schema") != 5
+                    or record.get("key_id") != self.key_id
+                    or await self.executor.run(digest, artifact) != record.get("sha256")):
+                raise DataIntegrityError("backup metadata validation failed")
+            offline = SqliteDatabase(DatabaseConfig(isolated.absolute()))
+            try:
+                await DataRecovery(offline).restore_copy(RecoveryCandidate(artifact, self.key),
+                                                         isolated, DatabaseRequest.within(120))
+            finally:
+                await offline.stop()
+            # The same independent application compatibility check gates both
+            # restore publication and eligibility to displace older recovery points.
+            candidate_db = SqliteDatabase(DatabaseConfig(isolated.absolute()))
+            try:
+                await candidate_db.start()
+                report = await candidate_db.inspect(DatabaseRequest.within(10))
+                if report.state is not DatabaseState.VALID or report.migration_version != 5:
+                    raise DataIntegrityError("restored application compatibility failed")
+            finally:
+                await candidate_db.stop()
+            yield isolated
+        finally:
+            def cleanup() -> None:
+                for suffix in ("", "-wal", "-shm", "-journal"):
+                    Path(str(isolated) + suffix).unlink(missing_ok=True)
+            await self.executor.run_retained(cleanup)
 
     async def restore(self, destination: Path, release: str, *, candidates: tuple[str, ...] | None = None) -> str:
         candidates = candidates if candidates is not None else await self.executor.run(self.candidates)
@@ -86,38 +147,11 @@ class Backups:
         try:
             for identity in candidates:
                 identifier(identity)
-                isolated = destination.with_name(".rehearsal-" + uuid4().hex + ".db")
                 try:
-                    record = await self.executor.run(read_json, self.root / (identity + ".json"))
-                    artifact = contained(self.root, self.root / (identity + ".enc"))
-                    if (record.get("identity") != identity or record.get("schema") != 5
-                            or record.get("key_id") != self.key_id
-                            or await self.executor.run(digest, artifact) != record.get("sha256")):
-                        raise DataIntegrityError("backup metadata validation failed")
-                    offline = SqliteDatabase(DatabaseConfig(isolated.absolute()))
-                    try:
-                        await DataRecovery(offline).restore_copy(RecoveryCandidate(artifact, self.key),
-                                                                 isolated, DatabaseRequest.within(120))
-                    finally:
-                        await offline.stop()
-                    # Independently prove startup compatibility before exposing
-                    # even the isolated operator candidate under its chosen name.
-                    candidate_db = SqliteDatabase(DatabaseConfig(isolated.absolute()))
-                    try:
-                        await candidate_db.start()
-                        report = await candidate_db.inspect(DatabaseRequest.within(10))
-                        if report.state is not DatabaseState.VALID or report.migration_version != 5:
-                            raise DataIntegrityError("restored application compatibility failed")
-                    finally:
-                        await candidate_db.stop()
-                    await self.executor.run_retained(publish_new, isolated, destination)
+                    async with self._validated_candidate(identity, destination.parent) as isolated:
+                        await self.executor.run_retained(publish_new, isolated, destination)
                 except (DataIntegrityError, FileNotFoundError):
                     continue
-                finally:
-                    def cleanup():
-                        for suffix in ("", "-wal", "-shm", "-journal"):
-                            Path(str(isolated) + suffix).unlink(missing_ok=True)
-                    await self.executor.run_retained(cleanup)
                 await self.executor.run_retained(self.audit.write, "restore_rehearsal", release, "ok", "validated")
                 return identity
             raise DataIntegrityError("no valid backup candidate")
