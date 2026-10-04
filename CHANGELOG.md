@@ -487,3 +487,10 @@
   session_closed delivery; cancel playback/reconnect work and reject late playback callbacks.
 - Preserve transient reconnect and unrelated rooms. Local synthetic validation only;
   Phase 6 stays FAIL pending independent A6V1. No production deployment.
+
+## 2026-10-04 - A9 local preparation only
+
+- Add a bounded fake-only workload/measurement/abort-cleanup harness and temporary
+  target guards, with brief Windows tests and an UNAPPROVED review example.
+- No runtime behavior, service configuration or approved SLO changes. A9 stays
+  BLOCKED; see docs/rebuild/final-audit/a9-local-preparation-report.md.

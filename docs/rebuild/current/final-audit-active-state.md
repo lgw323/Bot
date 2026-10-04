@@ -1122,3 +1122,20 @@ STOP. Do not start A3V2 or A4 in this remediation session.
 - **STOP A8V4 for supervisor review.** No A9 campaign/A10/Integrated/Phase11, SSH/Pi/network/live
   providers/production DB/config/service/security/restart/deploy/install/real cleanup/other projects.
   Friend activation HELD. Owned tests/tasks/executors exited; final cleanup/index proof in handoff.
+
+## BI. A9 bounded local harness preparation (2026-10-04)
+
+- **Preparation PASS; campaign readiness PARTIAL; A9 remains BLOCKED.**
+  [Report and boundaries](../final-audit/a9-local-preparation-report.md).
+- Entry candidate dc48b1ce66c63f36abdc2957d60d62bc387b725d; no production runtime edit.
+  Fake-only identity/temp guards, bounded samples/gaps/fault classification and
+  abort/cleanup checks; UNAPPROVED isolated example never applied.
+- Windows synthetic tests only; exact fresh results and inherited70 preservation
+  are in the report/evidence. No actual services, providers, 24h soak or WSL claim.
+- A0-A8 PASS retained. A9-B1/B2/B3/D1 and clean Pi/ARM64/Ethernet requirements remain.
+  Shared-host deviation/resource/SLO/service/credential/live-origin/off-host backup
+  approvals pending; Bot-Data/db-backup excluded. Reported baseline503/H2 latch must
+  resolve before load; no reset/restart or fresh production observation authorized.
+- Production8e9018d4b8061cde6006eee47fa4103522f77718 /
+  r-8e9018d4b8061cde-3dac82a792fad576 untouched. Local scoped commit only; no push.
+- **STOP after preparation. No Pi/load/A10/Integrated Audit/Phase11.**
