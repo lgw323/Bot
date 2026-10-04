@@ -1,0 +1,513 @@
+{
+  "scope": "LOCAL_MICROPHASE_ONLY",
+  "microphase": "PASS",
+  "runtime_candidate_a9": "BLOCKED",
+  "head": "769a00ab892edc7f98a1f9d947abd23d99c1056a",
+  "git_index_empty": true,
+  "source_export_sha256": "42e5cdfe289dba5180a245f0a03e9bde6f83832835c787e3a5afa5202615a43c",
+  "manifest_sha256": "4dbfcd44036d53d59e3631d43b329c2735d61ea35757ea8c233b06e1087c3ad8",
+  "source_files_reverified": 146,
+  "owned_files": [
+    "scripts/a9_local_harness.py",
+    "scripts/a9_candidate_adapter.py",
+    "scripts/a9_candidate_packet.py",
+    "tests/integration/operations/test_a9_candidate_packet.py",
+    "docs/rebuild/final-audit/a9-candidate-local-report.md",
+    "docs/rebuild/final-audit/a9-candidate-local-manifest.json",
+    "docs/rebuild/final-audit/a9-candidate-local-evidence.json",
+    "CHANGELOG.md",
+    "docs/rebuild/current/final-audit-active-state.md"
+  ],
+  "inherited_preserved": [
+    {
+      "path": "CHANGELOG.md",
+      "entry_sha256": "0c6dbdae5dd681957372c2953f91a0e995cba44dd11d8a00e490ef383c11010c",
+      "preservation": "exact-owned-appendix-removed"
+    },
+    {
+      "path": "README.md",
+      "entry_sha256": "9f1ee4c189b402e407f0e52e7c18109bc185e63b2701e60a69a8f1f6af7a1c4d",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/product-spec.md",
+      "entry_sha256": "87b31c254feb2dace9580ca1794ee097fb9ec151987ab60559d6112f12ca6fc8",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/README.md",
+      "entry_sha256": "e2324d804ac1e13d7f7dc465f122b4d91f451b4cb8157efa7494b28b8d85888c",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/current/current-plan.md",
+      "entry_sha256": "c2c23764a604d7e94b6dd3a5a87c6c36c3896d40801618c446f4287b1d478914",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/current/final-audit-active-state.md",
+      "entry_sha256": "d6d99b649d492f717f3bd60394ff8a32e689124bec939876d2381a8112ec104c",
+      "preservation": "exact-owned-appendix-removed"
+    },
+    {
+      "path": "docs/rebuild/current/final-audit-ledger.md",
+      "entry_sha256": "092efb5222385ccca03ad7c589ddeb72e1ddc10f8285dc1bce1aed1e4e7569c1",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/final-audit/a3-phase-3-report.md",
+      "entry_sha256": "e3ed14b7ed7929098d991e090449ce093defd2a187c19ad676ad179c70349ef9",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/phase-10-full-sweep-report.md",
+      "entry_sha256": "3329647383bf71f442e15d848ccaaa9686775fe4ef414e6b3c032956b6c751ef",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/phases/phase-10/phase-10-report.md",
+      "entry_sha256": "2663ce5d13506ccd9d9a8b3ec67e32b190cc449de203ae10e140c10250930118",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "tests/browser/watch_fixture.py",
+      "entry_sha256": "1cca7cf0cc5f9c3b8c1b6081292c3a12badc3c977b9ebe284275705319c82a47",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/current/final-audit-document-index.md",
+      "entry_sha256": "b749d4cb6ae02372afc46a1c9bdde4fd9549c6f236899bb173312ab0355fc881",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-active-state.md",
+      "entry_sha256": "55d0a15e4c4940f805b4876ad876cdb59e6c4cf6b47e1f946225fba4825ad6eb",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d4c-evidence.json",
+      "entry_sha256": "616f1d81094fceddd5c0e689081667c8dfb3d8237df3254c2880ebf328c83984",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d4r-browser-evidence.json",
+      "entry_sha256": "3cbac1af2ed816eaf3cd7f1d20828160bba967f0457d85bce33786c581d80fa2",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d4r2-p-evidence.json",
+      "entry_sha256": "dfbfd49897c08b9e18e0655805fa89363ab2681edaaad43bd164697c9c5bb01f",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d5-evidence.json",
+      "entry_sha256": "97f00af6285d66fe7009bd14bb50fbc5752228e0fd0f4cc6145221ca2f83a6b2",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d6-evidence.json",
+      "entry_sha256": "02d33066e6a1d0c701c4568d7c19919a72cafc474cde4a32c8f9255aaee33e78",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d7-evidence.json",
+      "entry_sha256": "8ddc17df545880c4fe50fd259f9103d8dbb8a75ffb9c9ff1c6b4e6c09bc2a015",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-e1-evidence.json",
+      "entry_sha256": "1bdd878f5206e19c1d2ae73a58d306c20af963b2f72ca2eba90ffb55275a64be",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-e2-evidence.json",
+      "entry_sha256": "7a80560599f97f79c2c41ffb51a316b57ea60da0f83986bc6a182372c6689158",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-e3-evidence.json",
+      "entry_sha256": "8b0b39492fe75481576c8587c20b96095d703e94ef1ace547a9093cecdca62da",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-e4-evidence.json",
+      "entry_sha256": "3ebe435f2873e84e5094b833df5678df1a0052dc350f1f991eb0d83b455410ff",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-gate-ledger.md",
+      "entry_sha256": "d5eb52741647f8d6a2f07b05972af8e28cf2326e3ca270334b362f7b3ff0bd48",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/final-audit/a0-phase-0-report.md",
+      "entry_sha256": "9fed83ee412725a83e780d986003c7ca523fbb2ec0870cdd82bd026387afee05",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/final-audit/a1-phase-1-report.md",
+      "entry_sha256": "a689a3b90b673382505d97e56eac91686a4009c5d42b461e5cf71b74211d1ab0",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/final-audit/a2-phase-2-report.md",
+      "entry_sha256": "603e715ab57298f6587ab5b03f3aa254cedf34ca2c94634c5887fd0d70a6cdf5",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/final-audit/a9-recovery-reconciliation-report.md",
+      "entry_sha256": "7f632bc6a6d57df370dcaf69de05d03b915212077e47cd56afb17ee6f6673020",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff.zip",
+      "entry_sha256": "5c18fccf77ee421c62ff05eaa072fc0d760011a0663bb8c972e05cc9c0304f91",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/00-executive-summary.md",
+      "entry_sha256": "df447f1847094a6810e8a436cf168fd4f17019a9aef375b45ce69d6612147041",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/01-current-system-overview.md",
+      "entry_sha256": "5955951c6c71993edc5d126b4f97640920aa1877002bb19c9fb91735910ba53a",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/02-repository-map.md",
+      "entry_sha256": "61283fd671587d5c340b48c0e7392547f437d166b3418126d781cb821d94854c",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/03-feature-inventory.md",
+      "entry_sha256": "32baa829002d74715964a43838afe0414376d70c79a7ed3cae77c606cd8132f9",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/04-command-event-inventory.md",
+      "entry_sha256": "1c997d1cab0d8810279ca66524eed35d1186783389001a2e564aea6d1129b95d",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/05-runtime-flow.md",
+      "entry_sha256": "671d1024f846dd0b42539cefcaf7c4e3f021851a61e8e8172880e3dd1b536349",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/06-data-model.md",
+      "entry_sha256": "1256b318675d74fab926ac665c94952a9352fa0c2268766f8259b03bab11bbb7",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/07-external-dependencies.md",
+      "entry_sha256": "f3917d1425e1d5927c1156986d7285bc7faa984f4d696fe5a371c1a5ce32707c",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/08-business-rules.md",
+      "entry_sha256": "3f3017b56f39842bf49ea51354e250432892da43a21090943174315be8714f57",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/09-performance-reliability-audit.md",
+      "entry_sha256": "607dad0a8aac83d3836a46370c7549608152cb75d29d451a54d0ebd59d1f789d",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/10-architecture-problems.md",
+      "entry_sha256": "d48a50a45e9fa4cf54b43bd00c30af30329c88c9a4ff3dde9875946400f5f4a7",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/11-prd.md",
+      "entry_sha256": "44d90adefd311facf5569c9a628125dc3eb1666f28b126e62c855c755b2151aa",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/12-functional-requirements.md",
+      "entry_sha256": "d8b26e47abfab9665f68da97e8b57d2d6ad5a5b5ad3621174d32f9cb6db6e600",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/13-non-functional-requirements.md",
+      "entry_sha256": "39c1f6045e9193162405272ca065d002062196d1d1e654c2fa028174165c4487",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/14-target-architecture.md",
+      "entry_sha256": "018a68b3bf6c858ca0dd28a8a92422df23f3f8c2b30edad2aac02e9ed34b7bc3",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/15-async-concurrency-design.md",
+      "entry_sha256": "86914523b607f482ba017c74cfde3c3b9ce68e80185a9d6370fcf1a8d8bb5c8a",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/16-error-handling-policy.md",
+      "entry_sha256": "d28a36e0f5feaa695dd6ebf47c8c1b4f73bd6b7c2697fc7db56af78195aa4a6d",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/17-observability.md",
+      "entry_sha256": "bb630cdc01d02a2b05308f8a53d26f43ccf99be5436029e377dfb578304c3c1e",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/18-security-review.md",
+      "entry_sha256": "cc785cb23e8b957f5e9d3d9de1db5ef1d90b42493a018c4718df3b91527f1c53",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/19-testing-strategy.md",
+      "entry_sha256": "d3a2c9940bf48c6a1dce594f307752b13f75918469fc2acc3a758e91daa354d7",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/20-migration-plan.md",
+      "entry_sha256": "fbfb6d3fbb1f047a40945e3ccc6f2d21d104ea3ae2aa0404456e0bc37e1a4c94",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/21-target-repository-structure.md",
+      "entry_sha256": "b108d404503d7e874c612ebe807e3013a4ce1d06e34e92634f78f915fd1917ab",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/README.md",
+      "entry_sha256": "58609e453f2861fb227ecf9b606cd0264fddfcf4b36c3b074fe3c7e4d8114562",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/current/architecture-decision-log.md",
+      "entry_sha256": "71039ddb38b57df33f91084f97880c56682a98189da60c5e9c1252ed4d63bafc",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/current/current-plan.md",
+      "entry_sha256": "53ee6fca9ec5979c8a0c1668eebc61a36a8ffeac29dec43afec89081fa2d0705",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/current/open-questions.md",
+      "entry_sha256": "261d44a18e9aa51b78bbbc74005b37777be38a63a4187b8801cdffb1fbacc54c",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/current/requirement-test-trace.md",
+      "entry_sha256": "ae19e1f2bd21880df364f9b0642dc1eac693e0030040cc9548a9ad2228bed5d2",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/master_prompt.txt",
+      "entry_sha256": "ce2bb85f6aca5e6c70508d08d033fa7dd1f337c42b65d163c9d3a22cb2525a7b",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-0-report.md",
+      "entry_sha256": "d8a311c8d690d782b2f0c9a2228bbbb09b7a81bb439284bc3b49acec0a809e02",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-1-report.md",
+      "entry_sha256": "c6a61e3fe6c28be06e0f094ce4f1aa8e62a0b921e7c019838a3c12dea6716308",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-10-report.md",
+      "entry_sha256": "9b751aebf337b39ea80769d8197be83e02a4da7ca109700b22ce2f425bcf7a73",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-2-report.md",
+      "entry_sha256": "405d6b1d4486085d0919820f09e336a59cd361775e489e51b570e0cf0566d736",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-3-report.md",
+      "entry_sha256": "6687e74efa8ccd37221f43ef6cc687abff1cd5e9a151aa210c16e8d2f8e07bc7",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-4-report.md",
+      "entry_sha256": "0fafc805332a5966ffae887900f2a78f8432c5b15eeb82817bbed94a968ab40f",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-5-report.md",
+      "entry_sha256": "0bcf7f07de5670dc491f9f20c18e26ba7834d8a973e8b784768cb07bf24d9931",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-6-report.md",
+      "entry_sha256": "028647c2b4bf3a0260b26510c0433cacd5612f413fdf0e7839ec422d0a417ef8",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-7-report.md",
+      "entry_sha256": "c7aab332ea674e606623f0606df04cd1769f4dcd6d71cf23a2ad932bb900cb80",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-8-report.md",
+      "entry_sha256": "153a7c84eb8bdf6a5f18a34f6a84321fbc222b7c25d21d1b6fe38d22c732e6f8",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-9-report.md",
+      "entry_sha256": "6cd700931bba699c4889c584339cfb63af278150092ef1078fe60cd86bc43664",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "docs/server-invite-guide.md",
+      "entry_sha256": "faff0a04cb0246f77cfb5c85a45000bb1faf24188a0dd52e97e0e0f14e63c978",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "tests/browser/watch_intent_chrome.cjs",
+      "entry_sha256": "d753ca05dc682158869b2becec18c4e2a11f360ae9c637cc58d4a36f618fb4dc",
+      "preservation": "byte-identical"
+    },
+    {
+      "path": "tests/browser/watch_refresh_chrome.cjs",
+      "entry_sha256": "dab8e20e4bd1cb0f654607933ab678c1d7cde4a890475baf7a1e8d187e60c25b",
+      "preservation": "byte-identical"
+    }
+  ],
+  "receipts": [
+    {
+      "path": "scratch/a9-candidate-local/gap.xml",
+      "sha256": "71b3b7cc531675bfeee61333f4c35fabb398394ddddb0971cddaf149589dfca6",
+      "command": ".venv/Scripts/python.exe -B docs/rebuild/final-audit/a8r4-test-runner.py scratch/a9-candidate-local/gap-probe.py -q --junitxml=scratch/a9-candidate-local/gap.xml",
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "seconds": 0.14,
+      "failure_ids": [
+        "scratch.a9-candidate-local.gap-probe::test_existing_labels_do_not_measure_candidate"
+      ]
+    },
+    {
+      "path": "scratch/a9-candidate-local/packet-final.xml",
+      "sha256": "1860dc53139c5ca60dad49c76daeb8c5b28e004103895fb15e88aeab747d675d",
+      "command": ".venv/Scripts/python.exe -B docs/rebuild/final-audit/a8r4-test-runner.py scratch/a9-candidate-local/capture-test.py -q --junitxml=scratch/a9-candidate-local/packet-final.xml",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 1.026,
+      "failure_ids": []
+    },
+    {
+      "path": "scratch/a9-candidate-local/focused-initial.xml",
+      "sha256": "bc98585346afb4b261f1813258d17e819c974eea768ec76c9c6433faffb3ba2c",
+      "command": ".venv/Scripts/python.exe -B docs/rebuild/final-audit/a8r4-test-runner.py tests/integration/operations/test_a9_candidate_packet.py tests/integration/operations/test_a9_local_harness.py -q --junitxml=scratch/a9-candidate-local/focused-initial.xml",
+      "passed": 56,
+      "failed": 2,
+      "skipped": 0,
+      "seconds": 4.588,
+      "failure_ids": [
+        "tests.integration.operations.test_a9_candidate_packet::test_candidate_paths_persist_atomic_results_and_measure_actual_work",
+        "tests.integration.operations.test_a9_candidate_packet::test_candidate_guards_preserve_and_cleanup[max_seconds-0.01-harness_error]"
+      ]
+    },
+    {
+      "path": "scratch/a9-candidate-local/relevant.xml",
+      "sha256": "2c848a69bb890791a9cb8525d1a12bb350765b53f74360c82b81299a22f82313",
+      "command": ".venv/Scripts/python.exe -B docs/rebuild/final-audit/a8r4-test-runner.py tests/integration/operations/test_a9_candidate_packet.py tests/integration/operations/test_a9_local_harness.py tests/integration/data tests/integration/engagement -q --junitxml=scratch/a9-candidate-local/relevant.xml",
+      "passed": 516,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 37.8,
+      "failure_ids": []
+    },
+    {
+      "path": "scratch/a9-candidate-local/focused-final.xml",
+      "sha256": "fcbb43d6f6a38a2ab16ac353751dca66e036d4aae6b043bdcc73384a434278a7",
+      "command": ".venv/Scripts/python.exe -B docs/rebuild/final-audit/a8r4-test-runner.py tests/integration/operations/test_a9_candidate_packet.py tests/integration/operations/test_a9_local_harness.py -q --junitxml=scratch/a9-candidate-local/focused-final.xml",
+      "passed": 61,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 3.953,
+      "failure_ids": []
+    },
+    {
+      "path": "scratch/a9-candidate-local/frozen-focused.xml",
+      "sha256": "c38fc1d7a6700f333930e3d68770ae663b0503edc7997c84d0875d3701214566",
+      "command": ".venv/Scripts/python.exe -B docs/rebuild/final-audit/a8r4-test-runner.py tests/integration/operations/test_a9_candidate_packet.py tests/integration/operations/test_a9_local_harness.py scratch/a9-candidate-local/capture-test.py -q --junitxml=scratch/a9-candidate-local/frozen-focused.xml",
+      "passed": 62,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 4.759,
+      "failure_ids": []
+    },
+    {
+      "path": "scratch/a9-candidate-local/full.xml",
+      "sha256": "9c64172d5140fa226386aac581b17537780b2ca41c8b1c26dce43f96b6087fe9",
+      "command": ".venv/Scripts/python.exe -B docs/rebuild/final-audit/a8r4-test-runner.py tests/ -q --junitxml=scratch/a9-candidate-local/full.xml",
+      "passed": 1652,
+      "failed": 2,
+      "skipped": 27,
+      "seconds": 292.636,
+      "failure_ids": [
+        "tests.architecture.test_rebuild_documentation::test_rebuild_documents_are_partitioned_without_loss",
+        "tests.integration.music.test_resources::test_pinned_provider_and_runtime_load_without_network"
+      ]
+    },
+    {
+      "path": "scratch/a9-candidate-local/full-final.xml",
+      "sha256": "0d548355f84abc08b61113b87d932a60587728a87ff9ff84d2a97b85b2a6048e",
+      "command": ".venv/Scripts/python.exe -B docs/rebuild/final-audit/a8r4-test-runner.py tests/ -q --junitxml=scratch/a9-candidate-local/full-final.xml",
+      "passed": 1652,
+      "failed": 3,
+      "skipped": 27,
+      "seconds": 293.54,
+      "failure_ids": [
+        "tests.architecture.test_rebuild_documentation::test_rebuild_documents_are_partitioned_without_loss",
+        "tests.architecture.test_rebuild_documentation::test_all_relative_rebuild_document_links_resolve",
+        "tests.integration.music.test_resources::test_pinned_provider_and_runtime_load_without_network"
+      ]
+    },
+    {
+      "path": "scratch/a9-candidate-local/docs-final.xml",
+      "sha256": "3bad25940dc244b7347a04f49399a2e1c01fa313fed7d1a8590f191beb6b37ba",
+      "command": ".venv/Scripts/python.exe -B docs/rebuild/final-audit/a8r4-test-runner.py tests/architecture/test_rebuild_documentation.py::test_all_relative_rebuild_document_links_resolve tests/architecture/test_rebuild_documentation.py::test_heading_anchor_preserves_spaces_around_removed_punctuation -q --junitxml=scratch/a9-candidate-local/docs-final.xml",
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 0.279,
+      "failure_ids": []
+    }
+  ],
+  "count_policy": "Overlapping receipts are not additive. full.xml precedes final cleanup guard/identity refinement; frozen-focused.xml is 61 regression tests plus one capture. full-final.xml is final source; its early missing evidence-link failure is separately rechecked by docs-final.xml. No clean full-suite claim.",
+  "gap": {
+    "before": "16 successful fake labels; zero actual candidate transactions",
+    "probe_sha256": "08fe045f912b48dba3c9719cd8adc923bdfdc7f509492582ba86c3057ae31e2c",
+    "expected_assertion": "len(calls) > 0",
+    "after": "8 actual composite operations, 22 worker completions, 3 failed/cancelled awaiter observations"
+  },
+  "limits": [
+    "Windows synthetic local only",
+    "No independent review completed",
+    "No ARM64 artifact/ABI proof",
+    "Real ACK/voice/provider latency and representative Pi capacity unverified",
+    "No OS resource quotas/kernel-hang guardian",
+    "Raw worker execution includes SQLite lock wait",
+    "n=1 per successful step",
+    "Four existing media dependency pin mismatches"
+  ],
+  "initial_failures": [
+    "Focused 56 PASS/2 FAIL: post-stop rejected read denominator; service flush after setup timeout. Both corrected in harness/tests only.",
+    "Final full-suite documentation link check ran before evidence JSON was assembled; corrected by artifact creation and separately rechecked without changing the test."
+  ],
+  "artifact_sha256": {
+    "scripts/a9_local_harness.py": "a5e4788a3c8cab2fa88842098b7c7e0b069c5fe48ca0d544432db38e766379c4",
+    "scripts/a9_candidate_adapter.py": "6aa78d7d75b7aa1c31eeb4fc945a5b62935437a654f2147d39fbfe1f7a7ece99",
+    "scripts/a9_candidate_packet.py": "76cfef8c7e66cee2d1f252e04777ee8d46cae31c26b32078381cda9b0c4b2c3d",
+    "tests/integration/operations/test_a9_candidate_packet.py": "8cab629133c6bd684fbfbf2c17d5d8222066e0bc070f6f196ff1e5292318934c",
+    "docs/rebuild/final-audit/a9-candidate-local-report.md": "bb6bcd0cc26f82f0f4d89fb268b18dd4f601dbde9caa0f396f434d92cfdd328f",
+    "docs/rebuild/final-audit/a9-candidate-local-manifest.json": "4dbfcd44036d53d59e3631d43b329c2735d61ea35757ea8c233b06e1087c3ad8",
+    "CHANGELOG.md": "d25bd4fe1c22497c1838e6c71a2c5d11bbabb5fc0da2da08439c4a44e880f127",
+    "docs/rebuild/current/final-audit-active-state.md": "bd09897f7f089c962c3ca82d701706084e7256a54cd20fe1d1fa04521af4a4f0"
+  }
+}

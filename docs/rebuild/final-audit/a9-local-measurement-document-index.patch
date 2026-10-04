@@ -1,0 +1,23 @@
+--- a/docs/rebuild/current/final-audit-document-index.md
++++ b/docs/rebuild/current/final-audit-document-index.md
+@@ -304,3 +304,20 @@
+   exact proposed approval bundles. Latest routing: active-state BJ and Phase9 ledger.
+ - A9 stays BLOCKED B1/B2/B3/D1; B19/C2 >=24h and staging contract remain authoritative.
+   Local candidate HEAD is not operating8e; current internal503 cause is unproven.
++
++
++## A9 local measurement independent closure (2026-10-04)
++
++- [Candidate report](../final-audit/a9-candidate-local-report.md),
++  [M1 discovery](../final-audit/a9-candidate-local-independent-audit.md),
++  [M1 remediation](../final-audit/a9-local-m1-remediation-report.md),
++  [M1 verification/M2 discovery](../final-audit/a9-local-m1-independent-verification.md),
++  [M2 remediation](../final-audit/a9-local-m2-remediation-report.md) and
++  [independent closure](../final-audit/a9-local-m2-independent-verification.md).
++- M2 independently CLOSED; M1 closure retained. Runtime A9 BLOCKED B1/B2/B3/D1.
++  Independent126 focused,20 saved-reader, both attacks1/1, docs2/2 PASS; historical
++  FAILs, four dependency mismatches and inventory/Deno limits remain.
++- [Finalization](../final-audit/a9-local-measurement-finalization.md) records scoped
++  local commits and historical manifest identity; active-state BN/Phase9 ledger
++  are current routing. Inherited index stays untracked; only this appendix patch
++  is committed. STOP; no automatic Watch/music/Pi/campaign or next phase.

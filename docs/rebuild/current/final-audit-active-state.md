@@ -1162,3 +1162,59 @@ STOP. Do not start A3V2 or A4 in this remediation session.
   and isolation assessment (report bundle R), then a reviewed campaign packet (C).
   No automatic deployment to gain evidence. No Pi/privilege/load/commit/push here;
   inherited70 contents preserved, parent reviews scoped diff first. A10/Integrated/Phase11 held.
+
+
+## BK. A9 local candidate measurement packet (2026-10-04)
+
+- Local microphase PASS; runtime candidate A9 remains BLOCKED B1/B2/B3/D1.
+- [Report, coverage and independent-review boundary](../final-audit/a9-candidate-local-report.md): actual synthetic SQLite/engagement transactions, cancellation and shutdown; fake external delivery only.
+- Source/export/pins/config/scenario identities and actual measurements are linked there. Windows evidence is not ARM64/ABI, real Discord/voice/provider latency or representative Pi capacity proof.
+- Inherited changes/recovery reconciliation preserved. No staging/commit/Pi/load/deployment; parent reviews the exact owned diff first. Frozen next local measurement proposal is one Watch fake-peer packet, not automatically started.
+
+
+## BL. A9-LOCAL-M1 local identity remediation - pending independent verification (2026-10-04)
+
+- **Remediated pending independent verification; NOT CLOSED. A9 remains BLOCKED B1/B2/B3/D1.**
+- [Remediation report](../final-audit/a9-local-m1-remediation-report.md) supersedes only BK local identity assurance. Preserve the [independent FAIL report](../final-audit/a9-candidate-local-independent-audit.md) and original author report/manifest/evidence as historical records.
+- Exact auditor stale-import RED reproduced before changes; fresh verified-byte worker now executes the changed adapter and returns PARTIAL/unexpected_fault. Author rerun is not independent closure.
+- Harness/tests/docs only; no runtime application, Watch/music, Pi/external campaign, production data, install/upgrade, credentials, deployment or permission change. Historical1652 PASS/3 FAIL/27 SKIP including artifact ordering stays explicit.
+- Worker launch/timeout/cancellation failures return no certificate; forced process exit cannot certify temp DB cleanup. Source/config/scenario, worker import provenance and saved-packet drift checks remain required.
+- No staging/commit/push; exact entry-relative owned diff and hashes accompany the report. STOP for parent review and fresh independent verification; A10/Integrated Audit/Phase11 remain held.
+
+
+## BM. A9-LOCAL-M2 local receipt remediation - pending independent review (2026-10-04)
+
+- **REMEDIATED PENDING INDEPENDENT REVIEW; NOT CLOSED. A9 remains BLOCKED B1/B2/B3/D1.**
+- [M1 independent verification](../final-audit/a9-local-m1-independent-verification.md)
+  retains original M1 GREEN and new missing-provenance M2 FAIL. No historical report,
+  manifest, evidence or ledger verdict was rewritten.
+- [M2 report and exact receipts](../final-audit/a9-local-m2-remediation-report.md): exact
+  RED reproduced, same deletion attack GREEN against a fresh M2 artifact; original M1
+  probe still GREEN. Shared worker/saved receipt schema, required provenance, unique
+  canonical source binding and whole-receipt checksum enforce local integrity only.
+- Four dependency mismatches and known inventory/Deno failures remain; no full-suite,
+  runtime acceptance, cryptographic authenticity, Pi/ARM64 or soak claim.
+- Packet verifier/tests/docs only. Original 675-file inventory and inherited 642 unowned
+  set preserved with disclosed protected-DB metadata-only verification. No staging,
+  commit/push, runtime/Watch/music, Pi/SSH/network, install, credentials or permissions.
+- **STOP for separately scoped independent M2 review.** No Watch packet, external
+  campaign, A10, Integrated Audit or Phase 11; no finding closure by author tests.
+
+
+## BN. A9 local measurement independently verified and finalized (2026-10-04)
+
+- **A9-LOCAL-M2 independently CLOSED; M1 closure retained. Runtime A9 remains
+  BLOCKED B1/B2/B3/D1.** Local measurement milestone complete; no next microphase.
+- [Independent closure](../final-audit/a9-local-m2-independent-verification.md):
+  126 focused PASS,20 independent saved-reader PASS, M1/M2 attacks1/1 each, docs2/2.
+  Prior FAIL and author pending-review records in BK-BM remain unchanged history.
+- [Finalization and ownership](../final-audit/a9-local-measurement-finalization.md):
+  recovery/local implementation/evidence commits are scoped separately; inherited
+  mixed edits stay unstaged. Only owned index appendix patches are committed.
+- All manifests remain historical at HEAD769a00ab892edc7f98a1f9d947abd23d99c1056a.
+  Later commits invalidate current-source reuse; no evidence/hashes were refreshed.
+- Four mismatches remain: bgutil-ytdlp-pot-provider1.3.1,deno2.9.7,yt-dlp-ejs0.8.0
+  lack installed metadata; yt-dlp2026.7.4 differs from pin2026.8.19. Known inventory/
+  Deno failures and prior full-suite FAIL history remain; no runtime/ABI/soak waiver.
+- **STOP.** Local commits only, no push, Watch/music/Pi/network/campaign, installs,
+  credentials, permissions, deployment, A10, Integrated Audit or Phase11.

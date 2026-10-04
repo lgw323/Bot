@@ -494,3 +494,36 @@
   target guards, with brief Windows tests and an UNAPPROVED review example.
 - No runtime behavior, service configuration or approved SLO changes. A9 stays
   BLOCKED; see docs/rebuild/final-audit/a9-local-preparation-report.md.
+
+
+## A9 local candidate measurement preparation (2026-10-04)
+
+- Connect the bounded local harness to synthetic SQLite and candidate engagement paths; retain real latency/failure samples and a source/config/dependency/coverage manifest. No runtime implementation change; A9 remains BLOCKED. See `docs/rebuild/final-audit/a9-candidate-local-report.md`.
+
+
+## A9-LOCAL-M1 local identity remediation (2026-10-04)
+
+- Bind the candidate measurement packet to verified frozen source in a fresh interpreter; reject stale imports/pycache, capture drift and saved-manifest drift. Add worker failure/cancellation/reaping checks without changing runtime application code.
+- Remediated pending independent verification, not CLOSED; A9 remains BLOCKED B1/B2/B3/D1. See `docs/rebuild/final-audit/a9-local-m1-remediation-report.md`. Historical audit and full-suite failures remain preserved.
+
+
+## A9-LOCAL-M2 local receipt integrity remediation (2026-10-04)
+
+- Require complete receipt checksum, protocol entrypoint provenance, canonical unique
+  module/source binding and fail-closed schema checks at worker return and saved reuse.
+  Raw saved JSON rejects duplicate keys. Preserve M1 fresh-worker execution and cleanup.
+- Exact missing-adapter RED reproduced; current-source attack and focused regressions
+  pass. Local integrity only, not authentication against a writer replacing all records.
+- [Report](docs/rebuild/final-audit/a9-local-m2-remediation-report.md): remediated pending
+  independent review, NOT CLOSED; historical FAIL retained. Runtime A9 remains BLOCKED.
+
+
+## A9 local measurement independent closure (2026-10-04)
+
+- A9-LOCAL-M2 independently CLOSED; M1 closure retained. Preserve prior FAIL and
+  pending-review entries as history. Runtime A9 remains BLOCKED B1/B2/B3/D1.
+- Independent126 focused +20 saved-reader checks, both attacks1/1 and docs2/2 PASS.
+  Four dependency mismatches and known inventory/Deno failures remain.
+- [Finalization](docs/rebuild/final-audit/a9-local-measurement-finalization.md) records
+  scoped local commit ownership. Manifests retain their historical pre-commit HEAD;
+  no measurement was regenerated and no next microphase or push was started.
