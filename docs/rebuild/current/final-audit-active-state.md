@@ -1134,8 +1134,31 @@ STOP. Do not start A3V2 or A4 in this remediation session.
   are in the report/evidence. No actual services, providers, 24h soak or WSL claim.
 - A0-A8 PASS retained. A9-B1/B2/B3/D1 and clean Pi/ARM64/Ethernet requirements remain.
   Shared-host deviation/resource/SLO/service/credential/live-origin/off-host backup
-  approvals pending; Bot-Data/db-backup excluded. Reported baseline503/H2 latch must
-  resolve before load; no reset/restart or fresh production observation authorized.
+  approvals pending; Bot-Data/db-backup excluded. Reported baseline503 must resolve before load; its cause is unproven.
+  No reset/restart or fresh production observation authorized.
 - Production8e9018d4b8061cde6006eee47fa4103522f77718 /
   r-8e9018d4b8061cde-3dac82a792fad576 untouched. Local scoped commit only; no push.
 - **STOP after preparation. No Pi/load/A10/Integrated Audit/Phase11.**
+
+## BJ. A9 bounded recovery reconciliation (2026-10-04)
+
+- **Supplied bounded recoveries PASS; A9 remains BLOCKED B1/B2/B3/D1.**
+  [Reconciliation, evidence identities and next approval bundles](../final-audit/a9-recovery-reconciliation-report.md).
+- Local HEAD769a00ab892edc7f98a1f9d947abd23d99c1056a is not operating source
+  8e9018d4b8061cde6006eee47fa4103522f77718 / pin r-8e9018d4b8061cde-3dac82a792fad576.
+- Bot12:52:45.153589-45.729649UTC: latest completed encrypted archive -> isolated
+  schema5/integrity/FK/aggregate/checksum/data-adapter PASS; worker/SSH0, independent
+  absence and service preservation agree. RSS unmeasured; no off-host readback,
+  candidate verification, sustained RPO/RTO or180s backup-budget proof.
+- Hanteok12:37:14.697621-19.380871UTC: bounded recovered-copy app PASS, exit0/PID/port
+  absent. ChildNOFILE1024/1024, sampledFD260/287; don't reuse arbitrary256 .NET cap
+  or infer production limit increases. Earlier failed/PARTIAL smokes stay preserved.
+- Internal9010/9011 readiness503 remained unchanged in supplied before/after evidence;
+  user reports sinceOct1, cause unproven. Historical ready wording is not current health.
+- Seven-day operation supports only corroborated unchanged-platform/old-runtime scope;
+  candidate lifecycle/SQLite/voice/music/Watch/retention/freshness still need evidence.
+  B19/C2 >=24h and dedicated-staging contract unchanged; fake harness is local prep only.
+- **NEXT:** local candidate/measurement packet; separately bounded read-only Pi diagnosis
+  and isolation assessment (report bundle R), then a reviewed campaign packet (C).
+  No automatic deployment to gain evidence. No Pi/privilege/load/commit/push here;
+  inherited70 contents preserved, parent reviews scoped diff first. A10/Integrated/Phase11 held.

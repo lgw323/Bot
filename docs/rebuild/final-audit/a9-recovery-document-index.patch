@@ -1,0 +1,15 @@
+--- a/docs/rebuild/current/final-audit-document-index.md
++++ b/docs/rebuild/current/final-audit-document-index.md
+@@ -295,3 +295,12 @@
+   [ownership receipt](../final-audit/a8v4-ownership-receipt.json) retain all70 inherited contents.
+   Latest routing: active-state BH and Phase8 ledger row. A9 remains separately BLOCKED;
+   no A9 campaign/A10/Integrated/Phase11, production action or live acceptance claim.
++
++## A9 bounded recovery evidence routing (2026-10-04)
++
++- [Local preparation](../final-audit/a9-local-preparation-report.md) remains fake-only;
++  [recovery reconciliation](../final-audit/a9-recovery-reconciliation-report.md) records
++  supplied Bot/Hanteok bounded PASS, receipt hashes, preserved PARTIAL history and
++  exact proposed approval bundles. Latest routing: active-state BJ and Phase9 ledger.
++- A9 stays BLOCKED B1/B2/B3/D1; B19/C2 >=24h and staging contract remain authoritative.
++  Local candidate HEAD is not operating8e; current internal503 cause is unproven.
