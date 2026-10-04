@@ -1028,3 +1028,29 @@ STOP. Do not start A3V2 or A4 in this remediation session.
   r-8e9018d4b8061cde-3dac82a792fad576 remain distinct/untouched. No production/data/service/network action.
 - **STOP A8V3 for supervisor review.** Any A9/live gate requires its separate assignment; no A9,
   Integrated Audit or Phase11 started. Friend activation HELD; deployment condition unmet; MyFood untouched.
+
+## BE. A9 independent Phase 9 staging audit - BLOCKED (2026-10-04)
+
+- **Phase 9 BLOCKED; repository/synthetic verification PASS, required staging acceptance PARTIAL.**
+  [A9 report, gate matrix and contradictions](../final-audit/a9-phase-9-report.md).
+  Audited HEAD27c02140576a5ff288ee4d0f47d7e5d9c885dc2f; no new MATERIAL implementation defect reproduced.
+- Original B19/B20/C2 requires dedicated staging, target Pi, peak-times-two or approved capacity,
+  SLO measurements and >=24h workload soak. A9-B1/B2/B3 retain missing workload/SLO acceptance,
+  clean representative soak, current host/ARM64/service proof and sustained recovery timing/RPO/RTO.
+- Historical24h/1,438 synthetic samples retain DB failures+12/+17, health missing1 and disk loss;
+  corrected300.171s and E4 1800.628s/315 samples do not replace full soak. E4 Watch clients/sessions0.
+  D-series30/30, public route, E1/E2 recovery and E3 timer are accepted only in their recorded scope.
+  A9-D1 completion routing discrepancy remains; no dedicated-staging/SLO/soak waiver inferred.
+- Fresh56 focused +7 independent observer-boundary +72 dependent checks +2 documentation =137 distinct PASS/0 FAIL/
+  0 SKIP/0 XFAIL. Windows/fakes/temp DB and synthetic children only. No full-suite/WSL/live rerun.
+  A8V3 1589 distinct PASS/2 known FAIL/27 SKIP including97 Linux checks remains prior evidence.
+  Known inventory/Deno/audioop/A3/systemd and power-loss/180s budget limits retained.
+- All70 inherited contents preserved:68 exact hashes plus2 reversible owned authority deltas.
+  Document index/exports/original reports untouched; scoped local audit commit only, no push.
+  All4 pytest sessions/owned children finished; no pending writes or persistent services remain.
+- A0-A8 PASS retained in their scopes. Production source8e9018d4b8061cde6006eee47fa4103522f77718 /
+  pin r-8e9018d4b8061cde-3dac82a792fad576 stays distinct/untouched. No Pi/production/data/deploy/
+  systemd/network/security/provider action; MyFood/my_money untouched; friend activation HELD.
+- **STOP A9 for supervisor review.** Next requires exact missing evidence or separately approved
+  isolated target-host/workload/soak/recovery campaign and explicit acceptance reconciliation.
+  No A10/Integrated Audit/Phase11 or independent remediation starts here.
