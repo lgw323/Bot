@@ -961,3 +961,25 @@ STOP. Do not start A3V2 or A4 in this remediation session.
   A0-A7 PASS retained; MyFood/my_money untouched; friend activation HELD; deployment condition unmet.
 - **STOP A8R2 for supervisor review.** Next separate boundary: independent M1/M2 verification plus
   remaining Phase 8 gates from A8V1. No A8V2/A9/Integrated Audit/Phase11 performed here.
+
+## BB. A8V2 independent Phase 8 verification - FAIL (2026-10-04)
+
+- **Phase 8 FAIL; M1 remains CLOSED; M2 independently CLOSED; new A8-M3 MATERIAL OPEN.**
+  [A8V2 report, exact probes and remaining gates](../final-audit/a8v2-phase-8-verification-report.md).
+  Audited HEAD b4a0e4d7b3a51fc8f10ebf5f26dca2212eb48763; M2 repair ca8078fc4b84e57b46a63ac534edc34480bce19f.
+- Unchanged M2 baseline1 PASS/1 FAIL ->current2 PASS; remediation36 PASS. M1 original4,
+  remediation78 and independent4 PASS. Two new real restore/commit-order/cancellation probes PASS.
+- New M3: unlisted app/manifest.json bypasses exact release inventory and activates current=new;
+  ordinary app/settings.json rejects/current=old. Original Phase8 basename exclusion, no fix.
+- Fresh distinct current127 PASS/1 MATERIAL FAIL/0 SKIP/0 XFAIL. Separate baseline1/1.
+  Full suite and remaining gates stopped at M3. Windows synthetic evidence only; no WSL/live/Pi.
+  Added restore I/O has no production-scale timing proof under the unchanged180s backup budget.
+- All70 inherited contents preserved:68 exact hashes plus2 reversible owned authority deltas.
+  Document index/exports/original evidence unchanged; local audit commit only, no push.
+  All4 pytest sessions/owned worker exited; no pending test write or persistent process remains.
+- Known inventory/Deno/Linux/systemd/audioop/A3 limits retained; A0-A7 PASS unchanged.
+  Production source8e9018d4b8061cde6006eee47fa4103522f77718 and pin
+  r-8e9018d4b8061cde-3dac82a792fad576 distinct/untouched. No production/data/deploy/service action.
+- **STOP A8V2. NEXT supervisor review of M3, separate authorized remediation, then independent
+  M1/M2/M3 and remaining Phase8 gates.** No A9/Integrated/Phase11; friend activation HELD;
+  deployment condition unmet; MyFood/my_money untouched.
