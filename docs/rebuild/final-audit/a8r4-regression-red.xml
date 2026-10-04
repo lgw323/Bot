@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="18" skipped="0" tests="27" time="0.261" timestamp="2026-10-04T13:14:09.954991+09:00" hostname="TUF"><testcase classname="tests.integration.operations.test_backup_freshness" name="test_elapsed_time_publication_and_probe_count[False]" file="tests\integration\operations\test_backup_freshness.py" line="67" time="0.008"><failure message="assert 100.0 == 25300">tests\integration\operations\test_backup_freshness.py:88: in test_elapsed_time_publication_and_probe_count
+    assert h.probe.gauges()['backup_age_seconds'] == 25300
+E   assert 100.0 == 25300</failure></testcase><testcase classname="tests.integration.operations.test_backup_freshness" name="test_elapsed_time_publication_and_probe_count[True]" file="tests\integration\operations\test_backup_freshness.py" line="67" time="0.002"><failure message="assert 100.0 == -1">tests\integration\operations\test_backup_freshness.py:80: in test_elapsed_time_publication_and_probe_count
+    unknown(h.probe)
+tests\integration\operations\test_backup_freshness.py:64: in unknown
+    assert gauges['backup_age_seconds'] == -1
+E   assert 100.0 == -1</failure></testcase><testcase classname="tests.integration.operations.test_backup_freshness" name="test_missing_invalid_metadata_never_keeps_previous_safe_value[False-invalid0]" file="tests\integration\operations\test_backup_freshness.py" line="109" time="0.002" /><testcase classname="tests.integration.operations.test_backup_freshness" name="test_missing_invalid_metadata_never_keeps_previous_safe_value[False-invalid1]" file="tests\integration\operations\test_backup_freshness.py" line="109" time="0.002" /><testcase classname="tests.integration.operations.test_backup_freshness" name="test_missing_invalid_metadata_never_keeps_previous_safe_value[False-nan]" file="tests\integration\operations\test_backup_freshness.py" line="109" time="0.002"><failure message="assert 0 == -1">tests\integration\operations\test_backup_freshness.py:124: in test_missing_invalid_metadata_never_keeps_previous_safe_value
+    unknown(h.probe)
+tests\integration\operations\test_backup_freshness.py:64: in unknown
+    assert gauges['backup_age_seconds'] == -1
+E   assert 0 == -1</failure></testcase><testcase classname="tests.integration.operations.test_backup_freshness" name="test_missing_invalid_metadata_never_keeps_previous_safe_value[False-inf]" file="tests\integration\operations\test_backup_freshness.py" line="109" time="0.002"><failure message="assert 0 == -1">tests\integration\operations\test_backup_freshness.py:124: in test_missing_invalid_metadata_never_keeps_previous_safe_value
+    unknown(h.probe)
+tests\integration\operations\test_backup_freshness.py:64: in unknown
+    assert gauges['backup_age_seconds'] == -1
+E   assert 0 == -1</failure></testcase><testcase classname="tests.integration.operations.test_backup_freshness" name="test_missing_invalid_metadata_never_keeps_previous_safe_value[False--inf]" file="tests\integration\operations\test_backup_freshness.py" line="109" time="0.002"><failure message="assert inf == -1">tests\integration\operations\test_backup_freshness.py:124: in test_missing_invalid_metadata_never_keeps_previous_safe_value
+    unknown(h.probe)
+tests\integration\operations\test_backup_freshness.py:64: in unknown
+    assert gauges['backup_age_seconds'] == -1
+E   assert inf == -1</failure></testcase><testcase classname="tests.integration.operations.test_backup_freshness" name="test_missing_invalid_metadata_never_keeps_previous_safe_value[False-None]" file="tests\integration\operations\test_backup_freshness.py" line="109" time="0.002"><failure message="TypeError: unsupported operand type(s) for -: 'float' and 'NoneType'">tests\integration\operations\test_backup_freshness.py:123: in test_missing_invalid_metadata_never_keeps_previous_safe_value
+    await h.sample()
+tests\integration\operations\test_backup_freshness.py:49: in sample
+    await factory()
+src\discordbot\operations\adapters\probe.py:71: in sample
+    self.backup_age = max(0, self.runtime.clock.now().timestamp() - modified)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: unsupported operand type(s) for -: 'float' and 'NoneType'</failure></testcase><testcase classname="tests.integration.operations.test_backup_freshness" name="test_missing_invalid_metadata_never_keeps_previous_safe_value[False-invalid]" file="tests\integration\operations\test_backup_freshness.py" line="109" time="0.002"><failure message="TypeError: unsupported operand type(s) for -: 'float' and 'str'">tests\integration\operations\test_backup_freshness.py:123: in test_missing_invalid_metadata_never_keeps_previous_safe_value
+    await h.sample()
+tests\integration\operations\test_backup_freshness.py:49: in sample
+    await factory()
+src\discordbot\operations\adapters\probe.py:71: in sample
+    self.backup_age = max(0, self.runtime.clock.now().timestamp() - modified)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: unsupported operand type(s) for -: 'float' and 'str'</failure></testcase><testcase classname="tests.integration.operations.test_backup_freshness" name="test_missing_invalid_metadata_never_keeps_previous_safe_value[False-True]" file="tests\integration\operations\test_backup_freshness.py" line="109" time="0.002"><failure message="assert 99999.0 == -1">tests\integration\operations\test_backup_freshness.py:124: in test_missing_invalid_metadata_never_keeps_previous_safe_value
+    unknown(h.probe)
+tests\integration\operations\test_backup_freshness.py:64: in unknown
+    assert gauges['backup_age_seconds'] == -1
+E   assert 99999.0 == -1</failure></testcase><testcase classname="tests.integration.operations.test_backup_freshness" name="test_missing_invalid_metadata_never_keeps_previous_safe_value[True-invalid0]" file="tests\integration\operations\test_backup_freshness.py" line="109" time="0.002" /><testcase classname="tests.integration.operations.test_backup_freshness" name="test_missing_invalid_metadata_never_keeps_previous_safe_value[True-invalid1]" file="tests\integration\operations\test_backup_freshness.py" line="109" time="0.002" /><testcase classname="tests.integration.operations.test_backup_freshness" name="test_missing_invalid_metadata_never_keeps_previous_safe_value[True-nan]" file="tests\integration\operations\test_backup_freshness.py" line="109" time="0.002"><failure message="assert 0 == -1">tests\integration\operations\test_backup_freshness.py:124: in test_missing_invalid_metadata_never_keeps_previous_safe_value
+    unknown(h.probe)
+tests\integration\operations\test_backup_freshness.py:64: in unknown
+    assert gauges['backup_age_seconds'] == -1
+E   assert 0 == -1</failure></testcase><testcase classname="tests.integration.operations.test_backup_freshness" name="test_missing_invalid_metadata_never_keeps_previous_safe_value[True-inf]" file="tests\integration\operations\test_backup_freshness.py" line="109" time="0.002"><failure message="assert 0 == -1">tests\integration\operations\test_backup_freshness.py:124: in test_missing_invalid_metadata_never_keeps_previous_safe_value
+    unknown(h.probe)
+tests\integration\operations\test_backup_freshness.py:64: in unknown
+    assert gauges['backup_age_seconds'] == -1
+E   assert 0 == -1</failure></testcase><testcase classname="tests.integration.operations.test_backup_freshness" name="test_missing_invalid_metadata_never_keeps_previous_safe_value[True--inf]" file="tests\integration\operations\test_backup_freshness.py" line="109" time="0.002"><failure message="assert inf == -1">tests\integration\operations\test_backup_freshness.py:124: in test_missing_invalid_metadata_never_keeps_previous_safe_value
+    unknown(h.probe)
+tests\integration\operations\test_backup_freshness.py:64: in unknown
+    assert gauges['backup_age_seconds'] == -1
+E   assert inf == -1</failure></testcase><testcase classname="tests.integration.operations.test_backup_freshness" name="test_missing_invalid_metadata_never_keeps_previous_safe_value[True-None]" file="tests\integration\operations\test_backup_freshness.py" line="109" time="0.002"><failure message="TypeError: unsupported operand type(s) for -: 'float' and 'NoneType'">tests\integration\operations\test_backup_freshness.py:123: in test_missing_invalid_metadata_never_keeps_previous_safe_value
+    await h.sample()
+tests\integration\operations\test_backup_freshness.py:49: in sample
+    await factory()
+src\discordbot\operations\adapters\probe.py:71: in sample
+    self.backup_age = max(0, self.runtime.clock.now().timestamp() - modified)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: unsupported operand type(s) for -: 'float' and 'NoneType'</failure></testcase><testcase classname="tests.integration.operations.test_backup_freshness" name="test_missing_invalid_metadata_never_keeps_previous_safe_value[True-invalid]" file="tests\integration\operations\test_backup_freshness.py" line="109" time="0.002"><failure message="TypeError: unsupported operand type(s) for -: 'float' and 'str'">tests\integration\operations\test_backup_freshness.py:123: in test_missing_invalid_metadata_never_keeps_previous_safe_value
+    await h.sample()
+tests\integration\operations\test_backup_freshness.py:49: in sample
+    await factory()
+src\discordbot\operations\adapters\probe.py:71: in sample
+    self.backup_age = max(0, self.runtime.clock.now().timestamp() - modified)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: unsupported operand type(s) for -: 'float' and 'str'</failure></testcase><testcase classname="tests.integration.operations.test_backup_freshness" name="test_missing_invalid_metadata_never_keeps_previous_safe_value[True-True]" file="tests\integration\operations\test_backup_freshness.py" line="109" time="0.002"><failure message="assert 99999.0 == -1">tests\integration\operations\test_backup_freshness.py:124: in test_missing_invalid_metadata_never_keeps_previous_safe_value
+    unknown(h.probe)
+tests\integration\operations\test_backup_freshness.py:64: in unknown
+    assert gauges['backup_age_seconds'] == -1
+E   assert 99999.0 == -1</failure></testcase><testcase classname="tests.integration.operations.test_backup_freshness" name="test_sampling_termination_invalidates_metrics_without_restart[cancel]" file="tests\integration\operations\test_backup_freshness.py" line="136" time="0.002"><failure message="assert 100.0 == -1">tests\integration\operations\test_backup_freshness.py:152: in test_sampling_termination_invalidates_metrics_without_restart
+    unknown(h.probe)
+tests\integration\operations\test_backup_freshness.py:64: in unknown
+    assert gauges['backup_age_seconds'] == -1
+E   assert 100.0 == -1</failure></testcase><testcase classname="tests.integration.operations.test_backup_freshness" name="test_sampling_termination_invalidates_metrics_without_restart[exception]" file="tests\integration\operations\test_backup_freshness.py" line="136" time="0.002"><failure message="assert 100.0 == -1">tests\integration\operations\test_backup_freshness.py:152: in test_sampling_termination_invalidates_metrics_without_restart
+    unknown(h.probe)
+tests\integration\operations\test_backup_freshness.py:64: in unknown
+    assert gauges['backup_age_seconds'] == -1
+E   assert 100.0 == -1</failure></testcase><testcase classname="tests.integration.operations.test_backup_freshness" name="test_sampling_termination_invalidates_metrics_without_restart[stop]" file="tests\integration\operations\test_backup_freshness.py" line="136" time="0.002"><failure message="assert 100.0 == -1">tests\integration\operations\test_backup_freshness.py:152: in test_sampling_termination_invalidates_metrics_without_restart
+    unknown(h.probe)
+tests\integration\operations\test_backup_freshness.py:64: in unknown
+    assert gauges['backup_age_seconds'] == -1
+E   assert 100.0 == -1</failure></testcase><testcase classname="tests.integration.operations.test_backup_freshness" name="test_shutdown_during_metadata_sampling_cancels_and_drains" file="tests\integration\operations\test_backup_freshness.py" line="158" time="0.001"><failure message="assert 100.0 == -1">tests\integration\operations\test_backup_freshness.py:179: in test_shutdown_during_metadata_sampling_cancels_and_drains
+    unknown(h.probe)
+tests\integration\operations\test_backup_freshness.py:64: in unknown
+    assert gauges['backup_age_seconds'] == -1
+E   assert 100.0 == -1</failure></testcase><testcase classname="tests.integration.operations.test_backup_freshness" name="test_existing_rpo_threshold_and_future_mtime_clamp[0-0]" file="tests\integration\operations\test_backup_freshness.py" line="186" time="0.001" /><testcase classname="tests.integration.operations.test_backup_freshness" name="test_existing_rpo_threshold_and_future_mtime_clamp[21600-0]" file="tests\integration\operations\test_backup_freshness.py" line="186" time="0.002" /><testcase classname="tests.integration.operations.test_backup_freshness" name="test_existing_rpo_threshold_and_future_mtime_clamp[21600.001-1]" file="tests\integration\operations\test_backup_freshness.py" line="186" time="0.001" /><testcase classname="tests.integration.operations.test_backup_freshness" name="test_existing_rpo_threshold_and_future_mtime_clamp[-100-0]" file="tests\integration\operations\test_backup_freshness.py" line="186" time="0.001" /><testcase classname="tests.integration.operations.test_backup_freshness" name="test_no_metadata_configured_is_unknown" file="tests\integration\operations\test_backup_freshness.py" line="200" time="0.001" /></testsuite></testsuites>

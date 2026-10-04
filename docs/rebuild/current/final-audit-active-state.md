@@ -1077,3 +1077,23 @@ STOP. Do not start A3V2 or A4 in this remediation session.
 - **STOP for separately authorized A8-M4 remediation and independent verification.** No SSH/network/
   production/DB/service/restart/install or other-project action. Test work exited; no pending workers.
   No A10/Integrated/Phase11; friend activation HELD and deployment condition unmet.
+
+## BG. A8R4 backup telemetry freshness remediation - pending verification (2026-10-04)
+
+- **Local remediation PASS; Phase 8 remains FAIL, A8-M4 pending independent verification.**
+  [Root cause, exact RED/GREEN and regressions](../final-audit/a8r4-backup-freshness-report.md).
+  Entry HEAD ecc7674a59150c280bca15031f51eb7ec1015a7a; implementation/final commits in report/handoff.
+- Preserve intended H2 terminal latch and stop/no-auto-recovery policy. Reuse unknown age -1/RPO 1
+  when metadata sampling is unavailable; active samples age with clock passage. No new DB/stat work
+  in gauges, no new worker, readiness remains false after hard; liveness remains responsive.
+- Original current RED becomes PASS; historical negative control remains RED unchanged. Thirty new
+  local regressions include clock/publication/invalid metadata/cancellation/shutdown/no-extra-probe,
+  real temporary filesystem and in-process HTTP proof. Full results/known failures are in the report.
+- M1/M2/M3 remain independently CLOSED; prior retention/inventory fixes and evidence untouched.
+  A9 remains separately BLOCKED B1/B2/B3/D1. Known inventory/Deno/Linux/systemd/audioop/A3 limits remain.
+- Preserve all70 inherited contents via exact hashes or inverse owned deltas; untracked document index
+  stays inherited, only its appendix patch is committed. Scoped local commits, no push or bulkstage.
+  Production8e9018d4b8061cde6006eee47fa4103522f77718 / r-8e9018d4b8061cde-3dac82a792fad576 untouched.
+- **STOP A8R4 for separate independent M4 verification.** No independent audit/A9 campaign here.
+  No SSH/network/live/Pi/actual DB/backup/service/config/security/credential/restart/deploy/install,
+  other-project action or archive cleanup. Friend activation HELD; no Integrated Audit/Phase11.
