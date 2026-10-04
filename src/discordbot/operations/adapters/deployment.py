@@ -14,6 +14,7 @@ from discordbot.operations.adapters.audit import Audit
 from discordbot.operations.adapters.build import Builder, Runner
 from discordbot.operations.adapters.filesystem import ExclusiveLock, ReleaseStore, atomic_json, read_json
 from discordbot.operations.adapters.recovery import Backups
+from discordbot.operations.adapters.retention import cleanup_releases
 from discordbot.operations.application.deployment import Deployment
 from discordbot.operations.ports.deployment import Release
 from discordbot.platform.errors import DataIntegrityError, ExternalTemporaryError
@@ -160,16 +161,9 @@ class LocalDeployment:
     def audit(self, operation, release, result, reason): self.journal.write(operation, release, result, reason)
 
     def retain(self, release, previous):
-        protected = {release.identity}
-        if previous:
-            protected.add(previous.identity)
         atomic_json(self.settings.state / "rollback.json", {"previous": previous.identity if previous else None,
                     "current": release.identity, "protected_until": time.time() + 7 * 86400})
-        candidates = sorted((p for p in self.store.releases.iterdir() if p.is_dir()), key=lambda p: p.stat().st_mtime, reverse=True)
-        keep = protected | {p.name for p in candidates[:4]}
-        for path in candidates:
-            if path.name not in keep and time.time() - path.stat().st_mtime >= 7 * 86400:
-                self.store.remove(path.name, keep)
+        cleanup_releases(self.store, self.settings.state)
 
     def discard(self, release):
         protected = {self.previous} if self.previous else set()

@@ -1,5 +1,11 @@
 # Changelog
 
+## A8R1 published release retention
+
+- Count only published manifests without `.building` toward the four newest release floor; retain the existing directory-mtime ordering.
+- Reuse cleanup policy after deployment, preserving current/rollback/activation targets, seven-day published retention and one-day incomplete grace. Add 78 synthetic boundary cases; no real release cleanup or deployment.
+- Local remediation only; Phase 8 stays FAIL and A8-M1 remains OPEN pending independent verification.
+
 ## A7R2 retire pause intent with its music session
 
 - Clear saved pause intent at logical session retirement, so exhausted reconnect recovery cannot silence a queued or later successor. Same-session retries, TTS and reconnect still retain user pause intent.
