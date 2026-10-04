@@ -917,3 +917,26 @@ STOP. Do not start A3V2 or A4 in this remediation session.
 - **STOP A8R1 for parent review.** Next separate authorization: independent A8 verification
   of M1 and every remaining original A8 gate. No A8V1/A9/Integrated Audit/Phase11 performed.
   Friend activation HELD; deployment condition unmet. October4 resumption has no new deadline.
+
+## AZ. A8V1 independent Phase 8 verification - FAIL (2026-10-04)
+
+- **Phase8 FAIL; A8-M1 independently CLOSED; new A8-M2 MATERIAL OPEN.**
+  [A8V1 report, exact probes and remaining gates](../final-audit/a8v1-phase-8-verification-report.md).
+  Audited HEAD957df6a5d4b19d793ebfebb844e477bb2452ad83; M1 repair403c453855e1b39126efb8d72390737aba5e5def.
+- Original unchanged retention probe: baseline2 PASS/2 FAIL ->current4 PASS. Remediation78
+  cases PASS; independent4 mixed-order/pin/idempotence cases PASS across both entrypoints.
+- New M2: local backup retention counts corrupt failed-publication records toward eight,
+  deleting all8 independently restored valid prior archives and keeping7 rejected corrupt
+  orphans plus1 valid new archive. Control PASS, fault RED. Original Phase8 code, no fix.
+- Fresh distinct current147 PASS/1 MATERIAL FAIL/0 SKIP/0 XFAIL; baseline2/2 separate.
+  Full-suite and remaining scoped gates stopped at new material RED; complete matrix in report.
+  Windows synthetic SQLite/encryption/filesystem, fake remote/services; no Linux/live/Pi proof.
+- All70 inherited contents preserved through68 exact hashes and2 inverse-owned authority
+  deltas; index/export/original A8/A8R1 unchanged. Scoped local evidence commit only, no push.
+  All4 pytest sessions exited; no owned persistent worker/browser/WSL or pending test writes.
+- A0-A7 PASS retained. Inventory/Deno/Linux skips/audioop/A3 limits unchanged, no clean-suite claim.
+  Production source8e9018d4b8061cde6006eee47fa4103522f77718 and pin
+  r-8e9018d4b8061cde-3dac82a792fad576 untouched; no production/data/service/network action.
+  MyFood and other projects untouched; friend activation HELD; deployment condition unmet.
+- **STOP A8V1; NEXT supervisor review of M2, separately authorized remediation, then
+  independent M1/M2 and remaining Phase8 verification.** No A9/Integrated Audit/Phase11.
