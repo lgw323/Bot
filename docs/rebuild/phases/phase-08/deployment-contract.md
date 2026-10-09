@@ -37,6 +37,15 @@ exact pin/version set and offline `pip --no-index --no-deps --require-hashes --o
 `pip check`. Wheel provenance and ARM64 availability remain staging checks. The Linux venv's known
 internal `lib64 -> lib` alias is materialized; unexpected links are rejected.
 
+The 2026-10-09 dependency correction includes the existing `yt-dlp[default]`
+requirements in this exact-pin policy: `brotli==1.2.0`, `mutagen==1.48.1` and
+`pycryptodomex==3.23.0`. The resulting policy has 64 pins. These are required extras
+already declared by `requirements.txt`, not an expansion of runtime features.
+Base dependency closure alone is insufficient: artifact review must evaluate the
+declared extras and their recursive dependencies against the target markers.
+The earlier 61-pin artifacts remain historical incomplete evidence; the correction
+does not authorize package installation or deployment.
+
 Source export accepts an explicit 40-hex revision or an operator-configured `refs/heads/...` policy.
 Automatic updates fetch only that ref into a dedicated source mirror. Bounded archive extraction
 admits selected code/test/deploy metadata; live data, `.env` and docs DB are not source inputs.

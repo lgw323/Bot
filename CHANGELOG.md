@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-09 - Required media dependency pins
+
+- Complete the deployment pin policy for existing `yt-dlp[default]` requirements with approved `brotli==1.2.0`, `mutagen==1.48.1` and `pycryptodomex==3.23.0`.
+- Retain the incomplete 61-wheel evidence and prepare a separate 64-pin ARM64 wheelhouse with recursive extras verification; no runtime behavior, installation or deployment change.
+
 ## 2026-10-09 - Installed admission history boundary
 
 - Split the A9-BT1 mixed test into mandatory source-history proofs and installed current-routing coverage, preserving every original assertion and all other cases. Exact two-module installed exclusions remain unchanged.
