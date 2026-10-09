@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-09 - Installed admission history boundary
+
+- Split the A9-BT1 mixed test into mandatory source-history proofs and installed current-routing coverage, preserving every original assertion and all other cases. Exact two-module installed exclusions remain unchanged.
+- Extend lane partition regressions and documentation; retain disposable local-Git and isolated-interpreter tests in installed admission. Local verification and independent review remain distinct gates.
+
+## 2026-10-09 - Bounded admission test selection
+
+- Share exact pre-collection exclusions for the two approved A9 source measurement modules between LocalDeployment and the production candidate verifier. Both modules remain mandatory source regressions; full source review and installed admission are separate required gates.
+- Add command-control and collection-partition regressions, preserving future operations tests, warnings, timeout and verifier xfail strictness. Builder payload, archive validation and release identity are unchanged. Local self-tests do not authorize deployment or independent closure.
+
 ## A8R4 backup telemetry freshness
 
 - Advance backup age from sampled local metadata mtime; report existing unknown age -1 / RPO 1 when sampling stops, fails, or the intended H2 DB latch is terminal. No new DB probes or automatic recovery.

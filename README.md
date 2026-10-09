@@ -130,3 +130,36 @@ V2 `src` package의 Python 3.12/setuptools build metadata는 `pyproject.toml`에
 있습니다. V2 실행·배포 entrypoint와 systemd 자산은 구현됐으며, 실제 설치 전
 [운영 절차](deploy/runbooks/README.md)와 [PHASE 8 보고서](docs/rebuild/phases/phase-08/phase-8-report.md)를
 검토합니다. V1 운영 경로는 유지합니다. 별도의 lint, formatting, type-checking 명령은 없습니다.
+
+## Required source and installed test lanes
+
+The full source-review/development/commit gate remains `python -m pytest tests/`.
+It includes the mandatory measurement regressions
+`tests/integration/operations/test_a9_local_harness.py` and
+`tests/integration/operations/test_a9_candidate_packet.py`, plus the historical
+Git proofs in `tests/integration/source_review/test_a9_bt1_history.py`. A focused source check
+does not replace that full gate:
+
+```powershell
+python -B docs/rebuild/final-audit/a8r4-test-runner.py tests/integration/operations/test_a9_local_harness.py tests/integration/operations/test_a9_candidate_packet.py tests/integration/source_review/test_a9_bt1_history.py --confcutdir=tests/integration -p no:cacheprovider -W error::RuntimeWarning -W error::pytest.PytestUnraisableExceptionWarning -o xfail_strict=true
+```
+
+Installed admission is also mandatory. From the isolated candidate's `app`
+directory, using its reviewed interpreter, its selection is:
+
+```text
+python -B -m pytest tests/integration/operations --confcutdir=tests/integration/operations --ignore=tests/integration/operations/test_a9_local_harness.py --ignore=tests/integration/operations/test_a9_candidate_packet.py -p no:cacheprovider -q -W error::RuntimeWarning -W error::pytest.PytestUnraisableExceptionWarning -o xfail_strict=true
+```
+
+The two exact exclusions apply before collection because these tools require
+source scripts, audit documents and Git provenance. They are not skips or waivers;
+no other operations module is excluded. Both deployment callers use the shared
+selection policy, and keep their existing 300-second timeout and warning controls
+(the production verifier also retains strict xfail). Never add a source-tree
+fallback to an installed admission run. Counts change as tests are added; evidence
+must record test identities and actual source hashes, including dirty work.
+The mixed A9-BT1 test's current configuration/fetch routing remains installed;
+only its original fixed-commit proofs moved to source review. Disposable local-Git
+backup drills and the isolated staging-interpreter probe remain installed coverage.
+See the [bounded correction and local evidence](docs/rebuild/final-audit/admission-selection-evidence-20261009.md)
+for guarded reproduction, partition proof and remaining gates.

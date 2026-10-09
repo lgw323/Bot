@@ -59,6 +59,25 @@ Tests use fake commands: no fetch, venv install or package network operation was
 
 Deployment tests run the approved `tests/integration/operations` subset with its own conftest boundary,
 bytecode disabled and pytest cache disabled. The full repository suite is the development/commit gate.
+Only `test_a9_local_harness.py` and `test_a9_candidate_packet.py` in that directory are
+mandatory **source measurement-tool regressions**, not installed-runtime admission modules.
+Both admission callers share exact `--ignore` paths, applied before import/collection;
+there is no marker waiver or pattern excluding future tests. Both modules remain in
+the mandatory full source suite, including budgets, abort/ownership, atomic work,
+receipt provenance, cancellation/pipe loss and source containment coverage. Source
+receipts identify actual file hashes including dirty changes; HEAD alone is insufficient.
+Passing installed admission never replaces source review. See the [lane commands](../../../../README.md#required-source-and-installed-test-lanes)
+and [bounded correction evidence](../../final-audit/admission-selection-evidence-20261009.md).
+The A9-BT1 fixed-project-history proofs are separately mandatory in
+`tests/integration/source_review/test_a9_bt1_history.py`; current configuration and
+fetch-routing assertions stay in operations admission. No additional operations
+module is excluded. Synthetic disposable local-Git and isolated-interpreter cases
+remain mandatory installed coverage. This split does not change payload roots,
+archive validation, source identity, warning/cancellation/timeout or xfail policy.
+`deploy/staging/build_initial.py` and its fixed-revision activation/repair callers
+are retained historical Phase 9 tools, not a current-candidate admission path.
+Any proposal to reuse them for a current candidate requires separate review of the
+same installed selection; this clarification does not revive their host workflow.
 Operations use argument vectors, no shell interpolation, bounded subprocess timeouts, discarded raw
 child output, no inherited secret environment and a 30-minute systemd outer update budget.
 

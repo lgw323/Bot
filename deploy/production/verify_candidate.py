@@ -64,6 +64,7 @@ def safe_archive(archive: zipfile.ZipFile, commit: str) -> None:
 def build_worker(run: Path, commit: str) -> None:
     sys.dont_write_bytecode = True
     sys.path.insert(0, str(run / "source/src"))
+    from discordbot.operations.adapters.admission import installed_operations_args
     from discordbot.operations.adapters.build import Builder, CommandRunner
     from discordbot.operations.adapters.filesystem import ExclusiveLock, ReleaseStore
     store = ReleaseStore(Path("/opt/discordbot"))
@@ -74,7 +75,7 @@ def build_worker(run: Path, commit: str) -> None:
         release = builder.build(commit)
         path = store.path(release)
         builder.runner.run([str(path / ".venv/bin/python"), "-m", "pytest", "-p", "no:cacheprovider",
-                            "tests/integration/operations", "--confcutdir=tests/integration/operations", "-q",
+                            *installed_operations_args(), "-q",
                             "-W", "error::RuntimeWarning", "-W", "error::pytest.PytestUnraisableExceptionWarning",
                             "-o", "xfail_strict=true"], path / "app", 300)
         builder.publish(release)

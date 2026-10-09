@@ -11,6 +11,7 @@ from urllib.request import ProxyHandler, HTTPRedirectHandler, build_opener
 from urllib.error import URLError
 
 from discordbot.operations.adapters.audit import Audit
+from discordbot.operations.adapters.admission import installed_operations_args
 from discordbot.operations.adapters.build import Builder, Runner
 from discordbot.operations.adapters.filesystem import ExclusiveLock, ReleaseStore, atomic_json, read_json
 from discordbot.operations.adapters.recovery import Backups
@@ -126,7 +127,7 @@ class LocalDeployment:
         python = path / ".venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
         # Explicit offline deploy subset. Full regression remains a source review
         # gate; no legacy conftest/DB/network is imported by this deploy subset.
-        self.builder.runner.run([str(python), "-m", "pytest", "-p", "no:cacheprovider", "tests/integration/operations", "--confcutdir=tests/integration/operations",
+        self.builder.runner.run([str(python), "-m", "pytest", "-p", "no:cacheprovider", *installed_operations_args(),
                                  "-q", "-W", "error::RuntimeWarning", "-W", "error::pytest.PytestUnraisableExceptionWarning"], path / "app", 300)
 
     def compatible(self, release):
