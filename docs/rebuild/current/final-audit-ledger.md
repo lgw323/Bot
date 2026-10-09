@@ -1,5 +1,21 @@
 # Final Phase Audit Ledger
 
+## Local committed candidate freeze - 2026-10-09
+
+[Freeze record](../final-audit/release-candidate-freeze-20261009.md) materializes
+reviewed source, tests, contracts and evidence as scoped local commits. The final
+full commit/archive/source identity is sealed in a detached manifest bound to the
+unchanged independently reviewed 64-wheel locks. Original pin bytes are retained
+verbatim after detecting Git newline normalization; runtime/working bytes are unchanged.
+Fresh offline freeze selection: 22 PASS. Historical Windows 1869 PASS/27 SKIP is
+not rerun. This is source/lock freeze only, not an installed or deployable release.
+Original A9/A10 BLOCKED, all 23 operational obligations and deferred P11 remain.
+One next gate: independent acceptance of the exact export and detached binding
+before any separately authorized ARM64 offline build/admission. STOP after local
+freeze; no Pi/SSH, install, service, push, production change, deployment or cleanup.
+Earlier dated notices and unrelated inherited work remain preserved.
+
+
 Prepared: 2026-09-20 — AUDIT-S0. Exactly one row per Phase 0–10.
 Status is the independent final audit status, not the implementation report's completion claim.
 Allowed statuses: NOT_AUDITED, PASS, FAIL, DRIFT, BLOCKED.
