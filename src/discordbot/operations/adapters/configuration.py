@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from discordbot.operations.adapters import backup_destination
 from discordbot.operations.adapters.filesystem import contained, read_json
 from discordbot.platform.errors import ConfigurationError
 
@@ -28,6 +29,7 @@ class BackupRemoteSettings:
     workspace: Path
     key_file: Path = field(repr=False)
     known_hosts_file: Path = field(repr=False)
+    destination: backup_destination.BackupDestination = backup_destination.PRODUCTION
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,18 +108,14 @@ def read_secret(root: Path, name: str) -> str:
 
 def load_settings(path: Path, credentials: Path, service: str) -> Settings:
     try:
-        value = read_json(path, 65536)
+        value = read_json(path, 65536, reject_duplicates=True)
         expected = {"version", "environment", "paths", "master", "admin_channel", "main_channels", "music_channels",
                     "public_origin", "ports", "gemini_model", "key_id", "limits", "backup_remote"}
         if set(value) != expected or value["version"] != 1 or value["environment"] not in {"staging", "production"}:
             raise ValueError
         if service not in {"discord-bot", "watch-web", "operations"}:
             raise ValueError
-        # Opt-in for the one operator-approved repository/ref. No code-remote fallback.
-        remote = value["backup_remote"]
-        if remote is not None and remote != {"kind": "git-ssh", "repository": "git@github.com:lgw323/Bot-Data.git",
-                                            "ref": "refs/heads/db-backup"}:
-            raise ConfigurationError("unapproved remote backup configuration")
+        remote = backup_destination.parse(value["backup_remote"], value["environment"])
         paths = value["paths"]
         if set(paths) != {"database", "state", "cache", "backups", "audit", "release_root", "operation_lock"}:
             raise ValueError
@@ -197,7 +195,7 @@ def load_settings(path: Path, credentials: Path, service: str) -> Settings:
             known_hosts_file = contained(credentials, credentials / "known_hosts")
             GitTransport(key_file, known_hosts_file)  # Metadata/ACL validation only; no subprocess/network.
             workspace = contained(parsed["backups"], parsed["backups"] / "remote-work")
-            backup_remote = BackupRemoteSettings(workspace, key_file, known_hosts_file)
+            backup_remote = BackupRemoteSettings(workspace, key_file, known_hosts_file, remote)
         return Settings(service, value["environment"], **parsed, master=value["master"], admin_channel=value["admin_channel"],
                         **channels, public_origin=value["public_origin"], public_port=ports["public"], control_port=ports["control"],
                         discord_health_port=ports["discord_health"], watch_health_port=ports["watch_health"],

@@ -13,47 +13,59 @@ import pytest
 from discordbot.operations.adapters.git_backup import (
     GitBackupStore, PREFIX, REF, REMOTE, retained, validate_pair,
 )
+from discordbot.operations.adapters import backup_destination
 from discordbot.platform.errors import ConflictError, DataIntegrityError, ExternalTemporaryError
 from discordbot.storage.adapters.backup_codec import BACKUP_HEADER
 
 
 class LocalTransport:
     """Replace the external boundary with a new local bare repo, never a real remote."""
-    def __init__(self, remote: Path):
+    def __init__(self, remote: Path, repository: str = REMOTE):
         self.remote = remote
+        self.repository = repository
         self.calls = []
         self.reject_push = False
+        self.reject_fetch = False
         self.failed_readback = False
         self.pushed = False
 
     def run(self, root, arguments, data=None):
         self.calls.append(arguments)
+        if arguments[0] == "fetch" and self.reject_fetch:
+            raise ExternalTemporaryError("synthetic rejected fetch")
         if arguments[0] == "push":
-            assert arguments[-2] == REMOTE and arguments[-1].endswith(":" + REF)
+            assert arguments[-2] == self.repository and arguments[-1].endswith(":" + REF)
             assert not any(arg.startswith(("--force", "+")) for arg in arguments)
             if self.reject_push:
                 raise ExternalTemporaryError("synthetic rejected push")
             self.pushed = True
         if arguments[0] == "fetch" and self.failed_readback and self.pushed:
             raise ExternalTemporaryError("synthetic readback failure")
-        args = [str(self.remote) if arg == REMOTE else arg for arg in arguments]
+        if arguments[0] == "fetch":
+            assert arguments[-2:] == [self.repository, REF]
+        args = [str(self.remote) if arg == self.repository else arg for arg in arguments]
         env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
         env.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull,
                    GIT_AUTHOR_NAME="Synthetic", GIT_AUTHOR_EMAIL="synthetic@localhost",
                    GIT_COMMITTER_NAME="Synthetic", GIT_COMMITTER_EMAIL="synthetic@localhost")
         result = subprocess.run(["git", "-c", "core.hooksPath=" + os.devnull,
-                                 "-c", "protocol.file.allow=always", *args],
+                                 "-c", "protocol.allow=never", "-c", "protocol.file.allow=always", *args],
                                 cwd=root, input=data, capture_output=True, env=env, timeout=10)
         if result.returncode:
             raise ExternalTemporaryError("synthetic Git failure")
         return result.stdout
 
 
-@pytest.fixture
-def store(tmp_path):
+@pytest.fixture(params=["production", "isolated"])
+def store(tmp_path, monkeypatch, request):
+    destination = backup_destination.PRODUCTION
+    if request.param == "isolated":
+        repository = "git@github.com:lgw323/A9-BT1-Synthetic.git"
+        monkeypatch.setattr(backup_destination, "ISOLATED_REPOSITORIES", frozenset({repository}))
+        destination = backup_destination.BackupDestination("staging", "isolated", repository)
     remote = tmp_path / "remote.git"
     remote.mkdir()
-    transport = LocalTransport(remote)
+    transport = LocalTransport(remote, destination.repository)
     transport.run(remote, ["init", "--bare", "--template=", "."])
     blob = transport.run(remote, ["hash-object", "-w", "--stdin"], b"retained legacy evidence").strip().decode()
     transport.run(remote, ["update-index", "--add", "--cacheinfo", "100644", blob, "legacy-evidence.txt"])
@@ -62,7 +74,7 @@ def store(tmp_path):
     transport.run(remote, ["update-ref", REF, commit])
     workspace = tmp_path / "workspace"
     workspace.mkdir()
-    return GitBackupStore(transport, workspace), commit
+    return GitBackupStore(transport, workspace, destination), commit
 
 
 def pair(tmp_path, number=1):
@@ -127,6 +139,17 @@ def test_non_fast_forward_or_permission_failure_does_not_retry(store, tmp_path):
         item.publish(artifact, checksum, identity)
     assert item.command(item.transport.remote, "rev-parse", REF).strip().decode() == previous
     assert sum(call[0] == "push" for call in item.transport.calls) == 1
+
+
+def test_initial_fetch_failure_has_no_fallback(store, tmp_path):
+    item, _ = store
+    item.transport.reject_fetch = True
+    before = len(item.transport.calls)
+    with pytest.raises(ExternalTemporaryError):
+        item.publish(*pair(tmp_path))
+    calls = item.transport.calls[before:]
+    assert [call[0] for call in calls] == ["init", "fetch"]
+    assert calls[-1][-2:] == [item.destination.repository, item.destination.ref]
 
 
 def test_uncertain_readback_is_failure_even_if_remote_commit_exists(store, tmp_path):

@@ -70,3 +70,16 @@ six-hour RPO under load and real old-key restore rehearsal remain staging/produc
 See [backup verification](../../../../deploy/runbooks/backup-verification.md),
 [rehearsal](../../../../deploy/runbooks/restore-rehearsal.md), and
 [real restore](../../../../deploy/runbooks/real-restore.md).
+
+## A9-BT1 destination policy clarification (2026-10-09)
+
+The original no-active-remote paragraph above records Phase 8 history; D22's Phase 10 approval
+subsequently enabled explicit private Bot-Data/db-backup production publication. A9-BT1 preserves
+that production object and explicit local-only null. It adds an environment-bound, source-reviewed
+isolated destination policy; configuration cannot grant approval and the isolated allowlist is empty.
+Staging may never select production. Fetch, push, independent readback, retention and download share
+one validated destination; errors never fall back to production. Duplicate configuration fields
+are rejected before credential/transport admission. Existing archive/authentication, verified
+retention, failure/latest, isolation, no-overwrite and deadline contracts remain unchanged.
+See the [configuration shape and trust boundary](../../../../deploy/runbooks/backup-verification.md#a9-bt1-isolated-destination-configuration-local-implementation-review-pending).
+Local implementation awaits independent verification; no remote durability or A9 gate is closed.

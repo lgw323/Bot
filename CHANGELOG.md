@@ -527,3 +527,9 @@
 - [Finalization](docs/rebuild/final-audit/a9-local-measurement-finalization.md) records
   scoped local commit ownership. Manifests retain their historical pre-commit HEAD;
   no measurement was regenerated and no next microphase or push was started.
+
+## A9-BT1 isolated backup destination (independent review pending)
+
+- Carry one validated, environment-bound destination through configuration, publication, readback and download. Preserve explicit production opt-in and local-only null; reject staging-to-production selections and duplicate config keys.
+- Add an exact source-reviewed isolated-recipient allowlist, empty pending a distinct approved private repository; preserve SSH, archive, retention, restore and deadline protections.
+- Local synthetic validation only. Runtime A9 remains BLOCKED B1/B2/B3/D1; changed runtime bytes require a new reviewed candidate identity before any execution.

@@ -37,7 +37,8 @@ Remote publication is an injected encrypted-object/digest port. `backup_remote:n
 local-only; off-host RPO/host-loss durability is not claimed. No code-remote fallback or force push
 exists. PHASE 10 selected private Bot-Data with a separate write deploy key. The opt-in object is
 `{"kind":"git-ssh","repository":"git@github.com:lgw323/Bot-Data.git","ref":"refs/heads/db-backup"}`;
-no other destination/ref is accepted. Operations additionally needs scoped `backup_ssh_key` and
+this unchanged object is accepted in `environment:production`. Staging must use the explicitly
+isolated policy below; it cannot select Bot-Data. Operations additionally needs scoped `backup_ssh_key` and
 `known_hosts` mounts. Runtime Discord/Watch scopes do not receive them. Actual production activation
 still requires the final gate; see [PHASE 10 cutover](../../docs/rebuild/phases/phase-10/cutover-runbook.md).
 
@@ -54,3 +55,47 @@ logic is verified on disposable synthetic repositories, not by pruning existing 
 
 Postcondition: latest checksum validates, independent isolated restore passes, age is within RPO and
 safe backup/rehearsal audits exist. A checksum alone is not a recovery proof.
+
+## A9-BT1 isolated destination configuration (local implementation, review pending)
+
+The source-controlled `ISOLATED_REPOSITORIES` allowlist in
+`src/discordbot/operations/adapters/backup_destination.py` is deliberately empty. An operator must
+name and approve an exact private repository before a separately reviewed source change adds it.
+Configuration alone cannot approve a recipient. The supplied Bot-Data URL names production and
+does not satisfy isolation. No repository, credential or remote operation is created by this change.
+
+Configuration shape below is illustrative and intentionally rejected until its placeholder is
+replaced with an owner-approved, source-allowlisted repository:
+
+```json
+{
+  "environment": "staging",
+  "backup_remote": {
+    "kind": "git-ssh",
+    "target": "isolated",
+    "repository": "git@github.com:lgw323/<approved-private-repository>.git",
+    "ref": "refs/heads/db-backup"
+  }
+}
+```
+
+This is a fragment, not a complete runnable config. Only canonical scp-style Git SSH on github.com,
+user git, owner lgw323 and the fixed db-backup ref are supported. Production/code repositories,
+other owners/hosts/protocols, unknown fields, duplicate JSON keys, absent fields and conflicting
+environment/target selections fail before credential reads or transport admission. Errors do not
+echo values. Existing production config needs no migration; explicit null remains local-only.
+Previously accepted staging-to-production remote config is now intentionally rejected.
+
+The immutable validated destination passes through BackupRemoteSettings, GitRemoteBackup and
+GitBackupStore. Upload base fetch, fast-forward push, independent readback, remote tree retention
+and explicit download all use it. Direct store construction without a destination retains its
+production helper compatibility default; isolated callers must pass the validated destination.
+There is no fallback after validation, fetch, push or readback errors. Production-specific scripts
+under deploy/production remain production-only and must not be used for isolated recovery.
+
+Recovery selection remains local to the configured backup root. Download with the same validated
+destination into a fresh directory, then bind a separately reviewed recovery config to those
+downloaded artifacts; no automatic repository search or production fallback exists. Private
+visibility, dedicated repository-scoped deploy key, pinned host and actual remote behavior require
+later evidence/approval. SSH ACL/ownership, no agent/global-config fallback, encryption, retention,
+restore no-overwrite and 90s total/30s command transport bounds are unchanged.

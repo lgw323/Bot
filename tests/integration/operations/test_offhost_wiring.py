@@ -4,6 +4,7 @@ import json
 import pytest
 
 from discordbot.operations.adapters.audit import Audit
+from discordbot.operations.adapters import backup_destination
 from discordbot.operations.adapters.configuration import BackupRemoteSettings, load_settings
 from discordbot.operations.adapters.deployment import backup_once
 from discordbot.operations.adapters.filesystem import read_json
@@ -21,6 +22,11 @@ REMOTE_CONFIG = {"kind": "git-ssh", "repository": "git@github.com:lgw323/Bot-Dat
 def test_remote_config_requires_explicit_repository_and_scope(config_files, monkeypatch):
     file, credentials = config_files
     value = json.loads(file.read_text())
+    value.update(environment="production", master=101, admin_channel=102,
+                 main_channels=[[103, 104]], music_channels=[[103, 105]],
+                 public_origin="https://watch.synthetic.test", key_id="synthetic-key")
+    for name in ("discord_token", "gemini_key"):
+        (credentials / name).write_text("synthetic-test-only")
     value["backup_remote"] = REMOTE_CONFIG
     file.write_text(json.dumps(value))
     calls = []
@@ -39,7 +45,8 @@ def test_remote_config_requires_explicit_repository_and_scope(config_files, monk
 
 
 @pytest.mark.asyncio
-async def test_failed_remote_in_real_backup_path_preserves_latest(config_files, monkeypatch):
+@pytest.mark.parametrize("target", ["production", "isolated"])
+async def test_failed_remote_in_real_backup_path_preserves_latest(config_files, monkeypatch, target):
     file, credentials = config_files
     settings = load_settings(file, credentials, "operations")
     for path in (settings.backups, settings.audit):
@@ -52,9 +59,14 @@ async def test_failed_remote_in_real_backup_path_preserves_latest(config_files, 
     audit = Audit(settings.audit)
     first = await backup_once(settings, audit, "r-0123456789abcdef-0123456789abcdef")
     remote = BackupRemoteSettings(settings.backups / "remote-work", credentials / "ssh", credentials / "hosts")
+    if target == "isolated":
+        repository = "git@github.com:lgw323/A9-BT1-Synthetic.git"
+        monkeypatch.setattr(backup_destination, "ISOLATED_REPOSITORIES", frozenset({repository}))
+        remote = replace(remote, destination=backup_destination.BackupDestination("staging", "isolated", repository))
     configured = replace(settings, backup_remote=remote)
     calls = []
     async def fail(self, artifact, checksum, identity):
+        assert self.destination == remote.destination
         calls.append(identity)
         assert artifact.suffix == ".enc"
         raise ExternalTemporaryError("synthetic transport outage")

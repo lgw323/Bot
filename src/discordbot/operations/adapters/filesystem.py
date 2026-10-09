@@ -64,14 +64,21 @@ def atomic_json(path: Path, value: object) -> None:
     atomic_bytes(path, (json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n").encode())
 
 
-def read_json(path: Path, maximum: int = 1024 * 1024) -> dict:
+def read_json(path: Path, maximum: int = 1024 * 1024, *, reject_duplicates: bool = False) -> dict:
     contained(path.parent, path)
     with path.open("rb") as stream:
         data = stream.read(maximum + 1)
     if len(data) > maximum:
         raise DataIntegrityError("metadata size exceeded")
+    def unique_object(pairs: list[tuple[str, object]]) -> dict:
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("duplicate field")
+            result[key] = value
+        return result
     try:
-        value = json.loads(data)
+        value = json.loads(data, object_pairs_hook=unique_object if reject_duplicates else None)
         if not isinstance(value, dict):
             raise ValueError
         return value

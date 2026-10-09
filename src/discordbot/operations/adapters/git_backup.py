@@ -20,11 +20,12 @@ from tempfile import TemporaryDirectory
 
 from discordbot.operations.adapters.filesystem import contained, read_json
 from discordbot.operations.adapters.configuration import private_mode
+from discordbot.operations.adapters.backup_destination import (
+    BackupDestination, PRODUCTION, REF, REMOTE, validate,
+)
 from discordbot.platform.errors import ConflictError, DataIntegrityError, ExternalTemporaryError
 from discordbot.storage.adapters.backup_codec import BACKUP_HEADER
 
-REMOTE = "git@github.com:lgw323/Bot-Data.git"
-REF = "refs/heads/db-backup"
 PREFIX = "v2/backups/"
 MAX_ARTIFACT = 64 * 1024 * 1024
 MAX_TREE = 4096
@@ -132,14 +133,16 @@ class GitRemoteBackup:
     """Bounded blocking transport behind the existing async RemoteBackup port."""
 
     def __init__(self, settings, executor) -> None:
+        self.destination = validate(settings.destination)
         self.settings, self.executor = settings, executor
 
     async def publish(self, artifact: Path, checksum: str, identity: str) -> None:
         def transfer() -> None:
+            destination = validate(self.destination)
             contained(self.settings.workspace.parent, self.settings.workspace)
             self.settings.workspace.mkdir(mode=0o700, exist_ok=True)
             transport = GitTransport(self.settings.key_file, self.settings.known_hosts_file)
-            GitBackupStore(transport, self.settings.workspace).publish(artifact, checksum, identity)
+            GitBackupStore(transport, self.settings.workspace, destination).publish(artifact, checksum, identity)
         # Cancellation does not advance Backups.latest. The owner drains this
         # bounded worker before releasing its operation lock; uncertain uploads
         # require explicit readback/reconciliation, never a retry loop.
@@ -147,7 +150,9 @@ class GitRemoteBackup:
 
 
 class GitBackupStore:
-    def __init__(self, transport: GitTransport, workspace: Path) -> None:
+    def __init__(self, transport: GitTransport, workspace: Path,
+                 destination: BackupDestination = PRODUCTION) -> None:
+        self.destination = validate(destination)
         self.transport, self.workspace = transport, workspace
 
     def command(self, root: Path, *arguments: str, data: bytes | None = None) -> bytes:
@@ -162,7 +167,7 @@ class GitBackupStore:
     def fetch(self, root: Path) -> str:
         self.command(root, "init", "--bare", "--template=", "--object-format=sha1", ".")
         # Missing branch is an explicit review stop; never invent an orphan base.
-        self.command(root, "fetch", "--depth=1", "--no-tags", REMOTE, REF)
+        self.command(root, "fetch", "--depth=1", "--no-tags", self.destination.repository, self.destination.ref)
         return self.oid(root, "rev-parse", "FETCH_HEAD")
 
     def tree(self, root: Path, commit: str) -> dict[str, str]:
@@ -242,7 +247,7 @@ class GitBackupStore:
                 new_tree = self.oid(root, "write-tree")
                 commit = self.oid(root, "commit-tree", new_tree, "-p", previous, data=b"backup: publish encrypted V2 recovery point\n")
                 # Single fast-forward ref update. No force, deletion, retries or history rewrite.
-                self.command(root, "push", "--porcelain", REMOTE, commit + ":" + REF)
+                self.command(root, "push", "--porcelain", self.destination.repository, commit + ":" + self.destination.ref)
         # Independent fetch is essential: local objects do not prove remote publication.
         with TemporaryDirectory(prefix="backup-readback-", dir=self.workspace) as temporary:
             root = Path(temporary)
