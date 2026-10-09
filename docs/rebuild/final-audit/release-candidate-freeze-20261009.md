@@ -87,16 +87,24 @@ preserves the exact independently reviewed dependency identity.
 
 ## Export boundary and detached identity
 
-The supported export is SourceBuilder's exact operation, with the final full commit:
+The supported export uses SourceBuilder's operation and exact selected roots, with
+the final full commit and automatic newline conversion disabled for this invocation:
 
 ```text
-git archive --format=zip --output=<new-owned-source.zip> <40-hex-commit> src tests deploy pyproject.toml requirements.txt requirements-dev.txt
+git -c core.autocrlf=false archive --format=zip --output=<new-owned-source.zip> <40-hex-commit> src tests deploy pyproject.toml requirements.txt requirements-dev.txt
 ```
 
 No Builder/venv/install/publication path runs. The ZIP's Git comment must equal its
 commit, and every file must equal that commit's blob. Existing
 `verify_candidate.safe_archive` and additional bounds, path, casefold-duplicate,
 mode/link, encrypted-member, forbidden-file and CRC checks verify the archive.
+
+The first plain `git archive` inherited Windows `core.autocrlf=true` and converted
+LF blobs to CRLF. The byte-equality guard rejected it; no non-line-ending difference
+was found. That rejected ZIP remains under `frozen/` with a separate failure receipt.
+The final export under `frozen-raw/` disables conversion for one command only;
+repository configuration and runtime/source files are unchanged. A separate
+documentation correction records this observation without rewriting earlier commits.
 
 The 373 exported files comprise **365 of the reviewed inputs plus eight unchanged
 tracked files**: the polkit rule, off-host service drop-in, three existing browser
@@ -112,7 +120,7 @@ local audit documents. Untracked canonical authorities, reports and scratch rece
 are not silently adopted: this freeze is **not a portable full-source audit bundle**,
 and no clean-checkout full-suite PASS is claimed.
 
-The new `scratch/release-freeze-20261009-01/frozen/` contains the final source ZIP,
+The new `scratch/release-freeze-20261009-01/frozen-raw/` contains the final source ZIP,
 `source-manifest.json`, `source-comparison.json`, exact copied original review
 manifests, wheel lock, both text locks, export command and `SHA256SUMS`. Wheels remain
 at the original preserved wheelhouse, bound by their exact hashes. No package cache
