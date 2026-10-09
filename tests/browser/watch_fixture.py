@@ -18,6 +18,7 @@ from discordbot.watch.adapters.security import Capabilities
 from discordbot.watch.adapters.writer import SqliteWatchWriter
 from discordbot.watch.adapters.web import build_public_app
 from discordbot.watch.application.service import WatchService
+from discordbot.watch.application.session import WatchSession
 from discordbot.watch.domain.policy import WatchLimits
 
 class Metadata:
@@ -36,6 +37,32 @@ async def main(template: Path | None = None):
             Metadata(), WatchLimits(), clock, Uuid4Generator(),
             TelemetryEmitter(buffer=TelemetryBuffer(128), clock=clock, service='watch-web', environment='test', release='synthetic'))
         await service.start(); service.schedule()
+        # Synthetic fixture only: retain categories, never capabilities or media/user IDs.
+        timeline = []
+        generations = {}
+        original_apply = WatchSession._apply
+        async def traced_apply(actor, operation, args):
+            previous, revision = actor.playback.get('state'), actor.revision
+            raw = args[1] if operation == 'message' and isinstance(args[1], dict) else {}
+            kind = raw.get('type')
+            safe_kind = kind if kind in {'join', 'state_change', 'seek', 'sync_response', 'sync_request'} else None
+            proposed = raw.get('state') if raw.get('state') in {'playing', 'paused'} else None
+            generation = generations.get(args[0]) if operation in {'message', 'leave'} else None
+            accepted = False
+            try:
+                result = await original_apply(actor, operation, args)
+                accepted = True
+                if operation == 'connect':
+                    generations[result.id] = len(generations) + 1
+                    generation = generations[result.id]
+                return result
+            finally:
+                if operation in {'connect', 'leave'} or safe_kind:
+                    timeline.append({'monotonic':clock.monotonic(), 'generation':generation,
+                        'source':'actor', 'event':safe_kind or operation, 'previous':previous,
+                        'proposed':proposed, 'accepted':accepted, 'intent':actor.playback.get('state'),
+                        'revision_before':revision, 'revision':actor.revision})
+        WatchSession._apply = traced_apply
         original_read = Path.read_text
         def read(path, *args, **kwargs):
             if template and path.name == 'player.html':
@@ -57,6 +84,9 @@ async def main(template: Path | None = None):
                 'states': [{'closed': a.closed, 'clients': len(a.peers), 'unique_clients': len(set(a.peers)),
                     'has_video': 'videoId' in a.playback, 'state': a.playback.get('state'),
                     'position': a.playback_snapshot().get('time'), 'revision': a.revision} for a in service.sessions.values()]}
+        @app.get('/fixture/trace')
+        async def trace():
+            return timeline
         @app.post('/fixture/close')
         async def close():
             for sid in tuple(service.sessions): await service.close(sid)
@@ -68,6 +98,7 @@ async def main(template: Path | None = None):
         try:
             await server.serve()
         finally:
+            WatchSession._apply = original_apply
             await service.stop(); await db.stop()
 
 if __name__ == '__main__':
