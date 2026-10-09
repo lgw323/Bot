@@ -31,4 +31,11 @@ def guard(event, args):
 sys.addaudithook(guard)
 import pytest
 
+# Kept below the reusable parent-guard prefix: installed-admission loaders do
+# not acquire this source-only adapter or a new source-test dependency.
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import import_probe_guard
+import_probe_guard.install(ROOT)
+
 raise SystemExit(pytest.main(sys.argv[1:]))
