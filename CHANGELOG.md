@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-15 - Local venv alias copy remediation
+
+- Preserve venv alias payload hashes, ordinary modes and timestamps without copying privileged bits or extended attributes; retain path/link checks and deployment security restrictions.
+- Add bounded redacted nested-copy diagnostics and local Windows/POSIX/seccomp regressions. Independent review and new-candidate installation remain pending; frozen dc5d and production are unchanged.
+
 ## 2026-10-15 - Recovery promotion source-sidecar rejection
 
 - Reject recovery candidates with WAL/SHM/journal entries and recheck source state before replacement, preventing main-file-only promotion from omitting a live candidate's latest WAL writes. Source files and sidecars are never checkpointed, normalized or deleted.

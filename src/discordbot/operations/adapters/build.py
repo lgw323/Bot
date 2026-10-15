@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import hashlib
+import json
+import logging
 import os
 import re
 import shutil
@@ -13,8 +15,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Protocol
 
+from discordbot.operations.adapters.build_copy import copy_failure_details, materialize_library
 from discordbot.operations.adapters.filesystem import ReleaseStore, atomic_json, contained, digest, read_json
 from discordbot.platform.errors import DataIntegrityError, ExternalTemporaryError
+
+logger = logging.getLogger(__name__)
 
 
 class Runner(Protocol):
@@ -185,7 +190,7 @@ class Builder:
                 if alias.resolve() != library.resolve() or library.is_symlink():
                     raise DataIntegrityError("unexpected virtual environment alias")
                 alias.unlink()
-                shutil.copytree(library, alias)
+                materialize_library(library, alias)
             # Manifest is published only after deployment preflight/test/backup.
             files = {}
             for node in path.rglob("*"):
@@ -199,7 +204,16 @@ class Builder:
                          entrypoints=["discord-bot", "watch-web", "operations"], config_version=1, files=files)
             atomic_json(path / "candidate.json", value)
             return identity
-        except BaseException:
+        except BaseException as exc:
+            if isinstance(exc, OSError):
+                try:
+                    details = copy_failure_details(exc, path / ".venv" / "lib", path / ".venv" / "lib64")
+                    logger.warning("build.filesystem_failed %s", json.dumps(details),
+                                   extra={"event": "build.filesystem_failed", "fields": {"failure": details}})
+                except Exception:
+                    # Best-effort diagnostics must not replace the original
+                    # build failure or prevent the existing cleanup path.
+                    pass
             self.store.remove(identity, set())
             raise
 
