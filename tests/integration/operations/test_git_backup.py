@@ -18,6 +18,44 @@ from discordbot.platform.errors import ConflictError, DataIntegrityError, Extern
 from discordbot.storage.adapters.backup_codec import BACKUP_HEADER
 
 
+def git_failure_diagnostic(arguments: list[str], returncode: int | None,
+                           stderr: bytes = b"", error: BaseException | None = None) -> dict:
+    """Fixed diagnostic vocabulary; never export args, paths, stderr or env."""
+    commands = {"init", "fetch", "push", "rev-parse", "hash-object", "update-index",
+                "write-tree", "commit-tree", "update-ref", "mktree", "ls-tree",
+                "cat-file", "read-tree", "show"}
+    tail = stderr[-8192:].lower()
+    categories = []
+    for token, category in ((b"dubious ownership", "dubious_ownership"),
+                            (b"permission denied", "permission_denied"),
+                            (b"operation not permitted", "operation_not_permitted"),
+                            (b"no space left", "no_space"),
+                            (b"read-only file system", "read_only_filesystem")):
+        if token in tail:
+            categories.append(category)
+    if b"no such file or directory" in tail and any(t in tail for t in (b"cannot run", b"cannot exec", b"unable to fork")):
+        categories.append("missing_executable")
+    if b"transport" in tail and b"not allowed" in tail:
+        categories.append("protocol_denied")
+    if isinstance(error, subprocess.TimeoutExpired):
+        categories.append("timeout")
+    if isinstance(error, OSError):
+        categories.append({1: "operation_not_permitted", 2: "missing_executable",
+                           13: "permission_denied", 28: "no_space", 30: "read_only_filesystem"}.get(error.errno, "os_error"))
+    return {"command": arguments[0] if arguments and arguments[0] in commands else "other",
+            "returncode": returncode if type(returncode) is int and -255 <= returncode <= 255 else None,
+            "categories": sorted(set(categories)) or ["unclassified"],
+            "stderr_bytes": min(len(stderr), 1048576), "stderr_truncated": len(stderr) > 8192}
+
+
+def git_failure_error(arguments: list[str], returncode: int | None, stderr: bytes = b"",
+                      error: BaseException | None = None) -> ExternalTemporaryError:
+    diagnostic = git_failure_diagnostic(arguments, returncode, stderr, error)
+    failure = ExternalTemporaryError("synthetic Git failure " + json.dumps(diagnostic, sort_keys=True))
+    failure.safe_diagnostic = diagnostic
+    return failure
+
+
 class LocalTransport:
     """Replace the external boundary with a new local bare repo, never a real remote."""
     def __init__(self, remote: Path, repository: str = REMOTE):
@@ -48,11 +86,14 @@ class LocalTransport:
         env.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull,
                    GIT_AUTHOR_NAME="Synthetic", GIT_AUTHOR_EMAIL="synthetic@localhost",
                    GIT_COMMITTER_NAME="Synthetic", GIT_COMMITTER_EMAIL="synthetic@localhost")
-        result = subprocess.run(["git", "-c", "core.hooksPath=" + os.devnull,
-                                 "-c", "protocol.allow=never", "-c", "protocol.file.allow=always", *args],
-                                cwd=root, input=data, capture_output=True, env=env, timeout=10)
+        try:
+            result = subprocess.run(["git", "-c", "core.hooksPath=" + os.devnull,
+                                     "-c", "protocol.allow=never", "-c", "protocol.file.allow=always", *args],
+                                    cwd=root, input=data, capture_output=True, env=env, timeout=10)
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise git_failure_error(arguments, None, error=exc) from None
         if result.returncode:
-            raise ExternalTemporaryError("synthetic Git failure")
+            raise git_failure_error(arguments, result.returncode, result.stderr) from None
         return result.stdout
 
 

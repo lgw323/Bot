@@ -8,6 +8,7 @@ import shutil
 import stat
 import tempfile
 import unittest
+from unittest.mock import patch
 import zipfile
 
 from discordbot.operations.adapters import build
@@ -36,19 +37,50 @@ class BuildCopyTests(unittest.TestCase):
 
     @unittest.skipIf(os.name == "nt", "POSIX mode semantics")
     def test_ordinary_modes_and_timestamps_preserved_without_special_bits(self):
-        self.source.chmod(0o2700)
-        (self.source / "nested").mkdir()
-        (self.source / "nested").chmod(0o2750)
-        for mode in (0o640, 0o751, 0o4751, 0o2640, 0o1640):
-            path = self.source / str(mode)
-            path.write_bytes(b"synthetic")
-            path.chmod(mode)
-            os.utime(path, ns=(1_600_000_000_000_000_000, 1_600_000_000_000_000_001))
-        self.copy()
-        for path in [self.source, *self.source.rglob("*")]:
-            target = self.alias / path.relative_to(self.source)
-            self.assertEqual(stat.S_IMODE(target.stat().st_mode), stat.S_IMODE(path.stat().st_mode) & 0o777)
-            self.assertEqual(target.stat().st_mtime_ns, path.stat().st_mtime_ns)
+        # Installed workers forbid creating SUID/SGID metadata. Real ordinary
+        # payload/modes/timestamps remain exercised; inject only the source mode
+        # bits for the separate stripping check, never a privileged chmod.
+        original_lstat = Path.lstat
+        for special in (False, True):
+            with self.subTest(special_metadata=special):
+                base = self.root / ("special" if special else "ordinary")
+                self.source, self.alias = base / "lib", base / "lib64"
+                self.source.mkdir(parents=True)
+                (self.source / "nested").mkdir()
+                modes = {self.source: 0o2700, self.source / "nested": 0o2750}
+                for mode in (0o640, 0o751, 0o4751, 0o2640, 0o1640):
+                    path = self.source / str(mode)
+                    path.write_bytes(b"synthetic")
+                    modes[path] = mode
+                expected = {}
+                for path, mode in modes.items():
+                    path.chmod(mode & 0o777)
+                    os.utime(path, ns=(1_600_000_000_000_000_000, 1_600_000_000_000_000_001))
+                    info = path.stat()
+                    expected[path] = (mode & 0o777, info.st_atime_ns, info.st_mtime_ns)
+
+                class ModeView:
+                    def __init__(self, info, bits):
+                        self.info = info
+                        self.st_mode = stat.S_IFMT(info.st_mode) | bits
+
+                    def __getattr__(self, name):
+                        return getattr(self.info, name)
+
+                def source_metadata(path, *args, **kwargs):
+                    info = original_lstat(path, *args, **kwargs)
+                    return ModeView(info, modes[path]) if special and path in modes else info
+
+                with patch.object(Path, "lstat", source_metadata):
+                    self.copy()
+                for path, (mode, accessed_ns, modified_ns) in expected.items():
+                    target = self.alias / path.relative_to(self.source)
+                    self.assertEqual(stat.S_IMODE(target.stat().st_mode), mode)
+                    self.assertEqual(target.stat().st_atime_ns, accessed_ns)
+                    self.assertEqual(target.stat().st_mtime_ns, modified_ns)
+                    if path.is_file():
+                        self.assertEqual(target.read_bytes(), b"synthetic")
+                self.assertTrue((self.alias / "nested").is_dir())
 
     def test_existing_destination_is_not_merged_or_overwritten(self):
         self.alias.mkdir()
