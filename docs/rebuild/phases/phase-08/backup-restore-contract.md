@@ -43,9 +43,17 @@ Restoration uses a separate offline DB instance, never maintenance on a running 
 `promote --destination <isolated-candidate> --expected-sha256 <reviewed-digest> --approve-promotion`
 requires reviewed recovery evidence, maintenance window and stopped consumers. CLI confirms both
 runtime services are inactive/failed, validates candidate schema/application compatibility and acquires
-the operation lock. Promotion rejects same-path source/target, changed candidate and canonical WAL/SHM,
+the operation lock. Promotion rejects same-path source/target, changed candidate, source WAL/SHM/journal
+entries and canonical WAL/SHM,
 copies to a private file, flushes/fsyncs, checks the digest, assigns the dedicated group mode 0660 and
 atomically replaces canonical followed by parent fsync. It never removes a live WAL to bypass checks.
+
+Source sidecar metadata is inspected without opening SQLite; access errors are not treated as absence.
+After the private copy is verified, promotion rechecks source sidecars, the original source digest and
+sidecars again before replacement. It never checkpoints, normalizes or deletes source sidecars.
+The source must remain exclusively owned and quiescent throughout: these filesystem checks do not
+acquire a SQLite lock or exclude a writer after the last check. The shared operation lock coordinates
+cooperating operations only. Accepted self-contained DELETE recovery copies retain their format.
 
 The operator must prevent unrelated service starts throughout the maintenance window. CLI does not
 automatically create a fresh backup of a corrupt canonical DB; retain existing verified encrypted

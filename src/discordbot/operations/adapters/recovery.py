@@ -162,14 +162,27 @@ class Backups:
             raise
 
 
+def _reject_promotion_source_sidecars(candidate: Path) -> None:
+    for suffix in ("-wal", "-shm", "-journal"):
+        try:
+            Path(str(candidate) + suffix).lstat()
+        except FileNotFoundError:
+            continue
+        # lstat also rejects dangling links; metadata access errors propagate.
+        raise ConflictError("promotion source requires quiescence without sidecars")
+
+
 def promote(candidate: Path, live: Path, expected_sha256: str, *, stopped: bool, audit: Audit, release: str) -> None:
     """Explicit offline promotion only. Caller validates and checks service state.
 
     The operator must retain approved encrypted recovery evidence before invocation.
-    Existing WAL/SHM or changed candidate blocks promotion. No down-migration.
+    Source sidecars, canonical WAL/SHM or a changed candidate block promotion.
+    Caller owns the operation lock and prevents writers throughout; filesystem
+    rechecks do not acquire a SQLite lock. No checkpoint or down-migration.
     """
     if not stopped or candidate == live or digest(candidate) != expected_sha256:
         raise ConflictError("promotion preconditions not satisfied")
+    _reject_promotion_source_sidecars(candidate)
     contained(live.parent, live)
     if any(Path(str(live) + suffix).exists() for suffix in ("-wal", "-shm")):
         raise ConflictError("promotion requires quiescent database without sidecars")
@@ -183,6 +196,10 @@ def promote(candidate: Path, live: Path, expected_sha256: str, *, stopped: bool,
             os.fsync(output.fileno())
         if digest(temporary) != expected_sha256:
             raise DataIntegrityError("promotion copy changed")
+        _reject_promotion_source_sidecars(candidate)
+        if digest(candidate) != expected_sha256:
+            raise DataIntegrityError("promotion source changed")
+        _reject_promotion_source_sidecars(candidate)
         os.replace(temporary, live)
         sync_dir(live.parent)
         audit.write("restore_promotion", release, "ok", "complete")

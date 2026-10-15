@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-15 - Recovery promotion source-sidecar rejection
+
+- Reject recovery candidates with WAL/SHM/journal entries and recheck source state before replacement, preventing main-file-only promotion from omitting a live candidate's latest WAL writes. Source files and sidecars are never checkpointed, normalized or deleted.
+- Add actual WAL/race regressions and characterize post-replace failure outcomes. Local RED/GREEN verification completed; independent review remains pending. Frozen candidate and production are unchanged.
+
 ## 2026-10-09 - Required media dependency pins
 
 - Complete the deployment pin policy for existing `yt-dlp[default]` requirements with approved `brotli==1.2.0`, `mutagen==1.48.1` and `pycryptodomex==3.23.0`.

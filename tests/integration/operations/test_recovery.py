@@ -1,5 +1,7 @@
 import errno
 import asyncio
+import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 import pytest
@@ -9,6 +11,7 @@ from cryptography.fernet import Fernet
 from discordbot.operations.adapters.audit import Audit
 from discordbot.operations.adapters.filesystem import digest, read_json, atomic_json
 from discordbot.operations.adapters.recovery import Backups, promote
+from discordbot.operations.adapters import recovery as recovery_module
 from discordbot.platform.errors import ConflictError, DataIntegrityError
 from discordbot.platform.executors import BoundedExecutor
 from discordbot.storage.adapters.execution import SqliteDatabase
@@ -152,3 +155,183 @@ async def test_promotion_atomic_failure_preserves_previous(backup, tmp_path, mon
     with pytest.raises(OSError):
         promote(candidate, live, digest(candidate), stopped=True, audit=backup.audit, release="release")
     assert live.read_bytes() == b"prior" and not list(tmp_path.glob(".restore-*"))
+
+
+async def _promotion_pair(backup: Backups, tmp_path: Path) -> tuple[Path, Path]:
+    await backup.create("release")
+    candidate = tmp_path / "candidate.db"
+    await backup.restore(candidate, "release")
+    with closing(sqlite3.connect(candidate, isolation_level=None)) as conn:
+        conn.execute("INSERT INTO users VALUES (1,1,10,1,0,NULL,NULL)")
+    live = tmp_path / "offline-live.db"
+    live.write_bytes(b"prior")
+    return candidate, live
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("when", ["present", "during_copy"])
+async def test_promotion_rejects_latest_writes_in_source_wal(
+    backup: Backups, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, when: str,
+) -> None:
+    candidate, live = await _promotion_pair(backup, tmp_path)
+    with closing(sqlite3.connect(candidate, isolation_level=None)) as conn:
+        assert conn.execute("PRAGMA journal_mode=WAL").fetchall() == [("wal",)]
+    expected = digest(candidate)
+    holders: list[sqlite3.Connection] = []
+    preserved: dict[Path, bytes] = {}
+
+    def write_latest() -> None:
+        conn = sqlite3.connect(candidate, isolation_level=None)
+        holders.append(conn)
+        conn.execute("PRAGMA wal_autocheckpoint=0")
+        conn.execute("UPDATE users SET xp=123")
+        assert conn.execute("SELECT xp FROM users").fetchone() == (123,)
+        assert digest(candidate) == expected  # Latest commit is only in WAL.
+        for suffix in ("", "-wal", "-shm"):
+            path = Path(str(candidate) + suffix)
+            preserved[path] = path.read_bytes()
+
+    original_copy = recovery_module.shutil.copyfileobj
+
+    def copy_then_write(*args, **kwargs) -> None:
+        original_copy(*args, **kwargs)
+        write_latest()
+
+    try:
+        if when == "present":
+            write_latest()
+        else:
+            monkeypatch.setattr(recovery_module.shutil, "copyfileobj", copy_then_write)
+        rejected = False
+        try:
+            promote(candidate, live, expected, stopped=True, audit=backup.audit, release="release")
+        except ConflictError:
+            rejected = True
+        if not rejected:
+            with closing(sqlite3.connect(live)) as copied:
+                published = copied.execute("SELECT xp FROM users").fetchone()[0]
+            pytest.fail(f"source committed synthetic XP123, but promotion published XP{published}")
+        assert preserved and all(path.read_bytes() == value for path, value in preserved.items())
+        assert live.read_bytes() == b"prior"
+        assert not list(tmp_path.glob(".restore-*"))
+    finally:
+        for conn in holders:
+            conn.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("suffix", ["-wal", "-shm", "-journal"])
+async def test_promotion_rejects_source_sidecar_without_changing_files(
+    backup: Backups, tmp_path: Path, suffix: str,
+) -> None:
+    candidate, live = await _promotion_pair(backup, tmp_path)
+    expected = digest(candidate)
+    sidecar = Path(str(candidate) + suffix)
+    sidecar.write_bytes(b"synthetic-sidecar-preserve")
+    with pytest.raises(ConflictError):
+        promote(candidate, live, expected, stopped=True, audit=backup.audit, release="release")
+    assert digest(candidate) == expected and sidecar.read_bytes() == b"synthetic-sidecar-preserve"
+    assert live.read_bytes() == b"prior" and not list(tmp_path.glob(".restore-*"))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("suffix", ["-wal", "-shm", "-journal"])
+@pytest.mark.parametrize("when", ["after_source_hash", "after_copy", "after_final_source_hash"])
+async def test_promotion_rechecks_source_sidecars_before_replacement(
+    backup: Backups, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, suffix: str, when: str,
+) -> None:
+    candidate, live = await _promotion_pair(backup, tmp_path)
+    expected = digest(candidate)
+    sidecar = Path(str(candidate) + suffix)
+    original_digest, original_copy = recovery_module.digest, recovery_module.shutil.copyfileobj
+    source_hashes = 0
+
+    def hash_then_sidecar(path: Path, *args, **kwargs) -> str:
+        nonlocal source_hashes
+        value = original_digest(path, *args, **kwargs)
+        if path == candidate:
+            source_hashes += 1
+            if source_hashes == (2 if when == "after_final_source_hash" else 1):
+                sidecar.write_bytes(b"synthetic-concurrent-sidecar")
+        return value
+
+    def copy_then_sidecar(*args, **kwargs) -> None:
+        original_copy(*args, **kwargs)
+        sidecar.write_bytes(b"synthetic-concurrent-sidecar")
+
+    if when != "after_copy":
+        monkeypatch.setattr(recovery_module, "digest", hash_then_sidecar)
+    else:
+        monkeypatch.setattr(recovery_module.shutil, "copyfileobj", copy_then_sidecar)
+    with pytest.raises(ConflictError):
+        promote(candidate, live, expected, stopped=True, audit=backup.audit, release="release")
+    assert sidecar.read_bytes() == b"synthetic-concurrent-sidecar"
+    assert original_digest(candidate) == expected and live.read_bytes() == b"prior"
+    assert not list(tmp_path.glob(".restore-*"))
+
+
+@pytest.mark.asyncio
+async def test_promotion_sidecar_stat_error_is_not_treated_as_absent(
+    backup: Backups, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate, live = await _promotion_pair(backup, tmp_path)
+    expected = digest(candidate)
+    original = Path.lstat
+
+    def denied(path: Path, *args, **kwargs):
+        if path == Path(str(candidate) + "-wal"):
+            raise PermissionError("synthetic denied sidecar metadata")
+        return original(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "lstat", denied)
+    with pytest.raises(PermissionError):
+        promote(candidate, live, expected, stopped=True, audit=backup.audit, release="release")
+    assert digest(candidate) == expected and live.read_bytes() == b"prior"
+
+
+@pytest.mark.asyncio
+async def test_promotion_rejects_source_changed_after_copy(
+    backup: Backups, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate, live = await _promotion_pair(backup, tmp_path)
+    expected = digest(candidate)
+    original = recovery_module.shutil.copyfileobj
+
+    def copy_then_write(*args, **kwargs) -> None:
+        original(*args, **kwargs)
+        with closing(sqlite3.connect(candidate, isolation_level=None)) as conn:
+            conn.execute("UPDATE users SET xp=123")
+
+    monkeypatch.setattr(recovery_module.shutil, "copyfileobj", copy_then_write)
+    with pytest.raises(DataIntegrityError):
+        promote(candidate, live, expected, stopped=True, audit=backup.audit, release="release")
+    with closing(sqlite3.connect(candidate)) as conn:
+        assert conn.execute("SELECT xp FROM users").fetchone() == (123,)
+    assert live.read_bytes() == b"prior" and not list(tmp_path.glob(".restore-*"))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("fault", ["directory_sync", "success_audit"])
+async def test_promotion_post_replace_failure_may_have_published(
+    backup: Backups, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fault: str,
+) -> None:
+    candidate, live = await _promotion_pair(backup, tmp_path)
+    expected = digest(candidate)
+    original_audit = backup.audit.write
+
+    def fail_sync(path: Path) -> None:
+        raise OSError("synthetic directory sync failure")
+
+    def fail_success(operation: str, release: str, result: str, reason: str) -> None:
+        if result == "ok":
+            raise OSError("synthetic success audit failure")
+        original_audit(operation, release, result, reason)
+
+    if fault == "directory_sync":
+        monkeypatch.setattr(recovery_module, "sync_dir", fail_sync)
+    else:
+        monkeypatch.setattr(backup.audit, "write", fail_success)
+    with pytest.raises(OSError):
+        promote(candidate, live, expected, stopped=True, audit=backup.audit, release="release")
+    assert digest(live) == digest(candidate) == expected
+    assert not list(tmp_path.glob(".restore-*"))
