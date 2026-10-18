@@ -1,5 +1,17 @@
 # Current Rebuild Plan
 
+## P11 cleanup and publication preparation — 2026-10-18
+
+Local V1 retirement is complete: 26 source paths and 19 V1-only test files removed;
+required DB/Engagement/Music comparisons retained explicitly. 172 focused checks
+passed and 1897 tests collected; no full-suite or new production health claim.
+[Publication scope and final P11 status](p11-publication-preparation-20261018.md)
+records the public `lgw323/Bot` destination, 77 existing unpublished V2 commits,
+two proposed P11 commits and the no-force branch/PR strategy. Nothing is published
+by this note. Installed cleanup remains 9/12 with three retained and four protected;
+no additional deletion or cancelled audit is authorized. Historical checkpoints
+below remain evidence, not the current source-retirement status.
+
 Updated: 2026-09-20
 
 ## PHASE 10 reporting authority and current work
