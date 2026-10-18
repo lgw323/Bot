@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="0.406" timestamp="2026-10-03T11:38:23.889099+09:00" hostname="TUF"><testcase classname="docs.rebuild.final-audit.a7-paused-disconnect-probe" name="test_paused_intent_survives_voice_reconnect[ordinary-reconnect-control]" time="0.288" /><testcase classname="docs.rebuild.final-audit.a7-paused-disconnect-probe" name="test_paused_intent_survives_voice_reconnect[disconnect-during-tts]" time="0.003"><failure message="AssertionError: (False, 'playing', False, True)&#10;assert (False, 'play..., False, True) == (True, 'paused', True, False)&#10;  &#10;  At index 0 diff: False != True&#10;  Use -v to get more diff">docs\rebuild\final-audit\a7-paused-disconnect-probe.py:84: in test_paused_intent_survives_voice_reconnect
+    assert observed == (True, "paused", True, False), observed
+E   AssertionError: (False, 'playing', False, True)
+E   assert (False, 'play..., False, True) == (True, 'paused', True, False)
+E
+E     At index 0 diff: False != True
+E     Use -v to get more diff</failure></testcase></testsuite></testsuites>

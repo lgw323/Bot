@@ -1,0 +1,9 @@
+// Reviewed Phase 9 install only. Runtime user cannot manage systemd units.
+polkit.addRule(function(action, subject) {
+    if (action.id === "org.freedesktop.systemd1.manage-units" &&
+        subject.user === "discordbot-deploy" &&
+        ["discord-bot.service", "watch-web.service"].indexOf(action.lookup("unit")) !== -1 &&
+        ["start", "stop"].indexOf(action.lookup("verb")) !== -1) {
+        return polkit.Result.YES;
+    }
+});

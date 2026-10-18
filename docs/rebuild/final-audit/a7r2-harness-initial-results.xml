@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="30" skipped="0" tests="30" time="0.615" timestamp="2026-10-03T11:57:43.635550+09:00" hostname="TUF"><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[queued-acquire-ordinary-playing]" time="0.254"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB746CE00&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB5433E00&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB746CE00&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB5433E00&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[queued-acquire-ordinary-paused]" time="0.004"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FAA30&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB74CB5C0&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FAA30&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB74CB5C0&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[queued-acquire-tts-playing]" time="0.004"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FADA0&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB75665D0&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FADA0&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB75665D0&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[queued-acquire-tts-paused]" time="0.004"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FAFB0&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB757CF50&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FAFB0&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB757CF50&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[queued-start-ordinary-playing]" time="0.004"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FA820&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB758CB90&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FA820&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB758CB90&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[queued-start-ordinary-paused]" time="0.003"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FB060&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB75C8E00&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FB060&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB75C8E00&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[queued-start-tts-playing]" time="0.004"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FB690&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB75855B0&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FB690&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB75855B0&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[queued-start-tts-paused]" time="0.004"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FACF0&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB7627890&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FACF0&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB7627890&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[later-acquire-ordinary-playing]" time="0.004"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FAF00&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB7567410&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FAF00&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB7567410&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[later-acquire-ordinary-paused]" time="0.004"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FA980&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB75A37D0&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FA980&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB75A37D0&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[later-acquire-tts-playing]" time="0.005"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FB5E0&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB7652300&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FB5E0&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB7652300&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[later-acquire-tts-paused]" time="0.004"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FB740&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB765E060&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FB740&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB765E060&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[later-start-ordinary-playing]" time="0.003"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB7660300&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB7585010&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB7660300&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB7585010&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[later-start-ordinary-paused]" time="0.004"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FBB60&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB7691D60&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FBB60&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB7691D60&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[later-start-tts-playing]" time="0.004"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FBA00&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB7565CA0&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FBA00&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB7565CA0&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[later-start-tts-paused]" time="0.004"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FBCC0&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB75A3230&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FBCC0&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB75A3230&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[same-session-acquire-ordinary-playing]" time="0.004"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FB740&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB76E95B0&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FB740&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB76E95B0&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[same-session-acquire-ordinary-paused]" time="0.003"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FBC10&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB75DCCE0&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FBC10&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB75DCCE0&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[same-session-acquire-tts-playing]" time="0.004"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB76607D0&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB7584320&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB76607D0&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB7584320&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[same-session-acquire-tts-paused]" time="0.004"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FB270&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB76BF620&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FB270&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB76BF620&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[same-session-start-ordinary-playing]" time="0.003"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB76600F0&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB771ABD0&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB76600F0&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB771ABD0&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[same-session-start-ordinary-paused]" time="0.003"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB76603B0&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB7719C40&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB76603B0&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB7719C40&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[same-session-start-tts-playing]" time="0.017"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FB060&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB7757320&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FB060&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB7757320&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_recovery_pause_lifetime[same-session-start-tts-paused]" time="0.004"><failure message="assert 120.0 == (120.0 + 8)&#10; +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FAB90&gt;.retry_at&#10; +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB768F050&gt;.value">tests\integration\music\test_pause_session_lifetime.py:89: in test_recovery_pause_lifetime
+    await wake_retry(actor, clock, sleeper, delay, seen, original.session_id, paused)
+tests\integration\music\test_pause_session_lifetime.py:42: in wake_retry
+    assert state.retry_at == clock.value + delay
+E   assert 120.0 == (120.0 + 8)
+E    +  where 120.0 = &lt;discordbot.music.domain.model.Projection object at 0x0000023BB74FAB90&gt;.retry_at
+E    +  and   120.0 = &lt;music.conftest.FakeClock object at 0x0000023BB768F050&gt;.value</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_completion_starts_new_session_with_fresh_pause_intent[0-playing]" time="0.003"><failure message="AssertionError: assert &lt;discordbot.m...0023BB74FB5E0&gt; == &lt;discordbot.m...0023BB74FADA0&gt;&#10;  &#10;  Omitting 16 identical items, use -vv to show&#10;  Differing attributes:&#10;  ['revision']&#10;  &#10;  Drill down into differing attribute revision:&#10;    revision: 12 != 11">tests\integration\music\test_pause_session_lifetime.py:155: in test_completion_starts_new_session_with_fresh_pause_intent
+    assert actor.projection() == successor
+E   AssertionError: assert &lt;discordbot.m...0023BB74FB5E0&gt; == &lt;discordbot.m...0023BB74FADA0&gt;
+E
+E     Omitting 16 identical items, use -vv to show
+E     Differing attributes:
+E     ['revision']
+E
+E     Drill down into differing attribute revision:
+E       revision: 12 != 11</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_completion_starts_new_session_with_fresh_pause_intent[0-paused]" time="0.004"><failure message="AssertionError: assert &lt;discordbot.m...0023BB74FB5E0&gt; == &lt;discordbot.m...0023BB74FADA0&gt;&#10;  &#10;  Omitting 16 identical items, use -vv to show&#10;  Differing attributes:&#10;  ['revision']&#10;  &#10;  Drill down into differing attribute revision:&#10;    revision: 16 != 15">tests\integration\music\test_pause_session_lifetime.py:155: in test_completion_starts_new_session_with_fresh_pause_intent
+    assert actor.projection() == successor
+E   AssertionError: assert &lt;discordbot.m...0023BB74FB5E0&gt; == &lt;discordbot.m...0023BB74FADA0&gt;
+E
+E     Omitting 16 identical items, use -vv to show
+E     Differing attributes:
+E     ['revision']
+E
+E     Drill down into differing attribute revision:
+E       revision: 16 != 15</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_completion_starts_new_session_with_fresh_pause_intent[1-playing]" time="0.003"><failure message="AssertionError: assert &lt;discordbot.m...0023BB74FB950&gt; == &lt;discordbot.m...0023BB74FB8A0&gt;&#10;  &#10;  Omitting 16 identical items, use -vv to show&#10;  Differing attributes:&#10;  ['revision']&#10;  &#10;  Drill down into differing attribute revision:&#10;    revision: 14 != 13">tests\integration\music\test_pause_session_lifetime.py:155: in test_completion_starts_new_session_with_fresh_pause_intent
+    assert actor.projection() == successor
+E   AssertionError: assert &lt;discordbot.m...0023BB74FB950&gt; == &lt;discordbot.m...0023BB74FB8A0&gt;
+E
+E     Omitting 16 identical items, use -vv to show
+E     Differing attributes:
+E     ['revision']
+E
+E     Drill down into differing attribute revision:
+E       revision: 14 != 13</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_completion_starts_new_session_with_fresh_pause_intent[1-paused]" time="0.003"><failure message="AssertionError: assert &lt;discordbot.m...0023BB74FAC40&gt; == &lt;discordbot.m...0023BB74FA770&gt;&#10;  &#10;  Omitting 16 identical items, use -vv to show&#10;  Differing attributes:&#10;  ['revision']&#10;  &#10;  Drill down into differing attribute revision:&#10;    revision: 17 != 16">tests\integration\music\test_pause_session_lifetime.py:155: in test_completion_starts_new_session_with_fresh_pause_intent
+    assert actor.projection() == successor
+E   AssertionError: assert &lt;discordbot.m...0023BB74FAC40&gt; == &lt;discordbot.m...0023BB74FA770&gt;
+E
+E     Omitting 16 identical items, use -vv to show
+E     Differing attributes:
+E     ['revision']
+E
+E     Drill down into differing attribute revision:
+E       revision: 17 != 16</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_completion_starts_new_session_with_fresh_pause_intent[2-playing]" time="0.004"><failure message="AssertionError: assert &lt;discordbot.m...0023BB74FAC40&gt; == &lt;discordbot.m...0023BB74FA770&gt;&#10;  &#10;  Omitting 16 identical items, use -vv to show&#10;  Differing attributes:&#10;  ['revision']&#10;  &#10;  Drill down into differing attribute revision:&#10;    revision: 15 != 14">tests\integration\music\test_pause_session_lifetime.py:155: in test_completion_starts_new_session_with_fresh_pause_intent
+    assert actor.projection() == successor
+E   AssertionError: assert &lt;discordbot.m...0023BB74FAC40&gt; == &lt;discordbot.m...0023BB74FA770&gt;
+E
+E     Omitting 16 identical items, use -vv to show
+E     Differing attributes:
+E     ['revision']
+E
+E     Drill down into differing attribute revision:
+E       revision: 15 != 14</failure></testcase><testcase classname="tests.integration.music.test_pause_session_lifetime" name="test_completion_starts_new_session_with_fresh_pause_intent[2-paused]" time="0.004"><failure message="AssertionError: assert &lt;discordbot.m...0023BB74FB740&gt; == &lt;discordbot.m...0023BB74FA980&gt;&#10;  &#10;  Omitting 16 identical items, use -vv to show&#10;  Differing attributes:&#10;  ['revision']&#10;  &#10;  Drill down into differing attribute revision:&#10;    revision: 18 != 17">tests\integration\music\test_pause_session_lifetime.py:155: in test_completion_starts_new_session_with_fresh_pause_intent
+    assert actor.projection() == successor
+E   AssertionError: assert &lt;discordbot.m...0023BB74FB740&gt; == &lt;discordbot.m...0023BB74FA980&gt;
+E
+E     Omitting 16 identical items, use -vv to show
+E     Differing attributes:
+E     ['revision']
+E
+E     Drill down into differing attribute revision:
+E       revision: 18 != 17</failure></testcase></testsuite></testsuites>

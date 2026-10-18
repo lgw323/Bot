@@ -1,0 +1,501 @@
+"""Lazy Discord components. Every mutation is routed to the guild actor."""
+import asyncio
+import hashlib
+import inspect
+import logging
+import re
+from collections.abc import Callable
+from dataclasses import replace
+from typing import Any
+from uuid import uuid4
+
+from discordbot.music.domain.model import LoopMode, Track
+from discordbot.music.domain.pages import SongPages
+from discordbot.music.ports.repository import Favorite
+from discordbot.platform.errors import AppError, AuthorizationError, CapacityError, ConflictError, ExternalPermanentError
+from discordbot.platform.tasks import TaskSpec, TaskSupervisor, require_tasks_stopped
+from discordbot.storage.ports.contracts import DatabaseRequest
+
+logger = logging.getLogger(__name__)
+
+
+def report_failure(stage: str, error: Exception) -> None:
+    logger.warning('music.ui_failed', extra={'fields':{'stage':stage,
+        'error_code':error.code.value if isinstance(error, AppError) else 'internal'}})
+
+
+class Responder:
+    def __init__(self, interaction: Any, *, delete_later: Callable[[Any, float], None] | None = None) -> None:
+        self.interaction = interaction
+        self.delete_later = delete_later
+        self.acknowledged = bool(interaction.response.is_done())
+        self.finished = False
+
+    async def _call(self, callback: Any) -> Any:
+        try:
+            async with asyncio.timeout(3):
+                return await callback()
+        except BaseException:
+            self.finished = True
+            raise
+
+    async def defer(self, *, ephemeral: bool = True, thinking: bool = True) -> None:
+        if not self.acknowledged and not self.finished:
+            self.acknowledged = True
+            await self._call(lambda: self.interaction.response.defer(ephemeral=ephemeral, thinking=thinking))
+
+    async def send(self, content: str | None = None, **kwargs: Any) -> Any:
+        if self.finished:
+            return None
+        callback = self.interaction.followup.send if self.acknowledged else self.interaction.response.send_message
+        delay = kwargs.pop('delete_after', None) if self.acknowledged else None
+        if delay is not None:
+            if self.delete_later is None or not 0 <= delay <= 60:
+                raise ValueError('bounded followup deletion owner required')
+            kwargs['wait'] = True
+        # A binding failure is known to precede any HTTP request. Leave the
+        # responder available for one fallback. Once invoked, a failed send
+        # can be ambiguous and must never admit a second response.
+        inspect.signature(callback).bind(content=content, **kwargs)
+        self.finished = True
+        self.acknowledged = True
+        message = await self._call(lambda: callback(content=content, **kwargs))
+        if delay is not None:
+            self.delete_later(message, delay)
+        return message
+
+    async def edit(self, **kwargs: Any) -> Any:
+        if self.finished:
+            return None
+        self.finished = self.acknowledged = True
+        return await self._call(lambda: self.interaction.response.edit_message(**kwargs))
+
+    async def modal(self, modal: Any) -> None:
+        if self.finished or self.acknowledged:
+            raise ConflictError("Music interaction already acknowledged")
+        self.finished = self.acknowledged = True
+        await self._call(lambda: self.interaction.response.send_modal(modal))
+
+
+class MusicController:
+    def __init__(self, actors: Any, repository: Any, clock: Any, channels: dict[int, int], master: int) -> None:
+        self.actors, self.repository, self.clock, self.channels, self.master = actors, repository, clock, channels, master
+        self.views: dict[str, tuple[Any, float]] = {}
+        self.delete_failures = 0
+        self._deletions = TaskSupervisor(capacity=32, history_capacity=64, clock=clock)
+        self._delete_tasks: set[asyncio.Task] = set()
+        self._closed = False
+
+    def responder(self, interaction: Any) -> Responder:
+        return Responder(interaction, delete_later=self._delete_later)
+
+    def _delete_later(self, message: Any, delay: float) -> None:
+        async def delete() -> None:
+            await asyncio.sleep(delay)
+            try:
+                # SDK delete(delay=...) creates an unowned background task.
+                # Keep both the delay and HTTP operation in this bounded owner.
+                async with asyncio.timeout(3):
+                    await message.delete()
+            except Exception:
+                self.delete_failures += 1
+
+        if self._closed:
+            self.delete_failures += 1
+            return
+        identity = uuid4().hex
+        try:
+            task = self._deletions.start(TaskSpec('music.reply_delete', 'music.ui', identity, identity, delay+4), delete)
+        except AppError:
+            # The response was delivered. Cleanup saturation cannot send a
+            # duplicate fallback or turn an accepted request into a failure.
+            self.delete_failures += 1
+            return
+        self._delete_tasks.add(task)
+        task.add_done_callback(self._delete_tasks.discard)
+
+    def own(self, view: Any, seconds: float = 180) -> Any:
+        for key, (old, expires) in tuple(self.views.items()):
+            if expires <= self.clock.monotonic() or old.is_finished():
+                old.stop()
+                del self.views[key]
+        if len(self.views) >= 32:
+            view.stop()
+            raise CapacityError("Music UI capacity exhausted")
+        self.views[uuid4().hex] = (view, self.clock.monotonic() + seconds)
+        return view
+
+    def close(self) -> None:
+        self._closed = True
+        for task in self._delete_tasks: task.cancel()
+        for view, _ in self.views.values(): view.stop()
+        self.views.clear()
+
+    async def stop(self) -> None:
+        self.close()
+        require_tasks_stopped(await self._deletions.shutdown(grace_seconds=0))
+
+    async def actor(self, guild_id: int) -> Any:
+        if guild_id not in self.channels:
+            raise AuthorizationError("Music disabled for this guild")
+        return await self.actors(guild_id)
+
+    async def voice(self, actor: Any, member: Any) -> bool:
+        channel = getattr(getattr(member, "voice", None), "channel", None)
+        state = actor.projection()
+        if channel is None:
+            if member.id != self.master:
+                raise AuthorizationError("requester is not in voice", safe_message="음성 채널에 먼저 참여해주세요.")
+            if state.voice_channel_id is None:
+                raise AuthorizationError("master has no voice target", safe_message="봇이 현재 음성 채널에 없습니다. 음성 채널에 먼저 참여하거나 봇을 호출해주세요.")
+            return False
+        if channel.guild.id != actor.guild_id:
+            raise AuthorizationError("cross-guild voice target")
+        moved = channel.id != state.voice_channel_id
+        await actor.ask("connect", channel_id=channel.id)
+        return moved
+
+    async def request(self, interaction: Any, query: str, *, modal: bool = False) -> None:
+        responder = self.responder(interaction)
+        logger.info('music.request_received', extra={'fields':{'stage':'ui_request'}})
+        try:
+            await responder.defer()
+            actor = await self.actor(interaction.guild_id)
+            channel = self.channels[interaction.guild_id]
+            if interaction.channel_id != channel:
+                text = f"노래 검색은 <#{channel}> 채널에서만 사용할 수 있습니다." if modal else f"노래 명령어는 <#{channel}> 채널에서만 사용할 수 있습니다."
+                await responder.send(text, ephemeral=True)
+                return
+            await self.voice(actor, interaction.user)
+            url = query.strip().startswith(("http://", "https://"))
+            future = await actor.ask("lookup", query=query, requester_id=interaction.user.id,
+                                     request_id=str(interaction.id), enqueue=url)
+            tracks = await future
+            if not tracks:
+                text = "재생목록을 처리할 수 없거나 비어있습니다." if url and "list=" in query else "노래 정보를 찾을 수 없습니다."
+                await responder.send(text, ephemeral=True, delete_after=5)
+            elif not url:
+                pages = SongPages(interaction.guild_id, interaction.user.id, self.clock.monotonic()+180, tracks)
+                await responder.send("**🔎 검색 결과:**", ephemeral=True, view=self.own(build_song_view(self, pages, "search")))
+            else:
+                text = f"✅ 재생목록에서 **{len(tracks)}**개의 노래를 대기열에 추가했습니다." if "list=" in query else f"✅ 대기열에 **'{tracks[0].title}'** 을(를) 추가했습니다."
+                await responder.send(text, ephemeral=True, delete_after=5)
+        except asyncio.CancelledError:
+            raise
+        except AppError as error:
+            report_failure('request', error)
+            await responder.send(error.safe_message, ephemeral=True)
+        except Exception as error:
+            report_failure('request', error)
+            await responder.send("노래 정보를 가져오는 중 오류가 발생했습니다.", ephemeral=True, delete_after=5)
+
+    async def message(self, message: Any) -> None:
+        if message.author.bot or not message.guild or self.channels.get(message.guild.id) != message.channel.id:
+            return
+        match = re.search(r"https?://(?:www\.|m\.|music\.)?(?:youtube\.com|youtu\.be)/[^\s<>]+", message.content)
+        if not match:
+            return
+        try:
+            await message.delete()
+        except Exception:
+            # Failed deletion must not prevent the original public request.
+            self.delete_failures += 1
+        try:
+            actor = await self.actor(message.guild.id)
+            await self.voice(actor, message.author)
+            future = await actor.ask("lookup", query=match.group(), requester_id=message.author.id,
+                                     request_id=str(message.id), enqueue=True)
+            tracks = await future
+            text = (f"✅ 재생목록에서 **{len(tracks)}**개의 노래를 대기열에 추가했습니다." if "list=" in match.group()
+                    else f"✅ 대기열에 **'{tracks[0].title}'** 을(를) 추가했습니다." if tracks else "노래 정보를 찾을 수 없습니다.")
+            await message.channel.send(text, delete_after=5)
+        except AppError as error:
+            report_failure('message_request', error)
+            await message.channel.send(error.safe_message, delete_after=8)
+
+    async def favorites(self, guild: int, user: int) -> SongPages:
+        tracks = []
+        for offset in range(0, 1001, 100):
+            values = await self.repository.list_favorites(user, DatabaseRequest.within(3), limit=100, offset=offset)
+            if offset == 1000 and values:
+                raise CapacityError("favorite view exceeds bounded result capacity")
+            tracks.extend(Track(hashlib.sha256(value.url.encode()).hexdigest(), value.url, value.title, 0, user) for value in values)
+            if len(values) < 100: break
+        return SongPages(guild, user, self.clock.monotonic()+180, tuple(tracks))
+
+    async def add_favorites(self, actor: Any, tracks: tuple[Track, ...], user: int, request_id: str) -> int:
+        """Keep successful entries in order; bound the whole partial batch."""
+        if len(tracks) > 50:
+            raise CapacityError("favorite batch exceeds fifty songs")
+        added = 0
+        try:
+            async with asyncio.timeout(60):
+                for song in tracks:
+                    try:
+                        future = await actor.ask("lookup", query=song.url, requester_id=user,
+                                                 request_id=request_id+song.item_id, enqueue=True)
+                        added += len(await future)
+                    except AppError:
+                        continue
+        except TimeoutError:
+            # Cancellation of the awaited result prevents a late enqueue.
+            return added
+        return added
+
+    async def action(self, interaction: Any, action: str, state: Any) -> None:
+        responder = self.responder(interaction)
+        try:
+            if interaction.guild_id != state.guild_id:
+                raise AuthorizationError("cross-guild Music component")
+            actor = await self.actor(state.guild_id)
+            if action == "search":
+                await responder.modal(self.own(build_search_modal(self)))
+            elif action == "pause":
+                await responder.defer(ephemeral=False, thinking=False)
+                # A displayed View remains dispatchable during HTTP edits. Decide
+                # the toggle inside the actor, not from that captured projection.
+                await actor.ask("toggle_pause", session_id=state.session_id)
+            elif action == "loop":
+                await responder.defer(ephemeral=False, thinking=False)
+                await actor.ask("loop")
+            elif action == "skip":
+                result = await actor.ask("skip", session_id=state.session_id, generation=state.generation)
+                await responder.send("⏭️ 현재 노래를 건너뛰었습니다." if result else "건너뛸 노래가 없습니다.", ephemeral=True, **({"delete_after": 5} if result else {}))
+            elif action == "leave":
+                await responder.defer()
+                await actor.ask("leave")
+                await responder.send("🚪 음성 채널에서 퇴장했습니다.", ephemeral=True)
+            elif action == "autoplay":
+                enabled = not actor.projection().autoplay
+                await actor.ask("autoplay", enabled=enabled)
+                await responder.send(f"🎶 자동 재생을 {'활성화' if enabled else '비활성화'}했습니다.", ephemeral=True, delete_after=5)
+            elif action == "favorite":
+                current = actor.projection()
+                if not current.current or current.session_id != state.session_id:
+                    await responder.send("재생 중인 노래가 없습니다.", ephemeral=True)
+                    return
+                await responder.defer()
+                pages = await self.favorites(state.guild_id, interaction.user.id)
+                if any(song.url == current.current.url for song in pages.songs):
+                    await responder.send("이미 즐겨찾기에 추가된 노래입니다.", ephemeral=True)
+                    return
+                await self.repository.put_favorite(interaction.user.id, Favorite(current.current.url, current.current.title), DatabaseRequest.within(3))
+                await responder.send(f"⭐ '{current.current.title}'을(를) 즐겨찾기에 추가했습니다!", ephemeral=True)
+            elif action in {"queue", "favorites"}:
+                current = actor.projection()
+                pages = (await self.favorites(state.guild_id, interaction.user.id) if action == "favorites" else
+                         SongPages(state.guild_id, interaction.user.id, self.clock.monotonic()+180, current.queue, current.revision))
+                if not pages.songs and action == "favorites":
+                    await responder.send("즐겨찾기 목록이 비어있습니다.", ephemeral=True)
+                else:
+                    await responder.send("🎶 노래 대기열" if action == "queue" else "💾 보관함", ephemeral=True,
+                                         view=self.own(build_song_view(self, pages, action)))
+        except AppError as error:
+            report_failure('action', error)
+            await responder.send(error.safe_message, ephemeral=True)
+        except Exception as error:
+            report_failure('action', error)
+            await responder.send("요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.", ephemeral=True)
+
+
+def build_search_modal(controller: MusicController) -> Any:
+    import discord
+    class SearchModal(discord.ui.Modal, title="🎵 노래 검색 및 재생"):
+        def __init__(self):
+            super().__init__(timeout=180)
+            self.query = discord.ui.TextInput(label="검색어 또는 유튜브 URL 입력", placeholder="예: 아이유 밤편지 또는 https://youtu.be/...", required=True, max_length=2048)
+            self.add_item(self.query)
+        async def on_submit(self, interaction):
+            await controller.request(interaction, self.query.value, modal=True)
+    return SearchModal()
+
+
+def build_song_view(controller: MusicController, pages: SongPages, kind: str) -> Any:
+    import discord
+    class SongView(discord.ui.View):
+        def __init__(self):
+            super().__init__(timeout=180)
+            self.songs, self.pages, self.page_index = pages.songs, pages, 0
+            self.selected: set[str] = set()
+            self.deleting = False
+            self.consumed = False
+            self.render()
+
+        async def interaction_check(self, interaction):
+            try:
+                pages.select((), interaction.guild_id, interaction.user.id, controller.clock.monotonic())
+                return True
+            except AppError as error:
+                await controller.responder(interaction).send(error.safe_message, ephemeral=True)
+                return False
+
+        def render(self):
+            self.clear_items()
+            options = [discord.SelectOption(label=track.title[:100], value=track.item_id,
+                       description=f"채널: {track.uploader[:60]} | 길이: {track.duration//60}:{track.duration%60:02d}",
+                       default=track.item_id in self.selected) for track in pages.page(self.page_index)]
+            if options:
+                select = discord.ui.Select(placeholder="재생할 노래를 선택하세요..." if kind == "search" else "노래를 선택하세요...",
+                    options=options, max_values=len(options) if kind == "favorites" else 1, custom_id="music:"+kind+":select", row=0)
+                async def selected(interaction):
+                    if not await self.interaction_check(interaction): return
+                    visible = {track.item_id for track in pages.page(self.page_index)}
+                    if not set(select.values) <= visible:
+                        await controller.responder(interaction).send("입력값을 확인해 주세요.", ephemeral=True)
+                        return
+                    self.selected.difference_update(visible)
+                    self.selected.update(select.values)
+                    if kind == "search": await self.perform(interaction, "add")
+                    else:
+                        self.render()
+                        await controller.responder(interaction).edit(view=self)
+                select.callback = selected
+                self.add_item(select)
+            if kind == "queue":
+                for label, action, custom_id in (("맨 위로", "move", "q_move_top"), ("삭제", "remove", "q_remove"),
+                                                  ("섞기", "shuffle", "music:shuffle"), ("전체삭제", "clear", "music:clear")):
+                    self.button(label, action, custom_id)
+            elif kind == "favorites":
+                for label, action in (("전체 선택", "all"), ("선택 해제", "none"), ("삭제" if self.deleting else "대기열에 추가", "add"),
+                                      ("추가 모드로 전환" if self.deleting else "삭제 모드로 전환", "mode")):
+                    self.button(label, action, "music:favorites:"+action)
+            if pages.count > 1:
+                self.button("이전", "previous", "music:previous", row=2, disabled=self.page_index == 0)
+                self.button("다음", "next", "music:next", row=2, disabled=self.page_index + 1 == pages.count)
+
+        def button(self, label, action, custom_id, row=1, disabled=False):
+            button = discord.ui.Button(label=label, custom_id=custom_id, row=row, disabled=disabled)
+            async def callback(interaction): await self.perform(interaction, action)
+            button.callback = callback
+            self.add_item(button)
+
+        async def perform(self, interaction, action):
+            responder = controller.responder(interaction)
+            try:
+                selected = pages.select(tuple(song.item_id for song in pages.songs if song.item_id in self.selected),
+                                        interaction.guild_id, interaction.user.id, controller.clock.monotonic())
+                if action in {"previous", "next", "all", "none", "mode"}:
+                    if action == "previous": self.page_index = max(0, self.page_index-1)
+                    if action == "next": self.page_index = min(pages.count-1, self.page_index+1)
+                    if action == "all": self.selected = {song.item_id for song in pages.songs}
+                    if action == "none": self.selected.clear()
+                    if action == "mode": self.deleting = not self.deleting
+                    self.render()
+                    await responder.edit(view=self)
+                    return
+                actor = await controller.actor(pages.guild_id)
+                if action == "clear":
+                    view = build_clear_confirmation(controller, pages)
+                    await responder.send("대기열을 모두 삭제하시겠습니까?", ephemeral=True, view=controller.own(view, 30))
+                    return
+                await responder.defer()
+                if action in {"move", "remove", "shuffle"}:
+                    if action != "shuffle" and len(selected) != 1: raise ConflictError("select one queue item")
+                    await actor.ask("edit", action=action, item_id=selected[0].item_id if selected else None, revision=pages.revision)
+                    await responder.send("🔀 대기열을 섞었습니다!" if action == "shuffle" else "대기열을 수정했습니다.", ephemeral=True, delete_after=5)
+                elif action == "add":
+                    if not selected: raise ConflictError("no selected Music items")
+                    if self.consumed: raise ConflictError("Music selection already consumed")
+                    if len(selected) > 50:
+                        raise CapacityError("select at most fifty favorites per request")
+                    self.consumed = True
+                    if kind == "favorites" and self.deleting:
+                        count = 0
+                        for song in selected:
+                            count += await controller.repository.remove_favorite(interaction.user.id, song.url, DatabaseRequest.within(3))
+                        await responder.send(f"🗑️ 즐겨찾기에서 {count}개의 노래를 삭제했습니다.", ephemeral=True)
+                    else:
+                        await controller.voice(actor, interaction.user)
+                        if kind == "search":
+                            await actor.ask("enqueue", tracks=tuple(replace(song, item_id=uuid4().hex) for song in selected), request_id=str(interaction.id))
+                            added = len(selected)
+                        else:
+                            added = await controller.add_favorites(actor, selected, interaction.user.id, str(interaction.id))
+                        await responder.send(f"✅ 대기열에 {added}개의 노래를 추가했습니다.", ephemeral=True, delete_after=5)
+                    self.stop()
+            except AppError as error:
+                report_failure('selection', error)
+                await responder.send(error.safe_message, ephemeral=True)
+            except Exception as error:
+                report_failure('selection', error)
+                await responder.send("노래 정보를 가져오는 중 오류가 발생했습니다.", ephemeral=True)
+    return SongView()
+
+
+def build_clear_confirmation(controller: MusicController, pages: SongPages) -> Any:
+    import discord
+    view = discord.ui.View(timeout=30)
+    expiry = controller.clock.monotonic()+30
+    for label, confirmed in (("확인", True), ("취소", False)):
+        button = discord.ui.Button(label=label, custom_id="music:clear:"+str(confirmed))
+        async def callback(interaction, confirmed=confirmed):
+            responder = controller.responder(interaction)
+            try:
+                pages.select((), interaction.guild_id, interaction.user.id, controller.clock.monotonic())
+                if controller.clock.monotonic() >= expiry: raise ConflictError("confirmation expired")
+                if confirmed:
+                    actor = await controller.actor(pages.guild_id)
+                    await actor.ask("edit", action="clear", revision=pages.revision)
+                await responder.edit(content=f"🗑️ 대기열의 노래 {len(pages.songs)}개를 모두 삭제했습니다." if confirmed else "취소했습니다.", view=None)
+                view.stop()
+            except AppError as error: await responder.send(error.safe_message, ephemeral=True)
+        button.callback = callback
+        view.add_item(button)
+    return view
+
+
+def build_dashboard(controller: MusicController, state: Any, top: tuple = ()) -> Any:
+    import discord
+    view = discord.ui.View(timeout=None)
+    controls = (("", "▶️" if state.status == "paused" else "⏸️", "pause", 0), ("", "⏭️", "skip", 0),
+                ("", "⏹️", "leave", 0), ("", "⭐", "favorite", 0), ("", "📜", "queue", 0),
+                (("반복 없음", "한 곡 반복", "전체 반복")[state.loop.value], ("➡️", "🔂", "🔁")[state.loop.value], "loop", 1),
+                ("추천재생: " + ("ON" if state.autoplay else "OFF"), "🤖", "autoplay", 1),
+                ("보관함", "💾", "favorites", 1), ("노래 검색", "🔎", "search", 1))
+    for label, emoji, action, row in controls:
+        button = discord.ui.Button(label=label, emoji=emoji, row=row, custom_id="music:"+action,
+                                   style=discord.ButtonStyle.primary if action == 'search' else discord.ButtonStyle.danger if action == 'leave' else discord.ButtonStyle.secondary,
+                                   disabled=(action in {"pause", "skip", "favorite"} and state.current is None))
+        async def callback(interaction, action=action): await controller.action(interaction, action, state)
+        button.callback = callback
+        view.add_item(button)
+    for index, song in enumerate(top[:3]):
+        button = discord.ui.Button(label=f"[{('🏆 1위','🥈 2위','🥉 3위')[index]}] {song.title[:40]} ({song.count}회)"[:80],
+                                   style=discord.ButtonStyle.primary,
+                                   row=index+2, custom_id="music:top:"+str(index))
+        async def callback(interaction, song=song): await controller.request(interaction, song.url)
+        button.callback = callback
+        view.add_item(button)
+    return view
+
+
+def dashboard_embed(state: Any) -> Any:
+    import discord
+    # Retain V1's jukebox appearance using only the actor's immutable projection.
+    if state.current:
+        song = state.current
+        embed = discord.Embed(title='**[ 💽 오디오_데이터_로드_완료 ]**', color=0x00FFFF, url=song.url)
+        if song.thumbnail:
+            embed.set_thumbnail(url=song.thumbnail)
+        progress = min(1, max(0, state.elapsed / song.duration)) if song.duration else 0
+        filled = int(12 * progress)
+        bar = '█' * filled + '▒' * (12-filled)
+        status = {'playing':'▶ 출력 중...', 'paused':'⏸ 일시 중단됨', 'preparing':'⏳ 준비 중...',
+                  'starting':'⏳ 준비 중...', 'retry':'⏳ 다시 준비 중...', 'disconnected':'🔌 연결 복구 중...',
+                  'tts':'🔊 음성 안내 중...', 'tts_starting':'🔊 음성 안내 준비 중...'}.get(state.status,'⏳ 대기 중...')
+        def label(value: str, length: int) -> str:
+            clean = value.replace('`', 'ˋ').replace('\n',' ').replace('\r',' ')
+            return clean[:length]+('...' if len(clean)>length else '')
+        embed.description = (f'```yaml\n제  목 : {label(song.title,25)}\n'
+            f'아티스트 : {label(song.uploader or "알 수 없는 아티스트",20)}\n상  태 : {status}\n'
+            f'버  퍼 : [{bar}] {int(progress*100)}%\n'
+            f'시  간 : {state.elapsed//60:02d}:{state.elapsed%60:02d} / {song.duration//60:02d}:{song.duration%60:02d}\n```')
+    else:
+        embed = discord.Embed(title='**[ 💤 시스템 대기 모드 ]**', color=0x36393F,
+            description='```\n대기열이 비어있습니다.\n/재생 또는 [보관함]으로 노래를 추가해 주세요.\n```')
+    loop = ('➡️ 반복 없음','🔂 한 곡 반복','🔁 전체 반복')[state.loop.value]
+    next_song = state.queue[0].title if state.queue else '없음'
+    next_song = next_song[:20]+('...' if len(next_song)>20 else '')
+    embed.set_footer(text=f'🔉 볼륨: {int(state.volume*100)}% | {loop} | 🤖 자동재생 {"ON" if state.autoplay else "OFF"}\n'
+                          f'다음 트랙: {next_song} | 대기열 {len(state.queue)}곡')
+    return embed

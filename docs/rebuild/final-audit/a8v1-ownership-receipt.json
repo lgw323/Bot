@@ -1,0 +1,596 @@
+{
+  "entry_head": "957df6a5d4b19d793ebfebb844e477bb2452ad83",
+  "inherited_count": 70,
+  "exact": 68,
+  "inverse_reconstructed": 2,
+  "checks": [
+    {
+      "path": "CHANGELOG.md",
+      "method": "exact",
+      "entry_sha256": "ec83159c3ec39cce1c1f3bd87e04f3efe4fc9c6268e0ec2e7f136d1e1854e0a8",
+      "preserved": true
+    },
+    {
+      "path": "README.md",
+      "method": "exact",
+      "entry_sha256": "9f1ee4c189b402e407f0e52e7c18109bc185e63b2701e60a69a8f1f6af7a1c4d",
+      "preserved": true
+    },
+    {
+      "path": "docs/product-spec.md",
+      "method": "exact",
+      "entry_sha256": "87b31c254feb2dace9580ca1794ee097fb9ec151987ab60559d6112f12ca6fc8",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/README.md",
+      "method": "exact",
+      "entry_sha256": "e2324d804ac1e13d7f7dc465f122b4d91f451b4cb8157efa7494b28b8d85888c",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/current/current-plan.md",
+      "method": "exact",
+      "entry_sha256": "c2c23764a604d7e94b6dd3a5a87c6c36c3896d40801618c446f4287b1d478914",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/current/final-audit-active-state.md",
+      "method": "remove AZ append",
+      "entry_sha256": "10710921b209654a3029d7fbac09c493cd7db220905b2f03ad71e6eeb187d65f",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/current/final-audit-ledger.md",
+      "method": "reverse Phase8 row only",
+      "entry_sha256": "dabec09870758fc1afdca99f9e607df5400b78203593cd5d94b05b43ef6bf0d7",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/final-audit/a3-phase-3-report.md",
+      "method": "exact",
+      "entry_sha256": "e3ed14b7ed7929098d991e090449ce093defd2a187c19ad676ad179c70349ef9",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/phase-10-full-sweep-report.md",
+      "method": "exact",
+      "entry_sha256": "3329647383bf71f442e15d848ccaaa9686775fe4ef414e6b3c032956b6c751ef",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/phases/phase-10/phase-10-report.md",
+      "method": "exact",
+      "entry_sha256": "2663ce5d13506ccd9d9a8b3ec67e32b190cc449de203ae10e140c10250930118",
+      "preserved": true
+    },
+    {
+      "path": "tests/browser/watch_fixture.py",
+      "method": "exact",
+      "entry_sha256": "1cca7cf0cc5f9c3b8c1b6081292c3a12badc3c977b9ebe284275705319c82a47",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/current/final-audit-document-index.md",
+      "method": "exact",
+      "entry_sha256": "2c36ba9b1bcaa70cc54a8f6dc8aca05ca54f6ec21b9770b4b77a0374c8f89969",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-active-state.md",
+      "method": "exact",
+      "entry_sha256": "55d0a15e4c4940f805b4876ad876cdb59e6c4cf6b47e1f946225fba4825ad6eb",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d4c-evidence.json",
+      "method": "exact",
+      "entry_sha256": "616f1d81094fceddd5c0e689081667c8dfb3d8237df3254c2880ebf328c83984",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d4r-browser-evidence.json",
+      "method": "exact",
+      "entry_sha256": "3cbac1af2ed816eaf3cd7f1d20828160bba967f0457d85bce33786c581d80fa2",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d4r2-p-evidence.json",
+      "method": "exact",
+      "entry_sha256": "dfbfd49897c08b9e18e0655805fa89363ab2681edaaad43bd164697c9c5bb01f",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d5-evidence.json",
+      "method": "exact",
+      "entry_sha256": "97f00af6285d66fe7009bd14bb50fbc5752228e0fd0f4cc6145221ca2f83a6b2",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d6-evidence.json",
+      "method": "exact",
+      "entry_sha256": "02d33066e6a1d0c701c4568d7c19919a72cafc474cde4a32c8f9255aaee33e78",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d7-evidence.json",
+      "method": "exact",
+      "entry_sha256": "8ddc17df545880c4fe50fd259f9103d8dbb8a75ffb9c9ff1c6b4e6c09bc2a015",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-e1-evidence.json",
+      "method": "exact",
+      "entry_sha256": "1bdd878f5206e19c1d2ae73a58d306c20af963b2f72ca2eba90ffb55275a64be",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-e2-evidence.json",
+      "method": "exact",
+      "entry_sha256": "7a80560599f97f79c2c41ffb51a316b57ea60da0f83986bc6a182372c6689158",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-e3-evidence.json",
+      "method": "exact",
+      "entry_sha256": "8b0b39492fe75481576c8587c20b96095d703e94ef1ace547a9093cecdca62da",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-e4-evidence.json",
+      "method": "exact",
+      "entry_sha256": "3ebe435f2873e84e5094b833df5678df1a0052dc350f1f991eb0d83b455410ff",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-gate-ledger.md",
+      "method": "exact",
+      "entry_sha256": "d5eb52741647f8d6a2f07b05972af8e28cf2326e3ca270334b362f7b3ff0bd48",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/final-audit/a0-phase-0-report.md",
+      "method": "exact",
+      "entry_sha256": "9fed83ee412725a83e780d986003c7ca523fbb2ec0870cdd82bd026387afee05",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/final-audit/a1-phase-1-report.md",
+      "method": "exact",
+      "entry_sha256": "a689a3b90b673382505d97e56eac91686a4009c5d42b461e5cf71b74211d1ab0",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/final-audit/a2-phase-2-report.md",
+      "method": "exact",
+      "entry_sha256": "603e715ab57298f6587ab5b03f3aa254cedf34ca2c94634c5887fd0d70a6cdf5",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff.zip",
+      "method": "exact",
+      "entry_sha256": "5c18fccf77ee421c62ff05eaa072fc0d760011a0663bb8c972e05cc9c0304f91",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/00-executive-summary.md",
+      "method": "exact",
+      "entry_sha256": "df447f1847094a6810e8a436cf168fd4f17019a9aef375b45ce69d6612147041",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/01-current-system-overview.md",
+      "method": "exact",
+      "entry_sha256": "5955951c6c71993edc5d126b4f97640920aa1877002bb19c9fb91735910ba53a",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/02-repository-map.md",
+      "method": "exact",
+      "entry_sha256": "61283fd671587d5c340b48c0e7392547f437d166b3418126d781cb821d94854c",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/03-feature-inventory.md",
+      "method": "exact",
+      "entry_sha256": "32baa829002d74715964a43838afe0414376d70c79a7ed3cae77c606cd8132f9",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/04-command-event-inventory.md",
+      "method": "exact",
+      "entry_sha256": "1c997d1cab0d8810279ca66524eed35d1186783389001a2e564aea6d1129b95d",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/05-runtime-flow.md",
+      "method": "exact",
+      "entry_sha256": "671d1024f846dd0b42539cefcaf7c4e3f021851a61e8e8172880e3dd1b536349",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/06-data-model.md",
+      "method": "exact",
+      "entry_sha256": "1256b318675d74fab926ac665c94952a9352fa0c2268766f8259b03bab11bbb7",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/07-external-dependencies.md",
+      "method": "exact",
+      "entry_sha256": "f3917d1425e1d5927c1156986d7285bc7faa984f4d696fe5a371c1a5ce32707c",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/08-business-rules.md",
+      "method": "exact",
+      "entry_sha256": "3f3017b56f39842bf49ea51354e250432892da43a21090943174315be8714f57",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/09-performance-reliability-audit.md",
+      "method": "exact",
+      "entry_sha256": "607dad0a8aac83d3836a46370c7549608152cb75d29d451a54d0ebd59d1f789d",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/10-architecture-problems.md",
+      "method": "exact",
+      "entry_sha256": "d48a50a45e9fa4cf54b43bd00c30af30329c88c9a4ff3dde9875946400f5f4a7",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/11-prd.md",
+      "method": "exact",
+      "entry_sha256": "44d90adefd311facf5569c9a628125dc3eb1666f28b126e62c855c755b2151aa",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/12-functional-requirements.md",
+      "method": "exact",
+      "entry_sha256": "d8b26e47abfab9665f68da97e8b57d2d6ad5a5b5ad3621174d32f9cb6db6e600",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/13-non-functional-requirements.md",
+      "method": "exact",
+      "entry_sha256": "39c1f6045e9193162405272ca065d002062196d1d1e654c2fa028174165c4487",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/14-target-architecture.md",
+      "method": "exact",
+      "entry_sha256": "018a68b3bf6c858ca0dd28a8a92422df23f3f8c2b30edad2aac02e9ed34b7bc3",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/15-async-concurrency-design.md",
+      "method": "exact",
+      "entry_sha256": "86914523b607f482ba017c74cfde3c3b9ce68e80185a9d6370fcf1a8d8bb5c8a",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/16-error-handling-policy.md",
+      "method": "exact",
+      "entry_sha256": "d28a36e0f5feaa695dd6ebf47c8c1b4f73bd6b7c2697fc7db56af78195aa4a6d",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/17-observability.md",
+      "method": "exact",
+      "entry_sha256": "bb630cdc01d02a2b05308f8a53d26f43ccf99be5436029e377dfb578304c3c1e",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/18-security-review.md",
+      "method": "exact",
+      "entry_sha256": "cc785cb23e8b957f5e9d3d9de1db5ef1d90b42493a018c4718df3b91527f1c53",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/19-testing-strategy.md",
+      "method": "exact",
+      "entry_sha256": "d3a2c9940bf48c6a1dce594f307752b13f75918469fc2acc3a758e91daa354d7",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/20-migration-plan.md",
+      "method": "exact",
+      "entry_sha256": "fbfb6d3fbb1f047a40945e3ccc6f2d21d104ea3ae2aa0404456e0bc37e1a4c94",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/21-target-repository-structure.md",
+      "method": "exact",
+      "entry_sha256": "b108d404503d7e874c612ebe807e3013a4ce1d06e34e92634f78f915fd1917ab",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/README.md",
+      "method": "exact",
+      "entry_sha256": "58609e453f2861fb227ecf9b606cd0264fddfcf4b36c3b074fe3c7e4d8114562",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/current/architecture-decision-log.md",
+      "method": "exact",
+      "entry_sha256": "71039ddb38b57df33f91084f97880c56682a98189da60c5e9c1252ed4d63bafc",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/current/current-plan.md",
+      "method": "exact",
+      "entry_sha256": "53ee6fca9ec5979c8a0c1668eebc61a36a8ffeac29dec43afec89081fa2d0705",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/current/open-questions.md",
+      "method": "exact",
+      "entry_sha256": "261d44a18e9aa51b78bbbc74005b37777be38a63a4187b8801cdffb1fbacc54c",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/current/requirement-test-trace.md",
+      "method": "exact",
+      "entry_sha256": "ae19e1f2bd21880df364f9b0642dc1eac693e0030040cc9548a9ad2228bed5d2",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/master_prompt.txt",
+      "method": "exact",
+      "entry_sha256": "ce2bb85f6aca5e6c70508d08d033fa7dd1f337c42b65d163c9d3a22cb2525a7b",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-0-report.md",
+      "method": "exact",
+      "entry_sha256": "d8a311c8d690d782b2f0c9a2228bbbb09b7a81bb439284bc3b49acec0a809e02",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-1-report.md",
+      "method": "exact",
+      "entry_sha256": "c6a61e3fe6c28be06e0f094ce4f1aa8e62a0b921e7c019838a3c12dea6716308",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-10-report.md",
+      "method": "exact",
+      "entry_sha256": "9b751aebf337b39ea80769d8197be83e02a4da7ca109700b22ce2f425bcf7a73",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-2-report.md",
+      "method": "exact",
+      "entry_sha256": "405d6b1d4486085d0919820f09e336a59cd361775e489e51b570e0cf0566d736",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-3-report.md",
+      "method": "exact",
+      "entry_sha256": "6687e74efa8ccd37221f43ef6cc687abff1cd5e9a151aa210c16e8d2f8e07bc7",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-4-report.md",
+      "method": "exact",
+      "entry_sha256": "0fafc805332a5966ffae887900f2a78f8432c5b15eeb82817bbed94a968ab40f",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-5-report.md",
+      "method": "exact",
+      "entry_sha256": "0bcf7f07de5670dc491f9f20c18e26ba7834d8a973e8b784768cb07bf24d9931",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-6-report.md",
+      "method": "exact",
+      "entry_sha256": "028647c2b4bf3a0260b26510c0433cacd5612f413fdf0e7839ec422d0a417ef8",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-7-report.md",
+      "method": "exact",
+      "entry_sha256": "c7aab332ea674e606623f0606df04cd1769f4dcd6d71cf23a2ad932bb900cb80",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-8-report.md",
+      "method": "exact",
+      "entry_sha256": "153a7c84eb8bdf6a5f18a34f6a84321fbc222b7c25d21d1b6fe38d22c732e6f8",
+      "preserved": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-9-report.md",
+      "method": "exact",
+      "entry_sha256": "6cd700931bba699c4889c584339cfb63af278150092ef1078fe60cd86bc43664",
+      "preserved": true
+    },
+    {
+      "path": "docs/server-invite-guide.md",
+      "method": "exact",
+      "entry_sha256": "faff0a04cb0246f77cfb5c85a45000bb1faf24188a0dd52e97e0e0f14e63c978",
+      "preserved": true
+    },
+    {
+      "path": "tests/browser/watch_intent_chrome.cjs",
+      "method": "exact",
+      "entry_sha256": "d753ca05dc682158869b2becec18c4e2a11f360ae9c637cc58d4a36f618fb4dc",
+      "preserved": true
+    },
+    {
+      "path": "tests/browser/watch_refresh_chrome.cjs",
+      "method": "exact",
+      "entry_sha256": "dab8e20e4bd1cb0f654607933ab678c1d7cde4a890475baf7a1e8d187e60c25b",
+      "preserved": true
+    }
+  ],
+  "authority_deltas": {
+    "active_append": "\n## AZ. A8V1 independent Phase 8 verification - FAIL (2026-10-04)\n\n- **Phase8 FAIL; A8-M1 independently CLOSED; new A8-M2 MATERIAL OPEN.**\n  [A8V1 report, exact probes and remaining gates](../final-audit/a8v1-phase-8-verification-report.md).\n  Audited HEAD957df6a5d4b19d793ebfebb844e477bb2452ad83; M1 repair403c453855e1b39126efb8d72390737aba5e5def.\n- Original unchanged retention probe: baseline2 PASS/2 FAIL ->current4 PASS. Remediation78\n  cases PASS; independent4 mixed-order/pin/idempotence cases PASS across both entrypoints.\n- New M2: local backup retention counts corrupt failed-publication records toward eight,\n  deleting all8 independently restored valid prior archives and keeping7 rejected corrupt\n  orphans plus1 valid new archive. Control PASS, fault RED. Original Phase8 code, no fix.\n- Fresh distinct current147 PASS/1 MATERIAL FAIL/0 SKIP/0 XFAIL; baseline2/2 separate.\n  Full-suite and remaining scoped gates stopped at new material RED; complete matrix in report.\n  Windows synthetic SQLite/encryption/filesystem, fake remote/services; no Linux/live/Pi proof.\n- All70 inherited contents preserved through68 exact hashes and2 inverse-owned authority\n  deltas; index/export/original A8/A8R1 unchanged. Scoped local evidence commit only, no push.\n  All4 pytest sessions exited; no owned persistent worker/browser/WSL or pending test writes.\n- A0-A7 PASS retained. Inventory/Deno/Linux skips/audioop/A3 limits unchanged, no clean-suite claim.\n  Production source8e9018d4b8061cde6006eee47fa4103522f77718 and pin\n  r-8e9018d4b8061cde-3dac82a792fad576 untouched; no production/data/service/network action.\n  MyFood and other projects untouched; friend activation HELD; deployment condition unmet.\n- **STOP A8V1; NEXT supervisor review of M2, separately authorized remediation, then\n  independent M1/M2 and remaining Phase8 verification.** No A9/Integrated Audit/Phase11.\n",
+    "old_phase8_row": "| 8 | FAIL | [docs/rebuild/phases/phase-08/phase-8-report.md](../phases/phase-08/phase-8-report.md) | B03, B05\u2013B07, B09\u2013B21, D22, D23, S3, C3, C4, C9, C12\u2013C15, T; relevant O rows | src/discordbot/operations/, src/discordbot/composition/; deploy/systemd/, deploy/polkit/, deploy/; tests/integration/operations/ | [A8 independent report](../final-audit/a8-phase-8-report.md): MATERIAL A8-M1 OPEN. Incomplete candidates displace four newest published releases; CLI cleanup and post-deploy retention both delete all four temporary validated alternatives. Existing64 PASS; independent2 PASS/2 FAIL; distinct66 PASS/2 FAIL/0 SKIP. Audited d07412c968c2274948d1c9af3c2e835369226173. | [A8R1 remediation](../final-audit/a8r1-release-retention-report.md): local PASS, implementation 403c453855e1b39126efb8d72390737aba5e5def. Original unchanged probe2 PASS/2 FAIL ->4 PASS; new78 PASS; shared714 PASS/1 known inventory FAIL. Phase8 remains FAIL and M1 OPEN pending independent verification. Full-suite counts/harness corrections and inventory/Deno/Linux/audioop/A3 limits in report. STOP for parent review, then separately authorized independent M1 and remaining Phase8 gates. No A8V1/A9/deploy/Phase11. |\r\n",
+    "new_phase8_row": "| 8 | FAIL | [docs/rebuild/phases/phase-08/phase-8-report.md](../phases/phase-08/phase-8-report.md) | B03, B05\u2013B07, B09\u2013B21, D22, D23, S3, C3, C4, C9, C12\u2013C15, T; relevant O rows | src/discordbot/operations/, src/discordbot/composition/; deploy/systemd/, deploy/polkit/, deploy/; tests/integration/operations/ | [A8V1 independent verification](../final-audit/a8v1-phase-8-verification-report.md): M1 CLOSED; new A8-M2 MATERIAL OPEN. Original retention baseline2 PASS/2 FAIL ->current4 PASS; remediation78 and independent4 PASS. Invalid backup records displace all8 verified prior archives, leaving7 corrupt plus1 valid. Fresh distinct147 PASS/1 FAIL/0 SKIP/0 XFAIL. Audited957df6a5d4b19d793ebfebb844e477bb2452ad83. | M1 repair403c453855e1b39126efb8d72390737aba5e5def independently verified. M2 needs separate remediation; stop at new material RED. Remaining Phase8 gates PARTIAL/BLOCKED in report. No implementation fix/full-suite/Linux/live/Pi claim; known inventory/Deno/audioop/A3 limits retained. STOP for supervisor review; no A9/Integrated Audit/Phase11, friend activation HELD. |\n"
+  },
+  "unique_current_counts": {
+    "PASS": 147,
+    "FAIL": 1,
+    "SKIP": 0
+  },
+  "unique_current_case_ids": {
+    "docs.rebuild.final-audit.a8-retention-probe::test_four_newest_published_survive_incomplete_candidates[cleanup-published-only-control]": "PASS",
+    "docs.rebuild.final-audit.a8-retention-probe::test_four_newest_published_survive_incomplete_candidates[cleanup-newer-incomplete]": "PASS",
+    "docs.rebuild.final-audit.a8-retention-probe::test_four_newest_published_survive_incomplete_candidates[post-deploy-published-only-control]": "PASS",
+    "docs.rebuild.final-audit.a8-retention-probe::test_four_newest_published_survive_incomplete_candidates[post-deploy-newer-incomplete]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-building-0]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-building-1]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-building-3]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-building-4]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-building-6]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-candidate-only-0]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-candidate-only-1]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-candidate-only-3]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-candidate-only-4]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-candidate-only-6]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-empty-0]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-empty-1]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-empty-3]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-empty-4]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-empty-6]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-manifest-building-0]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-manifest-building-1]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-manifest-building-3]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-manifest-building-4]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[cleanup-manifest-building-6]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-building-0]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-building-1]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-building-3]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-building-4]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-building-6]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-candidate-only-0]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-candidate-only-1]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-candidate-only-3]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-candidate-only-4]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-candidate-only-6]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-empty-0]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-empty-1]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-empty-3]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-empty-4]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-empty-6]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-manifest-building-0]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-manifest-building-1]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-manifest-building-3]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-manifest-building-4]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_only_publications_count_toward_four_newest[post-deploy-manifest-building-6]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[cleanup--1-True-published-604800]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[cleanup--1-True-building-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[cleanup--1-True-candidate-only-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[cleanup--1-True-empty-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[cleanup--1-True-manifest-building-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[cleanup-0-False-published-604800]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[cleanup-0-False-building-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[cleanup-0-False-candidate-only-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[cleanup-0-False-empty-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[cleanup-0-False-manifest-building-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[cleanup-1-False-published-604800]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[cleanup-1-False-building-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[cleanup-1-False-candidate-only-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[cleanup-1-False-empty-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[cleanup-1-False-manifest-building-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[post-deploy--1-True-published-604800]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[post-deploy--1-True-building-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[post-deploy--1-True-candidate-only-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[post-deploy--1-True-empty-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[post-deploy--1-True-manifest-building-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[post-deploy-0-False-published-604800]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[post-deploy-0-False-building-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[post-deploy-0-False-candidate-only-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[post-deploy-0-False-empty-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[post-deploy-0-False-manifest-building-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[post-deploy-1-False-published-604800]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[post-deploy-1-False-building-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[post-deploy-1-False-candidate-only-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[post-deploy-1-False-empty-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_age_grace_boundary_outside_four_release_floor[post-deploy-1-False-manifest-building-86400]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_current_counts_in_publication_floor_and_old_intent_pins_are_additive[cleanup]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_current_counts_in_publication_floor_and_old_intent_pins_are_additive[post-deploy]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_invalid_activation_intent_fails_before_deletion[cleanup]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_invalid_activation_intent_fails_before_deletion[post-deploy]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_nested_link_is_rejected_before_removal[cleanup]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_nested_link_is_rejected_before_removal[post-deploy]": "PASS",
+    "tests.integration.operations.test_retention_contract::test_sixteen_directory_admission_cap_preserves_all_protected_releases": "PASS",
+    "tests.integration.operations.test_retention_contract::test_cleanup_without_current_keeps_four_publications": "PASS",
+    "tests.integration.operations.test_retention::test_cleanup_preserves_current_rollback_window_and_counts_venv": "PASS",
+    "tests.integration.operations.test_retention::test_reboot_incomplete_release_is_never_current_and_can_be_cleaned": "PASS",
+    "tests.integration.operations.test_filesystem::test_kernel_lock_excludes_manual_timer_backup_and_releases_on_error": "PASS",
+    "tests.integration.operations.test_filesystem::test_stale_pid_metadata_does_not_block_or_steal_kernel_lock": "PASS",
+    "tests.integration.operations.test_filesystem::test_first_open_does_not_write_until_kernel_ownership": "PASS",
+    "tests.integration.operations.test_filesystem::test_atomic_pointer_and_protected_cleanup": "PASS",
+    "tests.integration.operations.test_filesystem::test_symlink_switch_failure_keeps_old_pair": "PASS",
+    "tests.integration.operations.test_filesystem::test_incomplete_or_mutated_release_cannot_activate": "PASS",
+    "tests.integration.operations.test_filesystem::test_release_path_traversal_rejected[../outside]": "PASS",
+    "tests.integration.operations.test_filesystem::test_release_path_traversal_rejected[..]": "PASS",
+    "tests.integration.operations.test_filesystem::test_release_path_traversal_rejected[/absolute]": "PASS",
+    "tests.integration.operations.test_filesystem::test_release_path_traversal_rejected[a/b]": "PASS",
+    "tests.integration.operations.test_filesystem::test_release_path_traversal_rejected[a\\\\b]": "PASS",
+    "tests.integration.operations.test_filesystem::test_cleanup_rejects_nested_link_escape": "PASS",
+    "tests.integration.operations.test_build::test_published_private_artifacts_are_readable_by_runtime_group[384-False-288]": "PASS",
+    "tests.integration.operations.test_build::test_published_private_artifacts_are_readable_by_runtime_group[448-False-360]": "PASS",
+    "tests.integration.operations.test_build::test_published_private_artifacts_are_readable_by_runtime_group[420-False-288]": "PASS",
+    "tests.integration.operations.test_build::test_published_private_artifacts_are_readable_by_runtime_group[448-True-360]": "PASS",
+    "tests.integration.operations.test_build::test_build_pins_per_release_venv_before_publish": "PASS",
+    "tests.integration.operations.test_build::test_failed_build_does_not_publish_and_cleans_candidate": "PASS",
+    "tests.integration.operations.test_build::test_tampered_wheel_rejected_before_environment_creation": "PASS",
+    "tests.integration.operations.test_build::test_missing_transitive_wheel_is_not_resolved_online": "PASS",
+    "tests.integration.operations.test_build::test_lock_cannot_change_reviewed_pin_version": "PASS",
+    "tests.integration.operations.test_build::test_truncated_release_id_collision_never_reuses_other_commit": "PASS",
+    "tests.integration.operations.test_build::test_candidate_changed_after_tests_cannot_publish": "PASS",
+    "tests.integration.operations.test_build::test_source_sensitive_artifacts_are_rejected": "PASS",
+    "tests.integration.operations.test_build::test_emergency_update_rejects_unrelated_dependency_change": "PASS",
+    "tests.integration.operations.test_deployment::test_success_order[True]": "PASS",
+    "tests.integration.operations.test_deployment::test_success_order[False]": "PASS",
+    "tests.integration.operations.test_deployment::test_pre_activation_failure_preserves_pair[build]": "PASS",
+    "tests.integration.operations.test_deployment::test_pre_activation_failure_preserves_pair[preflight:new]": "PASS",
+    "tests.integration.operations.test_deployment::test_pre_activation_failure_preserves_pair[test:new]": "PASS",
+    "tests.integration.operations.test_deployment::test_pre_activation_failure_preserves_pair[compatible:new]": "PASS",
+    "tests.integration.operations.test_deployment::test_pre_activation_failure_preserves_pair[backup:new]": "PASS",
+    "tests.integration.operations.test_deployment::test_pre_activation_failure_preserves_pair[publish:new]": "PASS",
+    "tests.integration.operations.test_deployment::test_failure_rolls_back_code_and_dependency_pair[stop]": "PASS",
+    "tests.integration.operations.test_deployment::test_failure_rolls_back_code_and_dependency_pair[activate:new]": "PASS",
+    "tests.integration.operations.test_deployment::test_failure_rolls_back_code_and_dependency_pair[start]": "PASS",
+    "tests.integration.operations.test_deployment::test_failure_rolls_back_code_and_dependency_pair[ready:new]": "PASS",
+    "tests.integration.operations.test_deployment::test_failure_rolls_back_code_and_dependency_pair[smoke:new]": "PASS",
+    "tests.integration.operations.test_deployment::test_failure_rolls_back_code_and_dependency_pair[audit:deployment:ok]": "PASS",
+    "tests.integration.operations.test_deployment::test_failed_rollback_stops_pair_and_is_visible": "PASS",
+    "tests.integration.operations.test_deployment::test_initial_failure_has_no_fictitious_rollback": "PASS",
+    "tests.integration.operations.test_deployment::test_cancel_during_switch_restores_old_pair": "PASS",
+    "tests.integration.operations.test_deployment::test_audit_failure_before_build_has_no_mutation": "PASS",
+    "tests.integration.operations.test_pipeline::test_real_local_pipeline_with_synthetic_db_and_fake_services[False]": "PASS",
+    "tests.integration.operations.test_pipeline::test_real_local_pipeline_with_synthetic_db_and_fake_services[True]": "PASS",
+    "tests.integration.operations.test_recovery::test_newest_valid_and_corrupt_latest_fallback": "PASS",
+    "tests.integration.operations.test_recovery::test_invalid_backup_never_overwrites_live[wrong_key]": "PASS",
+    "tests.integration.operations.test_recovery::test_invalid_backup_never_overwrites_live[tamper]": "PASS",
+    "tests.integration.operations.test_recovery::test_invalid_backup_never_overwrites_live[schema]": "PASS",
+    "tests.integration.operations.test_recovery::test_invalid_backup_never_overwrites_live[partial_metadata]": "PASS",
+    "tests.integration.operations.test_recovery::test_remote_failure_keeps_last_good_latest": "PASS",
+    "tests.integration.operations.test_recovery::test_semantically_invalid_encrypted_latest_falls_back": "PASS",
+    "tests.integration.operations.test_recovery::test_cancelled_restore_never_promotes_or_leaves_plaintext_temp": "PASS",
+    "tests.integration.operations.test_recovery::test_backup_retention_keeps_bounded_verified_alternatives": "PASS",
+    "tests.integration.operations.test_recovery::test_backup_audit_failure_preserves_previous_latest": "PASS",
+    "tests.integration.operations.test_recovery::test_explicit_promotion_requires_quiescence_and_unchanged_candidate": "PASS",
+    "tests.integration.operations.test_recovery::test_promotion_atomic_failure_preserves_previous[28]": "PASS",
+    "tests.integration.operations.test_recovery::test_promotion_atomic_failure_preserves_previous[13]": "PASS",
+    "docs.rebuild.final-audit.a8v1-retention-probe::test_interleaved_candidates_pins_floor_and_idempotence[False-cleanup]": "PASS",
+    "docs.rebuild.final-audit.a8v1-retention-probe::test_interleaved_candidates_pins_floor_and_idempotence[False-post-deploy]": "PASS",
+    "docs.rebuild.final-audit.a8v1-retention-probe::test_interleaved_candidates_pins_floor_and_idempotence[True-cleanup]": "PASS",
+    "docs.rebuild.final-audit.a8v1-retention-probe::test_interleaved_candidates_pins_floor_and_idempotence[True-post-deploy]": "PASS",
+    "docs.rebuild.final-audit.a8v1-backup-probe::test_failed_corrupt_publications_do_not_displace_verified_backups[verified-only-control]": "PASS",
+    "docs.rebuild.final-audit.a8v1-backup-probe::test_failed_corrupt_publications_do_not_displace_verified_backups[corrupt-failed-publications]": "FAIL"
+  },
+  "baseline_counts_separate": {
+    "PASS": 2,
+    "FAIL": 2,
+    "SKIP": 0
+  },
+  "tests_exited": 4,
+  "persistent_workers_started": false,
+  "production_access": false
+}

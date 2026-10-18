@@ -1,5 +1,141 @@
 # Changelog
 
+## 2026-10-18 — V1 실행 경로 정리와 비교 참조 보존
+
+- Git에서 정확히 복구 가능한 V1 소스 26개와 V1 전용 테스트 19개를 제거하고,
+  혼합 characterization의 V2 검사는 유지했다. 폐기 테스트 목록과 출처는 P11 정리 기록에 남긴다.
+- 필요한 Engagement·Music 9개 참조는 DB 참조와 같은 격리 namespace에 보존했다.
+  세 파일의 절대 DB import만 바꾸고 원본·실행 SHA256과 import 전 검사를 추가했다.
+- 공통 DB fixture와 자격 증명 canary에서 기존 V1 실행 경로 의존성을 제거하고,
+  현재 README 실행 안내와 향후 source export 목록을 V2 경계에 맞췄다.
+- V2 runtime, 데이터 형식, Pi 서비스와 기존 rollback release는 변경하지 않았다.
+
+## 2026-10-15 - Local venv alias copy remediation
+
+- Preserve venv alias payload hashes, ordinary modes and timestamps without copying privileged bits or extended attributes; retain path/link checks and deployment security restrictions.
+- Add bounded redacted nested-copy diagnostics and local Windows/POSIX/seccomp regressions. Independent review and new-candidate installation remain pending; frozen dc5d and production are unchanged.
+
+## 2026-10-15 - Recovery promotion source-sidecar rejection
+
+- Reject recovery candidates with WAL/SHM/journal entries and recheck source state before replacement, preventing main-file-only promotion from omitting a live candidate's latest WAL writes. Source files and sidecars are never checkpointed, normalized or deleted.
+- Add actual WAL/race regressions and characterize post-replace failure outcomes. Local RED/GREEN verification completed; independent review remains pending. Frozen candidate and production are unchanged.
+
+## 2026-10-09 - Required media dependency pins
+
+- Complete the deployment pin policy for existing `yt-dlp[default]` requirements with approved `brotli==1.2.0`, `mutagen==1.48.1` and `pycryptodomex==3.23.0`.
+- Retain the incomplete 61-wheel evidence and prepare a separate 64-pin ARM64 wheelhouse with recursive extras verification; no runtime behavior, installation or deployment change.
+
+## 2026-10-09 - Installed admission history boundary
+
+- Split the A9-BT1 mixed test into mandatory source-history proofs and installed current-routing coverage, preserving every original assertion and all other cases. Exact two-module installed exclusions remain unchanged.
+- Extend lane partition regressions and documentation; retain disposable local-Git and isolated-interpreter tests in installed admission. Local verification and independent review remain distinct gates.
+
+## 2026-10-09 - Bounded admission test selection
+
+- Share exact pre-collection exclusions for the two approved A9 source measurement modules between LocalDeployment and the production candidate verifier. Both modules remain mandatory source regressions; full source review and installed admission are separate required gates.
+- Add command-control and collection-partition regressions, preserving future operations tests, warnings, timeout and verifier xfail strictness. Builder payload, archive validation and release identity are unchanged. Local self-tests do not authorize deployment or independent closure.
+
+## A8R4 backup telemetry freshness
+
+- Advance backup age from sampled local metadata mtime; report existing unknown age -1 / RPO 1 when sampling stops, fails, or the intended H2 DB latch is terminal. No new DB probes or automatic recovery.
+- Validate missing/invalid mtime and cover clock passage, metadata publication, cancellation/shutdown and unchanged readiness/retention boundaries with synthetic regressions.
+- Local remediation only; Phase 8 stays FAIL and M4 awaits independent verification. M1-M3 stay CLOSED; A9 stays separately BLOCKED.
+
+## A8R3 exact release inventory
+
+- Exclude only release-root manifest metadata during validation and only the root build marker during inventory creation. Nested manifest.json, candidate.json and .building payloads retain exact checksum coverage.
+- Add 59 synthetic validation, activation, current-pointer, build/publication/reuse and supported-layout regression cases; preserve release and backup retention and rollback contracts.
+- Local remediation only; Phase 8 remains FAIL, M1/M2 stay independently CLOSED and M3 awaits independent verification. No production cleanup or deployment.
+
+## A8R2 verified backup retention
+
+- Validate recovery candidates before the eight-backup floor and before advancing latest; preserve the prior latest and the new snapshot even outside filename ordering.
+- Reuse isolated restore validation, retain rejected artifacts for operator inspection, and plan all deletion before pruning. Add 36 synthetic corruption, publication, cancellation and retention boundary tests.
+- Local remediation only; Phase 8 stays FAIL, M1 remains independently CLOSED and M2 awaits independent verification. No production cleanup or deployment.
+
+## A8R1 published release retention
+
+- Count only published manifests without `.building` toward the four newest release floor; retain the existing directory-mtime ordering.
+- Reuse cleanup policy after deployment, preserving current/rollback/activation targets, seven-day published retention and one-day incomplete grace. Add 78 synthetic boundary cases; no real release cleanup or deployment.
+- Local remediation only; Phase 8 stays FAIL and A8-M1 remains OPEN pending independent verification.
+
+## A7R2 retire pause intent with its music session
+
+- Clear saved pause intent at logical session retirement, so exhausted reconnect recovery cannot silence a queued or later successor. Same-session retries, TTS and reconnect still retain user pause intent.
+- Add 30 synthetic regression cases for acquisition/start failures, retry exhaustion/success, successor timing, stale callbacks, TTS and loop transitions; preserve the unchanged A7/A7V1 probes.
+- Local remediation only; Phase 7 remains FAIL, M1 stays independently CLOSED and M2 awaits independent verification. No production access or deployment.
+
+## A7R1 preserve paused music across TTS reconnect
+
+- Retain saved music pause intent when voice disconnects during TTS or reconnect preparation; queue, logical session, position and cancellation ordering stay unchanged.
+- Add 20 synthetic Cog/Actor regression cases covering playing/paused music, TTS phases, repeated disconnects, stale callbacks, reconnect announcements and session termination.
+- Local remediation only; Phase 7 remains FAIL and A7-M1 awaits independent verification. No production access or deployment.
+
+## A5R1 Summary cancellation notification failure
+
+- Preserve native cancellation when its single private Discord notification fails or times out; retain bounded delivery and redacted delivery-failure telemetry.
+- Add 11 synthetic cancellation, notification, deadline/provider-error and result-handoff regressions. Existing Summary contracts and cleanup remain unchanged.
+- Local remediation only; Phase 5 remains FAIL pending fresh independent A5V1. No production access or deployment.
+
+## A4R4 cancelled voice shutdown retry
+
+- Retain the first closed-admission effective voice tick across cancelled or timed-out drains and failed/cancelled flush retries. Renew request deadlines without adding unobserved elapsed time; retain M1/M2/M3, fault policy, formula and schema.
+- Add 22 deterministic synthetic regression cases for repeated interruption, connected/resumed/disconnected accounting, failed observations, transactional rollback/commit ambiguity, idempotence and same-user guild isolation.
+- Local remediation only; Phase 4 remains FAIL until fresh independent A4V4. No production action, deployment or rollout.
+
+## A4R3 disconnected voice observation time
+
+- Freeze voice elapsed time at disconnect through replay completion; resume live accrual at RESUMED or replacement READY without adding the transport gap. Preserve sequence dedupe, M1 reconciliation and M2 shutdown outcome handling.
+- Add 15 synthetic regressions including actual offline SDK callback scheduling. Original A4V2 timing probe now records 100 seconds / 5 XP on both formerly failing paths; formula and schema unchanged.
+- Local remediation only; Phase 4 remains FAIL pending independent A4V3. No deployment or rollout.
+
+## A3R2 SQLite CHECK constraint validation
+
+- Compare legacy and migration-ledger CHECK constraints against reviewed DDL before writable readiness or recovery publication; preserve approved extension DDL checks and all four nullable-pair variants.
+- Cover column/table constraints, safe SQL spelling differences, startup, migration/rehearsal, encrypted last-good backup/metadata preservation, restore and real XP writes with synthetic regressions.
+- Schema version, migration definitions and stored formats are unchanged. Production is untouched; A3-M1 remains CLOSED, A3-M2 is remediated pending independent A3V2, and Phase 3 remains FAIL.
+
+## A3R SQLite schema validation
+
+- Use one complete column inspector and reject unsupported generated/hidden columns in schema and migration-ledger validation.
+- Cover startup, copy-only migration/rehearsal, encrypted backup/restore and XP writes with synthetic regressions. Schema versions and stored formats are unchanged.
+- Production is untouched; A3-M1 is remediated pending independent A3V. Phase 3 remains FAIL.
+
+## A2R5 Music reply-deletion cleanup
+
+- MusicController의 내부 삭제 supervisor 결과를 기존 정리 검증기로 전달해 미완료 작업이 있으면 부모의 정상 종료를 차단합니다.
+- 실제 Music 경로 회귀와 Linux guardian 종료 검증을 추가했습니다. 운영 배포 없이 독립 재감사를 기다립니다.
+
+## A2R4 nested cleanup ownership
+
+- 내부 supervisor의 미완료 정리를 typed 오류로 전파하고 의존 리소스의 조기 종료를 막습니다.
+- 필수 집합의 실패한 자식과 부분 초기화 소유권을 유지하며, 정리 완료 때만 정상 종료로 표시합니다.
+- 실제 어댑터·집합 회귀와 기존 Linux guardian 통합 검증을 추가했습니다. 운영 배포는 없습니다.
+
+## A2R3 optional resource startup
+
+- 선택 리소스 시작 실패는 부분 정리가 확인되면 정상 필수 리소스를 유지하고 degraded 상태로 계속합니다.
+- 정리가 실패하거나 기한을 넘으면 소유권을 유지한 채 시작을 실패시키며 기존 A2R2 종료 경계를 사용합니다.
+- Watch/Music 자체 정리 완료 표시와 필수 롤백·선택 실패·후속 종료 회귀를 추가했습니다. 운영 배포는 없습니다.
+
+## A2R2 bounded service termination
+
+- Linux guardian이 한 worker의 정상 종료, process-group 강제 종료와 reap을 소유합니다.
+- application/loop의 공통 종료 기한과 별도 lifecycle 작업 소유권을 추가하고, 미완료 작업·thread·resource의 소유권을 유지합니다.
+- 생산 기본 기한은 20/40/70/90초이며 짧은 정책은 테스트 코드에서만 주입합니다. 강제 종료·finalizer 오류는 성공으로 기록하지 않습니다.
+- 기존 Ubuntu WSL의 합성 process/systemd 회귀를 추가했습니다. 운영 배포와 A2-M2 수정은 포함하지 않습니다.
+
+## A0R test credential isolation
+
+- pytest 수집 전 자동 dotenv 로딩과 저장소 credential 파일 접근을 차단하고 상속된 앱 설정을 제거한다.
+- 합성 canary와 별도 Python process로 두 V1 import 경로의 수집 전 격리 및 보호 없는 실패를 검증한다.
+
+## PHASE 10B bounded full-sweep validation
+
+- 명시적 root-owned/release-bound/최대30분 검사 모드에서 일반 기능 실패를 SOFT FAIL로 수집하고 독립 검사를 계속한다.
+- Music 기능 실패 뒤 자동 retry는 막으면서 명시적 검색·정지·독립 TTS를 허용한다. 일반 운영과 기존 strict smoke 정책은 유지한다.
+- DB/schema/security/identity/restart 및 지속 readiness 실패는 HARD STOP을 유지하며 새 preservation의 fsync/inventory를 확인한다.
+
 모든 주요 변경 사항과 아키텍처 패치 노트가 이 파일에 기록됩니다.
 
 이 문서는 [Keep a Changelog](https://keepachangelog.com/ko/1.0.0/)의 국제 포맷팅 규칙을 따르며,
@@ -8,6 +144,105 @@
 ---
 
 ## [Unreleased]
+
+### Fixed
+- Watch의 YouTube API script를 defer하여 Chrome의 warm-cache 새로고침에서도 준비 콜백이 먼저 등록됩니다.
+  영상 전환 중 잠시 없는 iframe metadata는 재생 확인 대기로 처리합니다. 실제 Chrome·YouTube iframe의
+  실패→성공 회귀와 독립 context/TCP 단절 검증을 추가했으며, 응답 header로 client asset hash를 확인할 수 있습니다.
+- Watch 새로고침·재접속은 서버의 영상·위치·재생 상태를 비동기 플레이어에 복원하고 완료 상태를 확인합니다.
+  기존 참여자의 오래된 화면으로 방 상태를 덮어쓰지 않으며, 자동재생 차단·재생 미확인 시 직접 누르는
+  `재생 이어가기`를 표시합니다. 연결 성공과 실제 재생 동기화 상태를 구분합니다.
+- Music 일시정지 버튼은 클릭을 처리하는 시점의 actor 상태에서 한 번만 전환합니다.
+  오래된 View와 지연된 화면 편집이 실제 음성의 일시정지·재개 표시를 뒤집지 않도록 합니다.
+- DB health probe는 고정 SELECT-1 작업의 단계·SQLite 숫자 코드·허용된 오류 분류·연결 정리 결과만 기록합니다.
+  재현된 configure-stage SQLITE_BUSY(5) 중 연결 정리가 확인된 1건만 bounded transient로 분리하며,
+  15초 내 정기 probe 2회 성공을 요구합니다. 60초 내 재발·LOCKED·일반 DB 오류·정리 실패는 HARD STOP을
+  유지하고 readiness 실패를 고정합니다. SQL/행/경로/원문 예외를 기록하거나 busy timeout·journal/schema를 변경하지 않습니다.
+- Full-sweep credential 감시가 application과 같은 exact service-user ACL 정책을 사용하도록 정렬했습니다.
+  정상 systemd read-only ACL의 mode mask를 외부 접근으로 오판하지 않으며, 다른 사용자·group/other 접근,
+  writable mount·비정규 파일·symlink·잘못된 소유자는 계속 HARD STOP 처리합니다. Credential 값은 읽지 않습니다.
+- 요약 제공자의 HTTP 상태·통신 실패·시간 초과를 안전한 분류로 기록합니다. Live smoke 감시는
+  요약의 외부 의존성·응답 전송 실패도 정지·보존 대상으로 처리하며 원문 응답이나 credential은 기록하지 않습니다.
+- 쥬크박스 화면 갱신 중 기존 버튼 처리를 유지하고, 갱신 실패 시에도 버튼 연결을 복구합니다.
+  갱신이 끝나면 최신 버튼으로 전환하여 곡 추가·스킵 직후의 입력 공백을 없앱니다.
+- 봇 입장 TTS가 진행 중일 때 검색 완료·곡 추가·음성 연결 갱신이 안내를 덮어쓰지 않도록 합니다.
+  안내가 끝나면 대기 중인 음악을 시작하고, 재생할 곡이 없는 경우에도 다음 안내와 대기 상태로 정상 전환합니다.
+  연속 안내 후에도 기존 음악의 일시정지 상태와 재생 위치를 유지합니다.
+- PHASE 10 live smoke를 root marker로 명시적으로 활성화하면 첫 Music 실패에서 admission을 닫아
+  guard polling 전에 재시도가 들어가지 않게 합니다. 정규 운영의 3초/8초 재시도는 유지합니다.
+- Pi에서 재현된 Music download HTTP 403에 대응해 yt-dlp를 검증 후보 2026.8.19로 고정하고,
+  같은 release 안의 Deno/EJS를 명시적으로 사용합니다. Runtime component 자동 다운로드는 금지합니다.
+  Media 실패는 vendor stderr 대신 허용된 원인 분류와 제한된 child exit code만 기록합니다.
+- Music deferred 응답의 지연 삭제를 discord.py Webhook API와 맞추고, 삭제 작업을 bounded owner로 회수합니다.
+  전송 전 인자 검증 실패에는 단일 fallback을 허용하며 통신 결과가 불확실한 전송을 중복하지 않습니다.
+- PHASE 10B 재시도에서 jukebox 갱신 시 새 버튼 callback까지 제거하던 순서와 immutable release의
+  TTS child 실행 경로를 수정했습니다. Watch는 iframe 준비와 독립된 참여자 연결, 단독 새로고침의
+  상태 복원 및 제한된 재연결을 지원합니다. 사용자 요청으로 V1 jukebox의 색상·썸네일·진행·볼륨 표시를 복원했습니다.
+- 반복되는 운영 작업의 정상 시작·종료 journal 기록을 줄였습니다. 작업 metric과 제한된 이력,
+  실패·취소·deadline 기록은 유지하고 DB health probe 실패에는 비밀 내용 없는 오류 코드만 남깁니다.
+  readiness 기준은 유지하며 승인된63c7722를 Pi synthetic pair에서 검증했습니다. Production 전환은 별도 승인 대상입니다.
+
+### Added
+- Music 단계별 안전한 진단과 browser/SDK/child regression을 추가했습니다. 실제 writes가 있는 stopped DB의
+  별도 암호화 복구본과 offline retry release 검증 도구를 준비했습니다. 운영 재시도·완료 여부는 PHASE10 보고서를 따릅니다.
+- 사용자 승인에 따른 PHASE 10B 실제 DB 승격, production 첫 ready, 수동 Cloudflare 전환의 단계별
+  실행 기록을 추가했습니다. Music/Watch 실제 smoke 실패로 서비스를 정지했으며 production backup/timer는
+  활성화하지 않았습니다. Windows shell 전달의 LF와 private 보존 디렉터리 setgid 제거 절차를 명시했습니다.
+- PHASE 10A의 수정본 synthetic 재관찰, 민감값 없는 connector route 조회, 별도 최종 config 준비와
+  exact cutover/rollback 명령표를 추가했습니다. 10A 준비 완료이며10B production 전환은 미승인입니다.
+- PHASE 10A에 private Bot-Data 전용 SSH key 준비와 암호화 artifact의 일반 Git push/read-back/격리 복구
+  도구를 추가했습니다. V2 현재 tree의 retention과 과거 Git history 보존을 구분하며 자동 백업은 아직 활성화하지 않습니다.
+- 승인된 off-host 목적지의 명시적 runtime opt-in, 원격 검증 실패 시 이전 정상 backup 유지와
+  stopped-service cutover activation guard를 추가했습니다. 실제 production 전환은 별도 승인 대상입니다.
+- PHASE 10A의 원본 보존 기반 production 후보 migration, 실제 암호화 backup/isolated restore 증거와
+  cutover 준비 문서를 추가했습니다. 한국어 한 번 입력 setup, scoped offline preflight, production placeholder
+  거부와 finite staging 관찰을 제공하며 실제 production 전환·로그인·DNS 변경은 포함하지 않습니다.
+- PHASE 9의 실제 Raspberry Pi ARM64 staging 준비·격리 설치·synthetic lifecycle/복구 검증 도구와
+  진행 보고서를 추가했습니다. production DB/cutover와 실제 외부 credential 사용은 포함하지 않습니다.
+- Pi에서 확인한 immutable release의 전용 그룹 읽기 권한과 systemd service-exclusive credential ACL
+  검증을 수정하고 regression test를 추가했습니다. 기존 immutable release와 secret 권한은 완화하지 않습니다.
+- PHASE 8 배포·복구·운영 계약, 완료 보고서와 13개 staging 검토용 runbook을 추가했습니다.
+  상세 검증과 PHASE 9 gate는 `docs/rebuild/phases/phase-08/phase-8-report.md`를 따릅니다.
+- V2 Discord/Watch executable composition, OS-managed credential/config loader, local health/metrics,
+  signal shutdown, manual operation inbox와 systemd service/timer 자산을 추가했습니다.
+  실제 서비스 활성화와 ARM64 wheel 설치는 후속 staging gate에 남깁니다.
+- PHASE 3 snapshot/encryption primitives에 검증된 backup archive, bounded retention,
+  isolated restore/fallback, 명시적 offline promotion과 durable audit를 연결했습니다.
+- V2 Operations에 exclusive deployment lock, release별 immutable code/venv manifest와
+  offline wheel hash 검증, atomic activation, 두 서비스 readiness/rollback gate를 추가했습니다.
+  운영 명령은 synthetic tests와 fake runner로 검증하며 실제 Pi/production 경로는 실행하지 않습니다.
+- DiscordBot V2 PHASE 7 Music을 per-guild actor, bounded media/TTS cache와 FFmpeg process,
+  stable paginated Discord UI, legacy-compatible checkpoint/restore로 이전했습니다.
+  additive migration 5의 logical playback receipt로 count 중복을 방지하고 missing-volume 0.5와
+  25개 이후 pagination CORRECT specs를 V2 경로로 해결했습니다. V1 운영 경로와 실제 DB/Pi는
+  변경하지 않았습니다. 상세 증거와 후속 gate는 `docs/rebuild/phases/phase-07/phase-7-report.md`에 기록합니다.
+- DiscordBot V2 PHASE 6 Watch를 독립 web runtime과 Discord loopback client로 이전했습니다.
+  durable-before-invite, single responder, 세션별 순서·종료, 느린 접속자 제한, capability와
+  Origin/CSRF/CSP 방어, 30초+5초 lifecycle, 관리자 메시지 정리를 synthetic 테스트로 검증했습니다.
+  additive migration 4와 기존 reader/암호화 backup 호환성을 추가했으며 실제 DB·Pi·Cloudflare와
+  운영 route는 변경하지 않았습니다. Music migration은 PHASE 7 사용자 지시를 기다립니다.
+- DiscordBot V2 PHASE 5 Summary를 추가했습니다. message-ID capture/preload, bounded retention,
+  source ACL과 privacy, 60초 전체 deadline, active 1/waiting 4, Gemini async boundary와
+  기본·고급·refresh·topic pagination을 fake 기반 테스트로 검증했습니다. V1 운영 route, 실제 DB와
+  Pi에는 연결하지 않았으며 Watch/Music migration은 후속 Phase에 남깁니다.
+- DiscordBot V2 PHASE 4의 Engagement application과 Discord adapter를 추가했습니다. Jamo text XP,
+  completed-minute voice XP/profile/ranking, master birthday CRUD와 KST daily notification을
+  PHASE 3 repository와 supervised lifecycle에 연결했으며 V1 운영 경로는 변경하지 않았습니다.
+- 중복 message/voice event와 daily birthday claim을 위한 additive migration 3, metadata를 포함한
+  encrypted backup/restore 검증과 deterministic Engagement race/failure test를 추가했습니다.
+- DiscordBot V2 PHASE 3의 typed SQLite repositories, 독립 bounded read/write execution,
+  expand-only migration ledger, explicit bootstrap와 fail-closed DB validation을 추가했습니다.
+- 한 시점의 snapshot과 전체 암호화 backup 검증, V2/legacy SQL restore-to-new-path,
+  실제 보관 DB의 copy-only rehearsal 도구와 synthetic concurrency/failure test를 추가했습니다.
+  V1 route, 원본 DB와 Pi 운영 설치에는 연결하지 않았습니다.
+- DiscordBot V2 PHASE 2 platform skeleton을 `src/discordbot/`에 추가했습니다. typed immutable
+  config/error/context, bounded telemetry·metrics·executor, capability health와 TaskSupervisor를
+  포함하며 import만으로 DB/network/server/subprocess를 시작하지 않습니다.
+- Discord와 Watch가 독립 lifecycle/capacity를 소유할 수 있는 별도 composition root와
+  bounded startup/rollback/shutdown을 추가했습니다. 실제 Discord/Watch feature route와
+  production service는 연결하지 않았습니다.
+- domain/application/ports/adapters dependency 방향, vendor·SQLite adapter 격리, raw task와
+  executor 사용 위치, fresh-process import 안전성을 검사하는 architecture test를 추가했습니다.
 
 ### Changed
 - Watch Together 웹 플레이어를 어두운 전술 네트워크 콘솔과 주황색 상태 신호를
@@ -26,6 +261,22 @@
   일시적 네트워크 WARNING과 60초 내 동일 메시지만 중복 억제하도록 조정했습니다.
 
 ### Documentation
+- PHASE 4 계약/완료 보고서와 current ADR-019/trace/다음 Phase gate를 추가했습니다. 보관된 실제
+  DB와 PHASE 0–3/baseline 문서는 변경하지 않았습니다.
+- PHASE 3 데이터 계약, actual DB aggregate rehearsal 결과, 원본 hash 보존, requirement trace와
+  PHASE 4 사용자 지시 gate를 추가했습니다. 역사적 baseline과 이전 Phase 문서는 보존했습니다.
+- DiscordBot V2 재구축 PHASE 0의 decision closure, 승인된 ADR, F001–F045 요구사항-테스트
+  trace, V1 baseline test 결과와 Raspberry Pi 측정 계획을 추가했습니다.
+- V2 production target을 Raspberry Pi 5, Ubuntu Server 24.04 LTS ARM64, Ethernet/LAN의
+  bot 전용 clean host로 확정했습니다. WordPress/CloudPanel과 기존 Cloudflare Tunnel/DNS는
+  복원하지 않고 새 Watch tunnel과 staging acceptance baseline을 준비하도록 ADR을 갱신했습니다.
+- PHASE 1에서 slash/help 공개성, Discord component와 pagination, 음악 상태·retry·autoplay,
+  XP/생일, Summary ACL·timeout·capacity, Watch HTTP/WS·30초/5초 lifecycle, 손상 DB와
+  concurrency/failure 계약을 test 및 trace 가능한 문서로 고정했습니다.
+- PHASE 2 platform 구현 상태, 자원 상한, ADR-017, architecture/reliability 검증과 PHASE 3
+  진입 gate를 재구축 문서에 기록했습니다.
+- 재구축 문서를 동결된 V1 `baseline/`, 계속 갱신하는 `current/`, Phase별 역사적 산출물인
+  `phases/phase-XX/`로 분리하고 내부 링크·필수 문서 구성을 검사하는 테스트를 추가했습니다.
 - 현재 전체 기능의 유즈케이스, 구성요소, 상태와 데이터 흐름을 설명하는 시스템
   설계 문서를 추가했습니다.
 - 음악 403의 확인된 실패 경계와 기존 동작을 보존하는 재생 엔진 단계적 교체 계획을
@@ -264,3 +515,56 @@
 
 ### Security
 - 봇의 데이터 복구 동작 수행 중, 발생할 수 있는 메인 브랜치의 **Git Index(Staging 영역) 오염(Pollution)**사태로 인해 사용자의 암호화 정보가 엉뚱한 브랜치에 노출될 수 있는 치명적 엣지 케이스를 막기 위해, 파일 복원 방식 로직을 일차원적인 `git checkout`에서 `git show` 기반의 데이터 스트림 추출 방식으로 대폭 강화했습니다.
+
+## A6R1 - Watch terminal media lifecycle (2026-10-02)
+
+- Release the owned iframe on terminal closure, including delayed initialization and
+  session_closed delivery; cancel playback/reconnect work and reject late playback callbacks.
+- Preserve transient reconnect and unrelated rooms. Local synthetic validation only;
+  Phase 6 stays FAIL pending independent A6V1. No production deployment.
+
+## 2026-10-04 - A9 local preparation only
+
+- Add a bounded fake-only workload/measurement/abort-cleanup harness and temporary
+  target guards, with brief Windows tests and an UNAPPROVED review example.
+- No runtime behavior, service configuration or approved SLO changes. A9 stays
+  BLOCKED; see docs/rebuild/final-audit/a9-local-preparation-report.md.
+
+
+## A9 local candidate measurement preparation (2026-10-04)
+
+- Connect the bounded local harness to synthetic SQLite and candidate engagement paths; retain real latency/failure samples and a source/config/dependency/coverage manifest. No runtime implementation change; A9 remains BLOCKED. See `docs/rebuild/final-audit/a9-candidate-local-report.md`.
+
+
+## A9-LOCAL-M1 local identity remediation (2026-10-04)
+
+- Bind the candidate measurement packet to verified frozen source in a fresh interpreter; reject stale imports/pycache, capture drift and saved-manifest drift. Add worker failure/cancellation/reaping checks without changing runtime application code.
+- Remediated pending independent verification, not CLOSED; A9 remains BLOCKED B1/B2/B3/D1. See `docs/rebuild/final-audit/a9-local-m1-remediation-report.md`. Historical audit and full-suite failures remain preserved.
+
+
+## A9-LOCAL-M2 local receipt integrity remediation (2026-10-04)
+
+- Require complete receipt checksum, protocol entrypoint provenance, canonical unique
+  module/source binding and fail-closed schema checks at worker return and saved reuse.
+  Raw saved JSON rejects duplicate keys. Preserve M1 fresh-worker execution and cleanup.
+- Exact missing-adapter RED reproduced; current-source attack and focused regressions
+  pass. Local integrity only, not authentication against a writer replacing all records.
+- [Report](docs/rebuild/final-audit/a9-local-m2-remediation-report.md): remediated pending
+  independent review, NOT CLOSED; historical FAIL retained. Runtime A9 remains BLOCKED.
+
+
+## A9 local measurement independent closure (2026-10-04)
+
+- A9-LOCAL-M2 independently CLOSED; M1 closure retained. Preserve prior FAIL and
+  pending-review entries as history. Runtime A9 remains BLOCKED B1/B2/B3/D1.
+- Independent126 focused +20 saved-reader checks, both attacks1/1 and docs2/2 PASS.
+  Four dependency mismatches and known inventory/Deno failures remain.
+- [Finalization](docs/rebuild/final-audit/a9-local-measurement-finalization.md) records
+  scoped local commit ownership. Manifests retain their historical pre-commit HEAD;
+  no measurement was regenerated and no next microphase or push was started.
+
+## A9-BT1 isolated backup destination (independent review pending)
+
+- Carry one validated, environment-bound destination through configuration, publication, readback and download. Preserve explicit production opt-in and local-only null; reject staging-to-production selections and duplicate config keys.
+- Add an exact source-reviewed isolated-recipient allowlist, empty pending a distinct approved private repository; preserve SSH, archive, retention, restore and deadline protections.
+- Local synthetic validation only. Runtime A9 remains BLOCKED B1/B2/B3/D1; changed runtime bytes require a new reviewed candidate identity before any execution.

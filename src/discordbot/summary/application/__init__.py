@@ -1,0 +1,1 @@
+"""Summary use-case boundary."""

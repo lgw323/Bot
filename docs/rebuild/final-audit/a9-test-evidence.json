@@ -1,0 +1,677 @@
+{
+  "audited_head": "27c02140576a5ff288ee4d0f47d7e5d9c885dc2f",
+  "evidence_type": "fresh Windows isolated synthetic tests; fake host/provider/clock adapters; temporary SQLite and bounded Python child processes",
+  "receipts": [
+    {
+      "path": "docs/rebuild/final-audit/a9-focused-results.xml",
+      "sha256": "b94c7591e4c603ca208f72aa43d7b670ac7b03ec16ec8d509d93114bb1ce52e2",
+      "command": [
+        ".venv/Scripts/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "tests/integration/operations/test_staging_entrypoint.py",
+        "tests/integration/operations/test_staging_observation.py",
+        "tests/integration/operations/test_credential_acl.py",
+        "tests/integration/operations/test_build.py",
+        "tests/integration/operations/test_final_readiness_tools.py",
+        "tests/integration/operations/test_operational_telemetry.py",
+        "tests/integration/operations/test_probe_policy.py",
+        "-q",
+        "--strict-markers",
+        "--strict-config",
+        "-o",
+        "junit_family=xunit1",
+        "--junitxml=docs/rebuild/final-audit/a9-focused-results.xml"
+      ],
+      "counts": {
+        "PASS": 56,
+        "FAIL": 0,
+        "SKIP": 0
+      },
+      "cases": [
+        {
+          "identity": "tests\\integration\\operations\\test_staging_entrypoint.py::test_isolated_initial_builder_disables_bytecode_before_source_access",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_staging_observation.py::test_finite_observer_records_only_actual_elapsed_time",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_credential_acl.py::test_systemd_root_owned_credential_grants_only_service_uid_read",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_credential_acl.py::test_credential_acl_never_accepts_extra_readers_writers_or_invalid_metadata[\\x02\\x00\\x00\\x00\\x01\\x00\\x04\\x00\\xff\\xff\\xff\\xff\\x02\\x00\\x04\\x00\\xe6\\x03\\x00\\x00\\x04\\x00\\x00\\x00\\xff\\xff\\xff\\xff\\x10\\x00\\x04\\x00\\xff\\xff\\xff\\xff \\x00\\x00\\x00\\xff\\xff\\xff\\xff]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_credential_acl.py::test_credential_acl_never_accepts_extra_readers_writers_or_invalid_metadata[\\x02\\x00\\x00\\x00\\x01\\x00\\x04\\x00\\xff\\xff\\xff\\xff\\x02\\x00\\x04\\x00\\xe5\\x03\\x00\\x00\\x04\\x00\\x04\\x00\\xff\\xff\\xff\\xff\\x10\\x00\\x04\\x00\\xff\\xff\\xff\\xff \\x00\\x00\\x00\\xff\\xff\\xff\\xff]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_credential_acl.py::test_credential_acl_never_accepts_extra_readers_writers_or_invalid_metadata[\\x02\\x00\\x00\\x00\\x01\\x00\\x04\\x00\\xff\\xff\\xff\\xff\\x02\\x00\\x04\\x00\\xe5\\x03\\x00\\x00\\x04\\x00\\x00\\x00\\xff\\xff\\xff\\xff\\x10\\x00\\x04\\x00\\xff\\xff\\xff\\xff \\x00\\x04\\x00\\xff\\xff\\xff\\xff]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_credential_acl.py::test_credential_acl_never_accepts_extra_readers_writers_or_invalid_metadata[\\x02\\x00\\x00\\x00\\x01\\x00\\x04\\x00\\xff\\xff\\xff\\xff\\x02\\x00\\x04\\x00\\xe5\\x03\\x00\\x00\\x04\\x00\\x00\\x00\\xff\\xff\\xff\\xff\\x10\\x00\\x06\\x00\\xff\\xff\\xff\\xff \\x00\\x00\\x00\\xff\\xff\\xff\\xff]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_credential_acl.py::test_credential_acl_never_accepts_extra_readers_writers_or_invalid_metadata[\\x02\\x00\\x00\\x00\\x01\\x00\\x04\\x00\\xff\\xff\\xff\\xff\\x02\\x00\\x06\\x00\\xe5\\x03\\x00\\x00\\x04\\x00\\x00\\x00\\xff\\xff\\xff\\xff\\x10\\x00\\x04\\x00\\xff\\xff\\xff\\xff \\x00\\x00\\x00\\xff\\xff\\xff\\xff]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_credential_acl.py::test_credential_acl_never_accepts_extra_readers_writers_or_invalid_metadata[\\x02\\x00\\x00\\x00\\x01\\x00\\x04\\x00\\xff\\xff\\xff\\xff\\x02\\x00\\x04\\x00\\xe5\\x03\\x00\\x00\\x04\\x00\\x00\\x00\\xff\\xff\\xff\\xff\\x10\\x00\\x04\\x00\\xff\\xff\\xff\\xff \\x00\\x00\\x00\\xff\\xff\\xff\\xff\\x02\\x00\\x04\\x00\\xe7\\x03\\x00\\x00]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_credential_acl.py::test_credential_acl_never_accepts_extra_readers_writers_or_invalid_metadata[malformed]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_credential_acl.py::test_credential_acl_never_accepts_extra_readers_writers_or_invalid_metadata[None]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_credential_acl.py::test_acl_exception_does_not_apply_to_writable_or_nonroot_credentials",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_build.py::test_published_private_artifacts_are_readable_by_runtime_group[384-False-288]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_build.py::test_published_private_artifacts_are_readable_by_runtime_group[448-False-360]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_build.py::test_published_private_artifacts_are_readable_by_runtime_group[420-False-288]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_build.py::test_published_private_artifacts_are_readable_by_runtime_group[448-True-360]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_build.py::test_build_pins_per_release_venv_before_publish",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_build.py::test_failed_build_does_not_publish_and_cleans_candidate",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_build.py::test_tampered_wheel_rejected_before_environment_creation",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_build.py::test_missing_transitive_wheel_is_not_resolved_online",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_build.py::test_lock_cannot_change_reviewed_pin_version",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_build.py::test_truncated_release_id_collision_never_reuses_other_commit",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_build.py::test_candidate_changed_after_tests_cannot_publish",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_build.py::test_source_sensitive_artifacts_are_rejected",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_build.py::test_emergency_update_rejects_unrelated_dependency_change",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_final_readiness_tools.py::test_corrected_release_guard_refuses_unreviewed_or_production_state[marker]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_final_readiness_tools.py::test_corrected_release_guard_refuses_unreviewed_or_production_state[production]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_final_readiness_tools.py::test_corrected_release_guard_refuses_unreviewed_or_production_state[current]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_final_readiness_tools.py::test_corrected_release_guard_refuses_unreviewed_or_production_state[digest]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_final_readiness_tools.py::test_corrected_release_guard_refuses_unreviewed_or_production_state[config]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_operational_telemetry.py::test_periodic_success_keeps_metrics_and_history_without_journal_churn",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_operational_telemetry.py::test_generic_probe_failure_emits_safe_code_and_latches_readiness",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_operational_telemetry.py::test_journal_diagnostic_only_releases_allowlisted_labels",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_one_busy_requires_two_healthy_probes_and_a_60_second_window",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_other_classes_never_get_transient_policy[change0]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_other_classes_never_get_transient_policy[change1]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_other_classes_never_get_transient_policy[change2]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_other_classes_never_get_transient_policy[change3]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_other_classes_never_get_transient_policy[change4]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_other_classes_never_get_transient_policy[change5]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_other_classes_never_get_transient_policy[change6]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_other_classes_never_get_transient_policy[change7]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_other_classes_never_get_transient_policy[change8]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_other_classes_never_get_transient_policy[change9]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_other_classes_never_get_transient_policy[change10]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_generic_repeated_stale_and_expired_are_hard",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_scheduled_probe_records_failure_and_two_successes_without_extra_requests",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_observer_preserves_safe_fields_and_never_erases_a_hard_error",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_pending_recovery_lost_readiness_is_immediately_hard",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_probe_field_allowlist_rejects_sensitive_shapes",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_terminal_probe_failure_is_hard_even_without_umbrella_code[deadline_exceeded]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_terminal_probe_failure_is_hard_even_without_umbrella_code[capacity]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_terminal_probe_failure_is_hard_even_without_umbrella_code[cancellation]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_terminal_probe_failure_is_hard_even_without_umbrella_code[internal]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_terminal_probe_failure_is_hard_even_without_umbrella_code[None]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\operations\\test_probe_policy.py::test_full_observer_continues_exact_busy_but_stops_second_hard_event",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "path": "docs/rebuild/final-audit/a9-independent-results.xml",
+      "sha256": "91a73ffa0cbe776c7dc03fe3af6fc48591ea02c08ada90c4e6fcc7ab5972b043",
+      "command": [
+        ".venv/Scripts/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "docs/rebuild/final-audit/a9-staging-probe.py",
+        "-q",
+        "--strict-markers",
+        "--strict-config",
+        "-o",
+        "junit_family=xunit1",
+        "--junitxml=docs/rebuild/final-audit/a9-independent-results.xml"
+      ],
+      "counts": {
+        "PASS": 7,
+        "FAIL": 0,
+        "SKIP": 0
+      },
+      "cases": [
+        {
+          "identity": "docs\\rebuild\\final-audit\\a9-staging-probe.py::test_observer_refuses_unsafe_boundary_before_sampling[marker_missing]",
+          "result": "PASS"
+        },
+        {
+          "identity": "docs\\rebuild\\final-audit\\a9-staging-probe.py::test_observer_refuses_unsafe_boundary_before_sampling[production_active]",
+          "result": "PASS"
+        },
+        {
+          "identity": "docs\\rebuild\\final-audit\\a9-staging-probe.py::test_observer_rechecks_boundary_and_preserves_partial_evidence[marker_removed]",
+          "result": "PASS"
+        },
+        {
+          "identity": "docs\\rebuild\\final-audit\\a9-staging-probe.py::test_observer_rechecks_boundary_and_preserves_partial_evidence[production_started]",
+          "result": "PASS"
+        },
+        {
+          "identity": "docs\\rebuild\\final-audit\\a9-staging-probe.py::test_elapsed_completion_retains_collection_errors",
+          "result": "PASS"
+        },
+        {
+          "identity": "docs\\rebuild\\final-audit\\a9-staging-probe.py::test_aggregate_keeps_health_gaps_failure_growth_and_sampled_limits",
+          "result": "PASS"
+        },
+        {
+          "identity": "docs\\rebuild\\final-audit\\a9-staging-probe.py::test_absent_observation_is_not_success",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "path": "docs/rebuild/final-audit/a9-regression-results.xml",
+      "sha256": "8aea41a29dd7f860950b5209f6669c235c5f9a82f00cd002091d8102242f3807",
+      "command": [
+        ".venv/Scripts/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "tests/integration/data/test_concurrency.py",
+        "tests/integration/summary/test_requests.py",
+        "tests/integration/summary/test_lifecycle.py",
+        "tests/integration/watch/test_runtime.py",
+        "tests/integration/watch/test_lifecycle.py",
+        "tests/integration/music/test_lifecycle.py",
+        "-q",
+        "--strict-markers",
+        "--strict-config",
+        "-o",
+        "junit_family=xunit1",
+        "--junitxml=docs/rebuild/final-audit/a9-regression-results.xml"
+      ],
+      "counts": {
+        "PASS": 72,
+        "FAIL": 0,
+        "SKIP": 0
+      },
+      "cases": [
+        {
+          "identity": "tests\\integration\\data\\test_concurrency.py::test_busy_writer_keeps_event_loop_and_read_lane_alive",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\data\\test_concurrency.py::test_queue_saturation_waiting_cancellation_and_running_capacity",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\data\\test_concurrency.py::test_cancel_or_deadline_before_commit_rolls_back_and_is_observed[False]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\data\\test_concurrency.py::test_cancel_or_deadline_before_commit_rolls_back_and_is_observed[True]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\data\\test_concurrency.py::test_sqlite_progress_handler_interrupts_long_query",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\data\\test_concurrency.py::test_snapshot_during_atomic_cross_table_write_is_one_point_in_time",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\data\\test_concurrency.py::test_shutdown_closes_both_lanes_and_rejects_admission",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_six_requests_fifo_cancel_waiter_and_recover",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_cancel_before_first_loop_turn_releases_admission",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_controlled_timeout_cancels_active_or_waiter_and_recovers[False]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_controlled_timeout_cancels_active_or_waiter_and_recovers[True]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_end_to_end_boundary_and_late_provider_result[59.999-True]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_end_to_end_boundary_and_late_provider_result[60-False]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_end_to_end_boundary_and_late_provider_result[61-False]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_acl_before_extraction_and_after_queue_wait",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_filter_prompt_scope_and_untrusted_preference",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_failure_releases_next_and_safe_sink[ExternalTemporaryError]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_failure_releases_next_and_safe_sink[ExternalPermanentError]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_invalid_range_never_admitted[0]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_invalid_range_never_admitted[-1]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_invalid_range_never_admitted[25]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_invalid_range_never_admitted[nan]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_invalid_range_never_admitted[inf]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_shutdown_cancels_all_without_orphans",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_queue_elapsed_time_is_not_reset_before_provider",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_queued_deadline_expires_without_extraction_or_second_provider",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_permission_revocation_while_queued_blocks_extraction",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_authorization_time_consumes_same_end_to_end_budget",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_requests.py::test_runtime_mode_refuses_partial_capture_until_reconciled",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_lifecycle.py::test_repeated_ready_during_preload_coalesces_then_reconciles",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_lifecycle.py::test_disabled_resource_no_client_history_cleanup_and_owns_bot_close",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_lifecycle.py::test_result_view_modal_bounds_and_expiry",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\summary\\test_lifecycle.py::test_maximal_embed_is_discord_valid_without_losing_overall",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_runtime.py::test_durable_idempotency_and_revocation",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_runtime.py::test_active_owner_prevents_stale_cleanup",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_runtime.py::test_seven_messages_order_and_session_isolation",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_runtime.py::test_creation_grace_and_reconnect_boundary",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_runtime.py::test_single_viewer_reload_hydrates_actor_playback[False]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_runtime.py::test_single_viewer_reload_hydrates_actor_playback[True]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_runtime.py::test_late_peer_and_reconnect_use_server_authority[playing]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_runtime.py::test_late_peer_and_reconnect_use_server_authority[paused]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_runtime.py::test_playlist_duplicate_order_close_race",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_runtime.py::test_slow_peer_queue_is_bounded_and_fast_peer_progresses",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_runtime.py::test_connection_capacity_and_shutdown",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_runtime.py::test_slow_socket_send_deadline_closes_without_blocking_session",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_lifecycle.py::test_no_participant_creation_grace_boundary[29.999-False]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_lifecycle.py::test_no_participant_creation_grace_boundary[30-False]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_lifecycle.py::test_no_participant_creation_grace_boundary[34.999-False]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_lifecycle.py::test_no_participant_creation_grace_boundary[35-True]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_lifecycle.py::test_absolute_expiry_revokes_even_connected_capability",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_lifecycle.py::test_abort_before_late_create_is_a_durable_tombstone",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_lifecycle.py::test_create_cancel_after_commit_compensates_and_cannot_retry",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_lifecycle.py::test_stale_cleanup_readiness_barrier_and_failure",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_lifecycle.py::test_new_owner_cleans_dead_owner_and_old_peer_cannot_mutate",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_lifecycle.py::test_mailbox_saturation_cancelled_waiter_and_close_are_bounded",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_lifecycle.py::test_add_metadata_late_result_cannot_revive_closed_session",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_lifecycle.py::test_session_cap_and_maintenance_schedule_idempotence",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_lifecycle.py::test_total_connections_playlist_and_client_rate_caps",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_lifecycle.py::test_expired_queued_work_never_creates_a_peer",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\watch\\test_lifecycle.py::test_close_during_durable_create_cannot_leave_an_orphan_actor",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\music\\test_lifecycle.py::test_cf16_ready_storm_dashboard_coalesce_and_cf20_shutdown",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\music\\test_lifecycle.py::test_partial_restore_source_retained_until_successful_actor_ack",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\music\\test_lifecycle.py::test_dashboard_delete_recovery_failure_health_and_cleanup_timing",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\music\\test_lifecycle.py::test_dashboard_refresh_retains_real_discord_component_dispatch",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\music\\test_lifecycle.py::test_cf02_cf20_ffmpeg_adapter_local_child_ownership[normal]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\music\\test_lifecycle.py::test_cf02_cf20_ffmpeg_adapter_local_child_ownership[nonzero]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\music\\test_lifecycle.py::test_cf02_cf20_ffmpeg_adapter_local_child_ownership[hung]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\music\\test_lifecycle.py::test_cf02_cf20_ffmpeg_adapter_local_child_ownership[immediate_stop]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\music\\test_lifecycle.py::test_cf02_cf20_ffmpeg_adapter_local_child_ownership[start_failure]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\music\\test_lifecycle.py::test_cf02_cf20_ffmpeg_adapter_local_child_ownership[empty_audio]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\music\\test_lifecycle.py::test_optional_start_cleanup_marker[False]",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\integration\\music\\test_lifecycle.py::test_optional_start_cleanup_marker[True]",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "path": "docs/rebuild/final-audit/a9-doc-results.xml",
+      "sha256": "af89c5d9e3c193cdb2b3118e75ef691d3fba1a54f6f02e0d535d6de5e8136102",
+      "command": [
+        ".venv/Scripts/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "tests/architecture/test_rebuild_documentation.py::test_all_relative_rebuild_document_links_resolve",
+        "tests/architecture/test_rebuild_documentation.py::test_heading_anchor_preserves_spaces_around_removed_punctuation",
+        "-q",
+        "--strict-markers",
+        "--strict-config",
+        "-o",
+        "junit_family=xunit1",
+        "--junitxml=docs/rebuild/final-audit/a9-doc-results.xml"
+      ],
+      "counts": {
+        "PASS": 2,
+        "FAIL": 0,
+        "SKIP": 0
+      },
+      "cases": [
+        {
+          "identity": "tests\\architecture\\test_rebuild_documentation.py::test_all_relative_rebuild_document_links_resolve",
+          "result": "PASS"
+        },
+        {
+          "identity": "tests\\architecture\\test_rebuild_documentation.py::test_heading_anchor_preserves_spaces_around_removed_punctuation",
+          "result": "PASS"
+        }
+      ]
+    }
+  ],
+  "distinct_counts": {
+    "PASS": 137,
+    "FAIL": 0,
+    "SKIP": 0,
+    "XFAIL": 0
+  },
+  "historical_not_added": {
+    "A8V3_distinct_PASS": 1589,
+    "known_FAIL": 2,
+    "SKIP": 27,
+    "real_Linux_checks": 97
+  },
+  "full_suite_rerun": false,
+  "linux_rerun": false,
+  "live_host_or_provider_access": false
+}

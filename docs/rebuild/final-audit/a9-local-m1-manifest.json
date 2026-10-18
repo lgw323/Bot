@@ -1,0 +1,1083 @@
+{
+  "schema": 2,
+  "microphase": "PASS",
+  "a9": "BLOCKED",
+  "source": {
+    "head": "769a00ab892edc7f98a1f9d947abd23d99c1056a",
+    "export_kind": "verified frozen allowlisted bytes; working-tree origin, not Git HEAD or built artifact",
+    "files": {
+      "conftest.py": "c762904134d57d6e4803f87188e84062a712cfad5d6a176f3faaeb772fbbeffa",
+      "deploy/dependencies.pins": "6bb473645ce5a9997bc8cbaf09086bdf350afc8510c3a196d7781e6c97dd3deb",
+      "docs/rebuild/final-audit/a8r4-test-runner.py": "e0db037371cff2b3912900b2361b6849971f052ee0d880418346666b0364eee2",
+      "pyproject.toml": "c261dd857dbfdea690bca327365ed2ed5b9efbaab8aff807ef813aa7b2d8f602",
+      "requirements-dev.txt": "72043c08af1b153244a41b188d49b7f470ffd13b8561161c5f5806517514c8f3",
+      "requirements.txt": "2a0850a169ec5f11cb202ab72979472cb6990a3d9cbafc9d5ff1657f32ba2962",
+      "scripts/a9_candidate_adapter.py": "6aa78d7d75b7aa1c31eeb4fc945a5b62935437a654f2147d39fbfe1f7a7ece99",
+      "scripts/a9_candidate_packet.py": "66c34e5a840e59d11e7f108bb6ba97817a075d024e47f37ca23308abe72347ca",
+      "scripts/a9_local_harness.py": "a5e4788a3c8cab2fa88842098b7c7e0b069c5fe48ca0d544432db38e766379c4",
+      "src/discordbot/__init__.py": "6807cad9b3afca3fec50b1a89ae675a76ac700999da9c8c66667c8a71b113ccc",
+      "src/discordbot/composition/__init__.py": "cd67328fd38bf1bbbeda4a1ba17181eb3f1c4bf7c532a01771897fc7892b2154",
+      "src/discordbot/composition/config.py": "fe381c62548e772b9791e6b3b0c1f31bcb630b8cb57712c4578883548cde3ada",
+      "src/discordbot/composition/discord_app.py": "bf84d52b2cbb7c1dd182a0077488e2148d0c2539b644f8b035462e4c5249cb87",
+      "src/discordbot/composition/engagement.py": "90720c0f0e3c77f9446397c925977e0b36f0d42bf7621e7510f7c5bd212b1e9e",
+      "src/discordbot/composition/guardian.py": "bd228202c46e1a390e08f2a0f24d53887c625c6ef57588db041630a2f8d139b3",
+      "src/discordbot/composition/live_validation.py": "edcf47139c9e70863a1c202a5521d4ec26eca67f00a1f48877a491a08103e560",
+      "src/discordbot/composition/main.py": "9b00053220a3d342d5c8dfa1ff60d9cb691f164660be0289370cba9688c14f9e",
+      "src/discordbot/composition/production_discord.py": "bf1430098f43d9df7b2b75331445443f8d75604130e6fa7630ad647be7d95e84",
+      "src/discordbot/composition/production_watch.py": "213e65ef904b1a4138c7f68f0cfeb7b274d46c8bb8aa1829f45ac5d0fdc6e611",
+      "src/discordbot/composition/runtime.py": "d59512fc3771cf058cc1a544aaf58f689420a817b51e92f430dd8f02c9d4172c",
+      "src/discordbot/composition/summary.py": "653dc3d783c9b1aedd1da38903d298dbdab575524fd35392d32c8d32cbd6d6f4",
+      "src/discordbot/composition/watch_app.py": "f73c4020592ce35f1ec4d81540cb3b0f6e31d309f239009b550d0ba5d7bc7143",
+      "src/discordbot/composition/worker.py": "3753b369299c0494e0db939aa278ab055c07187193a78db7cb31d16cf4aeb6bf",
+      "src/discordbot/engagement/__init__.py": "caf52267061f38f8e7bf894da8d38b716633bbf6318257df777e3e33484a07ea",
+      "src/discordbot/engagement/adapters/__init__.py": "bab6f5454393312d00b01c24ba8c45e2747bbb750103cec3fc491382793a82c5",
+      "src/discordbot/engagement/adapters/authorization.py": "51e792cefd79e86fb373d1060a54ec2b7a2f890ddd3fcc3066e25e15ea9d284c",
+      "src/discordbot/engagement/adapters/discord_runtime.py": "057c1ef24cda7c5526b9cd3209adc679108efd538f121e2486ebe452045fbfa8",
+      "src/discordbot/engagement/adapters/discord_ui.py": "887e9ca2e13a5726ffcc7c0891db22d5e724dcb3c7ed8b0edecbd4f96447b90e",
+      "src/discordbot/engagement/adapters/event_repository.py": "8d6df7210d3fa953d40cbf5cec650496d988c72e24cbdabcd8d27261f5fbee05",
+      "src/discordbot/engagement/adapters/scheduler.py": "5135ab71250ff1becbae20247d709dd7259ceee6956f3d4adb4d74d96e6d37c8",
+      "src/discordbot/engagement/adapters/sqlite_repository.py": "3e87340d9de37a69bb5ecabd3705b1fb62c3518b66f12e7f3861a2af39a1ad10",
+      "src/discordbot/engagement/application/__init__.py": "90ea0d17ee8b7b1aca2fdebfeda70b2471cdd0d32fe934e4b91ee1357325dfd8",
+      "src/discordbot/engagement/application/service.py": "0969c73eaed5268230286301b2694b121222510bd07bcb5c3c1767cbf7878bc9",
+      "src/discordbot/engagement/domain/__init__.py": "d822817d335c1f90f33d10d0eb6b9a5197cf1306ebcf4f6413a8558e3a00e048",
+      "src/discordbot/engagement/domain/policy.py": "914fde0d24b28a3e9298824339980bf6a7ad49b70b11348a0095f5b90bfb233c",
+      "src/discordbot/engagement/ports/__init__.py": "389d25f7df110a2e67e6dc9ca10a88dc10bbd8cc984368fe59b0a4f5d88de0d5",
+      "src/discordbot/engagement/ports/events.py": "1cab2ecd114390fe88033d06a54fdce39da3dafba20e1cdfda8722d7a2f30782",
+      "src/discordbot/engagement/ports/repository.py": "a0ef87ac03b662f2dfc5f49c85fdfd4228e06cd29cb9caf3c21db5f3ba2c2b9e",
+      "src/discordbot/music/__init__.py": "0939116e97c342b694adb604244f1577e55a4f03912112ab858ca729c668827a",
+      "src/discordbot/music/adapters/__init__.py": "b42837b6bef78a4581642a0b101a0bf8facff83fddffebe8870e2d31c4e109e1",
+      "src/discordbot/music/adapters/audio.py": "766381019f393399fd4038bcb74ebd9f265a854d9871981328cffc7179e5b6e9",
+      "src/discordbot/music/adapters/cache.py": "17047c9b08534ad875e41f0f5d9b0865ba22df86c8c6bae42a0bc5bb1f6e1d67",
+      "src/discordbot/music/adapters/discord_ui.py": "bddce65cbbeb260f42e0d1976d29c836185bcc8ad553db7e738834f139aab8b9",
+      "src/discordbot/music/adapters/processes.py": "f146d0d10aeb6fb51f6ac5911e117da88c7a7603e1449418c37e6e4952d1abc1",
+      "src/discordbot/music/adapters/providers.py": "a99bb66bd5cc584c56fbfd79a490979f993876fb790bf31c8b32defea4b11014",
+      "src/discordbot/music/adapters/runtime.py": "d65a12dd7eac3ca8e016f56556a66c454d601801e1f1d1a618fa1ccfb35a6f6a",
+      "src/discordbot/music/adapters/snapshots.py": "4e333dca6acbba3d87b17de31b0115c6d60bf577678f4bfd85b3659b946776a9",
+      "src/discordbot/music/adapters/sqlite_repository.py": "e23d219ad99725062ab4010e70a868865d7fd8429594cff0a189de8480b5abe7",
+      "src/discordbot/music/adapters/tts_worker.py": "6d7ccfee507635b44f6c022fda018452f6b96fafdad289f972e504b5d5a9135d",
+      "src/discordbot/music/application/__init__.py": "f8fc654ff6e75c84e44cd8a004865f2ebcf6ee7a553f3eebb0a77fdef7705d3c",
+      "src/discordbot/music/application/actor.py": "76bc1b6434d9f4960150b5b4da3bc70562de6e89707811885439d63c10794062",
+      "src/discordbot/music/domain/__init__.py": "c8d40f87eb8213e81202b066f6d54be3cd404313dedd83627122799ebd963b33",
+      "src/discordbot/music/domain/failures.py": "9f5e93eb5a06eb093aca25328467ad2677a3de961a891b56dcfbff5dae48ea31",
+      "src/discordbot/music/domain/model.py": "c9415a13620ca9bbf752554568f349ea81a19bdc0efa29711f103bd80e550f8b",
+      "src/discordbot/music/domain/pages.py": "8071c2267fb4fd03e3164594c63a191d272796a134469f3ee6eaebcadc8cf6f3",
+      "src/discordbot/music/ports/__init__.py": "26763f9506e399bbe0dddd2696d70c1353643e79a8c73616bf86d163b7dabd2e",
+      "src/discordbot/music/ports/playback.py": "c8ae58101c9e0c0257dafde513ddc85563a1ddfa1eb168f2a140ea6ccd2b4281",
+      "src/discordbot/music/ports/repository.py": "eb43c43d31114b91abe74489fcaca5aedce44b6b315de5761d139082fd5c0c3e",
+      "src/discordbot/operations/__init__.py": "4f9178fc9257886e36e56f3051b44073517f7160999d810e27d723bba640d4dc",
+      "src/discordbot/operations/adapters/__init__.py": "34b33413595104a2d375d9abe0b23710f75909b8a751e1bb124f15325708a036",
+      "src/discordbot/operations/adapters/audit.py": "7bec20d0bf8aa695132ca79682bb6ffbead72c6119c517655272dc76b89be983",
+      "src/discordbot/operations/adapters/build.py": "3c1986139ef9d0a0e602c1a787b596b8796a3f17dca1b65dce284a7a9c001914",
+      "src/discordbot/operations/adapters/cli.py": "3628d9008a262f9dedc8da73c16a8c02bae902235d594452eed96aae8218d636",
+      "src/discordbot/operations/adapters/configuration.py": "641e7698097cce5e7d6e75e92df752fe9e89257ebaa2f31455d95dfab05d5a73",
+      "src/discordbot/operations/adapters/deployment.py": "badc6012da8455e7e4b9ee9958e715a363de18491b6d9f3bafa2d59564a20ec6",
+      "src/discordbot/operations/adapters/filesystem.py": "57fd8ae500bfdb754797eb02fcec78e7d1df900f99297798118ed197b0306f1f",
+      "src/discordbot/operations/adapters/git_backup.py": "e1399f41fffff4809eaec083476e4e3a816639aafc35cad0d671a1d09da33175",
+      "src/discordbot/operations/adapters/hosting.py": "bf58ab7008873a479bfa1abe5835ef988c15816a744e140bdbcfcad710ab9f6e",
+      "src/discordbot/operations/adapters/manual.py": "3bf5d0c45d4d3c7ca2d3caf48f70c91ed98fc40545c282ecb5b346a135fb6136",
+      "src/discordbot/operations/adapters/probe.py": "901965597f0eefe81913c4573a9147f6bcc44ac080937e8d42e0352fd9a14ac3",
+      "src/discordbot/operations/adapters/probe_policy.py": "ebd793627b5f404944a23158688e9b01882b0fc1fde875180196268ec5b3e879",
+      "src/discordbot/operations/adapters/recovery.py": "5f845ffc515b19ca25821d228000bea099f4e6eaf601d410fcf36b06e974e5a7",
+      "src/discordbot/operations/adapters/retention.py": "e15cffdef242442dfe905ac23ae9ac1dc92185d7bd4681547f08dd8e8f27bcb3",
+      "src/discordbot/operations/adapters/source.py": "c2617531cec31197e6c5747f63d210ecb735b192e8f7557fe017573fe7471f19",
+      "src/discordbot/operations/application/__init__.py": "be41a8dd3a0024ced6035a0cdaffb1f465d3165c89741e7782c2a8525e622512",
+      "src/discordbot/operations/application/deployment.py": "519e89dcd00434baab93450b5648d1c5d963e3e6d0c8d76288c3f5735ead6f18",
+      "src/discordbot/operations/application/manual.py": "f5bac500ba828993e8dde87708e1bb517eb290537a9a16543b01f99beb482764",
+      "src/discordbot/operations/ports/__init__.py": "25b4ad766c2a03d715602232a16241a48af85d7281111f39f8c17b4c2ce49263",
+      "src/discordbot/operations/ports/deployment.py": "3f92b436386338c695b07113bb0dbbbdcb01543c552e4b4631e26fe1c3e58a5d",
+      "src/discordbot/platform/__init__.py": "e773c9d7e517dc46382685c61afe3a82573239018d2efc5c68c3bafd061e459a",
+      "src/discordbot/platform/clock.py": "9a1e5c4c8f5f16aefc6d45411f670e2e7017c6b6c1aef70fefecd8e01c052d9f",
+      "src/discordbot/platform/context.py": "3e5a73842b6765bb834ccc547a6cb8184c4632b11cecb66ca4614067602102f8",
+      "src/discordbot/platform/errors.py": "9e42f0ef2821fafce2c6c559f799004c675b98101ab68cc34914df9dca3ecb5c",
+      "src/discordbot/platform/executors.py": "734d045dd5492c120fbe81f3f32e73c0652a7a75fb9891599c0f6b938c34d19b",
+      "src/discordbot/platform/health.py": "401bad2a26961621482f7ee6af34779aa18e505fd136e65779162d597926fb76",
+      "src/discordbot/platform/tasks.py": "2af7d4f0402c9ece05d03fbc5f4c582002680829ce85cf3aa0d037f7b35856c3",
+      "src/discordbot/platform/telemetry.py": "36438ad94215fbaa05b22d709f2b6c7f9f2de19b880494fffb3d69c56f06821b",
+      "src/discordbot/platform/termination.py": "ac52ee2f4e66c13732024298aba37562ec25f45d8335eb8c7d19a73d76089fef",
+      "src/discordbot/storage/__init__.py": "6d9b7592709ef98c532350bf040c4ecdc9e26c87e4c952a734f86359c7b73e40",
+      "src/discordbot/storage/adapters/__init__.py": "bd163588ad4eb5183b312b790c918cf3ffc13ce038b93bc8ee6e8084eab838f4",
+      "src/discordbot/storage/adapters/backup_codec.py": "71bea85189445e33e92d2648b406f2ce765189ecef5b3052a217197a62564bc7",
+      "src/discordbot/storage/adapters/constraints.py": "11c416cd61ffe313ecca7d4280c2e9b5ff5a555416201a3c7f34199c03da5c0c",
+      "src/discordbot/storage/adapters/engagement_schema.py": "39735c1ed36b4fd4804646f57f8bb34f04e3220b54993d707438e0ddbf03ca56",
+      "src/discordbot/storage/adapters/execution.py": "ff869a45db2d03599698a5fae5f1d1b61f568720d7bb3fefd3de6392687aad0d",
+      "src/discordbot/storage/adapters/files.py": "20636e0ac758eaf7c0f2e5679e4cefa8b88b962d142a5c460c60dfa498d00cf0",
+      "src/discordbot/storage/adapters/inputs.py": "32d3bfdf82c41940a3ea7ccff2ef5b1dd6d84c2891e6910d0ba861397940b31d",
+      "src/discordbot/storage/adapters/migrations.py": "970bbb7c82154c257e036570177f0be5b4d90d09751c954463abec4457c0c292",
+      "src/discordbot/storage/adapters/music_schema.py": "5169ea9fed58516131639b87fa54a43534fe85316b26eef1c21db2c3c2904a37",
+      "src/discordbot/storage/adapters/probe_diagnostics.py": "c613c0beeadfd39896facf9ee5907c0d4650a2e351062a782c1119b34f9e3e54",
+      "src/discordbot/storage/adapters/recovery.py": "888ddfa37faedb9d9ec7f518b05e71bdf8aa4d7cd923dd86c957aadd26111c61",
+      "src/discordbot/storage/adapters/schema.py": "8c2f4ed5a33cf2b9eea4cc173afdcc4572890a8ec731de2821799b49dcba5ba5",
+      "src/discordbot/storage/adapters/watch_schema.py": "b7f539b3d19f368f4c1a4364699a510df384ce53d6e2245083c3222c5eba3109",
+      "src/discordbot/storage/ports/__init__.py": "29409e3b9dd92a021adf5dd47ba43946df2ddbbb333f61b64eda1165fe2e155f",
+      "src/discordbot/storage/ports/contracts.py": "71e1a4baff35601e50c165aec39fa5af9238b8912d21f39318c39386cc0cba36",
+      "src/discordbot/summary/__init__.py": "b6eb3525a6b35ac331a683ebc025a4dab3e9b7b59d81fd06b5fd47c0ff61aada",
+      "src/discordbot/summary/adapters/__init__.py": "79ce4f654d5aaef7a8db7cf2c461a9de65148b5ae66d03b48fd35b00e93953ae",
+      "src/discordbot/summary/adapters/discord_io.py": "7e0b15a6686654411d21d602ec393ed26ba8a0c62ea953d7e2fb3b37b21f576e",
+      "src/discordbot/summary/adapters/discord_ui.py": "57d2c283153c4c33f09142059139bc15eab038b8d093e8b73fbeacedaf46beed",
+      "src/discordbot/summary/adapters/gemini.py": "89c38a7c4718ed16cada4927acfaafbe5d75e20241cdef13800eccace8f81c64",
+      "src/discordbot/summary/adapters/runtime.py": "465620266e459dc7944e472f7e4d046db1dfbb7865f1241e080be1b7d433f8bf",
+      "src/discordbot/summary/application/__init__.py": "89914ae565b0f01c8b95cd4ee0cfb1f98d9205b89c31d7377a56dffe064ab617",
+      "src/discordbot/summary/application/capture.py": "0ecd0cda19c473d5b0f3537672b444cf0f8ead0b5506f81455f2ad081cfe0b40",
+      "src/discordbot/summary/application/service.py": "4b60c6f0b99bbd49217a827a0d9efd3ee9e589d7f2a8bdcb366fe835b52a6e17",
+      "src/discordbot/summary/domain/__init__.py": "b2d72710a8d5adf2e07c3530c66e70b6e2294b2428685dd7b5e2a60d548799b4",
+      "src/discordbot/summary/domain/failures.py": "816e771a7a12e11948036f365f4670766d02aba984034bb73f8e17ab980555d3",
+      "src/discordbot/summary/domain/models.py": "6c98aef5c5238f9e7187b16629984c4e8e9d8001f621d8f6732b3fa285b69475",
+      "src/discordbot/summary/ports/__init__.py": "89e4e9efc652d919caf7fdc90e8d7d855985200aeeaeee99dc78b794e8441a38",
+      "src/discordbot/summary/ports/io.py": "545422cbef2de1190ec448e854f70c2d2b085d78ca2badc6b13cd311bf34be6a",
+      "src/discordbot/watch/__init__.py": "ea33f54f0ac59c07be4cf05dbba35baf2ee809a344085bba4474596a66475710",
+      "src/discordbot/watch/adapters/__init__.py": "7a05ad5a93a0dac5b2a77e532d1994259a16e7ec832de135723663b2beaf0091",
+      "src/discordbot/watch/adapters/control_client.py": "e79418b5750d4e4889459a445a65e5290c31df72a7d73d75efbfca03cc80097c",
+      "src/discordbot/watch/adapters/control_schema.py": "424e48bce0aa25edf4f6b2fa1e44f245ef4f0bf10ed3b17c62772afbb9b0f7e9",
+      "src/discordbot/watch/adapters/control_server.py": "4d23b61d4879b3b279af9bed9944ada5ec523f54b90a90916d252a9b9c9b2468",
+      "src/discordbot/watch/adapters/discord_io.py": "8f8f085280a16e7bb2070720b970f0bafc32fa5a3ddb4a3612f91edc8c62f838",
+      "src/discordbot/watch/adapters/discord_runtime.py": "21feda1a95b209118cd59c8fc121b0bd1f43ea4288e91ce65a5389de3d9d3391",
+      "src/discordbot/watch/adapters/metadata.py": "d61ff5025389ba84b4345bedbc12679ef671b0474ebfa28e7d189738abe7cb41",
+      "src/discordbot/watch/adapters/security.py": "15f505a85f9b53410678e1a21f23b20eacd9b3e9df506614cce8da3749f7bf97",
+      "src/discordbot/watch/adapters/server.py": "2f48fc1ddfb2373b60c0001ee4230c99ffd8f666262f41e1e09d5fef410cfd7c",
+      "src/discordbot/watch/adapters/sqlite_repository.py": "80b52458878295077640167184ebabcef7399da382c9cbbc49ceea1aa34531fc",
+      "src/discordbot/watch/adapters/templates/player.html": "543802aed5865c8f28ef2f317554c4a6c476f05ba9016b1d39df7bf61fc2a0a4",
+      "src/discordbot/watch/adapters/web.py": "9ce580cf2e39a23aaa055ffbf699af0b225ad21164358e334fdcec86f4b3c9e8",
+      "src/discordbot/watch/adapters/web_runtime.py": "a60acf1ebfdefd398877a73cdf85da5bac7950ae493bad26354cf9366a327502",
+      "src/discordbot/watch/adapters/wire.py": "775c6d216f540e13991c6b56120df8d441e66aa0cbbb5bcb4ac23146773d5e2e",
+      "src/discordbot/watch/adapters/writer.py": "e60c11d6a6ebea109a915fd86a56dfcfafd93a177e9357341ba62bf36ea65012",
+      "src/discordbot/watch/application/__init__.py": "6c53f20930ba24b454199654e2d366c6db0f0c18b174da9a23b13ff9e070a13d",
+      "src/discordbot/watch/application/discord_control.py": "577dda471e281b1a4f86499be4ccd00f70606ec2447c412629e52d7193fc2626",
+      "src/discordbot/watch/application/service.py": "711b11ceced0ea466b0a78ba6f9a318403c6a06c8a21a8f3b0282cada8353c62",
+      "src/discordbot/watch/application/session.py": "31f39a1e0f14d2169de28367ba50f8cfe6648c3ed048f2815c6757b05900786f",
+      "src/discordbot/watch/domain/__init__.py": "b9e9f3c7de55c0ed5afc5a9f6ec318c6e5d77506ba17dd7347dfc87b573be1d2",
+      "src/discordbot/watch/domain/policy.py": "bb9b53160c0200b19e0d3d6181284988587312f5a70db1f932d7af66a1ff8752",
+      "src/discordbot/watch/ports/__init__.py": "1c26366ec848bce71309af160b1427de09da01ec18af18261ed7469c46203e21",
+      "src/discordbot/watch/ports/discord.py": "78cd29f603d770363b8567baaef2ea41ac8e53041d1f0a2e9e5191a7a887dd74",
+      "src/discordbot/watch/ports/repository.py": "9acb0784928b3e2a5e6602308ed3376ea44fa2cf1d19692a15ee4b5a36138fb5",
+      "src/discordbot/watch/ports/runtime.py": "997893b22a4b907743819f49ca4b5085f965c14b09b18edbeed0bd0086c022e7",
+      "tests/conftest.py": "9726158e2dad09f1c6f760957d42b830e90aee60f56c92f8c76a6b1cd21764b7",
+      "tests/integration/operations/test_a9_candidate_packet.py": "b016007c0cea8510bfcd4a7d0dff37da7625c3fcd974be730472c500783051cf"
+    },
+    "export_sha256": "9abd0bc4e382bda5931149ae49d5c460a634682d4c5049f7c489d76ca703a5a6",
+    "dependency_pins": {
+      "aiohappyeyeballs": {
+        "pin": "2.7.1",
+        "installed": "2.7.1",
+        "matches": true
+      },
+      "aiohttp": {
+        "pin": "3.14.3",
+        "installed": "3.14.3",
+        "matches": true
+      },
+      "aiosignal": {
+        "pin": "1.4.0",
+        "installed": "1.4.0",
+        "matches": true
+      },
+      "annotated-doc": {
+        "pin": "0.0.4",
+        "installed": "0.0.4",
+        "matches": true
+      },
+      "annotated-types": {
+        "pin": "0.8.0",
+        "installed": "0.8.0",
+        "matches": true
+      },
+      "anyio": {
+        "pin": "4.14.2",
+        "installed": "4.14.2",
+        "matches": true
+      },
+      "attrs": {
+        "pin": "26.1.0",
+        "installed": "26.1.0",
+        "matches": true
+      },
+      "bgutil-ytdlp-pot-provider": {
+        "pin": "1.3.1",
+        "installed": null,
+        "matches": false
+      },
+      "certifi": {
+        "pin": "2026.7.22",
+        "installed": "2026.7.22",
+        "matches": true
+      },
+      "cffi": {
+        "pin": "2.1.0",
+        "installed": "2.1.0",
+        "matches": true
+      },
+      "charset-normalizer": {
+        "pin": "3.4.9",
+        "installed": "3.4.9",
+        "matches": true
+      },
+      "click": {
+        "pin": "8.1.8",
+        "installed": "8.1.8",
+        "matches": true
+      },
+      "colorama": {
+        "pin": "0.4.6",
+        "installed": "0.4.6",
+        "matches": true
+      },
+      "cryptography": {
+        "pin": "42.0.5",
+        "installed": "42.0.5",
+        "matches": true
+      },
+      "davey": {
+        "pin": "0.1.6",
+        "installed": "0.1.6",
+        "matches": true
+      },
+      "deno": {
+        "pin": "2.9.7",
+        "installed": null,
+        "matches": false
+      },
+      "discord.py": {
+        "pin": "2.7.1",
+        "installed": "2.7.1",
+        "matches": true
+      },
+      "distro": {
+        "pin": "1.9.0",
+        "installed": "1.9.0",
+        "matches": true
+      },
+      "fastapi": {
+        "pin": "0.139.2",
+        "installed": "0.139.2",
+        "matches": true
+      },
+      "frozenlist": {
+        "pin": "1.8.0",
+        "installed": "1.8.0",
+        "matches": true
+      },
+      "google-auth": {
+        "pin": "2.56.2",
+        "installed": "2.56.2",
+        "matches": true
+      },
+      "google-genai": {
+        "pin": "2.14.0",
+        "installed": "2.14.0",
+        "matches": true
+      },
+      "gTTS": {
+        "pin": "2.5.4",
+        "installed": "2.5.4",
+        "matches": true
+      },
+      "h11": {
+        "pin": "0.16.0",
+        "installed": "0.16.0",
+        "matches": true
+      },
+      "httpcore": {
+        "pin": "1.0.9",
+        "installed": "1.0.9",
+        "matches": true
+      },
+      "httpcore2": {
+        "pin": "2.9.1",
+        "installed": "2.9.1",
+        "matches": true
+      },
+      "httpx": {
+        "pin": "0.28.1",
+        "installed": "0.28.1",
+        "matches": true
+      },
+      "httpx2": {
+        "pin": "2.9.1",
+        "installed": "2.9.1",
+        "matches": true
+      },
+      "idna": {
+        "pin": "3.18",
+        "installed": "3.18",
+        "matches": true
+      },
+      "iniconfig": {
+        "pin": "2.3.0",
+        "installed": "2.3.0",
+        "matches": true
+      },
+      "markdown-it-py": {
+        "pin": "4.2.0",
+        "installed": "4.2.0",
+        "matches": true
+      },
+      "mdurl": {
+        "pin": "0.1.2",
+        "installed": "0.1.2",
+        "matches": true
+      },
+      "multidict": {
+        "pin": "6.7.1",
+        "installed": "6.7.1",
+        "matches": true
+      },
+      "packaging": {
+        "pin": "26.2",
+        "installed": "26.2",
+        "matches": true
+      },
+      "pluggy": {
+        "pin": "1.6.0",
+        "installed": "1.6.0",
+        "matches": true
+      },
+      "propcache": {
+        "pin": "0.5.2",
+        "installed": "0.5.2",
+        "matches": true
+      },
+      "pyasn1": {
+        "pin": "0.6.4",
+        "installed": "0.6.4",
+        "matches": true
+      },
+      "pyasn1_modules": {
+        "pin": "0.4.2",
+        "installed": "0.4.2",
+        "matches": true
+      },
+      "pycparser": {
+        "pin": "3.0",
+        "installed": "3.0",
+        "matches": true
+      },
+      "pydantic": {
+        "pin": "2.13.4",
+        "installed": "2.13.4",
+        "matches": true
+      },
+      "pydantic_core": {
+        "pin": "2.46.4",
+        "installed": "2.46.4",
+        "matches": true
+      },
+      "Pygments": {
+        "pin": "2.20.0",
+        "installed": "2.20.0",
+        "matches": true
+      },
+      "PyNaCl": {
+        "pin": "1.5.0",
+        "installed": "1.5.0",
+        "matches": true
+      },
+      "pytest": {
+        "pin": "9.1.1",
+        "installed": "9.1.1",
+        "matches": true
+      },
+      "pytest-asyncio": {
+        "pin": "1.4.0",
+        "installed": "1.4.0",
+        "matches": true
+      },
+      "python-dotenv": {
+        "pin": "1.2.2",
+        "installed": "1.2.2",
+        "matches": true
+      },
+      "RapidFuzz": {
+        "pin": "3.14.5",
+        "installed": "3.14.5",
+        "matches": true
+      },
+      "requests": {
+        "pin": "2.34.2",
+        "installed": "2.34.2",
+        "matches": true
+      },
+      "rich": {
+        "pin": "15.0.0",
+        "installed": "15.0.0",
+        "matches": true
+      },
+      "sniffio": {
+        "pin": "1.3.1",
+        "installed": "1.3.1",
+        "matches": true
+      },
+      "starlette": {
+        "pin": "1.3.1",
+        "installed": "1.3.1",
+        "matches": true
+      },
+      "tenacity": {
+        "pin": "9.1.4",
+        "installed": "9.1.4",
+        "matches": true
+      },
+      "truststore": {
+        "pin": "0.10.4",
+        "installed": "0.10.4",
+        "matches": true
+      },
+      "typing-inspection": {
+        "pin": "0.4.2",
+        "installed": "0.4.2",
+        "matches": true
+      },
+      "typing_extensions": {
+        "pin": "4.16.0",
+        "installed": "4.16.0",
+        "matches": true
+      },
+      "urllib3": {
+        "pin": "2.7.0",
+        "installed": "2.7.0",
+        "matches": true
+      },
+      "uvicorn": {
+        "pin": "0.51.0",
+        "installed": "0.51.0",
+        "matches": true
+      },
+      "websockets": {
+        "pin": "16.1.1",
+        "installed": "16.1.1",
+        "matches": true
+      },
+      "yarl": {
+        "pin": "1.24.5",
+        "installed": "1.24.5",
+        "matches": true
+      },
+      "yt-dlp": {
+        "pin": "2026.8.19",
+        "installed": "2026.7.4",
+        "matches": false
+      },
+      "yt-dlp-ejs": {
+        "pin": "0.8.0",
+        "installed": null,
+        "matches": false
+      }
+    },
+    "lock": {
+      "path": "deploy/dependencies.pins",
+      "sha256": "6bb473645ce5a9997bc8cbaf09086bdf350afc8510c3a196d7781e6c97dd3deb",
+      "artifact_hash_lock": "absent from this packet"
+    },
+    "platform": {
+      "system": "Windows",
+      "machine": "AMD64",
+      "python": "3.12.14",
+      "sqlite": "3.53.1"
+    },
+    "arm64_artifacts": "NOT_VERIFIED",
+    "arm64_abi": "NOT_VERIFIED"
+  },
+  "config": {
+    "run_id": "<run-id>",
+    "target_identity": "fake://a9/<run-id>",
+    "temp_root": "<canonical-os-temp>/a9-campaign-<run-id>",
+    "scope": "LOCAL_SYNTHETIC_ONLY",
+    "adapter": "fake",
+    "ticks": 1,
+    "interval_seconds": 0.01,
+    "multiplier": 1,
+    "max_seconds": 5,
+    "max_operations": 64,
+    "max_output_bytes": 16384,
+    "free_floor_bytes": 1048576,
+    "fault": "none",
+    "fault_at": 0,
+    "execution_adapter": "closed candidate engagement/sqlite adapter"
+  },
+  "config_sha256": "fda27906d1cede453c339808076ce5388d1f5787b255b855c12d8f3d6a0e02a8",
+  "scenario": {
+    "id": "a9-engagement-sqlite-v1",
+    "steps": [
+      "text_write",
+      "duplicate_write",
+      "profile_read",
+      "busy_write",
+      "rollback_write",
+      "cancel_write",
+      "birthday_delivery",
+      "shutdown"
+    ],
+    "synthetic_guild": 100,
+    "synthetic_user": 10,
+    "text": "abc",
+    "clock": "2027-02-28T00:00:00+00:00",
+    "delivery_delay_seconds": 0.01,
+    "busy_seconds": 0.03,
+    "request_seconds": 0.5,
+    "barrier_seconds": 0.5,
+    "cleanup_grace_seconds": 1.0
+  },
+  "scenario_sha256": "f452d8913e498ffd9b726bae8389c4638fcb577bf7f02835725e9cc34c558c51",
+  "data_identity": {
+    "origin": "new empty DataRecovery.bootstrap plus fixed synthetic scenario",
+    "input_sha256": "f452d8913e498ffd9b726bae8389c4638fcb577bf7f02835725e9cc34c558c51",
+    "real_data": false
+  },
+  "coverage": {
+    "covered": [
+      "DataRecovery.bootstrap synthetic new DB",
+      "SqliteDatabase start/read/write/stop",
+      "EngagementService start/message/profile/register_birthday/notify_guild/stop",
+      "SqliteEngagementEvents transactions/dedupe",
+      "SqliteEngagementRepository read/write",
+      "actual SQLITE_BUSY with safe explicit retry",
+      "rollback and precommit cancellation"
+    ],
+    "fake": [
+      "event inputs and wall/voice clock",
+      "birthday delivery (10ms asyncio delay)"
+    ],
+    "omitted": [
+      "full composition root and Discord command ACK/transport",
+      "engagement voice",
+      "music actors/audio/provider/state restore",
+      "Watch ASGI/WS/browser/lifecycle",
+      "summary/Gemini",
+      "backup/restore/retention/remote publication",
+      "event loop lag/CPU/RSS/FD/disk throughput",
+      "representative concurrency/capacity/24h",
+      "Pi/ARM64 ABI and installed artifact/service validation"
+    ],
+    "metrics": {
+      "operation": "real perf_counter elapsed including verification suboperations",
+      "worker": "candidate observations: queue before execution; execution includes SQLite lock wait",
+      "sql_lock_wait": "not separately instrumented; do not interpret execution as pure SQL time",
+      "percentiles": "nearest rank; successful operation samples only; n=1 per successful step",
+      "failure_samples": "retained separately, including actual failed worker/awaiter outcomes"
+    }
+  },
+  "clock_resolution_seconds": {
+    "monotonic": 0.015625,
+    "perf_counter": 1e-07
+  },
+  "guards": {
+    "execution_seconds": 5,
+    "cleanup_grace_seconds": 1,
+    "max_operations": 8,
+    "max_observations": 128,
+    "max_packet_bytes": 262144,
+    "kernel_hang_guard": false,
+    "OS_resource_quota": false,
+    "worker_wall_seconds": 10.0,
+    "forced_exit_cleanup": "not guaranteed; no certificate on worker failure"
+  },
+  "result": {
+    "scope": "LOCAL_CANDIDATE_FAKE_EXTERNAL",
+    "a9": "BLOCKED",
+    "target_identity": "fake://a9/32104c68c42a44c9aaddb4fa56b9111e",
+    "status": "complete",
+    "reason": "none",
+    "planned_operations": 8,
+    "recorded_operations": 8,
+    "missing_operations": 0,
+    "planned_ticks": 1,
+    "observed_ticks": 1,
+    "missing_ticks": 0,
+    "max_tick_gap_seconds": null,
+    "late_tick_gaps": 0,
+    "elapsed_seconds": 0.2649999999994179,
+    "output_bytes": 879,
+    "classifications": {
+      "ok": 5,
+      "expected_db_busy": 1,
+      "expected_rollback": 1,
+      "expected_cancellation": 1
+    },
+    "cleanup_complete": true,
+    "owned_workers_remaining": 0,
+    "samples": [
+      {
+        "index": 0,
+        "tick": 0,
+        "kind": "text_write",
+        "latency_seconds": 0.0078464999969583,
+        "classification": "ok"
+      },
+      {
+        "index": 1,
+        "tick": 0,
+        "kind": "duplicate_write",
+        "latency_seconds": 0.0022346000041579828,
+        "classification": "ok"
+      },
+      {
+        "index": 2,
+        "tick": 0,
+        "kind": "profile_read",
+        "latency_seconds": 0.0015327000000979751,
+        "classification": "ok"
+      },
+      {
+        "index": 3,
+        "tick": 0,
+        "kind": "busy_write",
+        "latency_seconds": 0.08903830000053858,
+        "classification": "expected_db_busy"
+      },
+      {
+        "index": 4,
+        "tick": 0,
+        "kind": "rollback_write",
+        "latency_seconds": 0.007009000000834931,
+        "classification": "expected_rollback"
+      },
+      {
+        "index": 5,
+        "tick": 0,
+        "kind": "cancel_write",
+        "latency_seconds": 0.008271999999124091,
+        "classification": "expected_cancellation"
+      },
+      {
+        "index": 6,
+        "tick": 0,
+        "kind": "birthday_delivery",
+        "latency_seconds": 0.06288490000588354,
+        "classification": "ok"
+      },
+      {
+        "index": 7,
+        "tick": 0,
+        "kind": "shutdown",
+        "latency_seconds": 0.00753689999692142,
+        "classification": "ok"
+      }
+    ],
+    "candidate": {
+      "checks": {
+        "write_applied": true,
+        "duplicate_rejected": true,
+        "read_exact_xp": true,
+        "busy_atomic_retry": true,
+        "rollback_exact_xp": true,
+        "cancellation_propagated": true,
+        "cancel_rollback_exact_xp": true,
+        "durable_fake_delivery_dedupe": true,
+        "closed_admission": true
+      },
+      "database_observations": [
+        {
+          "step": "setup",
+          "lane": "maintenance",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.046000000002095476
+        },
+        {
+          "step": "setup",
+          "lane": "read",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.0
+        },
+        {
+          "step": "setup",
+          "lane": "write",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.01600000000325963
+        },
+        {
+          "step": "text_write",
+          "lane": "write",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.0
+        },
+        {
+          "step": "duplicate_write",
+          "lane": "write",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.0
+        },
+        {
+          "step": "profile_read",
+          "lane": "read",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.0
+        },
+        {
+          "step": "busy_write",
+          "lane": "write",
+          "phase": "worker_finished",
+          "result": "database_unavailable",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.06300000000192085
+        },
+        {
+          "step": "busy_write",
+          "lane": "write",
+          "phase": "awaiter_finished",
+          "result": "database_unavailable",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.0
+        },
+        {
+          "step": "busy_write",
+          "lane": "read",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.014999999999417923
+        },
+        {
+          "step": "busy_write",
+          "lane": "write",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.0
+        },
+        {
+          "step": "busy_write",
+          "lane": "read",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.0
+        },
+        {
+          "step": "rollback_write",
+          "lane": "write",
+          "phase": "worker_finished",
+          "result": "data_integrity",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.01599999999598367
+        },
+        {
+          "step": "rollback_write",
+          "lane": "write",
+          "phase": "awaiter_finished",
+          "result": "data_integrity",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.0
+        },
+        {
+          "step": "rollback_write",
+          "lane": "read",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.0
+        },
+        {
+          "step": "cancel_write",
+          "lane": "write",
+          "phase": "awaiter_finished",
+          "result": "cancelled",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.0
+        },
+        {
+          "step": "cancel_write",
+          "lane": "write",
+          "phase": "worker_finished",
+          "result": "cancellation",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.0
+        },
+        {
+          "step": "cancel_write",
+          "lane": "write",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.0
+        },
+        {
+          "step": "cancel_write",
+          "lane": "read",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.0
+        },
+        {
+          "step": "birthday_delivery",
+          "lane": "write",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.01600000000325963
+        },
+        {
+          "step": "birthday_delivery",
+          "lane": "read",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.0
+        },
+        {
+          "step": "birthday_delivery",
+          "lane": "write",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.014999999999417923
+        },
+        {
+          "step": "birthday_delivery",
+          "lane": "write",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.01600000000325963
+        },
+        {
+          "step": "birthday_delivery",
+          "lane": "read",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.0
+        },
+        {
+          "step": "birthday_delivery",
+          "lane": "write",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.0
+        },
+        {
+          "step": "shutdown",
+          "lane": "write",
+          "phase": "worker_finished",
+          "result": "ok",
+          "queue_seconds": 0.0,
+          "execution_seconds": 0.014999999999417923
+        }
+      ],
+      "fake_delivery_calls": 1,
+      "admitted_remaining": 0,
+      "loop_closed": true,
+      "database_stopped": true
+    },
+    "primary_reason": "none",
+    "latency": {
+      "text_write": {
+        "successful_samples": 1,
+        "p95_seconds": 0.0078464999969583,
+        "p99_seconds": 0.0078464999969583
+      },
+      "duplicate_write": {
+        "successful_samples": 1,
+        "p95_seconds": 0.0022346000041579828,
+        "p99_seconds": 0.0022346000041579828
+      },
+      "profile_read": {
+        "successful_samples": 1,
+        "p95_seconds": 0.0015327000000979751,
+        "p99_seconds": 0.0015327000000979751
+      },
+      "busy_write": {
+        "successful_samples": 0,
+        "p95_seconds": null,
+        "p99_seconds": null
+      },
+      "rollback_write": {
+        "successful_samples": 0,
+        "p95_seconds": null,
+        "p99_seconds": null
+      },
+      "cancel_write": {
+        "successful_samples": 0,
+        "p95_seconds": null,
+        "p99_seconds": null
+      },
+      "birthday_delivery": {
+        "successful_samples": 1,
+        "p95_seconds": 0.06288490000588354,
+        "p99_seconds": 0.06288490000588354
+      },
+      "shutdown": {
+        "successful_samples": 1,
+        "p95_seconds": 0.00753689999692142,
+        "p99_seconds": 0.00753689999692142
+      }
+    }
+  },
+  "execution": {
+    "mode": "fresh isolated interpreter; verified in-memory source compilation",
+    "modules": {
+      "scripts.a9_candidate_packet": {
+        "path": "scripts/a9_candidate_packet.py",
+        "sha256": "66c34e5a840e59d11e7f108bb6ba97817a075d024e47f37ca23308abe72347ca"
+      },
+      "scripts.a9_candidate_adapter": {
+        "path": "scripts/a9_candidate_adapter.py",
+        "sha256": "6aa78d7d75b7aa1c31eeb4fc945a5b62935437a654f2147d39fbfe1f7a7ece99"
+      },
+      "discordbot": {
+        "path": "src/discordbot/__init__.py",
+        "sha256": "6807cad9b3afca3fec50b1a89ae675a76ac700999da9c8c66667c8a71b113ccc"
+      },
+      "discordbot.engagement": {
+        "path": "src/discordbot/engagement/__init__.py",
+        "sha256": "caf52267061f38f8e7bf894da8d38b716633bbf6318257df777e3e33484a07ea"
+      },
+      "discordbot.engagement.adapters": {
+        "path": "src/discordbot/engagement/adapters/__init__.py",
+        "sha256": "bab6f5454393312d00b01c24ba8c45e2747bbb750103cec3fc491382793a82c5"
+      },
+      "discordbot.engagement.adapters.authorization": {
+        "path": "src/discordbot/engagement/adapters/authorization.py",
+        "sha256": "51e792cefd79e86fb373d1060a54ec2b7a2f890ddd3fcc3066e25e15ea9d284c"
+      },
+      "discordbot.engagement.adapters.event_repository": {
+        "path": "src/discordbot/engagement/adapters/event_repository.py",
+        "sha256": "8d6df7210d3fa953d40cbf5cec650496d988c72e24cbdabcd8d27261f5fbee05"
+      },
+      "discordbot.engagement.domain": {
+        "path": "src/discordbot/engagement/domain/__init__.py",
+        "sha256": "d822817d335c1f90f33d10d0eb6b9a5197cf1306ebcf4f6413a8558e3a00e048"
+      },
+      "discordbot.engagement.domain.policy": {
+        "path": "src/discordbot/engagement/domain/policy.py",
+        "sha256": "914fde0d24b28a3e9298824339980bf6a7ad49b70b11348a0095f5b90bfb233c"
+      },
+      "discordbot.engagement.ports": {
+        "path": "src/discordbot/engagement/ports/__init__.py",
+        "sha256": "389d25f7df110a2e67e6dc9ca10a88dc10bbd8cc984368fe59b0a4f5d88de0d5"
+      },
+      "discordbot.engagement.ports.events": {
+        "path": "src/discordbot/engagement/ports/events.py",
+        "sha256": "1cab2ecd114390fe88033d06a54fdce39da3dafba20e1cdfda8722d7a2f30782"
+      },
+      "discordbot.engagement.ports.repository": {
+        "path": "src/discordbot/engagement/ports/repository.py",
+        "sha256": "a0ef87ac03b662f2dfc5f49c85fdfd4228e06cd29cb9caf3c21db5f3ba2c2b9e"
+      },
+      "discordbot.storage": {
+        "path": "src/discordbot/storage/__init__.py",
+        "sha256": "6d9b7592709ef98c532350bf040c4ecdc9e26c87e4c952a734f86359c7b73e40"
+      },
+      "discordbot.storage.ports": {
+        "path": "src/discordbot/storage/ports/__init__.py",
+        "sha256": "29409e3b9dd92a021adf5dd47ba43946df2ddbbb333f61b64eda1165fe2e155f"
+      },
+      "discordbot.storage.ports.contracts": {
+        "path": "src/discordbot/storage/ports/contracts.py",
+        "sha256": "71e1a4baff35601e50c165aec39fa5af9238b8912d21f39318c39386cc0cba36"
+      },
+      "discordbot.platform": {
+        "path": "src/discordbot/platform/__init__.py",
+        "sha256": "e773c9d7e517dc46382685c61afe3a82573239018d2efc5c68c3bafd061e459a"
+      },
+      "discordbot.platform.errors": {
+        "path": "src/discordbot/platform/errors.py",
+        "sha256": "9e42f0ef2821fafce2c6c559f799004c675b98101ab68cc34914df9dca3ecb5c"
+      },
+      "discordbot.storage.adapters": {
+        "path": "src/discordbot/storage/adapters/__init__.py",
+        "sha256": "bd163588ad4eb5183b312b790c918cf3ffc13ce038b93bc8ee6e8084eab838f4"
+      },
+      "discordbot.storage.adapters.execution": {
+        "path": "src/discordbot/storage/adapters/execution.py",
+        "sha256": "ff869a45db2d03599698a5fae5f1d1b61f568720d7bb3fefd3de6392687aad0d"
+      },
+      "discordbot.platform.executors": {
+        "path": "src/discordbot/platform/executors.py",
+        "sha256": "734d045dd5492c120fbe81f3f32e73c0652a7a75fb9891599c0f6b938c34d19b"
+      },
+      "discordbot.storage.adapters.schema": {
+        "path": "src/discordbot/storage/adapters/schema.py",
+        "sha256": "8c2f4ed5a33cf2b9eea4cc173afdcc4572890a8ec731de2821799b49dcba5ba5"
+      },
+      "discordbot.storage.adapters.constraints": {
+        "path": "src/discordbot/storage/adapters/constraints.py",
+        "sha256": "11c416cd61ffe313ecca7d4280c2e9b5ff5a555416201a3c7f34199c03da5c0c"
+      },
+      "discordbot.storage.adapters.engagement_schema": {
+        "path": "src/discordbot/storage/adapters/engagement_schema.py",
+        "sha256": "39735c1ed36b4fd4804646f57f8bb34f04e3220b54993d707438e0ddbf03ca56"
+      },
+      "discordbot.storage.adapters.watch_schema": {
+        "path": "src/discordbot/storage/adapters/watch_schema.py",
+        "sha256": "b7f539b3d19f368f4c1a4364699a510df384ce53d6e2245083c3222c5eba3109"
+      },
+      "discordbot.storage.adapters.music_schema": {
+        "path": "src/discordbot/storage/adapters/music_schema.py",
+        "sha256": "5169ea9fed58516131639b87fa54a43534fe85316b26eef1c21db2c3c2904a37"
+      },
+      "discordbot.storage.adapters.probe_diagnostics": {
+        "path": "src/discordbot/storage/adapters/probe_diagnostics.py",
+        "sha256": "c613c0beeadfd39896facf9ee5907c0d4650a2e351062a782c1119b34f9e3e54"
+      },
+      "discordbot.storage.adapters.inputs": {
+        "path": "src/discordbot/storage/adapters/inputs.py",
+        "sha256": "32d3bfdf82c41940a3ea7ccff2ef5b1dd6d84c2891e6910d0ba861397940b31d"
+      },
+      "discordbot.storage.adapters.migrations": {
+        "path": "src/discordbot/storage/adapters/migrations.py",
+        "sha256": "970bbb7c82154c257e036570177f0be5b4d90d09751c954463abec4457c0c292"
+      },
+      "discordbot.engagement.adapters.sqlite_repository": {
+        "path": "src/discordbot/engagement/adapters/sqlite_repository.py",
+        "sha256": "3e87340d9de37a69bb5ecabd3705b1fb62c3518b66f12e7f3861a2af39a1ad10"
+      },
+      "discordbot.engagement.application": {
+        "path": "src/discordbot/engagement/application/__init__.py",
+        "sha256": "90ea0d17ee8b7b1aca2fdebfeda70b2471cdd0d32fe934e4b91ee1357325dfd8"
+      },
+      "discordbot.engagement.application.service": {
+        "path": "src/discordbot/engagement/application/service.py",
+        "sha256": "0969c73eaed5268230286301b2694b121222510bd07bcb5c3c1767cbf7878bc9"
+      },
+      "discordbot.platform.clock": {
+        "path": "src/discordbot/platform/clock.py",
+        "sha256": "9a1e5c4c8f5f16aefc6d45411f670e2e7017c6b6c1aef70fefecd8e01c052d9f"
+      },
+      "discordbot.platform.context": {
+        "path": "src/discordbot/platform/context.py",
+        "sha256": "3e5a73842b6765bb834ccc547a6cb8184c4632b11cecb66ca4614067602102f8"
+      },
+      "discordbot.storage.adapters.recovery": {
+        "path": "src/discordbot/storage/adapters/recovery.py",
+        "sha256": "888ddfa37faedb9d9ec7f518b05e71bdf8aa4d7cd923dd86c957aadd26111c61"
+      },
+      "discordbot.storage.adapters.backup_codec": {
+        "path": "src/discordbot/storage/adapters/backup_codec.py",
+        "sha256": "71bea85189445e33e92d2648b406f2ce765189ecef5b3052a217197a62564bc7"
+      },
+      "discordbot.storage.adapters.files": {
+        "path": "src/discordbot/storage/adapters/files.py",
+        "sha256": "20636e0ac758eaf7c0f2e5679e4cefa8b88b962d142a5c460c60dfa498d00cf0"
+      },
+      "scripts.a9_local_harness": {
+        "path": "scripts/a9_local_harness.py",
+        "sha256": "a5e4788a3c8cab2fa88842098b7c7e0b069c5fe48ca0d544432db38e766379c4"
+      }
+    },
+    "export_sha256": "9abd0bc4e382bda5931149ae49d5c460a634682d4c5049f7c489d76ca703a5a6",
+    "bootstrap_sha256": "c628bc9875d2f17ff77329d69d297f440ef420c330e0a3a3a2d7328de00e4111",
+    "interpreter": {
+      "implementation": "cpython",
+      "version": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+      "executable_sha256": "5912d0884b23c0343983a864c6064242391e2265536f50b88624857e353882c9",
+      "isolated": 1,
+      "bytecode_writes_disabled": true
+    },
+    "dependency_identity": "worker-installed distribution versions; wheel/ABI hashes not verified",
+    "worker_exit_verified": true,
+    "parent_pipe_guard": true
+  },
+  "source_unchanged_after_run": true
+}

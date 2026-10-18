@@ -1,0 +1,48 @@
+{
+  "approval": "UNAPPROVED",
+  "purpose": "Human review only; this is deliberately not an executable harness or service config",
+  "isolated_target": {
+    "environment": "Windows temporary directory or existing WSL synthetic workspace only",
+    "target_identity": "fake://a9/<fresh-32-hex-run-id>",
+    "temp_root": "<canonical-OS-temp>/a9-campaign-<same-run-id>",
+    "adapter": "fake",
+    "network": false,
+    "credentials": false,
+    "services": false
+  },
+  "local_logic_check_only": {
+    "ticks": 4,
+    "interval_seconds": 0.01,
+    "max_seconds": 2,
+    "max_operations": 64,
+    "max_output_bytes": 16384
+  },
+  "future_campaign_review_proposal_only": {
+    "cpu_cores": 1,
+    "ram_mib": 1024,
+    "tasks": 128,
+    "read_mib_per_second": 4,
+    "write_mib_per_second": 1,
+    "footprint_gib": 6,
+    "log_mib": 64,
+    "free_floor_gib": 20,
+    "normal": {
+      "synthetic_music_streams": 1,
+      "watch_rooms": 1,
+      "watch_clients": 2,
+      "commands_per_second": 1,
+      "engagement_writes_per_second": 5
+    },
+    "peak_multiplier": 2,
+    "status": "Not approved SLO, capacity facts, measured usage, or enforced limits"
+  },
+  "pending_approvals": [
+    "Shared-host deviation from clean Pi 5 Ubuntu 24.04 ARM64 Ethernet acceptance",
+    "Resource envelope and workload/SLO acceptance",
+    "Separate staging services, application/guild, credentials and live origin",
+    "Separate off-host backup destination; existing Bot-Data/db-backup excluded",
+    "Any actual 24h campaign and target-host operations"
+  ],
+  "precondition": "Resolve reported production baseline 503 latched DB probe before load; no reset/restart is authorized",
+  "a9": "BLOCKED"
+}

@@ -1,0 +1,70 @@
+{
+  "receipts": [
+    {
+      "path": "a8r4-doc-results.xml",
+      "hash_and_counts_match": true,
+      "counts": {
+        "PASS": 2
+      }
+    },
+    {
+      "path": "a8r4-focused-green.xml",
+      "hash_and_counts_match": true,
+      "counts": {
+        "PASS": 249
+      }
+    },
+    {
+      "path": "a8r4-full-results.xml",
+      "hash_and_counts_match": true,
+      "counts": {
+        "SKIP": 27,
+        "FAIL": 2,
+        "PASS": 1592
+      }
+    },
+    {
+      "path": "a8r4-original-after.xml",
+      "hash_and_counts_match": true,
+      "counts": {
+        "FAIL": 1,
+        "PASS": 3
+      }
+    },
+    {
+      "path": "a8r4-original-red.xml",
+      "hash_and_counts_match": true,
+      "counts": {
+        "FAIL": 2,
+        "PASS": 2
+      }
+    },
+    {
+      "path": "a8r4-regression-green.xml",
+      "hash_and_counts_match": true,
+      "counts": {
+        "PASS": 30
+      }
+    },
+    {
+      "path": "a8r4-regression-red.xml",
+      "hash_and_counts_match": true,
+      "counts": {
+        "FAIL": 18,
+        "PASS": 9
+      }
+    }
+  ],
+  "focused_unique_pass": 250,
+  "prior_ownership": {
+    "exact": 66,
+    "inverse_owned_deltas": 4,
+    "all_70_verified": true
+  },
+  "affected_scope_changes_since_pre_M4": [
+    "deploy/runbooks/backup-verification.md",
+    "src/discordbot/operations/adapters/probe.py",
+    "tests/integration/operations/test_backup_freshness.py"
+  ],
+  "original_probe_unchanged": true
+}

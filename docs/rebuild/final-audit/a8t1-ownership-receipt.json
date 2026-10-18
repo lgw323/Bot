@@ -1,0 +1,470 @@
+{
+  "audited_head": "3dc37e05c811d337b5515d00cbdd6841916a1b4d",
+  "entry_index_empty": true,
+  "inherited_contents": 70,
+  "exact_hashes": 67,
+  "inverse_owned_changes": 3,
+  "checks": [
+    {
+      "path": "CHANGELOG.md",
+      "verification": "exact",
+      "entry_sha256": "816384c2a688fde82b9d77b19fbe1859cd146e77a3fc186ce6fac1ef79d65135",
+      "verified": true
+    },
+    {
+      "path": "README.md",
+      "verification": "exact",
+      "entry_sha256": "9f1ee4c189b402e407f0e52e7c18109bc185e63b2701e60a69a8f1f6af7a1c4d",
+      "verified": true
+    },
+    {
+      "path": "docs/product-spec.md",
+      "verification": "exact",
+      "entry_sha256": "87b31c254feb2dace9580ca1794ee097fb9ec151987ab60559d6112f12ca6fc8",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/README.md",
+      "verification": "exact",
+      "entry_sha256": "e2324d804ac1e13d7f7dc465f122b4d91f451b4cb8157efa7494b28b8d85888c",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/current/current-plan.md",
+      "verification": "exact",
+      "entry_sha256": "c2c23764a604d7e94b6dd3a5a87c6c36c3896d40801618c446f4287b1d478914",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/current/final-audit-active-state.md",
+      "verification": "inverse_owned_append",
+      "entry_sha256": "5583d4aa9253c58db394a5878441f05216ea83d3a5873b043f76074e44f1c1c0",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/current/final-audit-ledger.md",
+      "verification": "inverse_owned_row",
+      "entry_sha256": "7633ad038930356c5d47f5f2d2c412d91c3537b8ae60efa118d14bffa6f00041",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/final-audit/a3-phase-3-report.md",
+      "verification": "exact",
+      "entry_sha256": "e3ed14b7ed7929098d991e090449ce093defd2a187c19ad676ad179c70349ef9",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/phase-10-full-sweep-report.md",
+      "verification": "exact",
+      "entry_sha256": "3329647383bf71f442e15d848ccaaa9686775fe4ef414e6b3c032956b6c751ef",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/phases/phase-10/phase-10-report.md",
+      "verification": "exact",
+      "entry_sha256": "2663ce5d13506ccd9d9a8b3ec67e32b190cc449de203ae10e140c10250930118",
+      "verified": true
+    },
+    {
+      "path": "tests/browser/watch_fixture.py",
+      "verification": "exact",
+      "entry_sha256": "1cca7cf0cc5f9c3b8c1b6081292c3a12badc3c977b9ebe284275705319c82a47",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/current/final-audit-document-index.md",
+      "verification": "inverse_owned_append",
+      "entry_sha256": "2c36ba9b1bcaa70cc54a8f6dc8aca05ca54f6ec21b9770b4b77a0374c8f89969",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-active-state.md",
+      "verification": "exact",
+      "entry_sha256": "55d0a15e4c4940f805b4876ad876cdb59e6c4cf6b47e1f946225fba4825ad6eb",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d4c-evidence.json",
+      "verification": "exact",
+      "entry_sha256": "616f1d81094fceddd5c0e689081667c8dfb3d8237df3254c2880ebf328c83984",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d4r-browser-evidence.json",
+      "verification": "exact",
+      "entry_sha256": "3cbac1af2ed816eaf3cd7f1d20828160bba967f0457d85bce33786c581d80fa2",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d4r2-p-evidence.json",
+      "verification": "exact",
+      "entry_sha256": "dfbfd49897c08b9e18e0655805fa89363ab2681edaaad43bd164697c9c5bb01f",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d5-evidence.json",
+      "verification": "exact",
+      "entry_sha256": "97f00af6285d66fe7009bd14bb50fbc5752228e0fd0f4cc6145221ca2f83a6b2",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d6-evidence.json",
+      "verification": "exact",
+      "entry_sha256": "02d33066e6a1d0c701c4568d7c19919a72cafc474cde4a32c8f9255aaee33e78",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-d7-evidence.json",
+      "verification": "exact",
+      "entry_sha256": "8ddc17df545880c4fe50fd259f9103d8dbb8a75ffb9c9ff1c6b4e6c09bc2a015",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-e1-evidence.json",
+      "verification": "exact",
+      "entry_sha256": "1bdd878f5206e19c1d2ae73a58d306c20af963b2f72ca2eba90ffb55275a64be",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-e2-evidence.json",
+      "verification": "exact",
+      "entry_sha256": "7a80560599f97f79c2c41ffb51a316b57ea60da0f83986bc6a182372c6689158",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-e3-evidence.json",
+      "verification": "exact",
+      "entry_sha256": "8b0b39492fe75481576c8587c20b96095d703e94ef1ace547a9093cecdca62da",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-e4-evidence.json",
+      "verification": "exact",
+      "entry_sha256": "3ebe435f2873e84e5094b833df5678df1a0052dc350f1f991eb0d83b455410ff",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/current/phase-10b-gate-ledger.md",
+      "verification": "exact",
+      "entry_sha256": "d5eb52741647f8d6a2f07b05972af8e28cf2326e3ca270334b362f7b3ff0bd48",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/final-audit/a0-phase-0-report.md",
+      "verification": "exact",
+      "entry_sha256": "9fed83ee412725a83e780d986003c7ca523fbb2ec0870cdd82bd026387afee05",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/final-audit/a1-phase-1-report.md",
+      "verification": "exact",
+      "entry_sha256": "a689a3b90b673382505d97e56eac91686a4009c5d42b461e5cf71b74211d1ab0",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/final-audit/a2-phase-2-report.md",
+      "verification": "exact",
+      "entry_sha256": "603e715ab57298f6587ab5b03f3aa254cedf34ca2c94634c5887fd0d70a6cdf5",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff.zip",
+      "verification": "exact",
+      "entry_sha256": "5c18fccf77ee421c62ff05eaa072fc0d760011a0663bb8c972e05cc9c0304f91",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/00-executive-summary.md",
+      "verification": "exact",
+      "entry_sha256": "df447f1847094a6810e8a436cf168fd4f17019a9aef375b45ce69d6612147041",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/01-current-system-overview.md",
+      "verification": "exact",
+      "entry_sha256": "5955951c6c71993edc5d126b4f97640920aa1877002bb19c9fb91735910ba53a",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/02-repository-map.md",
+      "verification": "exact",
+      "entry_sha256": "61283fd671587d5c340b48c0e7392547f437d166b3418126d781cb821d94854c",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/03-feature-inventory.md",
+      "verification": "exact",
+      "entry_sha256": "32baa829002d74715964a43838afe0414376d70c79a7ed3cae77c606cd8132f9",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/04-command-event-inventory.md",
+      "verification": "exact",
+      "entry_sha256": "1c997d1cab0d8810279ca66524eed35d1186783389001a2e564aea6d1129b95d",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/05-runtime-flow.md",
+      "verification": "exact",
+      "entry_sha256": "671d1024f846dd0b42539cefcaf7c4e3f021851a61e8e8172880e3dd1b536349",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/06-data-model.md",
+      "verification": "exact",
+      "entry_sha256": "1256b318675d74fab926ac665c94952a9352fa0c2268766f8259b03bab11bbb7",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/07-external-dependencies.md",
+      "verification": "exact",
+      "entry_sha256": "f3917d1425e1d5927c1156986d7285bc7faa984f4d696fe5a371c1a5ce32707c",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/08-business-rules.md",
+      "verification": "exact",
+      "entry_sha256": "3f3017b56f39842bf49ea51354e250432892da43a21090943174315be8714f57",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/09-performance-reliability-audit.md",
+      "verification": "exact",
+      "entry_sha256": "607dad0a8aac83d3836a46370c7549608152cb75d29d451a54d0ebd59d1f789d",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/10-architecture-problems.md",
+      "verification": "exact",
+      "entry_sha256": "d48a50a45e9fa4cf54b43bd00c30af30329c88c9a4ff3dde9875946400f5f4a7",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/11-prd.md",
+      "verification": "exact",
+      "entry_sha256": "44d90adefd311facf5569c9a628125dc3eb1666f28b126e62c855c755b2151aa",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/12-functional-requirements.md",
+      "verification": "exact",
+      "entry_sha256": "d8b26e47abfab9665f68da97e8b57d2d6ad5a5b5ad3621174d32f9cb6db6e600",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/13-non-functional-requirements.md",
+      "verification": "exact",
+      "entry_sha256": "39c1f6045e9193162405272ca065d002062196d1d1e654c2fa028174165c4487",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/14-target-architecture.md",
+      "verification": "exact",
+      "entry_sha256": "018a68b3bf6c858ca0dd28a8a92422df23f3f8c2b30edad2aac02e9ed34b7bc3",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/15-async-concurrency-design.md",
+      "verification": "exact",
+      "entry_sha256": "86914523b607f482ba017c74cfde3c3b9ce68e80185a9d6370fcf1a8d8bb5c8a",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/16-error-handling-policy.md",
+      "verification": "exact",
+      "entry_sha256": "d28a36e0f5feaa695dd6ebf47c8c1b4f73bd6b7c2697fc7db56af78195aa4a6d",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/17-observability.md",
+      "verification": "exact",
+      "entry_sha256": "bb630cdc01d02a2b05308f8a53d26f43ccf99be5436029e377dfb578304c3c1e",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/18-security-review.md",
+      "verification": "exact",
+      "entry_sha256": "cc785cb23e8b957f5e9d3d9de1db5ef1d90b42493a018c4718df3b91527f1c53",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/19-testing-strategy.md",
+      "verification": "exact",
+      "entry_sha256": "d3a2c9940bf48c6a1dce594f307752b13f75918469fc2acc3a758e91daa354d7",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/20-migration-plan.md",
+      "verification": "exact",
+      "entry_sha256": "fbfb6d3fbb1f047a40945e3ccc6f2d21d104ea3ae2aa0404456e0bc37e1a4c94",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/21-target-repository-structure.md",
+      "verification": "exact",
+      "entry_sha256": "b108d404503d7e874c612ebe807e3013a4ce1d06e34e92634f78f915fd1917ab",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/baseline/README.md",
+      "verification": "exact",
+      "entry_sha256": "58609e453f2861fb227ecf9b606cd0264fddfcf4b36c3b074fe3c7e4d8114562",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/current/architecture-decision-log.md",
+      "verification": "exact",
+      "entry_sha256": "71039ddb38b57df33f91084f97880c56682a98189da60c5e9c1252ed4d63bafc",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/current/current-plan.md",
+      "verification": "exact",
+      "entry_sha256": "53ee6fca9ec5979c8a0c1668eebc61a36a8ffeac29dec43afec89081fa2d0705",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/current/open-questions.md",
+      "verification": "exact",
+      "entry_sha256": "261d44a18e9aa51b78bbbc74005b37777be38a63a4187b8801cdffb1fbacc54c",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/current/requirement-test-trace.md",
+      "verification": "exact",
+      "entry_sha256": "ae19e1f2bd21880df364f9b0642dc1eac693e0030040cc9548a9ad2228bed5d2",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/master_prompt.txt",
+      "verification": "exact",
+      "entry_sha256": "ce2bb85f6aca5e6c70508d08d033fa7dd1f337c42b65d163c9d3a22cb2525a7b",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-0-report.md",
+      "verification": "exact",
+      "entry_sha256": "d8a311c8d690d782b2f0c9a2228bbbb09b7a81bb439284bc3b49acec0a809e02",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-1-report.md",
+      "verification": "exact",
+      "entry_sha256": "c6a61e3fe6c28be06e0f094ce4f1aa8e62a0b921e7c019838a3c12dea6716308",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-10-report.md",
+      "verification": "exact",
+      "entry_sha256": "9b751aebf337b39ea80769d8197be83e02a4da7ca109700b22ce2f425bcf7a73",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-2-report.md",
+      "verification": "exact",
+      "entry_sha256": "405d6b1d4486085d0919820f09e336a59cd361775e489e51b570e0cf0566d736",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-3-report.md",
+      "verification": "exact",
+      "entry_sha256": "6687e74efa8ccd37221f43ef6cc687abff1cd5e9a151aa210c16e8d2f8e07bc7",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-4-report.md",
+      "verification": "exact",
+      "entry_sha256": "0fafc805332a5966ffae887900f2a78f8432c5b15eeb82817bbed94a968ab40f",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-5-report.md",
+      "verification": "exact",
+      "entry_sha256": "0bcf7f07de5670dc491f9f20c18e26ba7834d8a973e8b784768cb07bf24d9931",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-6-report.md",
+      "verification": "exact",
+      "entry_sha256": "028647c2b4bf3a0260b26510c0433cacd5612f413fdf0e7839ec422d0a417ef8",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-7-report.md",
+      "verification": "exact",
+      "entry_sha256": "c7aab332ea674e606623f0606df04cd1769f4dcd6d71cf23a2ad932bb900cb80",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-8-report.md",
+      "verification": "exact",
+      "entry_sha256": "153a7c84eb8bdf6a5f18a34f6a84321fbc222b7c25d21d1b6fe38d22c732e6f8",
+      "verified": true
+    },
+    {
+      "path": "docs/rebuild/gpt_handoff/phase-9-report.md",
+      "verification": "exact",
+      "entry_sha256": "6cd700931bba699c4889c584339cfb63af278150092ef1078fe60cd86bc43664",
+      "verified": true
+    },
+    {
+      "path": "docs/server-invite-guide.md",
+      "verification": "exact",
+      "entry_sha256": "faff0a04cb0246f77cfb5c85a45000bb1faf24188a0dd52e97e0e0f14e63c978",
+      "verified": true
+    },
+    {
+      "path": "tests/browser/watch_intent_chrome.cjs",
+      "verification": "exact",
+      "entry_sha256": "d753ca05dc682158869b2becec18c4e2a11f360ae9c637cc58d4a36f618fb4dc",
+      "verified": true
+    },
+    {
+      "path": "tests/browser/watch_refresh_chrome.cjs",
+      "verification": "exact",
+      "entry_sha256": "dab8e20e4bd1cb0f654607933ab678c1d7cde4a890475baf7a1e8d187e60c25b",
+      "verified": true
+    }
+  ],
+  "owned_authority_deltas": {
+    "docs/rebuild/current/final-audit-active-state.md": {
+      "kind": "append",
+      "text": "\n## BF. A8T1 scoped backup telemetry reopening - FAIL (2026-10-04)\n\n- **Phase 8 FAIL only for backup telemetry freshness; A8-M4 MATERIAL OPEN.**\n  [Focused report, exact probe and control](../final-audit/a8t1-backup-freshness-report.md).\n  Audited HEAD3dc37e05c811d337b5515d00cbdd6841916a1b4d. M4 was the next unused material ID.\n- Historical/current BUSY recurrence latches readiness and stops probes by the explicit H2 policy;\n  this is intended, not an automatic recovery defect. No latch/retry/threshold change is authorized.\n- Reopened A8V3 Manual/health/telemetry/audit **backup age/RPO freshness portion only**: after hard,\n  actual synthetic age25320s reports120s/RPO0; a healthy control reports25320s/RPO1 and sees new metadata.\n  M1/M2/M3 stay independently CLOSED; all unaffected gate evidence and historical reports remain intact.\n- Fresh17 PASS/2 expected contract FAIL/0 SKIP (historical/current RED, two controls,13 policy,2 docs).\n  Prior six temporary SQLite cases retained separately. Fake clock/driver/metadata and synchronous\n  real probe factories/callbacks; no elapsed soak, live backup freshness or user-impact claim.\n- All70 inherited contents preserved:67 exact plus3 reversible owned authority deltas. Index appendix\n  stays in the inherited untracked document; its exact patch is committed, not the inherited file.\n  Scoped audit docs/evidence only; local Conventional Commit, no implementation fix/push/bulkstage.\n- A0-A7 PASS retained; **A9 remains separately BLOCKED** with B1/B2/B3/D1 unchanged. This overlay\n  supersedes only the earlier A8 PASS retention wording, not A9's evidence or status. Known limits remain.\n  Production8e9018d4b8061cde6006eee47fa4103522f77718 / r-8e9018d4b8061cde-3dac82a792fad576 untouched.\n- **STOP for separately authorized A8-M4 remediation and independent verification.** No SSH/network/\n  production/DB/service/restart/install or other-project action. Test work exited; no pending workers.\n  No A10/Integrated/Phase11; friend activation HELD and deployment condition unmet.\n"
+    },
+    "docs/rebuild/current/final-audit-ledger.md": {
+      "kind": "row",
+      "old": "| 8 | PASS | [docs/rebuild/phases/phase-08/phase-8-report.md](../phases/phase-08/phase-8-report.md) | B03, B05\u2013B07, B09\u2013B21, D22, D23, S3, C3, C4, C9, C12\u2013C15, T; relevant O rows | src/discordbot/operations/, src/discordbot/composition/; deploy/systemd/, deploy/polkit/, deploy/; tests/integration/operations/ | [A8V3 independent report](../final-audit/a8v3-phase-8-verification-report.md): Phase8 repository scope PASS; M1/M2 remain CLOSED; M3 independently CLOSED. Original M3 baseline1/1 ->current2 PASS; remediation25/34 ->59 PASS. Focused187 PASS; affected809 PASS/1 known FAIL; new Windows9 PASS; real Linux97 PASS. Full1562 PASS/2 known FAIL/27 SKIP; distinct1589 PASS/2 FAIL/27 SKIP/0 XFAIL. Original A8V2/A8R3 evidence retained. | All scoped repository operations gates verified; original Phase8/ADR-023 defers actual host/systemd/ARM64/live SLO. Tiny synthetic nine/32 restore timing does not establish production180s fit. Known inventory/Deno/audioop/A3/systemd limits retained; no clean-suite/production claim. All70 inherited contents preserved; local audit only. STOP A8V3 for supervisor; no A9/Integrated/Phase11; friend activation HELD. |\n",
+      "new": "| 8 | FAIL | [docs/rebuild/phases/phase-08/phase-8-report.md](../phases/phase-08/phase-8-report.md) | B03, B05\u2013B07, B09\u2013B21, D22, D23, S3, C3, C4, C9, C12\u2013C15, T; relevant O rows | src/discordbot/operations/, src/discordbot/composition/; deploy/systemd/, deploy/polkit/, deploy/; tests/integration/operations/ | [A8T1 scoped reopening](../final-audit/a8t1-backup-freshness-report.md): A8-M4 MATERIAL OPEN, backup age/RPO freshness portion of A8V3 Manual/health/telemetry/audit only. Historical/current hard-latched probe reports120s/RPO0 at actual25320s; healthy control updates correctly. Fresh17 PASS/2 expected contract FAIL/0 SKIP. H2 terminal latch is intended and unchanged. | M1/M2/M3 remain independently CLOSED. Unaffected [A8V3 gates/evidence](../final-audit/a8v3-phase-8-verification-report.md) and host/180s/known limits retained; no new production claim. All70 inherited contents preserved via67 exact/3 reversible deltas; index appendix patch retained without staging inherited index. STOP for separate A8-M4 remediation and independent verification. A9 remains separately BLOCKED; no fix/deploy/production action. |\n"
+    },
+    "docs/rebuild/current/final-audit-document-index.md": {
+      "kind": "append",
+      "text": "\n## A8T1 scoped backup telemetry reopening - 2026-10-04\n\n- [A8T1 report and contract citations](../final-audit/a8t1-backup-freshness-report.md):\n  A8-M4 MATERIAL OPEN; Phase8 FAIL only for backup age/RPO freshness within the A8V3\n  Manual/health/telemetry/audit gate. H2 terminal latch is intended and unchanged.\n- [Portable synthetic probe](../final-audit/a8t1-backup-freshness-probe.py),\n  [fresh evidence](../final-audit/a8t1-freshness-evidence.json),\n  [retained discovery](../final-audit/a8t1-discovery-evidence.json), and\n  [ownership receipt](../final-audit/a8t1-ownership-receipt.json). Fresh17 PASS/2 expected\n  contract FAIL/0 SKIP; historical/current RED plus healthy controls. No live claim.\n- M1/M2/M3 CLOSED and unaffected evidence preserved; A9 separately BLOCKED.\n  Latest routing: active-state BF and Phase8 ledger row. STOP for separate remediation.\n"
+    }
+  },
+  "document_index_commit_boundary": "Existing untracked file stays untracked; only the owned appendix patch is committed.",
+  "implementation_changed": false,
+  "stop_boundary": "Separate A8-M4 remediation and independent verification; A9 remains BLOCKED.",
+  "evidence_sha256": {
+    "a8t1-backup-freshness-probe.py": "edd960986b4598e4890359ba0e9d7c018731ad7b2a1a9848900f53c0ec23a6eb",
+    "a8t1-backup-freshness-report.md": "393f307ca70ef780d49e1080074846e8454eeb6addf65ae96119ce4f2739b5bf",
+    "a8t1-discovery-evidence.json": "1260b99d97723c64634d73a6d90ae893a40f484ebbabaa86c4a67da4bc25d0c7",
+    "a8t1-doc-results.xml": "6e5a012790c69c09204be46e6a493150e42f6bea6cb898e835e26116b28c5057",
+    "a8t1-document-index.patch": "27a2ca31459ef9c2ec27a6b23fa56e9dafb48eae219d0d24208b94cdc15e16ad",
+    "a8t1-entry-inventory.json": "d41f9ae0d8268dc2c0eea954e8555e0a86ed99d665fa0c698afda61720369698",
+    "a8t1-freshness-evidence.json": "46d44625a8fa2b15ce77e5c5729aee9058b079300cc18c3bab4ad469e92ec976",
+    "a8t1-probe-results.xml": "8a7dbb562bb70bd5bc4b287dc3329eeb0af37e8259acf97b93db8668429470d2"
+  },
+  "validation": {
+    "pass": 17,
+    "expected_contract_fail": 2,
+    "skip": 0,
+    "full_suite_run": false,
+    "scope": "2 historical/current latch-control PASS, 2 historical/current freshness RED, 13 existing policy PASS, 2 doc PASS"
+  },
+  "probe_source_identity": {
+    "src/discordbot/operations/adapters/probe.py": "00fc1110e45d0f0560735a077f6797301ece6e61318da2e60484f926513a9619",
+    "src/discordbot/operations/adapters/probe_policy.py": "ebd793627b5f404944a23158688e9b01882b0fc1fde875180196268ec5b3e879"
+  },
+  "owned_tests_exited": true,
+  "owned_temporary_test_data_removed": true
+}

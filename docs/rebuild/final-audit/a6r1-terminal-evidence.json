@@ -1,0 +1,62 @@
+{
+  "baseline": {
+    "exit": 1,
+    "observation": {
+      "terminal": true,
+      "targetState": 1,
+      "targetTime": 44,
+      "targetSockets": 1,
+      "targetCommands": [
+        "playing"
+      ],
+      "controlState": 1,
+      "controlTime": 44
+    },
+    "template_sha256": "c1f1e05edc49b0a7a0563b613b62b245e01e7853bd28111ea25fee00a463949e"
+  },
+  "candidate": {
+    "exit": 0,
+    "observation": {
+      "terminal": true,
+      "targetState": -1,
+      "targetTime": 42,
+      "targetSockets": 1,
+      "targetCommands": [
+        "playing",
+        "destroy"
+      ],
+      "controlState": 1,
+      "controlTime": 44
+    },
+    "template_sha256": "543802aed5865c8f28ef2f317554c4a6c476f05ba9016b1d39df7bf61fc2a0a4"
+  },
+  "candidate_commit": "ecd8ef2d69d27199c41eb8941615fa177d1e8834",
+  "pytest_final": {
+    "pass": 148,
+    "fail": 0,
+    "skip": 0,
+    "xfail": 0
+  },
+  "chrome": {
+    "pass": 1,
+    "baseline_exit": 1,
+    "baseline_failure": "terminal iframe remains attached",
+    "browser": "Chrome/154.0.8037.92",
+    "before": [
+      42.234401,
+      42.019348
+    ],
+    "stopped": 0,
+    "after": [
+      0,
+      42.990457
+    ],
+    "joins": {
+      "target": 1,
+      "control": 1
+    }
+  },
+  "phase_6": "FAIL pending independent A6V1",
+  "hash_note": "template_sha256 hashes exact on-disk bytes tested; candidate Git blob separately hashes normalized repository content",
+  "candidate_git_blob_sha256": "672ee5b1ddb22e261e6a82a2e14b99e1860b87f5b74b15cb3d267456755466c9"
+}

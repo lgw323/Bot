@@ -1,0 +1,182 @@
+{
+  "scope": "A6V1 only; synthetic identities, temporary databases, loopback browser media",
+  "entry_head": "e12b6e4fb3263eb702752d872ce902625785a0d9",
+  "implementation": "ecd8ef2d69d27199c41eb8941615fa177d1e8834",
+  "resumed_utc": "2026-10-03 01:44:56 UTC",
+  "inherited_hashes_verified_at_resume": 70,
+  "index_empty_at_resume": true,
+  "prior_pytest_provenance": "Completed tool outputs in interrupted A6V1 conversation; scratch scripts/inventory survived, raw pytest logs were not saved. Not rerun or counted again.",
+  "pytest": {
+    "original_appendix": 2,
+    "browser_vm": 44,
+    "remaining_watch_and_characterization": 102,
+    "independent_contracts": 24,
+    "architecture_import_rules": 12,
+    "unique_pass": 184,
+    "fail": 0,
+    "skip": 0,
+    "xfail": 0
+  },
+  "original_node_fresh": {
+    "terminal": true,
+    "targetState": -1,
+    "targetTime": 42,
+    "targetSockets": 1,
+    "targetCommands": [
+      "playing",
+      "destroy"
+    ],
+    "controlState": 1,
+    "controlTime": 44
+  },
+  "browser_results": [
+    {
+      "case": "active",
+      "result": "PASS",
+      "browser": "Chrome/154.0.8037.93",
+      "before": [
+        42.228868,
+        42.034468
+      ],
+      "stopped": 0,
+      "after": [
+        0,
+        43.005558
+      ],
+      "joins": {
+        "target": 1,
+        "control": 1
+      }
+    },
+    {
+      "case": "before-api",
+      "result": "PASS",
+      "browser": "Chrome/154.0.8037.93",
+      "before": [
+        0,
+        42.032
+      ],
+      "stopped": 0,
+      "after": [
+        0,
+        43.02489
+      ],
+      "joins": {
+        "target": 1,
+        "control": 1
+      }
+    },
+    {
+      "case": "before-ready",
+      "result": "PASS",
+      "browser": "Chrome/154.0.8037.93",
+      "before": [
+        0,
+        42.030711
+      ],
+      "stopped": 0,
+      "after": [
+        0,
+        43.031182
+      ],
+      "joins": {
+        "target": 1,
+        "control": 1
+      }
+    },
+    {
+      "case": "session-event",
+      "result": "PASS",
+      "browser": "Chrome/154.0.8037.93",
+      "before": [
+        42.234384,
+        42.032815
+      ],
+      "stopped": 0,
+      "after": [
+        0,
+        43.084833
+      ],
+      "joins": {
+        "target": 1,
+        "control": 1
+      }
+    },
+    {
+      "case": "destroy-throws",
+      "result": "PASS",
+      "browser": "Chrome/154.0.8037.93",
+      "before": [
+        42.182555,
+        42.03493
+      ],
+      "stopped": 0,
+      "after": [
+        0,
+        43.026104
+      ],
+      "joins": {
+        "target": 1,
+        "control": 1
+      }
+    },
+    {
+      "case": "reconnect",
+      "result": "PASS",
+      "browser": "Chrome/154.0.8037.93",
+      "before": [
+        42.223674,
+        42.035127
+      ],
+      "stopped": 0,
+      "after": [
+        0,
+        43.737742
+      ],
+      "joins": {
+        "target": 2,
+        "control": 1
+      }
+    }
+  ],
+  "file_sha256": {
+    "src/discordbot/watch/adapters/templates/player.html": "543802aed5865c8f28ef2f317554c4a6c476f05ba9016b1d39df7bf61fc2a0a4",
+    "tests/integration/watch/playback_browser_harness.cjs": "da3a592fd99d4bacad5dbccb69ceb2a07016387a52a60b79be9cb49f76b9fdeb",
+    "tests/integration/watch/browser_client_harness.cjs": "60cae6a7710d5f0b64d95ffbe62c41d19874ccafd94695cb3b8316305920ae3e",
+    "tests/integration/watch/terminal_browser_harness.cjs": "be11cd773974208354bae19d65b0006a487795a6de7d48a298816829e1a96fa4",
+    "tests/browser/watch_terminal_chrome.py": "15e5a8e5efc747c17438f6dc65b7d5dd61a751d6571dfa43f2e9a0684d8612c5",
+    "docs/rebuild/final-audit/a6v1-browser-probe.py": "c18bd6fe5d4a819db975f03052499797a926fc6372b4187e4582b2aa5b3f0a5a",
+    "docs/rebuild/final-audit/a6v1-contract-probe.py": "edbe9de044f120020e085ed47c838507337e95f6a5d62db8f6f2d4d580435300"
+  },
+  "baseline_sha256": "c1f1e05edc49b0a7a0563b613b62b245e01e7853bd28111ea25fee00a463949e",
+  "baseline_revision": "8d04ed571578076837928a41131ae99b8519f69f",
+  "baseline_result": "Expected FAIL: terminal iframe remains attached, same unmodified watch_terminal_chrome.py; independently observed before pause on Chrome154.0.8037.92 and after resume on154.0.8037.93. Negative control excluded from candidate failure counts.",
+  "browser_unique_pass": 6,
+  "browser_prior_active": {
+    "browser": "Chrome/154.0.8037.92",
+    "before": [
+      42.254369,
+      42.03293
+    ],
+    "stopped": 0,
+    "after": [
+      0,
+      43.00096
+    ],
+    "result": "PASS",
+    "counted_again": false
+  },
+  "limits": [
+    "No live YouTube/Discord/Pi or proxy validation",
+    "Chrome synthetic server is not the production Watch ASGI app; production server path covered separately by in-process ASGI/signed-loopback/temp-SQLite tests",
+    "No clean full-suite claim; inventory/Deno/audioop/A3-N1/A3-I1 remain",
+    "Production source and pin unchanged; no deployment approval from this result"
+  ],
+  "final_process_check": {
+    "utc": "2026-10-03 ~01:56 UTC",
+    "method": "Read-only Win32_Process query filtered to exact audit probe/profile patterns; no process command lines emitted",
+    "owned_processes_found": 0,
+    "owned_pending_writes": 0,
+    "safe_to_update_app_or_shutdown": true
+  }
+}

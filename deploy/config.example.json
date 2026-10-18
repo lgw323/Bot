@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "environment": "staging",
+  "paths": {
+    "database": "/var/lib/discordbot/data/bot_database.db",
+    "state": "/var/lib/discordbot/state",
+    "cache": "/var/lib/discordbot/cache",
+    "backups": "/var/lib/discordbot/backups",
+    "audit": "/var/lib/discordbot/audit",
+    "release_root": "/opt/discordbot",
+    "operation_lock": "/var/lib/discordbot/operations.lock"
+  },
+  "master": 1,
+  "admin_channel": 2,
+  "main_channels": [[3, 4]],
+  "music_channels": [[3, 5]],
+  "public_origin": "https://watch.example.invalid",
+  "ports": {"public": 9000, "control": 9001, "discord_health": 9010, "watch_health": 9011},
+  "gemini_model": "gemini-flash-latest",
+  "key_id": "staging-key-1",
+  "limits": {},
+  "backup_remote": null
+}

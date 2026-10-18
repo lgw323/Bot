@@ -1,0 +1,199 @@
+{
+  "append_only": [
+    "CHANGELOG.md",
+    "docs/rebuild/current/final-audit-active-state.md"
+  ],
+  "boundary": "Local integrity, not protection against a malicious writer who rewrites and rehashes every record; STOP for independent review.",
+  "compiled_modules": 37,
+  "dependency_mismatches": {
+    "bgutil-ytdlp-pot-provider": {
+      "installed": null,
+      "matches": false,
+      "pin": "1.3.1"
+    },
+    "deno": {
+      "installed": null,
+      "matches": false,
+      "pin": "2.9.7"
+    },
+    "yt-dlp": {
+      "installed": "2026.7.4",
+      "matches": false,
+      "pin": "2026.8.19"
+    },
+    "yt-dlp-ejs": {
+      "installed": null,
+      "matches": false,
+      "pin": "0.8.0"
+    }
+  },
+  "entry_inventory_sha256": "c2eed8011f356f3677a82c0a6c1dfce410b0552992a986d2adeced40572d8725",
+  "finding": "A9-LOCAL-M2",
+  "full_suite": "not rerun; historical 1673 PASS/2 FAIL/27 SKIP and 1652 PASS/3 FAIL/27 SKIP retained",
+  "green_probe_delta": "Only manifest filename M1 -> fresh M2; original assertions and original probe preserved.",
+  "head": "769a00ab892edc7f98a1f9d947abd23d99c1056a",
+  "index_empty": true,
+  "known_failures": [
+    "historical document-inventory failure",
+    "historical missing Deno executable failure"
+  ],
+  "modified": {
+    "CHANGELOG.md": {
+      "after_sha256": "794d030d6a1015746a7310d837fafdfe27666564eb1ba4b0f636f89502616184",
+      "before_sha256": "9bdfc2071c3001757879e61606cc047467750a524e5bd862757648996547179d"
+    },
+    "docs/rebuild/current/final-audit-active-state.md": {
+      "after_sha256": "0d566861f67c76a4e2b96acac65e4d96d15cd97aa653d9b543e75853981467f5",
+      "before_sha256": "caadc8d91b5dcd41a3b4103561a48f1f0ae0e7726ce36dc2c8b2c6b7d221e83c"
+    },
+    "scripts/a9_candidate_packet.py": {
+      "after_sha256": "249606fff08388e0e88bfd37bae3b796512169b267e406ed968728154e2c14b5",
+      "before_sha256": "66c34e5a840e59d11e7f108bb6ba97817a075d024e47f37ca23308abe72347ca"
+    },
+    "tests/integration/operations/test_a9_candidate_packet.py": {
+      "after_sha256": "e066a4ad3a9f00b0538e3b6ffca4569b53fc8f11d01f006686d95ea66387137a",
+      "before_sha256": "b016007c0cea8510bfcd4a7d0dff37da7625c3fcd974be730472c500783051cf"
+    }
+  },
+  "new_artifact_sha256": {
+    "docs/rebuild/final-audit/a9-local-m2-manifest.json": "387b6406aef0715be01aa0279c50e1babde94b2cf14db83d44e222d5cc12dad3",
+    "docs/rebuild/final-audit/a9-local-m2-remediation-report.md": "6542413f66b0f63b3fe9e55f1917e9fdf6820934d5a478e95fadc46adcb67ee1"
+  },
+  "patch_scope": "four existing files and report/manifest; evidence JSON is separately listed to avoid self-hashing",
+  "patch_sha256": "d1c1abcbbf47cb3705e2d26f7332aa186730092719d25019702c90f68a21a6e6",
+  "preservation": {
+    "inherited_unowned_count": 642,
+    "inherited_unowned_exact_hashes": 641,
+    "limitation": "Protected DB never opened or hashed; unchanged stat is not byte-integrity proof.",
+    "prior_inventory_count": 675,
+    "prior_owned_entry_bytes_retained": 4,
+    "prior_unchanged_safe_hashes": 670,
+    "protected_metadata_only": {
+      "docs/rebuild/bot_database.db": {
+        "mtime_ns": 1788518625378664900,
+        "size": 65536
+      }
+    },
+    "subsequent_independent_report_unchanged": true,
+    "unexpected_changed_files": []
+  },
+  "probe_sha256": {
+    "test_a9_independent_identity_probe.py": "bb7a1f3c92918215b2da782d3fd8d4eb5f5c21d2d6aa3bd04205262632541867",
+    "test_a9_m1_receipt_independent.py": "5cd8f1db2036e96a0268b9b22625e97e234a15f9bad5ac1122a5ddd74a0272f6",
+    "test_receipt_green.py": "2fe0e8bc7c71ab149b04e82dd26db838c23d5eef03e812c120a2db9390e8dd9f"
+  },
+  "receipt_sha256": "284be1535f8d66ef98af9892d74dfc46176ca791d9db246739a111c9cdff119c",
+  "receipts": {
+    "capture.xml": {
+      "command": ".venv/Scripts/python.exe -B docs/rebuild/final-audit/a8r4-test-runner.py scratch/a9-local-m2/test_capture.py -q -p no:cacheprovider --junitxml=scratch/a9-local-m2/capture.xml",
+      "sha256": "e9574a66fadcc0ecce2cdaffb0a361eae5f99d66cdf45b2ee66b79efa7def46e",
+      "summary": {
+        "errors": "0",
+        "failures": "0",
+        "hostname": "TUF",
+        "name": "pytest",
+        "skipped": "0",
+        "tests": "1",
+        "time": "1.938",
+        "timestamp": "2026-10-04T23:23:40.939116+09:00"
+      }
+    },
+    "docs.xml": {
+      "command": ".venv/Scripts/python.exe -B docs/rebuild/final-audit/a8r4-test-runner.py tests/architecture/test_rebuild_documentation.py::test_all_relative_rebuild_document_links_resolve tests/architecture/test_rebuild_documentation.py::test_heading_anchor_preserves_spaces_around_removed_punctuation -q -p no:cacheprovider --junitxml=scratch/a9-local-m2/docs.xml",
+      "sha256": "1cab28fda10a2f119049c06029e3ac11f4e1167bbd539bdf68b191043ce4b776",
+      "summary": {
+        "errors": "0",
+        "failures": "0",
+        "hostname": "TUF",
+        "name": "pytest",
+        "skipped": "0",
+        "tests": "2",
+        "time": "0.235",
+        "timestamp": "2026-10-04T23:27:55.802988+09:00"
+      }
+    },
+    "exact-red.xml": {
+      "command": ".venv/Scripts/python.exe -B docs/rebuild/final-audit/a8r4-test-runner.py %TEMP%/test_a9_m1_receipt_independent.py --rootdir=%TEMP% --confcutdir=%TEMP% -q -s -x -p no:cacheprovider --junitxml=scratch/a9-local-m2/exact-red.xml",
+      "sha256": "58abc0ca4b7b86012e0472f8c246dfb30d600933aaa17c74bc65b2e178406438",
+      "summary": {
+        "errors": "0",
+        "failures": "1",
+        "hostname": "TUF",
+        "name": "pytest",
+        "skipped": "0",
+        "tests": "1",
+        "time": "1.444",
+        "timestamp": "2026-10-04T23:19:03.385421+09:00"
+      }
+    },
+    "focused.xml": {
+      "command": ".venv/Scripts/python.exe -B docs/rebuild/final-audit/a8r4-test-runner.py tests/integration/operations/test_a9_candidate_packet.py tests/integration/operations/test_a9_local_harness.py -q -p no:cacheprovider --junitxml=scratch/a9-local-m2/focused.xml",
+      "sha256": "b2a90a85a37089d3f3ec0311117f868c69e5a59840526df14c02d9779be3388b",
+      "summary": {
+        "errors": "0",
+        "failures": "0",
+        "hostname": "TUF",
+        "name": "pytest",
+        "skipped": "0",
+        "tests": "126",
+        "time": "80.915",
+        "timestamp": "2026-10-04T23:21:56.656232+09:00"
+      }
+    },
+    "m1-exact-green.xml": {
+      "command": ".venv/Scripts/python.exe -B docs/rebuild/final-audit/a8r4-test-runner.py %TEMP%/test_a9_independent_identity_probe.py --rootdir=%TEMP% --confcutdir=%TEMP% -q -s -x -p no:cacheprovider --junitxml=scratch/a9-local-m2/m1-exact-green.xml",
+      "sha256": "1d9fd71c4251e76a3857faddd3e7ab9755fa630cc91da5b5854caa04a69c84c6",
+      "summary": {
+        "errors": "0",
+        "failures": "0",
+        "hostname": "TUF",
+        "name": "pytest",
+        "skipped": "0",
+        "tests": "1",
+        "time": "4.094",
+        "timestamp": "2026-10-04T23:24:15.697527+09:00"
+      }
+    },
+    "m2-current-green.xml": {
+      "command": ".venv/Scripts/python.exe -B docs/rebuild/final-audit/a8r4-test-runner.py scratch/a9-local-m2/test_receipt_green.py -q -s -x -p no:cacheprovider --junitxml=scratch/a9-local-m2/m2-current-green.xml",
+      "sha256": "eb05354ca77dd69bfe3f76125d39efee5c586b93071c3c8075f546a66e950ec9",
+      "summary": {
+        "errors": "0",
+        "failures": "0",
+        "hostname": "TUF",
+        "name": "pytest",
+        "skipped": "0",
+        "tests": "1",
+        "time": "0.786",
+        "timestamp": "2026-10-04T23:24:17.704385+09:00"
+      }
+    },
+    "relevant.xml": {
+      "command": ".venv/Scripts/python.exe -B docs/rebuild/final-audit/a8r4-test-runner.py tests/integration/data/test_concurrency.py tests/integration/data/test_lifecycle.py tests/integration/engagement/test_events.py tests/integration/engagement/test_failures.py tests/integration/engagement/test_birthday.py tests/architecture/test_import_rules.py -q -p no:cacheprovider --junitxml=scratch/a9-local-m2/relevant.xml",
+      "sha256": "4e9811ec869b92dfe2e5784f9708e4d702b450b0a68ce12df2c5f45f8621dd56",
+      "summary": {
+        "errors": "0",
+        "failures": "0",
+        "hostname": "TUF",
+        "name": "pytest",
+        "skipped": "0",
+        "tests": "41",
+        "time": "5.758",
+        "timestamp": "2026-10-04T23:23:39.022282+09:00"
+      }
+    }
+  },
+  "runtime_a9": "BLOCKED B1/B2/B3/D1",
+  "scope": [
+    "scripts/a9_candidate_packet.py",
+    "tests/integration/operations/test_a9_candidate_packet.py",
+    "CHANGELOG.md",
+    "docs/rebuild/current/final-audit-active-state.md",
+    "docs/rebuild/final-audit/a9-local-m2-remediation-report.md",
+    "docs/rebuild/final-audit/a9-local-m2-manifest.json",
+    "docs/rebuild/final-audit/a9-local-m2-evidence.json"
+  ],
+  "source_export_sha256": "573d85f550a705146c0f20a7fc1f360ab3b5b1ffdf1d6157da605db4f19a8eb7",
+  "source_files": 146,
+  "status": "REMEDIATED_PENDING_INDEPENDENT_REVIEW"
+}

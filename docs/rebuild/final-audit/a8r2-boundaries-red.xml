@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="14" skipped="0" tests="26" time="24.569" timestamp="2026-10-04T10:39:51.616481+09:00" hostname="TUF"><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_invalid_records_never_count_as_recoverable[missing]" time="0.955"><failure message="AssertionError: assert {'20261004T01...7745676', ...} &lt;= {'20261004T01...a4f1ea3', ...}&#10;  &#10;  Extra items in the left set:&#10;  '20261004T013951862517-b3a1c4a24531423a8113f48e91a08573'">tests\integration\operations\test_backup_retention_contract.py:83: in test_invalid_records_never_count_as_recoverable
+    assert set(valid[1:]) | {newest} &lt;= archives(backup)
+E   AssertionError: assert {'20261004T01...7745676', ...} &lt;= {'20261004T01...a4f1ea3', ...}
+E
+E     Extra items in the left set:
+E     '20261004T013951862517-b3a1c4a24531423a8113f48e91a08573'</failure></testcase><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_invalid_records_never_count_as_recoverable[metadata]" time="0.890"><failure message="AssertionError: assert {'20261004T01...c3dec6c', ...} &lt;= {'20261004T01...cae0ba3', ...}&#10;  &#10;  Extra items in the left set:&#10;  '20261004T013952823275-a79ba642bde04c18ab51d30847bcbf03'">tests\integration\operations\test_backup_retention_contract.py:83: in test_invalid_records_never_count_as_recoverable
+    assert set(valid[1:]) | {newest} &lt;= archives(backup)
+E   AssertionError: assert {'20261004T01...c3dec6c', ...} &lt;= {'20261004T01...cae0ba3', ...}
+E
+E     Extra items in the left set:
+E     '20261004T013952823275-a79ba642bde04c18ab51d30847bcbf03'</failure></testcase><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_invalid_records_never_count_as_recoverable[identity]" time="0.934"><failure message="AssertionError: assert {'20261004T01...76d6b60', ...} &lt;= {'20261004T01...8f5d8cf', ...}&#10;  &#10;  Extra items in the left set:&#10;  '20261004T013953717917-e24c5cb26c0842018197e0a73259bab5'">tests\integration\operations\test_backup_retention_contract.py:83: in test_invalid_records_never_count_as_recoverable
+    assert set(valid[1:]) | {newest} &lt;= archives(backup)
+E   AssertionError: assert {'20261004T01...76d6b60', ...} &lt;= {'20261004T01...8f5d8cf', ...}
+E
+E     Extra items in the left set:
+E     '20261004T013953717917-e24c5cb26c0842018197e0a73259bab5'</failure></testcase><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_invalid_records_never_count_as_recoverable[key_id]" time="1.101"><failure message="AssertionError: assert {'20261004T01...ccc6917', ...} &lt;= {'20261004T01...cb7a9a0', ...}&#10;  &#10;  Extra items in the left set:&#10;  '20261004T013954759971-63091ba9f1104d019d67707a9819a2c8'">tests\integration\operations\test_backup_retention_contract.py:83: in test_invalid_records_never_count_as_recoverable
+    assert set(valid[1:]) | {newest} &lt;= archives(backup)
+E   AssertionError: assert {'20261004T01...ccc6917', ...} &lt;= {'20261004T01...cb7a9a0', ...}
+E
+E     Extra items in the left set:
+E     '20261004T013954759971-63091ba9f1104d019d67707a9819a2c8'</failure></testcase><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_invalid_records_never_count_as_recoverable[schema]" time="1.022"><failure message="AssertionError: assert {'20261004T01...5a8e5f6', ...} &lt;= {'20261004T01...519e92f', ...}&#10;  &#10;  Extra items in the left set:&#10;  '20261004T013955763941-56d268b489e84beb88ec1136afae1269'">tests\integration\operations\test_backup_retention_contract.py:83: in test_invalid_records_never_count_as_recoverable
+    assert set(valid[1:]) | {newest} &lt;= archives(backup)
+E   AssertionError: assert {'20261004T01...5a8e5f6', ...} &lt;= {'20261004T01...519e92f', ...}
+E
+E     Extra items in the left set:
+E     '20261004T013955763941-56d268b489e84beb88ec1136afae1269'</failure></testcase><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_invalid_records_never_count_as_recoverable[sha256]" time="0.994"><failure message="AssertionError: assert {'20261004T01...7486719', ...} &lt;= {'20261004T01...1268bf9', ...}&#10;  &#10;  Extra items in the left set:&#10;  '20261004T013956792189-92edddb801f44649a2b8eecde5220ab1'">tests\integration\operations\test_backup_retention_contract.py:83: in test_invalid_records_never_count_as_recoverable
+    assert set(valid[1:]) | {newest} &lt;= archives(backup)
+E   AssertionError: assert {'20261004T01...7486719', ...} &lt;= {'20261004T01...1268bf9', ...}
+E
+E     Extra items in the left set:
+E     '20261004T013956792189-92edddb801f44649a2b8eecde5220ab1'</failure></testcase><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_invalid_records_never_count_as_recoverable[ciphertext]" time="0.999"><failure message="AssertionError: assert {'20261004T01...f7a2bbd', ...} &lt;= {'20261004T01...bc9301c', ...}&#10;  &#10;  Extra items in the left set:&#10;  '20261004T013957790085-8243628b2fbc4bfe9870c5c4a440d4c5'">tests\integration\operations\test_backup_retention_contract.py:83: in test_invalid_records_never_count_as_recoverable
+    assert set(valid[1:]) | {newest} &lt;= archives(backup)
+E   AssertionError: assert {'20261004T01...f7a2bbd', ...} &lt;= {'20261004T01...bc9301c', ...}
+E
+E     Extra items in the left set:
+E     '20261004T013957790085-8243628b2fbc4bfe9870c5c4a440d4c5'</failure></testcase><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_invalid_records_never_count_as_recoverable[authentication]" time="1.018"><failure message="AssertionError: assert {'20261004T01...7560a13', ...} &lt;= {'20261004T01...3d6c04f', ...}&#10;  &#10;  Extra items in the left set:&#10;  '20261004T013958820061-ffec8663486449fc829ebde39ea91a86'">tests\integration\operations\test_backup_retention_contract.py:83: in test_invalid_records_never_count_as_recoverable
+    assert set(valid[1:]) | {newest} &lt;= archives(backup)
+E   AssertionError: assert {'20261004T01...7560a13', ...} &lt;= {'20261004T01...3d6c04f', ...}
+E
+E     Extra items in the left set:
+E     '20261004T013958820061-ffec8663486449fc829ebde39ea91a86'</failure></testcase><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_invalid_records_never_count_as_recoverable[semantic]" time="1.194"><failure message="AssertionError: assert {'20261004T01...8e55c59', ...} &lt;= {'20261004T01...54851aa', ...}&#10;  &#10;  Extra items in the left set:&#10;  '20261004T013959833672-0510c1d5b2594fce89021e10350da564'">tests\integration\operations\test_backup_retention_contract.py:83: in test_invalid_records_never_count_as_recoverable
+    assert set(valid[1:]) | {newest} &lt;= archives(backup)
+E   AssertionError: assert {'20261004T01...8e55c59', ...} &lt;= {'20261004T01...54851aa', ...}
+E
+E     Extra items in the left set:
+E     '20261004T013959833672-0510c1d5b2594fce89021e10350da564'</failure></testcase><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_invalid_records_never_count_as_recoverable[ledger]" time="1.076"><failure message="AssertionError: assert {'20261004T01...cb8da39', ...} &lt;= {'20261004T01...c8a901b', ...}&#10;  &#10;  Extra items in the left set:&#10;  '20261004T014001032391-7fde3f7f4b3949569c8410e31462657e'">tests\integration\operations\test_backup_retention_contract.py:83: in test_invalid_records_never_count_as_recoverable
+    assert set(valid[1:]) | {newest} &lt;= archives(backup)
+E   AssertionError: assert {'20261004T01...cb8da39', ...} &lt;= {'20261004T01...c8a901b', ...}
+E
+E     Extra items in the left set:
+E     '20261004T014001032391-7fde3f7f4b3949569c8410e31462657e'</failure></testcase><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_valid_only_retention_boundaries[0]" time="0.060" /><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_valid_only_retention_boundaries[1]" time="0.201" /><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_valid_only_retention_boundaries[7]" time="1.113" /><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_valid_only_retention_boundaries[8]" time="1.272" /><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_valid_only_retention_boundaries[9]" time="1.423" /><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_valid_only_retention_boundaries[10]" time="1.467" /><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_recoverable_failed_publications_keep_prior_latest_and_filename_order" time="1.020"><failure message="AssertionError: assert {'20261004T01...f5f8bbf', ...} == {'20261004T01...f046d26', ...}&#10;  &#10;  Extra items in the right set:&#10;  '20261004T014007556744-cf0d078464d44b42a69d1c304c5a645a'&#10;  Use -v to get more diff">tests\integration\operations\test_backup_retention_contract.py:112: in test_recoverable_failed_publications_keep_prior_latest_and_filename_order
+    assert archives(backup) == {previous, newest, *orphans[-7:]}
+E   AssertionError: assert {'20261004T01...f5f8bbf', ...} == {'20261004T01...f046d26', ...}
+E
+E     Extra items in the right set:
+E     '20261004T014007556744-cf0d078464d44b42a69d1c304c5a645a'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_failure_before_latest_preserves_pointer_and_all_prior_archives[remote]" time="0.979" /><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_failure_before_latest_preserves_pointer_and_all_prior_archives[success_audit]" time="0.917" /><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_failure_before_latest_preserves_pointer_and_all_prior_archives[latest_replace]" time="1.057" /><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_failure_before_latest_preserves_pointer_and_all_prior_archives[validation_io]" time="0.906"><failure message="Failed: DID NOT RAISE OSError">tests\integration\operations\test_backup_retention_contract.py:157: in test_failure_before_latest_preserves_pointer_and_all_prior_archives
+    with pytest.raises(error):
+         ^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE OSError</failure></testcase><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_failure_before_latest_preserves_pointer_and_all_prior_archives[cancel]" time="0.953"><failure message="Failed: DID NOT RAISE CancelledError">tests\integration\operations\test_backup_retention_contract.py:157: in test_failure_before_latest_preserves_pointer_and_all_prior_archives
+    with pytest.raises(error):
+         ^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE CancelledError</failure></testcase><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_failure_before_latest_preserves_pointer_and_all_prior_archives[corrupt_new]" time="0.918"><failure message="Failed: DID NOT RAISE DataIntegrityError">tests\integration\operations\test_backup_retention_contract.py:157: in test_failure_before_latest_preserves_pointer_and_all_prior_archives
+    with pytest.raises(error):
+         ^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE DataIntegrityError</failure></testcase><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_capacity_remains_fail_closed_without_pruning_evidence[64]" time="0.311" /><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_capacity_remains_fail_closed_without_pruning_evidence[65]" time="0.223" /><testcase classname="tests.integration.operations.test_backup_retention_contract" name="test_delete_failure_leaves_eight_valid_alternatives_and_new_latest" time="1.389" /></testsuite></testsuites>

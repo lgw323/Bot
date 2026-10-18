@@ -1,0 +1,202 @@
+{
+  "discovery": {
+    "historical": {
+      "samples": [
+        {
+          "t": 5,
+          "ready": true,
+          "hard": false,
+          "pending": 5,
+          "calls": 1,
+          "scheduled": 2
+        },
+        {
+          "t": 10,
+          "ready": true,
+          "hard": false,
+          "pending": 5,
+          "calls": 2,
+          "scheduled": 3
+        },
+        {
+          "t": 15,
+          "ready": true,
+          "hard": false,
+          "pending": null,
+          "calls": 3,
+          "scheduled": 4
+        },
+        {
+          "t": 20,
+          "ready": false,
+          "hard": true,
+          "pending": null,
+          "calls": 4,
+          "scheduled": 4
+        }
+      ],
+      "events": [
+        {
+          "event": "database.probe_contention",
+          "error_code": "database_unavailable",
+          "probe_disposition": "bounded_busy",
+          "operation": "select1_probe",
+          "stage": "probe_configure",
+          "exception_family": "sqlite_operational",
+          "sqlite_family": "busy",
+          "sqlite_errorcode": 5,
+          "connection_opened": true,
+          "close_succeeded": true,
+          "cleanup_failed": false
+        },
+        {
+          "event": "database.probe_recovered",
+          "operation": "select1_probe",
+          "healthy_probes": 2
+        },
+        {
+          "event": "database.probe_failed",
+          "error_code": "database_unavailable",
+          "probe_disposition": "hard",
+          "operation": "select1_probe",
+          "stage": "probe_configure",
+          "exception_family": "sqlite_operational",
+          "sqlite_family": "busy",
+          "sqlite_errorcode": 5,
+          "connection_opened": true,
+          "close_succeeded": true,
+          "cleanup_failed": false
+        }
+      ],
+      "probe_calls": 4,
+      "stat_calls": 4,
+      "later_actual_age": 25320.0,
+      "later_reported_age": 120.0,
+      "later_rpo_exceeded": 0.0,
+      "post_hard_scheduled": 0,
+      "all_futures_done": true
+    },
+    "current": {
+      "samples": [
+        {
+          "t": 5,
+          "ready": true,
+          "hard": false,
+          "pending": 5,
+          "calls": 1,
+          "scheduled": 2
+        },
+        {
+          "t": 10,
+          "ready": true,
+          "hard": false,
+          "pending": 5,
+          "calls": 2,
+          "scheduled": 3
+        },
+        {
+          "t": 15,
+          "ready": true,
+          "hard": false,
+          "pending": null,
+          "calls": 3,
+          "scheduled": 4
+        },
+        {
+          "t": 20,
+          "ready": false,
+          "hard": true,
+          "pending": null,
+          "calls": 4,
+          "scheduled": 4
+        }
+      ],
+      "events": [
+        {
+          "event": "database.probe_contention",
+          "error_code": "database_unavailable",
+          "probe_disposition": "bounded_busy",
+          "operation": "select1_probe",
+          "stage": "probe_configure",
+          "exception_family": "sqlite_operational",
+          "sqlite_family": "busy",
+          "sqlite_errorcode": 5,
+          "connection_opened": true,
+          "close_succeeded": true,
+          "cleanup_failed": false
+        },
+        {
+          "event": "database.probe_recovered",
+          "operation": "select1_probe",
+          "healthy_probes": 2
+        },
+        {
+          "event": "database.probe_failed",
+          "error_code": "database_unavailable",
+          "probe_disposition": "hard",
+          "operation": "select1_probe",
+          "stage": "probe_configure",
+          "exception_family": "sqlite_operational",
+          "sqlite_family": "busy",
+          "sqlite_errorcode": 5,
+          "connection_opened": true,
+          "close_succeeded": true,
+          "cleanup_failed": false
+        }
+      ],
+      "probe_calls": 4,
+      "stat_calls": 4,
+      "later_actual_age": 25320.0,
+      "later_reported_age": 120.0,
+      "later_rpo_exceeded": 0.0,
+      "post_hard_scheduled": 0,
+      "all_futures_done": true
+    },
+    "source_identical": [
+      "probe.py",
+      "probe_policy.py"
+    ]
+  },
+  "sqlite_cases": [
+    {
+      "mode": "DELETE",
+      "transaction": "BEGIN",
+      "locked_result": "ok",
+      "after_release": "ok"
+    },
+    {
+      "mode": "DELETE",
+      "transaction": "BEGIN IMMEDIATE",
+      "locked_result": "ok",
+      "after_release": "ok"
+    },
+    {
+      "mode": "DELETE",
+      "transaction": "BEGIN EXCLUSIVE",
+      "locked_result": "probe_configure_SQLITE_BUSY_5_clean_close",
+      "after_release": "ok"
+    },
+    {
+      "mode": "WAL",
+      "transaction": "BEGIN",
+      "locked_result": "ok",
+      "after_release": "ok"
+    },
+    {
+      "mode": "WAL",
+      "transaction": "BEGIN IMMEDIATE",
+      "locked_result": "ok",
+      "after_release": "ok"
+    },
+    {
+      "mode": "WAL",
+      "transaction": "BEGIN EXCLUSIVE",
+      "locked_result": "ok",
+      "after_release": "ok"
+    }
+  ],
+  "original_reproducer_sha256": "7a3941d3e8bfe1076fdd492a56a33c1530eb05830a84d5fc7e9ba15c4b7f12d5",
+  "original_verifier_sha256": "26f9530457897c26ae22a22c742c03f14fb51a6c37cd40afbe1a91f5d3a1eb0f",
+  "retained_policy_test_result": "13 PASS",
+  "source": "prior bounded local investigation; synthetic only"
+}

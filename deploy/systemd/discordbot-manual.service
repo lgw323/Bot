@@ -1,0 +1,21 @@
+[Unit]
+Description=Consume one authorized local DiscordBot operation request
+
+[Service]
+Type=oneshot
+User=discordbot-deploy
+Group=discordbot
+WorkingDirectory=/var/lib/discordbot
+ExecStart=/opt/discordbot/current/.venv/bin/python -I /opt/discordbot/current/app/deploy/launch.py operations manual --config /etc/discordbot/config.json --credentials %d --policy /etc/discordbot/update.json --wheels /var/lib/discordbot/wheels
+LoadCredential=db_key:/etc/discordbot/secrets/db_key
+Environment=PYTHON_DOTENV_DISABLED=1 PYTHONDONTWRITEBYTECODE=1
+UMask=0077
+TimeoutStartSec=1800
+TimeoutStopSec=300
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/discordbot /var/lib/discordbot
+StandardOutput=journal
+StandardError=journal

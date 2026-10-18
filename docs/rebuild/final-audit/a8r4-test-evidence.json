@@ -1,0 +1,118 @@
+{
+  "implementation_head": "0640f70b37a60c614f4658d4c7cce7f55b51d756",
+  "receipts": [
+    {
+      "path": "a8r4-doc-results.xml",
+      "sha256": "3e38c8bbbce0cb5cc5ee264ad4fe6e219795cd1b9fdadd61eb937033b4aa7feb",
+      "counts": {
+        "PASS": 2
+      },
+      "failures": [],
+      "suite_seconds": "0.209"
+    },
+    {
+      "path": "a8r4-focused-green.xml",
+      "sha256": "fa12d9081f73493082dc0352859618480327ec195eeabbb3574d71fbcc059e6c",
+      "counts": {
+        "PASS": 249
+      },
+      "failures": [],
+      "suite_seconds": "145.254"
+    },
+    {
+      "path": "a8r4-full-results.xml",
+      "sha256": "c95f025306e046c2e89f61381bde2dab60612392a387a77dbcbd438514d8d51c",
+      "counts": {
+        "PASS": 1592,
+        "FAIL": 2,
+        "SKIP": 27
+      },
+      "failures": [
+        "tests.architecture.test_rebuild_documentation::test_rebuild_documents_are_partitioned_without_loss",
+        "tests.integration.music.test_resources::test_pinned_provider_and_runtime_load_without_network"
+      ],
+      "suite_seconds": "239.897"
+    },
+    {
+      "path": "a8r4-original-after.xml",
+      "sha256": "ddc6e0e2b9be23efc764ec05abdc0af81ba592e674c5f07412fcb4e1ecff966c",
+      "counts": {
+        "PASS": 3,
+        "FAIL": 1
+      },
+      "failures": [
+        "docs.rebuild.final-audit.a8t1-backup-freshness-probe::test_backup_freshness_must_not_remain_false_healthy_after_latch[historical]"
+      ],
+      "suite_seconds": "0.227"
+    },
+    {
+      "path": "a8r4-original-red.xml",
+      "sha256": "6a9bac521cd2babc6bdbeaf086343787510ea59730abd83622c4737e905d49a3",
+      "counts": {
+        "PASS": 2,
+        "FAIL": 2
+      },
+      "failures": [
+        "docs.rebuild.final-audit.a8t1-backup-freshness-probe::test_backup_freshness_must_not_remain_false_healthy_after_latch[historical]",
+        "docs.rebuild.final-audit.a8t1-backup-freshness-probe::test_backup_freshness_must_not_remain_false_healthy_after_latch[current]"
+      ],
+      "suite_seconds": "0.223"
+    },
+    {
+      "path": "a8r4-regression-green.xml",
+      "sha256": "172eb1e4a7c7bda9ea4fe3cb3949dbd3542b708dea8964dfae4f153807fc42e5",
+      "counts": {
+        "PASS": 30
+      },
+      "failures": [],
+      "suite_seconds": "0.501"
+    },
+    {
+      "path": "a8r4-regression-red.xml",
+      "sha256": "60651ef1ac011ce994058817548a7102572c9bc8099f46307b2c04032bb75432",
+      "counts": {
+        "FAIL": 18,
+        "PASS": 9
+      },
+      "failures": [
+        "tests.integration.operations.test_backup_freshness::test_elapsed_time_publication_and_probe_count[False]",
+        "tests.integration.operations.test_backup_freshness::test_elapsed_time_publication_and_probe_count[True]",
+        "tests.integration.operations.test_backup_freshness::test_missing_invalid_metadata_never_keeps_previous_safe_value[False-nan]",
+        "tests.integration.operations.test_backup_freshness::test_missing_invalid_metadata_never_keeps_previous_safe_value[False-inf]",
+        "tests.integration.operations.test_backup_freshness::test_missing_invalid_metadata_never_keeps_previous_safe_value[False--inf]",
+        "tests.integration.operations.test_backup_freshness::test_missing_invalid_metadata_never_keeps_previous_safe_value[False-None]",
+        "tests.integration.operations.test_backup_freshness::test_missing_invalid_metadata_never_keeps_previous_safe_value[False-invalid]",
+        "tests.integration.operations.test_backup_freshness::test_missing_invalid_metadata_never_keeps_previous_safe_value[False-True]",
+        "tests.integration.operations.test_backup_freshness::test_missing_invalid_metadata_never_keeps_previous_safe_value[True-nan]",
+        "tests.integration.operations.test_backup_freshness::test_missing_invalid_metadata_never_keeps_previous_safe_value[True-inf]",
+        "tests.integration.operations.test_backup_freshness::test_missing_invalid_metadata_never_keeps_previous_safe_value[True--inf]",
+        "tests.integration.operations.test_backup_freshness::test_missing_invalid_metadata_never_keeps_previous_safe_value[True-None]",
+        "tests.integration.operations.test_backup_freshness::test_missing_invalid_metadata_never_keeps_previous_safe_value[True-invalid]",
+        "tests.integration.operations.test_backup_freshness::test_missing_invalid_metadata_never_keeps_previous_safe_value[True-True]",
+        "tests.integration.operations.test_backup_freshness::test_sampling_termination_invalidates_metrics_without_restart[cancel]",
+        "tests.integration.operations.test_backup_freshness::test_sampling_termination_invalidates_metrics_without_restart[exception]",
+        "tests.integration.operations.test_backup_freshness::test_sampling_termination_invalidates_metrics_without_restart[stop]",
+        "tests.integration.operations.test_backup_freshness::test_shutdown_during_metadata_sampling_cancels_and_drains"
+      ],
+      "suite_seconds": "0.261"
+    }
+  ],
+  "distinct_current_counts": {
+    "PASS": 1594,
+    "FAIL": 2,
+    "SKIP": 27
+  },
+  "distinct_current_cases": 1623,
+  "distinct_current_identity_sha256": "277d10c27681d6387f161b7f8c140e2bf2d708a53ae6e701f8475010b7fbecc5",
+  "focused_distinct_pass": 250,
+  "new_regression_cases": 30,
+  "historical_after_counts": {
+    "PASS": 1,
+    "FAIL": 1
+  },
+  "current_union_includes": [
+    "a8r4-full-results.xml",
+    "a8r4-original-after.xml [current] only"
+  ],
+  "overlap_note": "Focused 249 plus final new 30 form 250 unique identities, all included in full suite. Final docs two identities repeat full. Baseline RED/historical cases excluded from current union."
+}

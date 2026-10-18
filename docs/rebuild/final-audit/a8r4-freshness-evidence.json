@@ -1,0 +1,226 @@
+{
+  "historical": {
+    "latched": {
+      "samples": [
+        {
+          "t": 5,
+          "ready": true,
+          "hard": false,
+          "calls": 1,
+          "scheduled": 2
+        },
+        {
+          "t": 10,
+          "ready": true,
+          "hard": false,
+          "calls": 2,
+          "scheduled": 3
+        },
+        {
+          "t": 15,
+          "ready": true,
+          "hard": false,
+          "calls": 3,
+          "scheduled": 4
+        },
+        {
+          "t": 20,
+          "ready": false,
+          "hard": true,
+          "calls": 4,
+          "scheduled": 4
+        }
+      ],
+      "events": [
+        "database.probe_contention",
+        "database.probe_recovered",
+        "database.probe_failed"
+      ],
+      "before_age": 120.0,
+      "actual_age": 25320.0,
+      "reported_age": 120.0,
+      "rpo_exceeded": 0.0,
+      "after_publication_age": 120.0,
+      "calls_after_elapsed": 4,
+      "stat_calls": 4,
+      "hard": true,
+      "ready": false,
+      "pending_before_stop": 0,
+      "all_futures_done": true
+    },
+    "healthy": {
+      "samples": [
+        {
+          "t": 5,
+          "ready": true,
+          "hard": false,
+          "calls": 1,
+          "scheduled": 2
+        },
+        {
+          "t": 10,
+          "ready": true,
+          "hard": false,
+          "calls": 2,
+          "scheduled": 3
+        },
+        {
+          "t": 15,
+          "ready": true,
+          "hard": false,
+          "calls": 3,
+          "scheduled": 4
+        },
+        {
+          "t": 20,
+          "ready": true,
+          "hard": false,
+          "calls": 4,
+          "scheduled": 5
+        },
+        {
+          "t": 25220,
+          "ready": true,
+          "hard": false,
+          "calls": 5,
+          "scheduled": 6
+        },
+        {
+          "t": 25225,
+          "ready": true,
+          "hard": false,
+          "calls": 6,
+          "scheduled": 7
+        }
+      ],
+      "events": [
+        "database.probe_contention",
+        "database.probe_recovered"
+      ],
+      "before_age": 120.0,
+      "actual_age": 25320.0,
+      "reported_age": 25320.0,
+      "rpo_exceeded": 1.0,
+      "after_publication_age": 5.0,
+      "calls_after_elapsed": 5,
+      "stat_calls": 6,
+      "hard": false,
+      "ready": true,
+      "pending_before_stop": 1,
+      "all_futures_done": true
+    }
+  },
+  "current": {
+    "latched": {
+      "samples": [
+        {
+          "t": 5,
+          "ready": true,
+          "hard": false,
+          "calls": 1,
+          "scheduled": 2
+        },
+        {
+          "t": 10,
+          "ready": true,
+          "hard": false,
+          "calls": 2,
+          "scheduled": 3
+        },
+        {
+          "t": 15,
+          "ready": true,
+          "hard": false,
+          "calls": 3,
+          "scheduled": 4
+        },
+        {
+          "t": 20,
+          "ready": false,
+          "hard": true,
+          "calls": 4,
+          "scheduled": 4
+        }
+      ],
+      "events": [
+        "database.probe_contention",
+        "database.probe_recovered",
+        "database.probe_failed"
+      ],
+      "before_age": -1.0,
+      "actual_age": 25320.0,
+      "reported_age": -1.0,
+      "rpo_exceeded": 1.0,
+      "after_publication_age": -1.0,
+      "calls_after_elapsed": 4,
+      "stat_calls": 4,
+      "hard": true,
+      "ready": false,
+      "pending_before_stop": 0,
+      "all_futures_done": true
+    },
+    "healthy": {
+      "samples": [
+        {
+          "t": 5,
+          "ready": true,
+          "hard": false,
+          "calls": 1,
+          "scheduled": 2
+        },
+        {
+          "t": 10,
+          "ready": true,
+          "hard": false,
+          "calls": 2,
+          "scheduled": 3
+        },
+        {
+          "t": 15,
+          "ready": true,
+          "hard": false,
+          "calls": 3,
+          "scheduled": 4
+        },
+        {
+          "t": 20,
+          "ready": true,
+          "hard": false,
+          "calls": 4,
+          "scheduled": 5
+        },
+        {
+          "t": 25220,
+          "ready": true,
+          "hard": false,
+          "calls": 5,
+          "scheduled": 6
+        },
+        {
+          "t": 25225,
+          "ready": true,
+          "hard": false,
+          "calls": 6,
+          "scheduled": 7
+        }
+      ],
+      "events": [
+        "database.probe_contention",
+        "database.probe_recovered"
+      ],
+      "before_age": 120.0,
+      "actual_age": 25320.0,
+      "reported_age": 25320.0,
+      "rpo_exceeded": 1.0,
+      "after_publication_age": 5.0,
+      "calls_after_elapsed": 5,
+      "stat_calls": 6,
+      "hard": false,
+      "ready": true,
+      "pending_before_stop": 1,
+      "all_futures_done": true
+    }
+  },
+  "original_probe_sha256": "edd960986b4598e4890359ba0e9d7c018731ad7b2a1a9848900f53c0ec23a6eb",
+  "candidate_probe_sha256": "901965597f0eefe81913c4573a9147f6bcc44ac080937e8d42e0352fd9a14ac3"
+}

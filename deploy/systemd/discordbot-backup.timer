@@ -1,0 +1,11 @@
+[Unit]
+Description=Four-hour backup schedule within six-hour initial RPO
+
+[Timer]
+OnCalendar=*-*-* 00/4:00:00 UTC
+AccuracySec=1s
+Persistent=true
+Unit=discordbot-backup.service
+
+[Install]
+WantedBy=timers.target

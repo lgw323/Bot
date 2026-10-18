@@ -1,0 +1,593 @@
+{
+  "status": "DELETED_LOCAL_TRACKED_PATHS",
+  "targets": [
+    {
+      "path": "main_bot.py",
+      "checkout_sha256": "1e95223b4cf70f7665f8f7ff3bf3041fabaf3f002100b1be4f5b2a93b4a18113",
+      "git_blob_sha256": "4cac0c77427247e4100d1c5940452c3f66dbf38128d9559a8c0ba0b5f85ea515",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "database_manager.py",
+      "checkout_sha256": "9d038dec97f380624433e07427504e300ae6efbf52fd0c569a5cf777e5cad43c",
+      "git_blob_sha256": "2862326053920ef379e72ceca7e65cba6f032f04e8285f4221d8101898c179b1",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/application_commands.py",
+      "checkout_sha256": "9e9f7507acb114167642cbcae5d5b92a3ee1daf5ce3ad660d3b1474b29c1fec5",
+      "git_blob_sha256": "69a1f642b1c48cb7030fece2c899c3a569dc5515007e8cf1cfc7c0b73bb66d85",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/birthday/birthday_core.py",
+      "checkout_sha256": "22ac1e947ec688b2fe86916b18b630e59579e25724b638a4e894c022424f743f",
+      "git_blob_sha256": "8ecb79a4845c52b595d081fb3789afb3ca3a8ac050c83ea70cff4cf72fb6cdf6",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/leveling/leveling_core.py",
+      "checkout_sha256": "da949b3b2d47a393bd1edf46a82ad9dc62326cb83e985b11a392c12e5f88db7c",
+      "git_blob_sha256": "9283e65339f919f5736d4947968264d57756780ce531604f70205c4a15145d29",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/logging/log_agent.py",
+      "checkout_sha256": "fe7cd0816fab6d816abad13adbe82cee562c6ab0c5a209473f87f46c79e8a5e5",
+      "git_blob_sha256": "79fd2cc08876e92b6d5183d74ecc219cb9138f91c2ff935cf775894c8b3689c3",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/logging/__init__.py",
+      "checkout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "git_blob_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/music/music_agent.py",
+      "checkout_sha256": "9a3b0827b5e8566c2f427ee6adefb8812e30502cd7b921ee025cd1dd7238e852",
+      "git_blob_sha256": "2c75a2e95f3aeaaa2ac581165214696a779d5fbb14d7aeaa62b02a81c411a673",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/music/music_core.py",
+      "checkout_sha256": "7fc7e856e77ab49b44e1fd9e21d1561c5bcf56445a71b06f0f8ebc73fb8a6ca0",
+      "git_blob_sha256": "58ba3b7161e1f482eeab50d99f47cab09714ce69b448a2983490fad1035755fd",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/music/music_playback.py",
+      "checkout_sha256": "48e66684ef8a6e14a046b8ded9bcac0129e1579d1988faba8eb41d35a735dbdc",
+      "git_blob_sha256": "48e66684ef8a6e14a046b8ded9bcac0129e1579d1988faba8eb41d35a735dbdc",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/music/music_session_restorer.py",
+      "checkout_sha256": "a02258e2c3123af9b177b38423d3cfbcc4d2d0a46d709ae3589e9fb4a9341edd",
+      "git_blob_sha256": "8a40a7c1ca4e92d6b823693300227510e1535182986c8d04cd48a400d0fd4343",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/music/music_state_store.py",
+      "checkout_sha256": "436e79a17c9fcb1c01bfd5cd9aaadd10c79ef1e4a3e0682e93d09c23851dee1e",
+      "git_blob_sha256": "220ed7203ce05babb0a8c9b6b5d979e63835eed42391dd3046da6146e635215c",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/music/music_ui.py",
+      "checkout_sha256": "9c218ba84ab318381bc293e49c955a482a2f7863672b365178bf37fe394b6a4e",
+      "git_blob_sha256": "fed644b4cea7c2d88270cc1b012f9014e0f92a2a88b5d550992c56dcbd6c53a4",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/music/music_utils.py",
+      "checkout_sha256": "fb8d5bb2cc32fae122839c606531b51259bc0ce74e3f5ffab591930e982c873e",
+      "git_blob_sha256": "bf1316297d4ac520b8e46b8da6cd1c55c111c88e66088a672ae6b6da7c8532ea",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/music/__init__.py",
+      "checkout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "git_blob_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/summary/summarizer_agent.py",
+      "checkout_sha256": "61fa62c27b4be6b3e8257cf16b2ead74fbfaa942cff040b75eedc99317a56736",
+      "git_blob_sha256": "da7719873e389b3b09e56bfdeb81bc04f9f1723165788d14271653a3d06d8c5e",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/summary/summary_listeners.py",
+      "checkout_sha256": "81a1de7e9a2d796bae5514e5f4dbfa2b3d56ce7921a449d2c7be1726972bb950",
+      "git_blob_sha256": "df35b641882dc7e41c4f0369183c7b44fe2212ce290e2da0ac146f220998165f",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/summary/__init__.py",
+      "checkout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "git_blob_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/watch_together/watch_agent.py",
+      "checkout_sha256": "f19ddc8390a58a189fe5909bf705f971e7a832b59ac1a569d396673b10974061",
+      "git_blob_sha256": "91e7f3af251c5ad3d75785363f4bf7ffbb233fe5bb9f997aef2585d29e2c5c3e",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/watch_together/watch_server.py",
+      "checkout_sha256": "498b6444444e6fe02d5a85ba8f2e320265d4a58a206020e5001b23ec784d07b1",
+      "git_blob_sha256": "18080fbb737e2025e5b39485be721434d670488b7ef19dace902eb9564f3392e",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/watch_together/__init__.py",
+      "checkout_sha256": "1023f16a67a38ab8a6465f956c8c5541afa228aba8e0f33911abe3d29d1c59d2",
+      "git_blob_sha256": "d83700c2eae66259058a3226bb6b46dfb39b92b5f89aa91e9d9ee4fbfbb4d824",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "cogs/watch_together/templates/player.html",
+      "checkout_sha256": "012f4500c3eaffcaaa6c1840e77751eb728b4e37685be175608be1adb6c50ef9",
+      "git_blob_sha256": "4210f76c614ccee2fa445a05ea551697512ea0830aa52779f7e4d3e6e8105f1c",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "scripts/auto_backup.sh",
+      "checkout_sha256": "ead01c7a1e8904c802327703fc8d99ce7ee4346b3b8fac702b25ef6eb10f20a3",
+      "git_blob_sha256": "8ea5651e07388a700be840faada953eba034242ab02c3dcbe18e2cab23f7a5bd",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "scripts/auto_update.sh",
+      "checkout_sha256": "e6c8730f6ff663cc845d19dcd473cd7e50fe2ad9fe664f00f6829fc6ad482558",
+      "git_blob_sha256": "87028561d484f91270077093ab4bafe111b71b76ac8cd3e50efbec602f49214e",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "scripts/install_pot_provider.sh",
+      "checkout_sha256": "ce64813dd3aa4ea7a3922b1893277c62160c54df28a6fc38f1bcadd30d704e07",
+      "git_blob_sha256": "ce64813dd3aa4ea7a3922b1893277c62160c54df28a6fc38f1bcadd30d704e07",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "envtemplate.txt",
+      "checkout_sha256": "9c11b58224ff30f237af0cf26c9ad6b9503e1979bcda8f5ef449cd9a192b641e",
+      "git_blob_sha256": "4184779a42ac16859ab5dd7136e409a290c1e2cc2f89e367d66c418023755993",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "original_source",
+      "tests": []
+    },
+    {
+      "path": "tests/test_application_commands.py",
+      "checkout_sha256": "fa4fac0b298aa32ffb8c9dd4ad47184cdd21cfe658fcb9572a737ebe820b64b7",
+      "git_blob_sha256": "b2929c5ff9b2aaf78b137a3cf63aa22b3e895a41a657b78df096d4c3e4c00041",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_summary_command_routing",
+        "test_play_command_routing",
+        "test_cog_app_command_error"
+      ]
+    },
+    {
+      "path": "tests/test_auto_backup_script.py",
+      "checkout_sha256": "3df5b75452a2736f679aab64be5e3a9b5442ea133b5657146e3b0c077a223459",
+      "git_blob_sha256": "8ae9a2700fc7cf3a4ed01a0fc5b35ef031d84064715d4670411f678758254b26",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_backup_generation_failure_stops_before_archiving",
+        "test_remote_push_failure_returns_an_error",
+        "test_backup_uses_required_private_remote_instead_of_code_origin"
+      ]
+    },
+    {
+      "path": "tests/test_auto_update_script.py",
+      "checkout_sha256": "995fb54726053b55e904638e2de2bec0254d7231e83a11d18c0aa0d530c5ff49",
+      "git_blob_sha256": "ae70c1999e428da024965e596046593f826567be5e086eda0860360c2722e35e",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_only_youtube_runtime_dependencies_are_force_upgraded",
+        "test_dependencies_are_prepared_before_code_is_deployed",
+        "test_pot_provider_is_installed_after_deploy_and_before_restart",
+        "test_failed_update_is_logged_and_marked_for_retry",
+        "test_restart_failure_rolls_back_changed_code",
+        "test_service_health_check_does_not_require_sudo",
+        "test_retired_packages_are_removed_only_after_successful_restart"
+      ]
+    },
+    {
+      "path": "tests/test_database_manager.py",
+      "checkout_sha256": "d348915b8515e0b9b6419a83ee392ff442730cc32de86ee155c739b3b69a2839",
+      "git_blob_sha256": "1735d26673f3119c220fb41a23ddd69bc41813500e5e5fd97e2fd76de5b4286f",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_import_does_not_replace_global_sqlite_connect",
+        "test_init_db_fetches_backup_when_local_data_is_missing",
+        "test_init_db_halts_without_private_backup_remote",
+        "test_init_db_halts_when_remote_backup_fetch_fails",
+        "test_init_db_halts_when_remote_backup_is_invalid",
+        "test_init_db_creates_tables",
+        "test_sqlite_pragmas_applied",
+        "test_user_xp_update_and_get",
+        "test_music_settings_and_favorites",
+        "test_favorites_are_shared_by_user_across_guilds",
+        "test_backup_database_to_sql",
+        "test_backup_without_encryption_key_preserves_previous_backup",
+        "test_backup_generation_failure_preserves_previous_backup",
+        "test_invalid_sql_dump_preserves_previous_backup",
+        "test_restore_from_encrypted_backup",
+        "test_restore_with_wrong_key_does_not_publish_unreadable_database",
+        "test_restore_supports_legacy_field_encrypted_sql_backup"
+      ]
+    },
+    {
+      "path": "tests/test_leveling_core.py",
+      "checkout_sha256": "2f7a5bde209e70ac47a20e32d8b0142c88053d3c864e4e7b84f0da7ef8c1d044",
+      "git_blob_sha256": "9d2edd347eb8d8227d963920c8d93c072d90cd824f880ac5e6c5effdcbc7887c",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_calculate_jamo_length",
+        "test_get_required_xp",
+        "test_on_message_xp_gain"
+      ]
+    },
+    {
+      "path": "tests/test_log_agent.py",
+      "checkout_sha256": "d16e89e016336b8a214ae8931958d9633088bc059100558d8b13505403a2901d",
+      "git_blob_sha256": "68612f409d67488ffeffa7e394be2c66de3016a41b79f1fc24e5d6288768f511",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_discord_log_policy_reports_project_warning_and_all_errors",
+        "test_discord_log_policy_deduplicates_identical_records",
+        "test_discord_log_handler_emit",
+        "test_discord_log_handler_truncation",
+        "test_watch_close_button_rejects_non_master_user",
+        "test_watch_close_button_closes_session",
+        "test_watch_session_control_is_sent_to_private_log_channel",
+        "test_setup_logging_preserves_foreign_handlers",
+        "test_on_ready_adds_one_discord_handler_across_reconnects"
+      ]
+    },
+    {
+      "path": "tests/test_main_bot.py",
+      "checkout_sha256": "1189205c5ed509a51acf34bfcd078020bf097e80f5baee602a6babb4e9a25ce5",
+      "git_blob_sha256": "26fd1c6429ca142c512d2dfd72ae6bd9fd51ab11d32ecf57e2ba3d51c958a851",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_bot_initialization_and_intents",
+        "test_setup_hook_loads_extensions",
+        "test_setup_hook_stops_before_services_when_db_fails"
+      ]
+    },
+    {
+      "path": "tests/test_music_agent.py",
+      "checkout_sha256": "9667d84fe14c6c31c814a4dfc2497c5b3875b2466d2c2accef14df0152b7fa18",
+      "git_blob_sha256": "27381bae0556045fbb911b85cbdbf81b064a831bdf1a402d9c3085028e6fd40a",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_music_agent_initialization",
+        "test_get_tts_filepath",
+        "test_cog_unload_delegates_snapshot_and_cleanup",
+        "test_on_ready_restores_complete_music_session",
+        "test_toggle_auto_play_off_cancels_pending_lookup",
+        "test_favorites_add_path_can_cancel_autoplay_without_error",
+        "test_skip_cancels_pending_playback_retry_without_stopping_voice"
+      ]
+    },
+    {
+      "path": "tests/test_music_core.py",
+      "checkout_sha256": "616dd3386e4c1a08cce1e4f97fb42a9ae1a0748f8fa0bee9be09d5508110df2c",
+      "git_blob_sha256": "82a2a826e44cdb158658839078deb0bb93c5aea229d74b5ede7485ac43d31d48",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_music_state_initialization",
+        "test_normalize_title",
+        "test_volume_transformer_exposes_wrapped_ffmpeg_error",
+        "test_volume_transformer_detects_delayed_ffmpeg_failure_at_eof",
+        "test_volume_transformer_does_not_fail_for_clean_ffmpeg_exit",
+        "test_volume_transformer_treats_ffmpeg_eof_timeout_as_failure",
+        "test_playback_error_requeues_song_for_fresh_extraction",
+        "test_second_playback_failure_uses_longer_backoff",
+        "test_playback_loop_waits_for_retry_deadline",
+        "test_pending_retry_can_be_skipped_immediately",
+        "test_pending_retry_selection_ignores_loop_mode_changes",
+        "test_active_download_preparation_can_be_skipped",
+        "test_play_loop_uses_prepared_backend_media",
+        "test_third_playback_error_skips_song_and_notifies_channel",
+        "test_cleanup_waits_for_all_background_tasks",
+        "test_cleanup_keeps_final_ui_update_for_user_disconnect",
+        "test_ui_update_burst_is_coalesced",
+        "test_cancel_autoplay_task_is_safe_and_idempotent",
+        "test_cancelled_autoplay_task_cannot_clear_new_task_reference"
+      ]
+    },
+    {
+      "path": "tests/test_music_playback.py",
+      "checkout_sha256": "8577b84445c946322be254c75be8c48e71bc9fa24207344522b77f37e7506ee4",
+      "git_blob_sha256": "8577b84445c946322be254c75be8c48e71bc9fa24207344522b77f37e7506ee4",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_direct_backend_preserves_headers_and_seek",
+        "test_download_command_uses_exempt_client_without_url_in_argv",
+        "test_download_backend_reuses_completed_cache_and_supports_seek",
+        "test_cache_cleanup_removes_oldest_files_over_limit",
+        "test_discard_removes_only_requested_song_cache",
+        "test_download_falls_back_from_web_embedded_to_android_vr",
+        "test_backend_factory_can_roll_back_to_direct"
+      ]
+    },
+    {
+      "path": "tests/test_music_state_store.py",
+      "checkout_sha256": "00304a407dba6b68ea4666caed230d2832be1d4dbb3eb2c263db28853a2e5ffb",
+      "git_blob_sha256": "9bceb7e12067fb01cf437129601b4e1efc6b2d64fd063a722e76ea777fb8c478",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_store_preserves_existing_json_contract_and_loads_once",
+        "test_failed_write_preserves_previous_snapshot",
+        "test_invalid_json_is_kept_for_diagnosis",
+        "test_empty_states_remove_previous_valid_snapshot",
+        "test_empty_states_keep_invalid_snapshot_for_diagnosis"
+      ]
+    },
+    {
+      "path": "tests/test_music_ui.py",
+      "checkout_sha256": "caa3d6a6e37c0e4b3a2b826f91f269a5d08a2e7117c12d7199492929435f0f8b",
+      "git_blob_sha256": "e4ce01957a609bf0a95e78701592f3109a926ccbef4f6a859783e830a63abf0d",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_search_select_initialization",
+        "test_queue_management_view_initialization",
+        "test_music_player_view_initialization"
+      ]
+    },
+    {
+      "path": "tests/test_music_utils.py",
+      "checkout_sha256": "7a1d4dd1200e7b5b48f6e19d9b30f9da4e21a7c1ae4b92a3a8ecb8c1a70caaf3",
+      "git_blob_sha256": "2833f7450cb8f16ed4fd59d19568ebc2c0fef9e8e98699252947a0de5fda81fd",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_url_regex",
+        "test_song_initialization",
+        "test_song_to_embed",
+        "test_loop_mode",
+        "test_extract_info_uses_fresh_ytdlp_session",
+        "test_ytdlp_options_use_mweb_po_token_provider_when_available",
+        "test_ytdlp_options_fall_back_when_po_provider_files_are_missing",
+        "test_extract_info_falls_back_after_po_token_generation_failure",
+        "test_ytdlp_runtime_status_accepts_deno_and_ejs",
+        "test_music_states_io"
+      ]
+    },
+    {
+      "path": "tests/test_pot_provider_script.py",
+      "checkout_sha256": "352563fcc02f3e4ffadb0bc58530fd6bc10aa6f36d2208db73d97361e1d69499",
+      "git_blob_sha256": "352563fcc02f3e4ffadb0bc58530fd6bc10aa6f36d2208db73d97361e1d69499",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_provider_install_is_version_pinned_and_atomic",
+        "test_provider_install_verifies_deno_script_with_cache_permissions",
+        "test_provider_install_does_not_leave_archived_versions"
+      ]
+    },
+    {
+      "path": "tests/test_summarizer_agent.py",
+      "checkout_sha256": "dc974bd131c32a0fc988d80d39dc90da82fcac8da34a2ffcf9021325b30925e9",
+      "git_blob_sha256": "1f0b70c813c33c136a985202a13ddbb7c22ff77fa5d8911367acb8db55d186c2",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_initialize_gemini_client_uses_supported_sdk",
+        "test_gemini_summary_uses_async_supported_sdk",
+        "test_close_gemini_client_releases_async_resources"
+      ]
+    },
+    {
+      "path": "tests/test_summary_listeners.py",
+      "checkout_sha256": "7059acb8ad22322c100c24a0fa6d29861e373c156824f472125eaee9a35e6984",
+      "git_blob_sha256": "e0ebbb0f954f7c1e0e40837a362058576c13e225bfcfc08e82060f4b3d5c6143",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_on_message_adds_to_log",
+        "test_prune_old_messages",
+        "test_execute_summary_no_messages",
+        "test_prune_loop_follows_cog_lifecycle"
+      ]
+    },
+    {
+      "path": "tests/test_system_integrity.py",
+      "checkout_sha256": "e25ce8448e26996476830d180a7507f7c68624f862094bce2f98d6458e205021",
+      "git_blob_sha256": "029a652faa1519f2f0564277d24359bae425dca0317b503078c1ff5e865a5b83",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_database_manager_import",
+        "test_cog_modules_import",
+        "test_extension_loading"
+      ]
+    },
+    {
+      "path": "tests/test_watch_together.py",
+      "checkout_sha256": "5356f7753a5d8d7cd201e622313c79bb4be220a1e9a03e39995acf7db384e49d",
+      "git_blob_sha256": "4d0301dd3681fa771fb740e05e5af2cfad64d8fe0153795eb9109664b43a73bd",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_watch_db_operations",
+        "test_watch_server_endpoints",
+        "test_watch_server_self_destruct",
+        "test_admin_close_disconnects_users_and_removes_session",
+        "test_stale_sessions_can_be_listed_for_startup_cleanup",
+        "test_watch_agent_cleans_only_stale_sessions_once",
+        "test_watch_creation_sends_private_admin_control",
+        "test_watch_playlist_rejects_non_youtube_urls",
+        "test_watch_player_renders_playlist_without_dynamic_inner_html"
+      ]
+    },
+    {
+      "path": "tests/characterization/test_discord_contracts.py",
+      "checkout_sha256": "7fdf2aa149fd80b2136b073c8799f8efea3da95062e2a59146fa697c39d16a4d",
+      "git_blob_sha256": "7fdf2aa149fd80b2136b073c8799f8efea3da95062e2a59146fa697c39d16a4d",
+      "git_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "kind": "v1_only_test",
+      "tests": [
+        "test_f003_fr003_preserve_eight_slash_command_signatures",
+        "test_f044_fr007_preserve_mention_only_default_help_contract",
+        "test_f008_fr003_fr010_preserve_summary_publicness_and_unready_error",
+        "test_f012_fr003_fr010_preserve_play_is_private_and_unready_error",
+        "test_f031_f032_fr033_preserve_profile_and_ranking_publicness",
+        "test_f033_f034_fr005_fr010_preserve_birthday_master_error_contract",
+        "test_f035_fr003_fr010_fr036_preserve_birthday_list_publicness",
+        "test_f034_fr005_fr010_fr034_preserve_birthday_delete_result_contract",
+        "test_f003_fr004_fr010_correct_command_error_uses_one_private_responder"
+      ]
+    }
+  ],
+  "completed_utc": "2026-10-18T08:10:47.7500830Z",
+  "retired_mixed_cases": [
+    {
+      "path": "tests/characterization/test_component_contracts.py",
+      "test": "test_f009_f010_fr028_fr029_preserve_summary_components",
+      "source_sha256": "a760b4e1d37942be191b52110e28c2e98b135badfe22d9d303f7e05e0af08e4c",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8"
+    },
+    {
+      "path": "tests/characterization/test_component_contracts.py",
+      "test": "test_f002_f003_f037_f042_fr005_fr038_fr043_preserve_watch_admin_components",
+      "source_sha256": "a760b4e1d37942be191b52110e28c2e98b135badfe22d9d303f7e05e0af08e4c",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8"
+    },
+    {
+      "path": "tests/characterization/test_summary_contracts.py",
+      "test": "test_f008_fr027_fr030_preserve_summary_success_is_public",
+      "source_sha256": "d7e7d308e7bc0d313de8a14e687ccc812a0f088870775c7413c114e820549c7a",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8"
+    },
+    {
+      "path": "tests/characterization/test_summary_contracts.py",
+      "test": "test_f008_fr010_fr027_preserve_summary_empty_and_failure_are_private",
+      "source_sha256": "d7e7d308e7bc0d313de8a14e687ccc812a0f088870775c7413c114e820549c7a",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8"
+    },
+    {
+      "path": "tests/characterization/test_watch_contracts.py",
+      "test": "test_f038_f040_fr039_preserve_watch_http_paths_and_payload",
+      "source_sha256": "e82f74655e316654ce2f404f05c51c43cf4477b45825523304b0188a023924af",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8"
+    },
+    {
+      "path": "tests/characterization/test_watch_contracts.py",
+      "test": "test_f037_fr003_fr010_fr038_preserve_watch_command_publicness_and_unready_error",
+      "source_sha256": "e82f74655e316654ce2f404f05c51c43cf4477b45825523304b0188a023924af",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8"
+    },
+    {
+      "path": "tests/characterization/test_watch_contracts.py",
+      "test": "test_f039_fr040_fr041_preserve_websocket_join_protocol",
+      "source_sha256": "e82f74655e316654ce2f404f05c51c43cf4477b45825523304b0188a023924af",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8"
+    },
+    {
+      "path": "tests/characterization/test_watch_contracts.py",
+      "test": "test_f039_fr040_preserve_websocket_relay_types",
+      "source_sha256": "e82f74655e316654ce2f404f05c51c43cf4477b45825523304b0188a023924af",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8"
+    },
+    {
+      "path": "tests/characterization/test_watch_contracts.py",
+      "test": "test_f039_fr040_preserve_invalid_websocket_session_close_code",
+      "source_sha256": "e82f74655e316654ce2f404f05c51c43cf4477b45825523304b0188a023924af",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8"
+    },
+    {
+      "path": "tests/characterization/test_watch_contracts.py",
+      "test": "test_f041_fr042_preserve_thirty_and_five_second_lifecycle_fake_clock",
+      "source_sha256": "e82f74655e316654ce2f404f05c51c43cf4477b45825523304b0188a023924af",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8"
+    },
+    {
+      "path": "tests/characterization/test_watch_contracts.py",
+      "test": "test_f041_fr042_preserve_last_disconnect_schedules_five_second_grace",
+      "source_sha256": "e82f74655e316654ce2f404f05c51c43cf4477b45825523304b0188a023924af",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8"
+    }
+  ],
+  "preserved_v2_correct_cases": [
+    "tests/characterization/test_component_contracts.py::test_f010_f013_f022_f025_fr021_correct_components_paginate_without_data_loss",
+    "tests/characterization/test_component_contracts.py::test_f010_fr029_correct_summary_topics_paginate_with_stable_ids",
+    "tests/characterization/test_summary_contracts.py::test_f008_fr030_correct_summary_denies_requester_without_source_acl",
+    "tests/characterization/test_summary_contracts.py::test_f008_fr030_correct_summary_total_timeout_is_bounded",
+    "tests/characterization/test_summary_contracts.py::test_f008_fr030_correct_summary_concurrency_is_one",
+    "tests/characterization/test_summary_contracts.py::test_f008_fr010_fr030_correct_summary_parse_error_is_private_and_redacted",
+    "tests/characterization/test_summary_contracts.py::test_f008_fr030_correct_summary_waiting_queue_capacity_is_four",
+    "tests/characterization/test_watch_contracts.py::test_f037_fr004_fr038_correct_watch_commits_before_invite",
+    "tests/characterization/test_watch_contracts.py::test_f037_fr004_fr010_correct_watch_failure_uses_single_responder"
+  ],
+  "source_recovery": "All 45 files were checked against the local Git commit before deletion; CRLF normalization was the only checkout difference.",
+  "excluded": "No actual data, SQL backups, credentials, ignored caches, historical reports, Git objects or installed release was removed."
+}

@@ -1,0 +1,296 @@
+"""Explicit Music lifecycle for Discord composition; importing starts nothing."""
+import asyncio
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any
+from uuid import uuid4
+
+from discordbot.music.adapters.audio import DiscordAudio
+from discordbot.music.adapters.cache import DiskCache
+from discordbot.music.adapters.discord_ui import MusicController, build_dashboard, dashboard_embed
+from discordbot.music.adapters.processes import ProcessPool
+from discordbot.music.adapters.providers import CachedMediaLibrary, YtDlpProvider
+from discordbot.music.adapters.snapshots import SnapshotStore
+from discordbot.music.application.actor import MusicActor
+from discordbot.music.domain.model import Bounds
+from discordbot.platform.errors import ShutdownError, CapacityError, ConflictError
+from discordbot.platform.tasks import require_tasks_stopped, TaskSpec, TaskSupervisor
+from discordbot.storage.ports.contracts import DatabaseRequest
+
+
+class Sleeper:
+    async def sleep(self, seconds: float) -> None:
+        await asyncio.sleep(seconds)
+
+
+class MusicResource:
+    name = "music"
+    required = False
+    startup_cleanup_complete = False
+
+    def __init__(self, bot: Any, repository: Any, clock: Any, executor: Any, *, cache_path: Path,
+                 snapshot_path: Path, channels: dict[int, int], master: int, bounds: Bounds = Bounds(),
+                 provider: Any = None, library: Any = None, audio_factory: Any = None,
+                 direct_until: float | None = None, tts_enabled: bool = True,
+                 fail_fast: bool | Callable[[], bool] = False,
+                 full_sweep: bool | Callable[[], bool] = False) -> None:
+        if len(channels) > bounds.actors:
+            raise CapacityError("Music configured guild capacity exceeded")
+        self.bot, self.repository, self.clock, self.executor = bot, repository, clock, executor
+        self.channels, self.bounds = dict(channels), bounds
+        self.supervisor = TaskSupervisor(capacity=96, history_capacity=256, clock=clock)
+        self.processes = ProcessPool(self.supervisor)
+        self.ffmpeg = ProcessPool(self.supervisor, active=bounds.actors, waiting=0)
+        self.cache = DiskCache(cache_path, executor, clock)
+        self.snapshots = SnapshotStore(snapshot_path, executor, guilds=bounds.actors)
+        self.provider = provider or YtDlpProvider(self.processes)
+        self.library = library or CachedMediaLibrary(self.cache, self.processes, direct_until=direct_until)
+        self.tts_enabled = tts_enabled
+        self.fail_fast = fail_fast
+        self.full_sweep = full_sweep
+        self.audio_factory = audio_factory or (lambda guild: DiscordAudio(bot, guild, self.ffmpeg))
+        self.actors: dict[int, MusicActor] = {}
+        self.messages: dict[int, Any] = {}
+        self.dashboard_views: dict[int, Any] = {}
+        self._dashboard_locks = {guild: asyncio.Lock() for guild in channels}
+        self._dashboard_revisions: dict[int, int] = {}
+        self._cleaned_sessions: dict[int, str | None] = {}
+        self._lock = asyncio.Lock()
+        self._dirty: dict[int, Any] = {}
+        self._refresh_task = self._tick_task = None
+        self.controller = MusicController(self.actor, repository, clock, channels, master)
+        self.started = self.closed = self.restoring = False
+        self._stopping = False
+        self.error: str | None = None
+        self.failed_restore: set[int] = set()
+        self.cog = None
+
+    def _spawn(self, name: str, operation: Any, seconds: float = 60):
+        identity = uuid4().hex
+        return self.supervisor.start(TaskSpec("music."+name, "music.runtime", identity, identity, seconds), operation)
+
+    async def actor(self, guild: int) -> MusicActor:
+        async with self._lock:
+            if self.closed or self._stopping or guild not in self.channels or guild in self.failed_restore:
+                raise ConflictError("Music guild is unavailable")
+            if guild not in self.actors:
+                if len(self.actors) >= self.bounds.actors:
+                    raise CapacityError("Music actor capacity exhausted")
+                volume = await self.repository.get_volume(guild, DatabaseRequest.within(3))
+                self.actors[guild] = MusicActor(guild, supervisor=self.supervisor, clock=self.clock,
+                    sleeper=Sleeper(), provider=self.provider, library=self.library, audio=self.audio_factory(guild),
+                    repository=self.repository, text_channel_id=self.channels[guild], volume=.5 if volume is None else volume,
+                    bounds=self.bounds, changed=self.changed, fail_fast=self.fail_fast, full_sweep=self.full_sweep)
+            return self.actors[guild]
+
+    def changed(self, state: Any) -> None:
+        if self.closed or self._stopping or self.restoring or state.guild_id in self.failed_restore:
+            return
+        self._dirty[state.guild_id] = state
+        if self._refresh_task is None:
+            self._refresh_task = self._spawn("dashboard-checkpoint", self._refresh)
+
+    async def _refresh(self) -> None:
+        try:
+            await asyncio.sleep(.25)
+            pending, self._dirty = self._dirty, {}
+            for guild, state in pending.items():
+                try:
+                    await self.snapshots.save(state)
+                except Exception:
+                    self.error = "checkpoint_failed"
+                try:
+                    await self.dashboard(guild, state)
+                except Exception:
+                    self.error = "dashboard_failed"
+        finally:
+            self._refresh_task = None
+            if self._dirty and not self.closed and not self._stopping:
+                self._refresh_task = self._spawn("dashboard-checkpoint", self._refresh)
+
+    async def dashboard(self, guild: int, state: Any) -> None:
+        async with self._dashboard_locks[guild]:
+            actor = self.actors.get(guild)
+            if actor is not None:
+                state = actor.projection()
+            if state.revision < self._dashboard_revisions.get(guild, -1):
+                return
+            await self._publish_dashboard(guild, state)
+            self._dashboard_revisions[guild] = state.revision
+
+    async def _publish_dashboard(self, guild: int, state: Any) -> None:
+        channel = self.bot.get_channel(self.channels[guild])
+        if channel is None or channel.guild.id != guild:
+            raise ConflictError("Music dashboard channel unavailable")
+        top = await self.repository.list_play_counts(guild, DatabaseRequest.within(3), limit=3)
+        view = build_dashboard(self.controller, state, top)
+        old_view = self.dashboard_views.get(guild)
+        previous_message = self.messages.get(guild)
+        try:
+            async with asyncio.timeout(5):
+                message = self.messages.get(guild)
+                if message is None:
+                    async for candidate in channel.history(limit=50):
+                        if candidate.author.id == self.bot.user.id and candidate.embeds:
+                            message = candidate
+                            break
+                # Keep the displayed controls dispatchable during HTTP/rate-limit
+                # waits. The SDK installs replacement callbacks after delivery.
+                if message:
+                    try:
+                        await message.edit(embed=dashboard_embed(state), view=view)
+                    except Exception as error:
+                        if getattr(error, "status", None) != 404:
+                            view.stop()
+                            raise
+                        message = None
+                new_dashboard = message is None
+                if message is None:
+                    message = await channel.send(embed=dashboard_embed(state), view=view)
+                # Stopping the old view removes shared message/custom_id entries.
+                # Retire and re-register through the public SDK synchronously, so
+                # there is no event-loop turn without a live callback owner.
+                if old_view:
+                    old_view.stop()
+                self.bot.add_view(view, message_id=message.id)
+                self.messages[guild] = message
+                self.dashboard_views[guild] = view
+                # Preserve dashboard/pinned messages and bounded jukebox cleanup.
+                new_track = state.session_id is not None and self._cleaned_sessions.get(guild) != state.session_id
+                if channel.permissions_for(channel.guild.me).manage_messages and (new_dashboard or new_track):
+                    await channel.purge(limit=100, check=lambda item: item.id != message.id and not item.pinned
+                                        and (new_track or item.author.id == self.bot.user.id))
+                self._cleaned_sessions[guild] = state.session_id
+        finally:
+            if self.dashboard_views.get(guild) is not view:
+                view.stop()
+                if old_view and not old_view.is_finished() and previous_message is not None:
+                    self.bot.add_view(old_view, message_id=previous_message.id)
+
+    async def ready(self) -> None:
+        if self.closed or self._stopping: return
+        for guild in self.channels:
+            if guild in self.failed_restore: continue
+            actor = await self.actor(guild)
+            self.changed(actor.projection())
+
+    def _schedule_tick(self) -> None:
+        if self.closed or self._stopping or self._tick_task is not None: return
+        async def tick():
+            try:
+                await asyncio.sleep(10)
+                await self.cache.cleanup()
+                await self.ready()
+            finally:
+                self._tick_task = None
+                if not self.closed and not self._stopping: self._schedule_tick()
+        self._tick_task = self._spawn("periodic-checkpoint-cache", tick, 30)
+
+    async def start(self) -> None:
+        if self.started: return
+        if self.closed or self._stopping: raise ConflictError("Music resource closed")
+        try:
+            await self.cache.start()
+            self.restoring = True
+            records, failed = await self.snapshots.records()
+            self.failed_restore.update(failed)
+            for record in records:
+                try:
+                    actor = await self.actor(record.guild_id)
+                    await actor.ask("restore", identity=record.identity, data=record.data,
+                                    session_id=record.session_id, revision=record.revision, paused=record.paused)
+                    # Retain source until actor ACK. The next checkpoint replaces
+                    # the acknowledged source atomically; no crash deletion gap.
+                    if record.data.get("voice_channel_id"):
+                        await actor.ask("connect", channel_id=record.data["voice_channel_id"])
+                    await self.snapshots.save(actor.projection())
+                except Exception:
+                    self.failed_restore.add(record.guild_id)
+                    self.error = "restore_guild_failed"
+            self.restoring = False
+            self.cog = build_music_cog(self)
+            await self.bot.add_cog(self.cog)
+            self.started = True
+            self._schedule_tick()
+        except BaseException:
+            await self.stop()
+            self.startup_cleanup_complete = (
+                not self.supervisor.snapshot().active
+                and not self.processes.children and not self.ffmpeg.children
+                and self.executor.admitted == 0
+                and self.error not in {"cog_removal_failed", "actor_close_failed", "shutdown_checkpoint_failed"}
+            )
+            raise
+
+    async def stop(self) -> None:
+        if self.closed:
+            return
+        if getattr(self, "_stopping", False):
+            raise ShutdownError("Music cleanup already incomplete")
+        self._stopping = True
+        await self.controller.stop()
+        if self.cog:
+            await self.bot.remove_cog(self.cog.qualified_name)
+            self.cog = None
+        for task in (self._tick_task, self._refresh_task):
+            if task:
+                task.cancel()
+        await asyncio.gather(*(task for task in (self._tick_task, self._refresh_task) if task),
+                             return_exceptions=True)
+        # The enclosing lifecycle retains this coroutine if any actor resists.
+        for guild, actor in self.actors.items():
+            if guild not in self.failed_restore:
+                try:
+                    await self.snapshots.save(actor.projection())
+                except Exception as exc:
+                    self.error = "shutdown_checkpoint_failed"
+                    raise ShutdownError("Music checkpoint failed") from exc
+            await actor.close()
+        require_tasks_stopped(await self.supervisor.shutdown(grace_seconds=2))
+        for view in self.dashboard_views.values():
+            view.stop()
+        await self.processes.close()
+        await self.ffmpeg.close()
+        await self.cache.close()
+        self.closed = True
+        self.startup_cleanup_complete = True
+
+
+def build_music_cog(resource: MusicResource) -> Any:
+    import discord
+    from discord import app_commands
+    from discord.ext import commands
+    class MusicCog(commands.Cog):
+        @app_commands.command(name="재생", description="유튜브 링크나 검색어로 노래를 재생하고, 봇을 음성 채널로 자동 초대합니다.")
+        async def play(self, interaction: discord.Interaction, 검색어: str):
+            await resource.controller.request(interaction, 검색어)
+
+        @commands.Cog.listener()
+        async def on_ready(self): await resource.ready()
+
+        @commands.Cog.listener()
+        async def on_message(self, message): await resource.controller.message(message)
+
+        @commands.Cog.listener()
+        async def on_voice_state_update(self, member, before, after):
+            guild = member.guild.id
+            actor = resource.actors.get(guild)
+            if actor is None: return
+            if member.id == resource.bot.user.id:
+                if before.channel and not after.channel:
+                    await actor.ask("disconnected")
+                elif after.channel:
+                    await actor.ask("connect", channel_id=after.channel.id)
+                    if not before.channel:
+                        await actor.ask("bot_join", enabled=resource.tts_enabled)
+                return
+            state = actor.projection()
+            if not state.voice_channel_id: return
+            channel = resource.bot.get_channel(state.voice_channel_id)
+            if after.channel == channel and before.channel != channel:
+                name = member.display_name
+                name = name[:10]+"..." if len(name)>10 else name
+                await actor.ask("tts", text=f"{name}님이 입장하셨습니다.", enabled=resource.tts_enabled)
+            if before.channel == channel or after.channel == channel:
+                await actor.ask("members", channel_id=channel.id, count=sum(not item.bot for item in channel.members))
+    return MusicCog()

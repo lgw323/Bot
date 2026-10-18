@@ -1,0 +1,19 @@
+--- a/docs/rebuild/current/final-audit-document-index.md
++++ b/docs/rebuild/current/final-audit-document-index.md
+@@ -268,3 +268,16 @@
+   contract FAIL/0 SKIP; historical/current RED plus healthy controls. No live claim.
+ - M1/M2/M3 CLOSED and unaffected evidence preserved; A9 separately BLOCKED.
+   Latest routing: active-state BF and Phase8 ledger row. STOP for separate remediation.
++
++## A8R4 scoped backup freshness remediation - 2026-10-04
++
++- [A8R4 report](../final-audit/a8r4-backup-freshness-report.md): local remediation PASS;
++  M4 pending independent verification and Phase8 stays FAIL. Existing unknown age -1/RPO 1
++  replaces stale safe telemetry on terminal/unavailable sampling; H2 remains unchanged.
++- [Entry inventory](../final-audit/a8r4-entry-inventory.json),
++  [numeric evidence](../final-audit/a8r4-freshness-evidence.json), original unchanged RED/GREEN
++  and focused/full receipts are linked from the report. Thirty new synthetic regressions;
++  historical negative control stays RED, prior M1-M3 closures and A9 BLOCKED retained.
++- Latest routing: active-state BG and Phase8 ledger row. All70 inherited contents retained;
++  this inherited untracked index receives only a committed appendix patch. No independent
++  verification, deployment, production action or A9 campaign starts here.
