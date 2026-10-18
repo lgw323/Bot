@@ -9,6 +9,7 @@ from discordbot.music.adapters.runtime import MusicResource
 from discordbot.music.adapters.sqlite_repository import SqliteMusicRepository
 from discordbot.operations.adapters.hosting import DeferredMusic, Gateway, Servers, TelemetryDrain, health_app, server
 from discordbot.operations.adapters.probe import Probe
+from discordbot.operations.adapters.discord_logging import DiscordLogging
 from discordbot.platform.clock import SystemClock, Uuid4Generator
 from discordbot.platform.tasks import TaskSupervisor
 from discordbot.storage.adapters.execution import DatabaseConfig, SqliteDatabase
@@ -29,6 +30,7 @@ class DiscordFeatures:
         self.runtime = None
         self.started = []
         self.music = self.deferred = self.summary = None
+        self.logs = None
 
     async def start(self):
         s, r = self.settings, self.runtime
@@ -45,7 +47,10 @@ class DiscordFeatures:
             fail_fast=lambda: Path('/run/discordbot-live-smoke').is_file(),
             full_sweep=lambda: full_sweep_active(self.config.release))
         self.deferred = DeferredMusic(self.music, self.bot, r.supervisor)
-        for resource in (engagement, self.summary, watch, Gateway(self.bot, s.secrets.discord_token), self.deferred):
+        self.logs = (DiscordLogging(self.bot, s.log_channel, self.clock, r.supervisor)
+                     if s.log_channel is not None else None)
+        resources = (engagement, self.summary, watch, Gateway(self.bot, s.secrets.discord_token), self.deferred)
+        for resource in (*resources, *((self.logs,) if self.logs is not None else ())):
             self.started.append(resource)
             try:
                 await resource.start()
@@ -71,7 +76,8 @@ class DiscordFeatures:
         return {"music_actors": len(self.music.actors) if self.music else 0,
                 "music_cache_bytes": self.music.cache.bytes if self.music else 0,
                 "music_processes": len(self.music.processes.children) if self.music else 0,
-                "summary_waiting": self.summary.service.waiting if self.summary else 0}
+                "summary_waiting": self.summary.service.waiting if self.summary else 0,
+                **(self.logs.gauges() if self.logs is not None else {})}
 
     async def stop(self):
         while self.started:

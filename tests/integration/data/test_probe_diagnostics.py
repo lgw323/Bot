@@ -189,6 +189,61 @@ async def test_probe_cancellation_retains_worker_capacity_and_closes(database, m
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize('late_failure', [None, 'close', 'sqlite'])
+async def test_probe_deadline_recovery_requires_actual_safe_completion(database, monkeypatch, late_failure):
+    from discordbot.storage.ports.contracts import DatabaseDeadlineError
+    started, release = threading.Event(), threading.Event()
+    real_connect = execution.sqlite3.connect
+    class Connection(sqlite3.Connection):
+        def execute(self, sql, *args):
+            if sql == 'SELECT 1':
+                started.set()
+                assert release.wait(5)
+                if late_failure == 'sqlite':
+                    error = sqlite3.OperationalError('private')
+                    error.sqlite_errorcode = sqlite3.SQLITE_CORRUPT
+                    raise error
+            return super().execute(sql, *args)
+        def close(self):
+            super().close()
+            if late_failure == 'close':
+                raise OSError(errno.EIO, 'private')
+    monkeypatch.setattr(execution.sqlite3, 'connect', lambda *a, **k: real_connect(*a, **k, factory=Connection))
+    task = asyncio.create_task(database.probe(DatabaseRequest.within(.1)))
+    try:
+        assert await asyncio.to_thread(started.wait, 3)
+        with pytest.raises(DatabaseDeadlineError):
+            await task
+        assert database.admitted[0] == 1 and not database.probe_recovery_safe
+    finally:
+        release.set()
+        await asyncio.gather(task, return_exceptions=True)
+    # Executor barrier only, without another connection that could replace the evidence.
+    await database._reader.run(lambda: None)
+    assert database.probe_recovery_safe is (late_failure is None)
+
+
+@pytest.mark.asyncio
+async def test_queued_probe_deadline_releases_without_opening_a_connection(database, monkeypatch):
+    from discordbot.storage.ports.contracts import DatabaseDeadlineError
+    started, release = threading.Event(), threading.Event()
+    def occupy_reader():
+        started.set()
+        assert release.wait(5)
+    occupied = asyncio.create_task(database._reader.run(occupy_reader))
+    monkeypatch.setattr(execution.sqlite3, 'connect', lambda *a, **k: pytest.fail('cancelled queued probe opened DB'))
+    try:
+        assert await asyncio.to_thread(started.wait, 3)
+        with pytest.raises(DatabaseDeadlineError):
+            await database.probe(DatabaseRequest.within(.05))
+        assert database.admitted[0] == 1 and not database.probe_recovery_safe
+    finally:
+        release.set()
+        await occupied
+    assert database.admitted[0] == 0 and database.probe_recovery_safe
+
+
+@pytest.mark.asyncio
 async def test_actual_shared_cache_schema_lock_is_locked_and_stays_hard(database, monkeypatch):
     from discordbot.operations.adapters.probe_policy import ProbePolicy
     real_connect = execution.sqlite3.connect

@@ -568,3 +568,18 @@
 - Carry one validated, environment-bound destination through configuration, publication, readback and download. Preserve explicit production opt-in and local-only null; reject staging-to-production selections and duplicate config keys.
 - Add an exact source-reviewed isolated-recipient allowlist, empty pending a distinct approved private repository; preserve SSH, archive, retention, restore and deadline protections.
 - Local synthetic validation only. Runtime A9 remains BLOCKED B1/B2/B3/D1; changed runtime bytes require a new reviewed candidate identity before any execution.
+
+## 2026-10-18 — DB readiness recovery
+
+- Continue bounded health sampling after an isolated fixed-read deadline only after actual safe reader drain; require two fresh successes to recover. Pending BUSY and terminal/late cleanup failures remain hard. No business-write retry, schema or Music checkpoint change.
+- Validation: focused probe, telemetry, runtime and temporary SQLite regressions; original production timeout cause remains unknown.
+
+## 2026-10-18 — Discord operational notifications
+
+- Add optional, independently configured connected/start and warning/error notifications with safe summaries, bounded delivery, stable nonce and optional-worker isolation. The main config stays compatible with rollback.
+- Validation: offline fake-Discord and production-configuration regressions. No live delivery is inferred from these tests; Watch forwarding and the old update/restart panel remain outside this change.
+
+## 2026-10-18 — Credential inspection
+
+- Discover credential source paths from actual unit/drop-in bindings instead of guessed filenames; distinguish unreadable metadata from absence.
+- Validation across the three fixes: 134 focused offline tests plus 6 production-configuration tests passed. Full-suite and deferred live campaigns were not run for this scoped remediation.

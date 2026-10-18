@@ -1,4 +1,4 @@
-"""One proven configure-stage BUSY; two healthy scheduled probes within 15 s."""
+"""Bounded BUSY tolerance and fail-closed deadline availability monitoring."""
 from collections.abc import Mapping
 
 
@@ -19,8 +19,18 @@ class ProbePolicy:
         self.pending_since: float | None = None
         self.healthy = 0
         self.hard = False
+        self.deadline_pending = False
+        self.last_deadline_success: float | None = None
 
     def failure(self, fields: Mapping[str, object], now: float, previously_ready: bool) -> str:
+        if (not self.hard and fields.get('operation') == 'select1_probe'
+                and (self.pending_since is None or self.deadline_pending)
+                and fields.get('error_code') == 'deadline_exceeded'):
+            self.deadline_pending = True
+            self.pending_since = now
+            self.healthy = 0
+            self.last_deadline_success = None
+            return 'deadline_pending'
         if (not self.hard and previously_ready and classified_busy(fields)
                 and self.pending_since is None and (self.last_busy is None or now - self.last_busy > 60)):
             self.last_busy = self.pending_since = now
@@ -32,6 +42,14 @@ class ProbePolicy:
     def success(self, now: float) -> str:
         if self.hard:
             return 'hard'
+        if self.deadline_pending:
+            if self.last_deadline_success is None or now - self.last_deadline_success >= 15:
+                self.last_deadline_success = now
+                return 'deadline_recovering'
+            self.deadline_pending = False
+            self.pending_since = None
+            self.last_deadline_success = None
+            return 'recovered'
         if self.pending_since is None:
             return 'healthy'
         if now - self.pending_since >= 15:

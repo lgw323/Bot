@@ -57,6 +57,21 @@ class Settings:
     limits: tuple[tuple[str, int], ...]
     secrets: Secrets = field(repr=False)
     backup_remote: BackupRemoteSettings | None = field(default=None, repr=False)
+    log_channel: int | None = field(default=None, repr=False)
+
+
+def load_log_channel(config: Path, service: str) -> int | None:
+    """Separate opt-in destination; old releases ignore this sibling file."""
+    if service != 'discord-bot':
+        return None
+    try:
+        value = read_json(config.with_name('logging.json'), 1024, reject_duplicates=True)
+    except FileNotFoundError:
+        return None
+    if (set(value) != {'version', 'channel_id'} or type(value['version']) is not int or value['version'] != 1
+            or type(value['channel_id']) is not int or not 0 < value['channel_id'] < 2**63):
+        raise ConfigurationError('invalid Discord logging destination')
+    return value['channel_id']
 
 
 def placeholder(value: str) -> bool:
@@ -115,6 +130,9 @@ def load_settings(path: Path, credentials: Path, service: str) -> Settings:
             raise ValueError
         if service not in {"discord-bot", "watch-web", "operations"}:
             raise ValueError
+        log_channel = load_log_channel(path, service)
+        if value['environment'] == 'production' and log_channel in {1, 2, 3, 4, 5}:
+            raise ConfigurationError('production logging placeholder refused')
         remote = backup_destination.parse(value["backup_remote"], value["environment"])
         paths = value["paths"]
         if set(paths) != {"database", "state", "cache", "backups", "audit", "release_root", "operation_lock"}:
@@ -200,7 +218,8 @@ def load_settings(path: Path, credentials: Path, service: str) -> Settings:
                         **channels, public_origin=value["public_origin"], public_port=ports["public"], control_port=ports["control"],
                         discord_health_port=ports["discord_health"], watch_health_port=ports["watch_health"],
                         gemini_model=value["gemini_model"], key_id=value["key_id"],
-                        limits=tuple(sorted(value["limits"].items())), secrets=Secrets(**secret_values), backup_remote=backup_remote)
+                        limits=tuple(sorted(value["limits"].items())), secrets=Secrets(**secret_values),
+                        backup_remote=backup_remote, log_channel=log_channel)
     except ConfigurationError:
         raise
     except (KeyError, ValueError, TypeError, OSError):

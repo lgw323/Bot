@@ -248,3 +248,28 @@ PHASE 5의 capture/retention, source ACL/privacy, bounded Gemini와 Discord Summ
 60초 전체 deadline과 active 1/waiting 4, 25개 초과 topic pagination을 적용합니다. 세부 한도와
 기존 V1 의미 차이는 [Summary 계약](rebuild/phases/phase-05/summary-contract.md)에 기록합니다.
 V1 운영 route와 실제 DB·외부 API·Pi에는 연결하지 않았습니다.
+
+## DB probe deadline recovery
+
+The readiness policy intentionally replaces the permanent stop for an
+isolated fixed-read probe deadline with unavailable-state monitoring. It keeps
+503 until the previous reader has actually drained safely and two subsequent
+probes succeed less than 15 seconds apart. This recovery state has no overall
+elapsed-time or recurrence ceiling. A deadline during pending BUSY recovery,
+corruption, late SQLite/OS/cleanup failures and other terminal failures remain
+hard; business writes are never retried. The original production timeout cause
+is unknown. The owner approved this policy change on 2026-10-18; publication does not establish deployment.
+
+## Discord operational notifications
+
+The optional Discord logging resource restores connected/start notices
+and Discord-process project warnings/all errors, including structured probe/task
+failures. It sends only allowlisted summaries, never raw message arguments,
+tracebacks, URLs, user IDs or secrets, and disables mentions. Queue32, bounded
+dedup history128, 60-second duplicate suppression, five-second application send
+spacing/timeout and at most one explicit rate-limit retry bound delivery. The
+pinned SDK's internal retries enforce a stable nonce. Discord unavailability or
+notification-worker admission failure does not fail the core bot. Journal remains
+authoritative. Watch-process forwarding and the old update/restart panel are not
+part of this narrow correction. The destination must be the verified existing log
+channel, independently configured from Watch administration.
