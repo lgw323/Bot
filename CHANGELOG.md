@@ -573,3 +573,8 @@
 
 - Continue bounded health sampling after an isolated fixed-read deadline only after actual safe reader drain; require two fresh successes to recover. Pending BUSY and terminal/late cleanup failures remain hard. No business-write retry, schema or Music checkpoint change.
 - Validation: focused probe, telemetry, runtime and temporary SQLite regressions; original production timeout cause remains unknown.
+
+## 2026-10-18 — Discord operational notifications
+
+- Add optional, independently configured connected/start and warning/error notifications with safe summaries, bounded delivery, stable nonce and optional-worker isolation. The main config stays compatible with rollback.
+- Validation: offline fake-Discord and production-configuration regressions. No live delivery is inferred from these tests; Watch forwarding and the old update/restart panel remain outside this change.

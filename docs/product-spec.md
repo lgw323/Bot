@@ -259,3 +259,17 @@ elapsed-time or recurrence ceiling. A deadline during pending BUSY recovery,
 corruption, late SQLite/OS/cleanup failures and other terminal failures remain
 hard; business writes are never retried. The original production timeout cause
 is unknown. The owner approved this policy change on 2026-10-18; publication does not establish deployment.
+
+## Discord operational notifications
+
+The optional Discord logging resource restores connected/start notices
+and Discord-process project warnings/all errors, including structured probe/task
+failures. It sends only allowlisted summaries, never raw message arguments,
+tracebacks, URLs, user IDs or secrets, and disables mentions. Queue32, bounded
+dedup history128, 60-second duplicate suppression, five-second application send
+spacing/timeout and at most one explicit rate-limit retry bound delivery. The
+pinned SDK's internal retries enforce a stable nonce. Discord unavailability or
+notification-worker admission failure does not fail the core bot. Journal remains
+authoritative. Watch-process forwarding and the old update/restart panel are not
+part of this narrow correction. The destination must be the verified existing log
+channel, independently configured from Watch administration.

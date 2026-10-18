@@ -389,3 +389,26 @@ tail -f ~/bot/data/logs/backup.log
 새 `Backup successful` 기록과 `db-backup` 브랜치의 갱신 시각을 함께 확인합니다.
 
 🎉 **설치 및 환경 세팅이 모두 완료되었습니다!** 이제 디스코드에서 봇이 온라인인지 확인하고 사용하시면 됩니다.
+
+## V2 operational notifications
+
+The optional Discord notification destination is a separate `logging.json` beside
+the main configuration (`/etc/discordbot/logging.json` in production). Use the
+`deploy/production/logging.example.json` template, replacing its placeholder with
+the verified existing V1 log channel ID as an integer. Do not infer it from the
+Watch `admin_channel`. Keep this non-secret but private selector root-owned and
+readable by the existing service group, like the main configuration; no new
+credential or unit permission is required. Deployment approval and destination
+verification precede installing this file. Absence disables the notification
+worker. Invalid contents fail closed before Discord login.
+
+The main config version/schema is unchanged; prior releases ignore the sidecar,
+so rollback does not require rewriting the main config or restoring old DB data.
+The notification resource emits one connected/start notice and bounded, redacted
+Discord-process warning/error summaries. Separate Watch-process logs and failures
+before login or during teardown remain in journal; this does not restore the V1
+update/restart control panel. The existing update/manual timers stay disabled.
+Inspect `discord_log_worker_enabled`, queue/drop/failure/delivery gauges and local
+`discord.log_delivery_failed` / `discord.log_worker_unavailable` records when
+delivery is absent. Failed notification delivery never grants access or changes
+the destination. Live delivery must be verified after an approved startup; offline tests do not establish channel visibility or send permission.
