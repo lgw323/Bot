@@ -1,5 +1,15 @@
 # P11 publication preparation — 2026-10-18
 
+## P11 closure — 2026-10-18
+
+**P11 scoped cleanup is complete: 12/12 approved old installed releases removed,
+with four protected releases intentionally retained.** V1 retirement and V2
+integration were published through [PR #8](https://github.com/lgw323/Bot/pull/8).
+The [final closure record and disposition matrix](p11-closure-status-20261018.md)
+are the compact authority for P11 status. Runtime/data/dependencies are unchanged
+by this documentation update. Unperformed tests remain unperformed, not PASS.
+Earlier preparation/pending statements below are historical checkpoints.
+
 **A normal, no-force publication is possible, but it includes existing V2 history
 as well as P11. Nothing has been staged, committed, pushed or merged.**
 
