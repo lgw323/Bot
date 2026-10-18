@@ -12,16 +12,18 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 
 
-@pytest.mark.parametrize("module", ["main_bot", "cogs.logging.log_agent"])
+@pytest.mark.parametrize("module", ["dotenv_function_canary", "dotenv_module_canary"])
 @pytest.mark.parametrize("protected", [False, True], ids=["unsafe-canary", "protected"])
 def test_collection_never_reads_repository_dotenv(
     tmp_path: Path, module: str, protected: bool,
 ) -> None:
-    # Only copy source files. Never copy the developer's configuration or data.
-    for source in [ROOT / "main_bot.py", ROOT / "database_manager.py", *ROOT.glob("cogs/**/*.py")]:
-        target = tmp_path / source.relative_to(ROOT)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(source, target)
+    # Synthetic import-time loaders exercise both dotenv import styles. No V1
+    # runtime or developer configuration is needed for the collection boundary.
+    loaders = {
+        "dotenv_function_canary": "from dotenv import load_dotenv\nload_dotenv()\n",
+        "dotenv_module_canary": "import dotenv\ndotenv.load_dotenv()\n",
+    }
+    (tmp_path / f"{module}.py").write_text(loaders[module], encoding="utf-8")
     (tmp_path / ".env").write_text("DISCORD_TOKEN=synthetic-canary\n", encoding="utf-8")
     (tmp_path / "pytest.ini").write_text("[pytest]\n", encoding="utf-8")
     # Installed before either the guard or application imports. It fails before
@@ -54,12 +56,6 @@ def too_late():
         "assert 'DISCORD_TOKEN' not in os.environ\n"
         "assert 'GOOGLE_API_KEY' not in os.environ\n"
         "assert 'MASTER_USER_ID' not in os.environ\n"
-        "if 'main_bot' in globals():\n"
-        "    import pytest\n"
-        "    from unittest.mock import patch\n"
-        "    with patch.object(main_bot, 'MyBot') as bot, patch.object(main_bot.logger, 'critical'):\n"
-        "        with pytest.raises(SystemExit): main_bot.main()\n"
-        "        bot.assert_not_called()\n"
         "Path(__file__).with_name('import-reached').write_text('reached')\n"
         "def test_collected(): pass\n", encoding="utf-8",
     )

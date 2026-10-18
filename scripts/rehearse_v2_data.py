@@ -52,7 +52,7 @@ async def check_copy(copy: Path, directory: Path) -> dict[str, object]:
     assert after.migration_version == repeated.migration_version == len(MIGRATIONS)
 
     # V1's own API is the rollback oracle. Output is never printed or serialized.
-    import database_manager as legacy
+    from compatibility.v1 import database_manager as legacy
     previous = (legacy.DB_PATH, legacy.DATA_DIR, legacy.SQL_BACKUP_PATH, legacy.db_lock)
     legacy.DB_PATH = migrated
     legacy.DATA_DIR = directory

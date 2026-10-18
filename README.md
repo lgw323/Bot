@@ -14,33 +14,22 @@
 - 링크로 입장하는 Watch Together 동시 시청방
 - 로컬 로그와 관리자 Discord 채널 오류 알림
 
-## 빠른 시작
+## 로컬 개발 시작
 
-1. `envtemplate.txt`를 참고해 프로젝트 루트에 `.env`를 준비합니다.
-2. 가상환경을 만들고 필요한 패키지를 설치합니다.
+Python 3.12 환경에서 개발 의존성을 준비한 뒤 테스트를 실행합니다.
+테스트에는 운영 `.env`나 Discord 로그인이 필요하지 않습니다.
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements-dev.txt
-```
-
-3. 전체 테스트를 실행합니다.
-
-```powershell
 python -m pytest tests/
 ```
 
-4. 봇을 실행합니다.
-
-```powershell
-python main_bot.py
-```
-
-테스트가 끝까지 실행되어 `passed`가 표시되면 현재 자동 검사 범위를 통과한
-것입니다. `FAILED`나 `ERROR`가 나타나면 실제 봇을 시작하기 전에 원인을
-확인합니다. 실제 Raspberry Pi 설치와 systemd·cron 설정은
-[운영 가이드](docs/operations.md)를 따릅니다.
+현재 실행 코드는 `src/discordbot/`의 V2입니다. 운영 시작에는 검토된 immutable
+release, release manifest, 명시적인 설정과 scoped credentials가 필요합니다.
+[운영 가이드](docs/operations.md)와 [배포 절차](deploy/runbooks/README.md)를 따릅니다.
+폐기된 루트 V1 시작 파일과 `.env` 템플릿은 현재 실행 경로가 아닙니다.
 
 ## 테스트와 데이터 보호
 
@@ -81,7 +70,9 @@ python -m pytest tests/ -W error::RuntimeWarning -W error::pytest.PytestUnraisab
 
 ## 데이터와 백업
 
-- 운영 데이터는 Git에서 제외된 `data/bot_database.db`에 저장됩니다.
+- 현재 V2 운영 데이터 경로는 명시적인 배포 설정으로 결정됩니다. 기존 V1의
+  `data/bot_database.db`와 아래 백업 설명은 호환성·복구 계약의 배경이며,
+  현재 백업·복구 명령은 [운영 절차](deploy/runbooks/README.md)를 따릅니다.
 - 최근 SQL 백업은 `DB_BACKUP_REMOTE_URL`로 지정한 별도 비공개
   [`lgw323/Bot-Data`](https://github.com/lgw323/Bot-Data) 저장소의
   `db-backup` 브랜치에 단일 커밋으로 갱신됩니다. 코드 저장소에는 DB 백업
@@ -104,13 +95,11 @@ python -m pytest tests/ -W error::RuntimeWarning -W error::pytest.PytestUnraisab
 
 | 위치 | 역할 |
 | --- | --- |
-| `main_bot.py` | 프로그램 시작, Discord 연결과 기능 모듈 로드 |
-| `database_manager.py` | SQLite 스키마, 데이터 읽기·쓰기와 SQL 백업·복구 |
-| `cogs/` | 음악, 요약, 레벨링, 생일, 로깅, Watch Together 기능 |
-| `src/discordbot/` | V2 platform·SQLite 호환 계층, Engagement·Summary·Music과 분리된 Watch process 구성; V1 운영 경로는 미전환 |
-| `scripts/` | Pi 자동 업데이트·DB 백업과 V2 데이터 사본 검증 도구 |
-| `deploy/` | V2 immutable release 도구, systemd 자산과 PHASE 9 검토용 운영 절차 |
-| `tests/` | V1 계약, V2 platform·데이터 호환성과 architecture 규칙을 확인하는 pytest 테스트 |
+| `src/discordbot/` | 현재 V2 platform, 저장소, Engagement, Summary, Music, Watch와 composition |
+| `compatibility/v1/` | 출처와 해시가 기록된 DB·Engagement·Music 비교 참조; 운영 runtime에서 import 금지 |
+| `scripts/` | 격리된 데이터 호환성 리허설과 명시적으로 선택하는 검증 도구 |
+| `deploy/` | V2 immutable release, systemd 자산과 운영 절차 |
+| `tests/` | V2 동작, 보존된 V1 비교 계약, 자격 증명 경계와 architecture 검사 |
 | `docs/` | 제품 명세, 운영 절차와 과거 작업 기록 |
 
 ## 문서 안내
@@ -129,7 +118,7 @@ python -m pytest tests/ -W error::RuntimeWarning -W error::pytest.PytestUnraisab
 V2 `src` package의 Python 3.12/setuptools build metadata는 `pyproject.toml`에 정의되어
 있습니다. V2 실행·배포 entrypoint와 systemd 자산은 구현됐으며, 실제 설치 전
 [운영 절차](deploy/runbooks/README.md)와 [PHASE 8 보고서](docs/rebuild/phases/phase-08/phase-8-report.md)를
-검토합니다. V1 운영 경로는 유지합니다. 별도의 lint, formatting, type-checking 명령은 없습니다.
+검토합니다. 루트 V1 실행 경로는 제거했으며 필요한 비교 참조만 격리해 보존합니다. 별도의 lint, formatting, type-checking 명령은 없습니다.
 
 ## Required source and installed test lanes
 

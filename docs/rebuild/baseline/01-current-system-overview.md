@@ -52,7 +52,7 @@ WordPress/CloudPanel 환경은 목표 runtime이나 비교 baseline에 포함하
 8. ready event 6개가 로그 panel, message preload, music dashboard/복원, voice XP 복원,
    stale Watch cleanup, presence 변경을 각각 수행한다.
 
-근거: [`main_bot.py`](../../../main_bot.py#L37), 특히 Cog 목록 L41–49, DB 선행 L55–58,
+근거: 원본 `main_bot.py`([Git 출처·복구 명세](../current/p11-v1-retirement-manifest-20261018.json)), 특히 Cog 목록 L41–49, DB 선행 L55–58,
 Uvicorn L59–73, extension loop L76–100, sync L102–109이다.
 
 ## 종료 순서

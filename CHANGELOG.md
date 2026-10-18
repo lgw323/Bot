@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-18 — V1 실행 경로 정리와 비교 참조 보존
+
+- Git에서 정확히 복구 가능한 V1 소스 26개와 V1 전용 테스트 19개를 제거하고,
+  혼합 characterization의 V2 검사는 유지했다. 폐기 테스트 목록과 출처는 P11 정리 기록에 남긴다.
+- 필요한 Engagement·Music 9개 참조는 DB 참조와 같은 격리 namespace에 보존했다.
+  세 파일의 절대 DB import만 바꾸고 원본·실행 SHA256과 import 전 검사를 추가했다.
+- 공통 DB fixture와 자격 증명 canary에서 기존 V1 실행 경로 의존성을 제거하고,
+  현재 README 실행 안내와 향후 source export 목록을 V2 경계에 맞췄다.
+- V2 runtime, 데이터 형식, Pi 서비스와 기존 rollback release는 변경하지 않았다.
+
 ## 2026-10-15 - Local venv alias copy remediation
 
 - Preserve venv alias payload hashes, ordinary modes and timestamps without copying privileged bits or extended attributes; retain path/link checks and deployment security restrictions.

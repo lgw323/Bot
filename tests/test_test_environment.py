@@ -1,18 +1,18 @@
 from pathlib import Path
 from typing import Dict
 
-import database_manager
+from compatibility.v1 import database_manager
 
 
 def test_database_paths_are_isolated(
-    isolated_database: Dict[str, Path],
+    isolated_v1_reference: Dict[str, Path],
 ) -> None:
     """The shared test fixture must never point at repository data files."""
     production_data_dir = (database_manager.BASE_DIR / "data").resolve()
 
-    assert database_manager.DATA_DIR == isolated_database["data_dir"]
-    assert database_manager.DB_PATH == isolated_database["db_path"]
-    assert database_manager.SQL_BACKUP_PATH == isolated_database["backup_path"]
+    assert database_manager.DATA_DIR == isolated_v1_reference["data_dir"]
+    assert database_manager.DB_PATH == isolated_v1_reference["db_path"]
+    assert database_manager.SQL_BACKUP_PATH == isolated_v1_reference["backup_path"]
     assert production_data_dir not in database_manager.DB_PATH.resolve().parents
     assert production_data_dir not in database_manager.SQL_BACKUP_PATH.resolve().parents
 

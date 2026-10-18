@@ -2,7 +2,7 @@ from datetime import date, datetime, timezone
 
 import pytest
 
-from cogs.leveling.leveling_core import calculate_jamo_length, get_required_xp
+from compatibility.v1.cogs.leveling.leveling_core import calculate_jamo_length, get_required_xp
 from discordbot.engagement.domain.policy import Progress, birthday_due, notification_date, required_xp, text_xp, valid_birthday
 
 

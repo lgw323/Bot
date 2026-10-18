@@ -4,7 +4,7 @@ import sqlite3
 import pytest
 from cryptography.fernet import Fernet
 
-import database_manager
+from compatibility.v1 import database_manager
 from discordbot.platform.errors import ConflictError, DataIntegrityError
 from discordbot.storage.adapters.backup_codec import BACKUP_HEADER
 from discordbot.storage.adapters.execution import SqliteDatabase

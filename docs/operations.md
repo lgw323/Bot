@@ -1,5 +1,16 @@
 # Raspberry Pi 배포와 운영 가이드
 
+## 현재 실행 경로와 보존된 과거 절차
+
+2026-10-18 로컬 소스 정리에서 루트 `main_bot.py`, `database_manager.py`,
+`cogs/`, V1 자동 업데이트·백업·PO-token 설치 스크립트와 `envtemplate.txt`를
+제거했습니다. 아래에 남아 있는 해당 경로, cron, `.env` 기반 예시는 과거 V1
+설치 기록이며 새 checkout에서 실행하지 않습니다. 현재 설치·배포는
+[정상 배포](../deploy/runbooks/normal-deploy.md), 복구는
+[실패 배포 롤백](../deploy/runbooks/failed-deploy-rollback.md)을 따릅니다.
+이 소스 정리는 Pi 서비스, 운영 데이터, 기존 immutable release와 rollback
+자산을 변경하지 않습니다. `compatibility/v1`은 오프라인 비교용이며 서비스로 실행하지 않습니다.
+
 본 문서는 **라즈베리파이 5** 기기에 봇을 설치하고 systemd·cron으로 운영하는
 절차만 관리합니다. 제품 의도와 데이터 정책은 `product-spec.md`, 로컬 개발과
 기능 개요는 루트 `README.md`를 참고합니다.

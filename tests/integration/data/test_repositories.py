@@ -4,7 +4,7 @@ from contextlib import closing
 
 import pytest
 
-import database_manager
+from compatibility.v1 import database_manager
 from discordbot.engagement.adapters.sqlite_repository import SqliteEngagementRepository
 from discordbot.music.adapters.sqlite_repository import SqliteMusicRepository
 from discordbot.music.ports.repository import Favorite

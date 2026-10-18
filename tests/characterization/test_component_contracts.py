@@ -4,8 +4,7 @@ from unittest.mock import MagicMock
 import discord
 import pytest
 
-from cogs.logging.log_agent import RestartControlView, WatchSessionControlView
-from cogs.music.music_ui import (
+from compatibility.v1.cogs.music.music_ui import (
     ConfirmClearView,
     FavoritesView,
     MusicPlayerView,
@@ -13,9 +12,7 @@ from cogs.music.music_ui import (
     SearchSelect,
     SearchSongModal,
 )
-from cogs.music.music_utils import LoopMode
-from cogs.summary.summary_listeners import AdvancedSummaryModal, SummaryView
-from cogs.watch_together.watch_agent import WatchTogetherJoinView
+from compatibility.v1.cogs.music.music_utils import LoopMode
 
 
 def _song(index: int) -> SimpleNamespace:
@@ -107,47 +104,6 @@ def test_f013_f025_fr012_fr020_preserve_select_modal_and_favorite_contract() -> 
         "대기열에 추가",
         "삭제 모드로 전환",
     ]
-
-
-def test_f009_f010_fr028_fr029_preserve_summary_components() -> None:
-    """Features F009/F010; FR-028/FR-029; PRESERVE."""
-    cog = MagicMock()
-    topics = [{"title": "주제 A"}, {"title": "주제 B"}]
-    view = SummaryView(6.0, topics, cog)
-    assert view.timeout == 3600
-    assert [type(item).__name__ for item in view.children] == [
-        "Button",
-        "Button",
-        "Select",
-    ]
-    assert [item.label for item in view.children[:2]] == ["새로고침", "고급 요약"]
-    assert [option.value for option in view.children[2].options] == ["0", "1"]
-
-    modal = AdvancedSummaryModal(6.0, cog)
-    assert modal.timeout == 300
-    assert [item._underlying.label for item in modal.children] == [  # type: ignore[attr-defined]
-        "포함할 키워드 (쉼표로 구분)",
-        "특정 사용자 이름 (쉼표로 구분)",
-        "추가 요청사항",
-    ]
-
-
-def test_f002_f003_f037_f042_fr005_fr038_fr043_preserve_watch_admin_components() -> None:
-    """Features F002/F003/F037/F042; FR-005/FR-038/FR-043; PRESERVE."""
-    join = WatchTogetherJoinView("https://watch.invalid/watch?session=abc")
-    assert len(join.children) == 1
-    assert join.children[0].label == "🎬 시청방 바로 입장"
-    assert join.children[0].url == "https://watch.invalid/watch?session=abc"
-
-    close = WatchSessionControlView("abc")
-    assert close.timeout == 21600
-    assert close.children[0].label == "🛑 세션 강제 종료"
-    assert close.children[0].custom_id == "log_agent:close_watch_session"
-
-    restart = RestartControlView()
-    assert restart.timeout is None
-    assert restart.children[0].label == "🔄 수동 업데이트 및 재시작"
-    assert restart.children[0].custom_id == "log_agent:restart_bot"
 
 
 def test_f022_fr016_preserve_clear_confirmation_components() -> None:

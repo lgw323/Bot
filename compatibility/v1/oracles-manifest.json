@@ -1,0 +1,77 @@
+{
+  "purpose": "Actual Engagement and Music comparison implementations; no V1 startup, logging, Summary or Watch server",
+  "oracles": [
+    {
+      "source_path": "cogs/birthday/birthday_core.py",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "source_sha256": "8ecb79a4845c52b595d081fb3789afb3ca3a8ac050c83ea70cff4cf72fb6cdf6",
+      "reference_path": "cogs/birthday/birthday_core.py",
+      "reference_sha256": "99b5808b17d692cc108ca3c1524b0d83dcfa7caf9594ed09990184448b3c9b49",
+      "adaptation": "absolute database import namespace only"
+    },
+    {
+      "source_path": "cogs/leveling/leveling_core.py",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "source_sha256": "9283e65339f919f5736d4947968264d57756780ce531604f70205c4a15145d29",
+      "reference_path": "cogs/leveling/leveling_core.py",
+      "reference_sha256": "2d5ae2df7839b88fa6c075132997720bd77238de3046506f077566ddd8da5673",
+      "adaptation": "absolute database import namespace only"
+    },
+    {
+      "source_path": "cogs/music/music_core.py",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "source_sha256": "58ba3b7161e1f482eeab50d99f47cab09714ce69b448a2983490fad1035755fd",
+      "reference_path": "cogs/music/music_core.py",
+      "reference_sha256": "58ba3b7161e1f482eeab50d99f47cab09714ce69b448a2983490fad1035755fd",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "cogs/music/music_playback.py",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "source_sha256": "48e66684ef8a6e14a046b8ded9bcac0129e1579d1988faba8eb41d35a735dbdc",
+      "reference_path": "cogs/music/music_playback.py",
+      "reference_sha256": "48e66684ef8a6e14a046b8ded9bcac0129e1579d1988faba8eb41d35a735dbdc",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "cogs/music/music_session_restorer.py",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "source_sha256": "8a40a7c1ca4e92d6b823693300227510e1535182986c8d04cd48a400d0fd4343",
+      "reference_path": "cogs/music/music_session_restorer.py",
+      "reference_sha256": "8a40a7c1ca4e92d6b823693300227510e1535182986c8d04cd48a400d0fd4343",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "cogs/music/music_state_store.py",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "source_sha256": "220ed7203ce05babb0a8c9b6b5d979e63835eed42391dd3046da6146e635215c",
+      "reference_path": "cogs/music/music_state_store.py",
+      "reference_sha256": "220ed7203ce05babb0a8c9b6b5d979e63835eed42391dd3046da6146e635215c",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "cogs/music/music_ui.py",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "source_sha256": "fed644b4cea7c2d88270cc1b012f9014e0f92a2a88b5d550992c56dcbd6c53a4",
+      "reference_path": "cogs/music/music_ui.py",
+      "reference_sha256": "fed644b4cea7c2d88270cc1b012f9014e0f92a2a88b5d550992c56dcbd6c53a4",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "cogs/music/music_utils.py",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "source_sha256": "bf1316297d4ac520b8e46b8da6cd1c55c111c88e66088a672ae6b6da7c8532ea",
+      "reference_path": "cogs/music/music_utils.py",
+      "reference_sha256": "f9824456f234a6f03dbf1fb8b7d3be21b61dc533ad59da2dac62bcdffc6e3474",
+      "adaptation": "absolute database import namespace only"
+    },
+    {
+      "source_path": "cogs/music/__init__.py",
+      "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+      "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reference_path": "cogs/music/__init__.py",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "adaptation": "none"
+    }
+  ]
+}

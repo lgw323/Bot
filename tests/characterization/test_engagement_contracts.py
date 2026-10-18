@@ -5,11 +5,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import discord
 import pytest
 
-import database_manager
-from cogs.birthday import birthday_core
-from cogs.birthday.birthday_core import BirthdayCoreCog
-from cogs.leveling import leveling_core
-from cogs.leveling.leveling_core import LevelingCog, calculate_jamo_length
+from compatibility.v1 import database_manager
+from compatibility.v1.cogs.birthday import birthday_core
+from compatibility.v1.cogs.birthday.birthday_core import BirthdayCoreCog
+from compatibility.v1.cogs.leveling import leveling_core
+from compatibility.v1.cogs.leveling.leveling_core import LevelingCog, calculate_jamo_length
 
 
 def _voice_state(channel: object | None, *, muted: bool = False) -> SimpleNamespace:
@@ -58,10 +58,10 @@ async def test_f030_fr032_preserve_voice_xp_fake_clock_and_completed_minutes() -
     }
 
     with patch.object(leveling_core.time, "time", return_value=1_125.9), patch(
-        "cogs.leveling.leveling_core.get_user_data",
+        "compatibility.v1.cogs.leveling.leveling_core.get_user_data",
         new=AsyncMock(return_value={"level": 1, "xp": 0, "total_vc_seconds": 0}),
     ), patch(
-        "cogs.leveling.leveling_core.update_user_xp",
+        "compatibility.v1.cogs.leveling.leveling_core.update_user_xp",
         new=AsyncMock(),
     ) as update_xp:
         await cog.on_voice_state_update(
@@ -95,7 +95,7 @@ async def test_f030_fr032_preserve_voice_move_keeps_one_session() -> None:
     cog.voice_sessions[member.id] = session
 
     with patch(
-        "cogs.leveling.leveling_core.update_user_xp",
+        "compatibility.v1.cogs.leveling.leveling_core.update_user_xp",
         new=AsyncMock(),
     ) as update_xp:
         await cog.on_voice_state_update(
@@ -122,7 +122,7 @@ async def test_f031_fr032_fr033_preserve_profile_completed_minute_formula() -> N
     interaction.response.is_done.return_value = True
 
     with patch(
-        "cogs.leveling.leveling_core.get_user_data",
+        "compatibility.v1.cogs.leveling.leveling_core.get_user_data",
         new=AsyncMock(return_value={"level": 1, "xp": 7, "total_vc_seconds": 119}),
     ):
         await LevelingCog.profile.callback(cog, interaction, user=None)
@@ -200,7 +200,7 @@ async def test_f036_fr037_preserve_kst_nine_oclock_fake_clock() -> None:
         "datetime",
         _LeapDayClock,
     ), patch(
-        "cogs.birthday.birthday_core.get_birthdays_today",
+        "compatibility.v1.cogs.birthday.birthday_core.get_birthdays_today",
         new=AsyncMock(return_value=[101]),
     ) as birthdays_today:
         await BirthdayCoreCog.birthday_loop.coro(cog)

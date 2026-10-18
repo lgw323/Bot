@@ -5,7 +5,7 @@ import sqlite3
 import pytest
 import pytest_asyncio
 
-import database_manager
+from compatibility.v1 import database_manager
 from discordbot.storage.adapters.execution import SqliteDatabase
 from discordbot.storage.ports.contracts import DatabaseConfig
 

@@ -17,7 +17,8 @@ def verifier():
 
 
 @pytest.mark.parametrize('name', ['../src/escape.py', '/src/escape.py', 'src/../../escape.py',
-                                  'src/.env', 'tests/actual.db', 'data/actual.sql', 'src/link.py'])
+                                  'src/.env', 'tests/actual.db', 'data/actual.sql', 'src/link.py',
+                                  'main_bot.py', 'database_manager.py', 'cogs/music/example.py', 'envtemplate.txt'])
 def test_retry_export_rejects_unsafe_inventory(name):
     with zipfile.ZipFile(io.BytesIO(),'w') as archive:
         archive.comment = b'a'*40
@@ -32,7 +33,9 @@ def test_retry_export_rejects_unsafe_inventory(name):
 def test_retry_export_requires_exact_commit_and_allows_test_support():
     with zipfile.ZipFile(io.BytesIO(),'w') as archive:
         archive.comment = b'a'*40
-        for name in ('src/example.py','database_manager.py','scripts/synthetic.sh','docs/example.md'):
+        for name in ('src/example.py','compatibility/v1/database_manager.py',
+                     'compatibility/v1/oracles-manifest.json','.gitattributes',
+                     'scripts/synthetic.sh','docs/example.md'):
             archive.writestr(name,'synthetic')
         verifier().safe_archive(archive,'a'*40)
         with pytest.raises(ValueError,match='identity'):

@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, MagicMock
 import discord
 import pytest
 
-from cogs.birthday.birthday_core import BirthdayCoreCog
-from cogs.leveling.leveling_core import LevelingCog
+from compatibility.v1.cogs.birthday.birthday_core import BirthdayCoreCog
+from compatibility.v1.cogs.leveling.leveling_core import LevelingCog
 from discordbot.engagement.adapters.discord_runtime import VoiceGateway
 from discordbot.engagement.adapters.discord_ui import DiscordBirthdayDelivery, EngagementCog
 from discordbot.platform.errors import ConflictError, DatabaseUnavailableError

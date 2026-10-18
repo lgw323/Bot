@@ -7,7 +7,7 @@ from contextlib import closing
 import pytest
 from cryptography.fernet import Fernet
 
-import database_manager
+from compatibility.v1 import database_manager
 from scripts.prepare_production_candidate import fingerprint, prepare, recover, preserve_recovery
 
 

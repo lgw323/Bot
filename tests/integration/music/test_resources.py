@@ -216,8 +216,8 @@ async def test_v2_snapshot_is_consumable_by_legacy_reader(rig, tmp_path):
     from collections import deque
     from types import SimpleNamespace
     from unittest.mock import MagicMock
-    from cogs.music.music_session_restorer import MusicSessionRestorer
-    from cogs.music.music_utils import LoopMode
+    from compatibility.v1.cogs.music.music_session_restorer import MusicSessionRestorer
+    from compatibility.v1.cogs.music.music_utils import LoopMode
 
     executor = BoundedExecutor(workers=1, queue_capacity=4, name="legacy-snapshot-test")
     store = SnapshotStore(tmp_path / "synthetic-rollback.json", executor)

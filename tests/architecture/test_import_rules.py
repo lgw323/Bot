@@ -118,7 +118,8 @@ def test_inward_layers_cannot_dispatch_storage_or_import_legacy_runtime() -> Non
     for path in _python_files():
         source = _feature_layer(path)
         for imported in _imports(path):
-            if imported == "database_manager" or imported.startswith("cogs."):
+            if (imported == "database_manager" or imported.startswith("cogs.")
+                    or imported == "compatibility" or imported.startswith("compatibility.")):
                 violations.append(f"{path}: legacy runtime dependency")
             if source and source[1] in {"domain", "ports", "application"}:
                 if imported in {"discordbot.platform.executors", "discordbot.composition"} or imported.startswith("discordbot.composition."):

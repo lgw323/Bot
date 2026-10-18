@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-import database_manager
+from compatibility.v1 import database_manager
 from scripts.rehearse_v2_data import check_copy
 
 

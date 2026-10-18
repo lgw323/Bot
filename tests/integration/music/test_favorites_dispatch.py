@@ -11,8 +11,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from discord.ui.view import ViewStore
 
-from cogs.music.music_ui import MusicPlayerView
-from cogs.music.music_utils import LoopMode as LegacyLoopMode
+from compatibility.v1.cogs.music.music_ui import MusicPlayerView
+from compatibility.v1.cogs.music.music_utils import LoopMode as LegacyLoopMode
 from discordbot.music.adapters.discord_ui import MusicController, build_dashboard
 from discordbot.music.adapters.runtime import MusicResource
 from discordbot.music.adapters.sqlite_repository import SqliteMusicRepository

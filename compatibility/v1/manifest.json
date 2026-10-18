@@ -1,0 +1,11 @@
+{
+  "purpose": "Immutable V1 schema/reader/backup oracle for isolated compatibility checks; not production runtime",
+  "source_commit": "6ce25d2dfd894ae340b64ebd59823d87463bbed8",
+  "source_path": "database_manager.py",
+  "source_git_blob": "595334c5261b552ce79af8f4094808eb4320a073",
+  "reference_file": "database_manager.py",
+  "reference_sha256": "2862326053920ef379e72ceca7e65cba6f032f04e8285f4221d8101898c179b1",
+  "original_checkout_sha256": "9d038dec97f380624433e07427504e300ae6efbf52fd0c569a5cf777e5cad43c",
+  "line_endings": "Exact LF Git blob; original Windows checkout hash was recorded before its Git-recoverable path was retired",
+  "execution_scope": "Explicit offline copies and synthetic tests only; never canonical database or automatic production rollback"
+}

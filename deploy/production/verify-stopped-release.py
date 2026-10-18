@@ -44,9 +44,8 @@ SCOPES = {'discord-bot': ('discord_token', 'gemini_key', 'control_key'),
 CREDENTIAL_SOURCES = {name:CONFIG.parent/'secrets'/name for names in SCOPES.values() for name in names}
 CREDENTIAL_SOURCES.update(backup_ssh_key=CONFIG.parent/'backup-ssh/id_ed25519',
                           known_hosts=CONFIG.parent/'backup-ssh/known_hosts')
-SOURCE_NAMES = {'src', 'tests', 'deploy', 'docs', 'scripts', 'cogs', 'database_manager.py',
-                'main_bot.py', 'pyproject.toml', 'requirements.txt', 'requirements-dev.txt',
-                'README.md', 'AGENTS.md', 'CHANGELOG.md', '.gitignore', 'envtemplate.txt'}
+SOURCE_NAMES = {'src', 'tests', 'deploy', 'docs', 'scripts', 'compatibility', 'pyproject.toml', 'requirements.txt', 'requirements-dev.txt',
+                'README.md', 'AGENTS.md', 'CHANGELOG.md', '.gitignore', '.gitattributes'}
 
 
 NODELESS_BROWSER_CASES = frozenset({

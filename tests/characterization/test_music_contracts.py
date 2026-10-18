@@ -7,12 +7,12 @@ from unittest.mock import AsyncMock, MagicMock
 import discord
 import pytest
 
-from cogs.music import music_core
-from cogs.music.music_core import MusicState
-from cogs.music.music_playback import PlaybackBackend
-from cogs.music.music_session_restorer import MusicSessionRestorer
-from cogs.music.music_state_store import serialize_music_states
-from cogs.music.music_utils import LoopMode, Song
+from compatibility.v1.cogs.music import music_core
+from compatibility.v1.cogs.music.music_core import MusicState
+from compatibility.v1.cogs.music.music_playback import PlaybackBackend
+from compatibility.v1.cogs.music.music_session_restorer import MusicSessionRestorer
+from compatibility.v1.cogs.music.music_state_store import serialize_music_states
+from compatibility.v1.cogs.music.music_utils import LoopMode, Song
 
 
 def _state() -> MusicState:
