@@ -32,6 +32,7 @@ class Probe:
     def ready(self):
         now = self.runtime.clock.monotonic()
         return (self.database_ready and now - self.checked < 15
+                and not self.policy.deadline_pending
                 and (self.policy.pending_since is None or now - self.policy.pending_since < 15))
 
     def schedule(self):
@@ -40,6 +41,20 @@ class Probe:
         async def sample():
             await asyncio.sleep(5)
             start = self.runtime.clock.monotonic()
+            # A timeout ends the awaiter, not necessarily its SQLite worker.
+            # Never enqueue more probes behind that worker, nor erase a late
+            # close/SQLite failure. Only fixed read health checks may recover.
+            if self.policy.deadline_pending:
+                if self.database.admitted[0]:
+                    await self.sample_backup()
+                    return
+                if not self.database.probe_recovery_safe:
+                    self.policy.hard = True
+                    self.database_ready = False
+                    self.runtime.telemetry.emit('database.probe_failed', component='operations', result='failed',
+                        fields={'operation': 'select1_probe', 'error_code': 'database_unavailable',
+                                'probe_disposition': 'hard', 'probe_recovery_safe': False})
+                    return
             try:
                 await self.database.probe(DatabaseRequest.within(2))
                 self.runtime.metrics.increment("database_probe_total", labels={"result": "ok"})
@@ -47,7 +62,7 @@ class Probe:
                 if disposition in {'healthy', 'recovering', 'recovered'}:
                     self.database_ready = True
                     self.checked = self.runtime.clock.monotonic()
-                elif disposition in {'hard', 'recovery_expired'}:
+                elif disposition in {'hard', 'recovery_expired', 'deadline_recovering'}:
                     self.database_ready = False
                 if disposition == 'recovery_expired':
                     self.runtime.telemetry.emit('database.probe_failed', component='operations', result='failed',
@@ -60,22 +75,25 @@ class Probe:
                 self.runtime.metrics.increment("database_probe_total", labels={"result": "failed"})
                 fields = safe_probe_fields(exc.context)
                 disposition = self.policy.failure({'error_code': exc.code.value, **fields}, self.runtime.clock.monotonic(), self.ready())
-                if disposition == 'hard':
+                if disposition in {'hard', 'deadline_pending'}:
                     self.database_ready = False
                 self.runtime.telemetry.emit('database.probe_contention' if disposition == 'bounded_busy' else 'database.probe_failed',
                     component='operations', result='failed',
                     fields={'error_code': exc.code.value, 'probe_disposition': disposition, **fields})
             self.runtime.metrics.increment("database_probe_seconds_total", self.runtime.clock.monotonic() - start)
-            if self.backup_latest is not None:
-                try:
-                    modified = await self.runtime.executor.run(lambda: self.backup_latest.stat().st_mtime)
-                    self._backup_modified = (modified if type(modified) in (int, float)
-                                             and math.isfinite(modified) else None)
-                except OSError:
-                    self._backup_modified = None
+            await self.sample_backup()
         self.task = self.runtime.supervisor.start(TaskSpec("database-probe", "operations", "probe", "health", 10,
             cancellation_behavior=CancellationBehavior.CANCEL_ON_SHUTDOWN, emit_routine_events=False), sample)
         self.task.add_done_callback(lambda task: self.schedule() if not task.cancelled() and task.exception() is None else None)
+
+    async def sample_backup(self) -> None:
+        if self.backup_latest is not None:
+            try:
+                modified = await self.runtime.executor.run(lambda: self.backup_latest.stat().st_mtime)
+                self._backup_modified = (modified if type(modified) in (int, float)
+                                         and math.isfinite(modified) else None)
+            except OSError:
+                self._backup_modified = None
 
     @property
     def backup_age(self) -> float:

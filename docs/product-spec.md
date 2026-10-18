@@ -248,3 +248,14 @@ PHASE 5의 capture/retention, source ACL/privacy, bounded Gemini와 Discord Summ
 60초 전체 deadline과 active 1/waiting 4, 25개 초과 topic pagination을 적용합니다. 세부 한도와
 기존 V1 의미 차이는 [Summary 계약](rebuild/phases/phase-05/summary-contract.md)에 기록합니다.
 V1 운영 route와 실제 DB·외부 API·Pi에는 연결하지 않았습니다.
+
+## DB probe deadline recovery
+
+The readiness policy intentionally replaces the permanent stop for an
+isolated fixed-read probe deadline with unavailable-state monitoring. It keeps
+503 until the previous reader has actually drained safely and two subsequent
+probes succeed less than 15 seconds apart. This recovery state has no overall
+elapsed-time or recurrence ceiling. A deadline during pending BUSY recovery,
+corruption, late SQLite/OS/cleanup failures and other terminal failures remain
+hard; business writes are never retried. The original production timeout cause
+is unknown. The owner approved this policy change on 2026-10-18; publication does not establish deployment.

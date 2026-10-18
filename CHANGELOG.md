@@ -568,3 +568,8 @@
 - Carry one validated, environment-bound destination through configuration, publication, readback and download. Preserve explicit production opt-in and local-only null; reject staging-to-production selections and duplicate config keys.
 - Add an exact source-reviewed isolated-recipient allowlist, empty pending a distinct approved private repository; preserve SSH, archive, retention, restore and deadline protections.
 - Local synthetic validation only. Runtime A9 remains BLOCKED B1/B2/B3/D1; changed runtime bytes require a new reviewed candidate identity before any execution.
+
+## 2026-10-18 — DB readiness recovery
+
+- Continue bounded health sampling after an isolated fixed-read deadline only after actual safe reader drain; require two fresh successes to recover. Pending BUSY and terminal/late cleanup failures remain hard. No business-write retry, schema or Music checkpoint change.
+- Validation: focused probe, telemetry, runtime and temporary SQLite regressions; original production timeout cause remains unknown.

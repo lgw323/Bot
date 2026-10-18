@@ -131,10 +131,16 @@ class SqliteDatabase:
         self._history_lock = threading.Lock()
         self._ready = False
         self._closed = False
+        self._probe_recovery_safe = False
 
     @property
     def admitted(self) -> tuple[int, int]:
         return self._reader.admitted, self._writer.admitted
+
+    @property
+    def probe_recovery_safe(self) -> bool:
+        """A timed-out fixed read released its lane without a late safety failure."""
+        return self._reader.admitted == 0 and self._probe_recovery_safe
 
     @property
     def observations(self) -> tuple[DatabaseObservation, ...]:
@@ -236,14 +242,23 @@ class SqliteDatabase:
         return await self._transaction(request, query, writable=False)
 
     async def probe(self, request: DatabaseRequest) -> tuple[int]:
-        """Same bounded read lane/connection policy, with fixed-operation diagnostics."""
+        """Fixed read diagnostics; the operations Probe is its single serial owner.
+
+        Recovery metadata belongs to this owner, not concurrent probe consumers.
+        """
         if not self._ready:
             raise ConflictError("database is not ready")
 
+        # If admission expires before execute starts, no connection was opened.
+        # The admitted count remains authoritative until any real worker finishes.
+        self._probe_recovery_safe = True
+
         def execute(control: WorkControl) -> tuple[int]:
+            self._probe_recovery_safe = False
             trace = ProbeTrace()
             conn = None
             result = None
+            unsafe_failure = True
             try:
                 conn = connect(self.config.path, control, writable=False,
                                busy_seconds=self.config.busy_timeout_seconds, trace=trace)
@@ -256,7 +271,11 @@ class SqliteDatabase:
                 trace.stage = 'probe_commit'
                 control.checkpoint()
                 conn.commit()
+                unsafe_failure = False
             except Exception as exc:
+                # Do not lose a late SQLite/OS error when cancellation supersedes
+                # its outward error code. Such a timeout cannot auto-recover.
+                unsafe_failure = not isinstance(exc, (DatabaseDeadlineError, CancellationError))
                 if isinstance(exc, sqlite3.Error):
                     try:
                         control.checkpoint()
@@ -272,8 +291,11 @@ class SqliteDatabase:
                 if conn is not None:
                     # Read-only transaction; close rolls back after a failed read.
                     trace.close(conn)
+                self._probe_recovery_safe = (not unsafe_failure and not trace.cleanup_failed
+                    and (not trace.connection_opened or trace.close_succeeded))
             trace.raise_if_failed()
             if result != (1,):
+                self._probe_recovery_safe = False
                 raise DataIntegrityError('Fixed database probe returned an invalid result')
             return result
 
