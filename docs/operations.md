@@ -412,3 +412,7 @@ Inspect `discord_log_worker_enabled`, queue/drop/failure/delivery gauges and loc
 `discord.log_delivery_failed` / `discord.log_worker_unavailable` records when
 delivery is absent. Failed notification delivery never grants access or changes
 the destination. Live delivery must be verified after an approved startup; offline tests do not establish channel visibility or send permission.
+
+## Inspect credential source metadata
+
+`deploy/production/inspect-credential-bindings.py` reads actual systemd unit and drop-in `LoadCredential=` bindings, handles resets, rejects ambiguous declarations and reports stat-only source metadata. Protected/unreadable files are distinct from missing files. Run protected metadata checks in the approved administrative session; this tool never reads credential contents or creates keys.

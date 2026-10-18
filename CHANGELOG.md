@@ -578,3 +578,8 @@
 
 - Add optional, independently configured connected/start and warning/error notifications with safe summaries, bounded delivery, stable nonce and optional-worker isolation. The main config stays compatible with rollback.
 - Validation: offline fake-Discord and production-configuration regressions. No live delivery is inferred from these tests; Watch forwarding and the old update/restart panel remain outside this change.
+
+## 2026-10-18 — Credential inspection
+
+- Discover credential source paths from actual unit/drop-in bindings instead of guessed filenames; distinguish unreadable metadata from absence.
+- Validation across the three fixes: 134 focused offline tests plus 6 production-configuration tests passed. Full-suite and deferred live campaigns were not run for this scoped remediation.
