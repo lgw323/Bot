@@ -122,6 +122,10 @@ V2 `src` package의 Python 3.12/setuptools build metadata는 `pyproject.toml`에
 
 ## Required source and installed test lanes
 
+For the reusable guarded source command and synthetic cutover/WAL checks, see
+[local tooling and tests](docs/local-tooling.md). The runner uses the existing
+Python 3.12 development environment and fresh temporary fixtures.
+
 The full source-review/development/commit gate remains `python -m pytest tests/`.
 It includes the mandatory measurement regressions
 `tests/integration/operations/test_a9_local_harness.py` and
