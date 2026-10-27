@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-10-27 - Local cutover tests and guarded source runner
+
+- Publish the synthetic cutover controller, byte-pinned stopped-WAL helper and
+  their model, owned child worker and regression tests as one dependency set.
+- Keep the worker credential boundary usable in installed layouts without the
+  source-only root conftest, and provide a guarded local test command.
+- Preserve application runtime and current publication/closure records; host
+  execution and deployment remain separate decisions.
+
 ## 2026-10-18 — V1 실행 경로 정리와 비교 참조 보존
 
 - Git에서 정확히 복구 가능한 V1 소스 26개와 V1 전용 테스트 19개를 제거하고,

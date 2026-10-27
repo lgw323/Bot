@@ -2,3 +2,5 @@ compatibility/v1/database_manager.py text eol=lf
 compatibility/v1/cogs/**/*.py text eol=lf
 # The frozen manifest's verified SHA256 includes its original CRLF bytes.
 compatibility/v1/oracles-manifest.json text eol=crlf
+# cutover_controller.py verifies this helper's exact LF SHA256 before import.
+deploy/tools/stopped_wal.py text eol=lf
