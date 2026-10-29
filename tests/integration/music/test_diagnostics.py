@@ -25,10 +25,88 @@ async def test_failed_preparation_reports_stage_code_without_track_or_exception_
     assert failures[0].fields['error_code'] == 'external_permanent'
     assert failures[0].fields['reason'] == 'http_forbidden'
     assert failures[0].fields['child_exit_code'] == 1
+    assert failures[0].fields['exception_type'] == 'ExternalPermanentError'
     assert len(failures[0].fields['work_id']) == 32
     encoded = '\n'.join(JsonEventFormatter().format(r) for r in caplog.records)
     assert marker not in encoded and '987654321' not in encoded and 'example.invalid' not in encoded
     assert {'music.voice_connected','music.enqueued','music.work_started'} <= {r.msg for r in caplog.records}
+
+
+async def test_unexpected_connect_failure_keeps_exception_and_state_without_payload(rig, caplog):
+    caplog.set_level(logging.WARNING, logger='discordbot.music')
+    actor = rig[0]()
+    rig[3].connect.side_effect = RuntimeError('private voice token and chat')
+    with pytest.raises(RuntimeError):
+        await actor.ask('connect', channel_id=123456789012345678)
+    row = next(r for r in caplog.records if r.msg == 'music.command_failed')
+    assert row.fields['exception_type'] == 'RuntimeError'
+    assert row.fields['state_before'] == row.fields['state_after'] == 'idle'
+    assert row.fields['voice_connected'] is False
+    assert len(row.fields['work_id']) == 32
+    assert row.fields['stage'] == 'connect'
+    encoded = JsonEventFormatter().format(row)
+    assert 'private' not in encoded and '123456789012345678' not in encoded
+    from discordbot.operations.adapters.discord_logging import notice
+    assert 'RuntimeError' in notice(row).description
+    assert 'music.command_failed' in notice(row).description
+
+
+async def test_unexpected_worker_failure_keeps_cause_and_state(rig, caplog):
+    caplog.set_level(logging.WARNING, logger='discordbot.music')
+    actor = rig[0]()
+    async def broken(_):
+        try:
+            raise ValueError('private URL')
+        except ValueError as cause:
+            raise RuntimeError('private token') from cause
+    rig[4].acquire.side_effect = broken
+    await actor.ask('connect', channel_id=123)
+    await actor.ask('enqueue', tracks=(song(),))
+    await settle(lambda: actor.projection().status == 'retry')
+    row = next(r for r in caplog.records if r.msg == 'music.work_failed')
+    assert row.fields['exception_type'] == 'RuntimeError' and row.fields['cause_type'] == 'ValueError'
+    assert row.fields['state_before'] == row.fields['state_after'] == 'preparing'
+    assert row.fields['voice_connected'] is True
+    assert 'private' not in JsonEventFormatter().format(row)
+
+
+async def test_cancelled_worker_and_shutdown_do_not_report_failure_or_recovery(rig, caplog):
+    import asyncio
+    caplog.set_level(logging.INFO, logger='discordbot.music')
+    started = asyncio.Event()
+    async def hold(_):
+        started.set()
+        await asyncio.Event().wait()
+    rig[4].acquire.side_effect = hold
+    actor = rig[0]()
+    await actor.ask('connect', channel_id=123)
+    await actor.ask('enqueue', tracks=(song(),))
+    await asyncio.wait_for(started.wait(), 1)
+    await actor.close()
+    assert not [r for r in caplog.records if r.msg in {'music.work_failed', 'music.command_failed'}]
+
+
+async def test_notification_formatter_failure_preserves_original_command_exception(rig, monkeypatch):
+    import asyncio
+    from discordbot.operations.adapters import discord_logging as module
+    owner = module.DiscordLogging(None, 42, rig[1], None)
+    owner.closed = False
+    def broken(_):
+        raise ValueError('private formatter payload')
+    monkeypatch.setattr(module, 'notice', broken)
+    log = logging.getLogger('discordbot.music.application.actor')
+    log.addHandler(owner.handler)
+    original = RuntimeError('original synthetic connection failure')
+    rig[3].connect.side_effect = original
+    actor = rig[0]()
+    try:
+        with pytest.raises(RuntimeError) as caught:
+            await asyncio.wait_for(actor.ask('connect', channel_id=123), 1)
+        assert caught.value is original
+        assert owner.gauges()['discord_log_format_failures'] == 1
+    finally:
+        log.removeHandler(owner.handler)
+        owner.handler.close()
 
 
 async def test_ui_failure_does_not_log_error_message_or_context(caplog):

@@ -208,10 +208,17 @@ class MusicController:
             tracks = await future
             text = (f"✅ 재생목록에서 **{len(tracks)}**개의 노래를 대기열에 추가했습니다." if "list=" in match.group()
                     else f"✅ 대기열에 **'{tracks[0].title}'** 을(를) 추가했습니다." if tracks else "노래 정보를 찾을 수 없습니다.")
-            await message.channel.send(text, delete_after=5)
+            delete_after = 5
+        except asyncio.CancelledError:
+            raise
         except AppError as error:
             report_failure('message_request', error)
-            await message.channel.send(error.safe_message, delete_after=8)
+            text, delete_after = error.safe_message, 8
+        except Exception as error:
+            report_failure('message_request', error)
+            text, delete_after = "노래 정보를 가져오는 중 오류가 발생했습니다.", 8
+        # A failed send can have reached Discord. Never send a second fallback.
+        await message.channel.send(text, delete_after=delete_after)
 
     async def favorites(self, guild: int, user: int) -> SongPages:
         tracks = []
@@ -319,6 +326,7 @@ def build_song_view(controller: MusicController, pages: SongPages, kind: str) ->
             self.selected: set[str] = set()
             self.deleting = False
             self.consumed = False
+            self.adding = False
             self.render()
 
         async def interaction_check(self, interaction):
@@ -395,24 +403,37 @@ def build_song_view(controller: MusicController, pages: SongPages, kind: str) ->
                     await responder.send("🔀 대기열을 섞었습니다!" if action == "shuffle" else "대기열을 수정했습니다.", ephemeral=True, delete_after=5)
                 elif action == "add":
                     if not selected: raise ConflictError("no selected Music items")
-                    if self.consumed: raise ConflictError("Music selection already consumed")
+                    if self.consumed or self.adding: raise ConflictError("Music selection already consumed")
                     if len(selected) > 50:
                         raise CapacityError("select at most fifty favorites per request")
-                    self.consumed = True
-                    if kind == "favorites" and self.deleting:
-                        count = 0
-                        for song in selected:
-                            count += await controller.repository.remove_favorite(interaction.user.id, song.url, DatabaseRequest.within(3))
-                        await responder.send(f"🗑️ 즐겨찾기에서 {count}개의 노래를 삭제했습니다.", ephemeral=True)
-                    else:
-                        await controller.voice(actor, interaction.user)
-                        if kind == "search":
-                            await actor.ask("enqueue", tracks=tuple(replace(song, item_id=uuid4().hex) for song in selected), request_id=str(interaction.id))
-                            added = len(selected)
+                    self.adding = True
+                    try:
+                        if kind == "favorites" and self.deleting:
+                            # A batch can partly commit before failure.
+                            self.consumed = True
+                            count = 0
+                            for song in selected:
+                                count += await controller.repository.remove_favorite(interaction.user.id, song.url, DatabaseRequest.within(3))
+                            await responder.send(f"🗑️ 즐겨찾기에서 {count}개의 노래를 삭제했습니다.", ephemeral=True)
                         else:
-                            added = await controller.add_favorites(actor, selected, interaction.user.id, str(interaction.id))
-                        await responder.send(f"✅ 대기열에 {added}개의 노래를 추가했습니다.", ephemeral=True, delete_after=5)
-                    self.stop()
+                            # Voice admission has no enqueue effect. Keep retries
+                            # available if it fails, but serialize concurrent clicks.
+                            await controller.voice(actor, interaction.user)
+                            self.consumed = True
+                            if kind == "search":
+                                try:
+                                    await actor.ask("enqueue", tracks=tuple(replace(song, item_id=uuid4().hex) for song in selected), request_id=str(interaction.id))
+                                except (CapacityError, ConflictError):
+                                    # Actor queue validation rejects before mutation.
+                                    self.consumed = False
+                                    raise
+                                added = len(selected)
+                            else:
+                                added = await controller.add_favorites(actor, selected, interaction.user.id, str(interaction.id))
+                            await responder.send(f"✅ 대기열에 {added}개의 노래를 추가했습니다.", ephemeral=True, delete_after=5)
+                        self.stop()
+                    finally:
+                        self.adding = False
             except AppError as error:
                 report_failure('selection', error)
                 await responder.send(error.safe_message, ephemeral=True)

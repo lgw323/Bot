@@ -12,7 +12,7 @@ import random
 import re
 from collections import deque
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 from uuid import uuid4
 
@@ -21,6 +21,7 @@ from discordbot.music.domain.failures import safe_failure_fields
 from discordbot.music.ports.playback import Audio, Media, MediaLibrary, Provider, Sleeper
 from discordbot.music.ports.repository import MusicRepository
 from discordbot.platform.clock import Clock
+from discordbot.platform.diagnostics import exception_fields
 from discordbot.platform.errors import AppError, CapacityError, ConflictError, ShutdownError, ValidationError
 from discordbot.platform.tasks import TaskSpec, TaskSupervisor
 from discordbot.storage.ports.contracts import DatabaseRequest
@@ -33,6 +34,7 @@ class Command:
     operation: str
     payload: dict[str, Any]
     response: asyncio.Future[Any]
+    work_id: str = field(default_factory=lambda: uuid4().hex)
 
 
 class MusicActor:
@@ -114,6 +116,7 @@ class MusicActor:
         try:
             while self._mailbox:
                 command = self._mailbox.popleft()
+                state_before = self._status
                 try:
                     result = await self._dispatch(command.operation, command.payload)
                     if command.operation != "inspect" and result is not False:
@@ -132,7 +135,11 @@ class MusicActor:
                 except Exception as error:
                     logger.warning('music.command_failed', extra={'fields':{
                         'stage':command.operation if command.operation in {'connect','enqueue','lookup','started','ended','result','tts','leave','close'} else 'control',
-                        'error_code':error.code.value if isinstance(error, AppError) else 'internal'}})
+                        'error_code':error.code.value if isinstance(error, AppError) else 'internal',
+                        'work_id':command.work_id, 'state_before':state_before,
+                        'state_after':self._status, 'voice_connected':self._connected,
+                        **exception_fields(error),
+                        **safe_failure_fields(error.context if isinstance(error, AppError) else {})}})
                     try:
                         if self._smoke_enabled() and isinstance(error, AppError) and error.code.value in {'data_integrity', 'database_unavailable'}:
                             await self._stop_for_smoke(hard=True)
@@ -160,6 +167,7 @@ class MusicActor:
         async def run() -> None:
             value, error, error_code = None, None, None
             fields = {'stage':name, 'work_id':token}
+            state_before = self._status
             logger.info('music.work_started', extra={'fields':fields})
             try:
                 async with asyncio.timeout(seconds):
@@ -171,6 +179,8 @@ class MusicActor:
                 error_code = exc.code.value if isinstance(exc, AppError) else 'internal'
                 logger.warning('music.work_failed', extra={'fields':dict(fields,
                     error_code=exc.code.value if isinstance(exc, AppError) else 'internal',
+                    state_before=state_before, state_after=self._status, voice_connected=self._connected,
+                    **exception_fields(exc),
                     **safe_failure_fields(exc.context if isinstance(exc, AppError) else {}))})
             else:
                 logger.info('music.work_succeeded', extra={'fields':fields})
