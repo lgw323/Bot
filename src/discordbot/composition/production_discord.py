@@ -10,6 +10,7 @@ from discordbot.music.adapters.sqlite_repository import SqliteMusicRepository
 from discordbot.operations.adapters.hosting import DeferredMusic, Gateway, Servers, TelemetryDrain, health_app, server
 from discordbot.operations.adapters.probe import Probe
 from discordbot.operations.adapters.discord_logging import DiscordLogging
+from discordbot.operations.adapters.watch_diagnostics import receive_watch_diagnostics
 from discordbot.platform.clock import SystemClock, Uuid4Generator
 from discordbot.platform.tasks import TaskSupervisor
 from discordbot.storage.adapters.execution import DatabaseConfig, SqliteDatabase
@@ -41,6 +42,7 @@ class DiscordFeatures:
             GeminiProvider(s.secrets.gemini_key, s.gemini_model), self.clock, r.telemetry)
         watch = DiscordWatchResource(self.bot, s.public_origin, f"http://127.0.0.1:{s.control_port}",
             s.secrets.control_key, s.admin_channel, s.master, self.clock, r.telemetry)
+        watch.controller.diagnostics = receive_watch_diagnostics
         self.music = MusicResource(self.bot, SqliteMusicRepository(self.database), self.clock, r.executor,
             cache_path=s.cache / "music", snapshot_path=s.state / "music_state.json",
             channels=dict(s.music_channels), master=s.master,

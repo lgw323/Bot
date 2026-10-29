@@ -3,6 +3,7 @@
 from discordbot.composition.runtime import ProcessRuntime
 from discordbot.operations.adapters.hosting import Servers, TelemetryDrain, health_app, server
 from discordbot.operations.adapters.probe import Probe
+from discordbot.operations.adapters.watch_diagnostics import WatchDiagnostics
 from discordbot.operations.adapters.cli import validate_candidate
 from discordbot.platform.clock import SystemClock
 from discordbot.platform.telemetry import TelemetryBuffer, TelemetryEmitter
@@ -26,10 +27,13 @@ def assemble(config, settings):
                                settings.secrets.control_key, clock, telemetry)
     runtime = ProcessRuntime(config=config, resources=(feature,), clock=clock)
     feature.service.telemetry = runtime.telemetry
+    diagnostics = WatchDiagnostics(clock)
+    feature.control_app.state.diagnostics = diagnostics.drain
     probe = Probe(database, runtime, settings.backups / "latest.json")
     def gauges():
-        return {**probe.gauges(), "watch_sessions": len(feature.service.sessions),
+        return {**probe.gauges(), "watch_diagnostic_pending": len(diagnostics.pending),
+                "watch_diagnostic_dropped": diagnostics.dropped, "watch_sessions": len(feature.service.sessions),
                 "watch_clients": sum(len(actor.peers) for actor in feature.service.sessions.values())}
     listeners = Servers((*build_servers(feature, settings.public_port, settings.control_port),
                          server(health_app(runtime, lambda: feature.service.ready() and probe.ready() and listeners.ready(), gauges), settings.watch_health_port)), runtime.supervisor)
-    return runtime, feature, listeners, TelemetryDrain(runtime), probe
+    return runtime, feature, listeners, TelemetryDrain(runtime, diagnostics.capture), probe

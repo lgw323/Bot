@@ -48,6 +48,8 @@ class SummaryService:
         self._permits: deque[asyncio.Future[None]] = deque()
         self._results: dict[str, Result] = {}
         self._accepting = True
+        self._work_stopped = False
+        self._cleanup_complete = False
 
     @property
     def active(self) -> int:
@@ -211,9 +213,14 @@ class SummaryService:
         raise ValidationError("invalid Summary topic")
 
     async def stop(self) -> None:
+        if getattr(self, "_cleanup_complete", False):
+            return
         self._accepting = False
-        require_tasks_stopped(await self.supervisor.shutdown(grace_seconds=2))
+        if not getattr(self, "_work_stopped", False):
+            require_tasks_stopped(await self.supervisor.shutdown(grace_seconds=2))
+            self._work_stopped = True
         self.capture.clear()
         self._results.clear()
         async with asyncio.timeout(2):
             await self.provider.close()
+        self._cleanup_complete = True

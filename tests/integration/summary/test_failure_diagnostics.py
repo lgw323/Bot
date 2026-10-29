@@ -45,3 +45,39 @@ async def test_request_telemetry_only_emits_allowlisted_failure_fields(summary, 
     encoded = json.dumps(events[0].as_dict())
     assert 'private' not in encoded and '987654321' not in encoded
     summary.provider.generate.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('error,code,kind', [
+    (ExternalTemporaryError('PRIVATE_SOURCE', context={'content': 'PRIVATE_SOURCE'}), 'external_temporary', 'ExternalTemporaryError'),
+    (TimeoutError('PRIVATE_SOURCE'), 'deadline_exceeded', 'TimeoutError'),
+    (type('PRIVATE_SOURCE', (ExternalTemporaryError,), {})('PRIVATE_SOURCE'), 'external_temporary', 'unexpected'),
+])
+async def test_preload_failure_has_typed_code_without_private_fields(summary, error, code, kind):
+    from discordbot.summary.adapters.runtime import SummaryResource
+    resource = SummaryResource(SimpleNamespace(), summary.config, summary.provider,
+                               summary.clock, summary.service.telemetry)
+    resource.history = SimpleNamespace(page=AsyncMock(side_effect=error))
+    await resource._reconcile()
+    events = summary.buffer.drain()
+    assert len(events) == len(summary.config.sources)
+    assert all(event.event == 'summary.preload' and event.result == 'failed' for event in events)
+    assert all(dict(event.fields) == {'error_code': code, 'exception_type': kind} for event in events)
+    assert 'PRIVATE_SOURCE' not in json.dumps([event.as_dict() for event in events])
+
+
+@pytest.mark.asyncio
+async def test_response_failure_has_boundary_code_without_exception_text(summary):
+    from characterization.summary_support import interaction
+    from discordbot.summary.adapters.discord_ui import SummaryController
+    controller = SummaryController(summary.service)
+    request = interaction()
+    request.followup.send.side_effect = RuntimeError('PRIVATE_SOURCE')
+    try:
+        await controller.execute(request, Query())
+        events = [event for event in summary.buffer.drain() if event.event == 'summary.response']
+        assert len(events) == 1 and events[0].result == 'delivery_failed'
+        assert dict(events[0].fields) == {'error_code': 'external_permanent'}
+        assert 'PRIVATE_SOURCE' not in json.dumps(events[0].as_dict())
+    finally:
+        controller.close()

@@ -6,7 +6,8 @@ import asyncio
 from typing import Any
 
 from discordbot.platform.clock import Clock, Uuid4Generator
-from discordbot.platform.errors import AppError, ConflictError, ShutdownError
+from discordbot.platform.diagnostics import exception_fields
+from discordbot.platform.errors import AppError, ConflictError, DeadlineExceededError, ShutdownError
 from discordbot.platform.tasks import require_tasks_stopped, CancellationBehavior, TaskSpec, TaskSupervisor
 from discordbot.platform.telemetry import TelemetryEmitter
 from discordbot.summary.application.capture import Capture
@@ -35,6 +36,7 @@ class SummaryResource:
         self._running = False
         self._closed = False
         self._owns_bot = owns_bot
+        self._bot_closed = False
         self._reconcile_again = False
         self._preload: asyncio.Task[None] | None = None
         self._cleanup: asyncio.Task[None] | None = None
@@ -61,8 +63,11 @@ class SummaryResource:
                 self.bot.add_listener(self.ready, "on_ready")
                 self.bot.add_listener(self.ready, "on_resumed")
                 self._schedule_cleanup()
-        except BaseException:
-            await self.stop()
+        except BaseException as original:
+            try:
+                await self.stop()
+            except BaseException as cleanup_error:
+                raise original from cleanup_error
             raise
 
     async def message(self, message: Any) -> None:
@@ -96,8 +101,10 @@ class SummaryResource:
                 # One bad source cannot prevent other guilds reconciling forever.
                 async with asyncio.timeout(5):
                     await self.service.capture.preload(scope, self.history)
-            except (AppError, TimeoutError):
-                self.service.telemetry.emit("summary.preload", component="summary", result="failed")
+            except (AppError, TimeoutError) as error:
+                code = error.code if isinstance(error, AppError) else DeadlineExceededError.code
+                self.service.telemetry.emit("summary.preload", component="summary", result="failed",
+                    fields={"error_code": code.value, **exception_fields(error)})
 
     def _schedule_cleanup(self) -> None:
         if self._running and self.config.enabled:
@@ -118,22 +125,43 @@ class SummaryResource:
         if self._closed:
             return
         if getattr(self, "_stopping", False):
-            raise ShutdownError("Summary cleanup already incomplete")
+            raise ShutdownError("Summary cleanup already in progress")
         self._stopping = True
-        self._running = False
-        self.bot.remove_listener(self.message, "on_message")
-        self.bot.remove_listener(self.ready, "on_ready")
-        self.bot.remove_listener(self.ready, "on_resumed")
-        if self.cog is not None:
-            await self.bot.remove_cog(self.cog.qualified_name)
-            self.cog = None
-        require_tasks_stopped(await self.background.shutdown(grace_seconds=2))
-        await self.service.stop()
-        self.controller.close()
-        if self._owns_bot:
-            await self.bot.close()
-        self._closed = True
-        self.startup_cleanup_complete = True
+        try:
+            self._running = False
+            self.bot.remove_listener(self.message, "on_message")
+            self.bot.remove_listener(self.ready, "on_ready")
+            self.bot.remove_listener(self.ready, "on_resumed")
+            if self.cog is not None:
+                await self.bot.remove_cog(self.cog.qualified_name)
+                self.cog = None
+            require_tasks_stopped(await self.background.shutdown(grace_seconds=2))
+            errors: list[BaseException] = []
+            try:
+                await self.service.stop()
+            except BaseException as error:
+                # Live work still owns its dependencies. A provider close error
+                # after the work drained must not retain independent UI/bot owners.
+                if not getattr(self.service, "_work_stopped", False):
+                    raise
+                errors.append(error)
+            self.controller.close()
+            if self._owns_bot and not self._bot_closed:
+                try:
+                    await self.bot.close()
+                except BaseException as error:
+                    errors.append(error)
+                else:
+                    self._bot_closed = True
+            if errors:
+                if len(errors) > 1:
+                    raise errors[0] from errors[-1]
+                raise errors[0]
+            self._closed = True
+            self.startup_cleanup_complete = True
+        finally:
+            # A completed attempt is retryable; only overlapping stops are denied.
+            self._stopping = False
 
 
 def create_summary_bot() -> Any:

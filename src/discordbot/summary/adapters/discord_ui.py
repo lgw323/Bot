@@ -111,12 +111,14 @@ class SummaryController:
                     await responder.error(CancellationError("Summary cancelled"))
                 except ResponderFailure:
                     # Best-effort feedback must not replace native cancellation.
-                    self.service.telemetry.emit("summary.response", component="summary", result="delivery_failed")
+                    self.service.telemetry.emit("summary.response", component="summary", result="delivery_failed",
+                        fields={"error_code": ResponderFailure.code.value})
                 raise
             except Exception:
                 await responder.error(InternalError("Summary UI failed"))
         except ResponderFailure:
-            self.service.telemetry.emit("summary.response", component="summary", result="delivery_failed")
+            self.service.telemetry.emit("summary.response", component="summary", result="delivery_failed",
+                fields={"error_code": ResponderFailure.code.value})
 
     @staticmethod
     def context(interaction: Any) -> tuple[int, int, int]:

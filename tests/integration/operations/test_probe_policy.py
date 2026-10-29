@@ -192,13 +192,43 @@ async def test_scheduled_probe_records_failure_and_two_successes_without_extra_r
         assert database.probe.await_count == 3
         events = runtime.telemetry_buffer.drain()
         assert [event.event for event in events] == ['database.probe_contention', 'database.probe_recovered']
+        assert len(events[0].fields['incident_id']) == 32
+        assert events[0].fields['incident_id'] == events[1].fields['incident_id']
+        assert events[1].fields['healthy_probes'] == 2
+        assert events[0].fields['read_admitted'] == events[0].fields['write_admitted'] == 0
         assert 'private' not in json.dumps([event.as_dict() for event in events])
         database.probe.side_effect = DatabaseUnavailableError('private', context=busy())
         now[0] = 20
         await factories[0]()
         assert not probe.ready()
-        assert runtime.telemetry_buffer.drain()[0].event == 'database.probe_failed'
+        hard = runtime.telemetry_buffer.drain()[0]
+        assert hard.event == 'database.probe_failed'
+        assert hard.fields['incident_id'] != events[0].fields['incident_id']
     finally:
+        await runtime.executor.close(grace_seconds=1)
+
+
+@pytest.mark.asyncio
+async def test_shutdown_cancels_probe_without_false_recovery(monkeypatch):
+    from discordbot.operations.adapters import probe as module
+    runtime = ProcessRuntime(config=PlatformConfig(ServiceKind.WATCH_WEB, Environment.TEST, 'synthetic'))
+    started = asyncio.Event()
+    async def blocked(_):
+        started.set()
+        await asyncio.Event().wait()
+    async def immediate(_):
+        return
+    monkeypatch.setattr(module, 'asyncio', SimpleNamespace(sleep=immediate, gather=asyncio.gather))
+    probe = Probe(SimpleNamespace(probe=blocked), runtime)
+    try:
+        probe.schedule()
+        await asyncio.wait_for(started.wait(), 1)
+        await probe.stop()
+        assert probe.closed and probe.task.cancelled()
+        assert not [event for event in runtime.telemetry_buffer.drain() if event.event.startswith('database.probe_')]
+    finally:
+        await probe.stop()
+        await runtime.supervisor.shutdown(grace_seconds=1)
         await runtime.executor.close(grace_seconds=1)
 
 

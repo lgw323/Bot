@@ -9,6 +9,7 @@ import sqlite3
 from discordbot.platform.errors import AppError, DataIntegrityError, DatabaseUnavailableError
 
 STAGES = frozenset('probe_open probe_configure probe_begin probe_execute probe_fetch probe_commit probe_close probe_admission'.split())
+CONFIGURE_STEPS = frozenset('progress_handler synchronous temp_store cache_size trusted_schema query_only'.split())
 SQLITE_FAMILIES = {sqlite3.SQLITE_BUSY: 'busy', sqlite3.SQLITE_LOCKED: 'locked',
     sqlite3.SQLITE_IOERR: 'io', sqlite3.SQLITE_CANTOPEN: 'cantopen', sqlite3.SQLITE_PERM: 'perm',
     sqlite3.SQLITE_READONLY: 'readonly', sqlite3.SQLITE_FULL: 'full', sqlite3.SQLITE_CORRUPT: 'corrupt',
@@ -23,7 +24,7 @@ FAMILIES = frozenset('sqlite_operational sqlite_integrity sqlite_database sqlite
 def safe_probe_fields(fields: Mapping[str, object]) -> dict[str, str | int | bool]:
     """Second allowlist at telemetry boundary, even for injected AppError contexts."""
     result: dict[str, str | int | bool] = {'operation': 'select1_probe'}
-    choices = {'stage': STAGES, 'exception_family': FAMILIES,
+    choices = {'stage': STAGES, 'configure_step': CONFIGURE_STEPS, 'exception_family': FAMILIES,
                'sqlite_family': frozenset(SQLITE_FAMILIES.values()) | {'other'},
                'errno_category': frozenset(ERRNO_CATEGORIES.values()) | {'other'}}
     for key, allowed in choices.items():
@@ -42,6 +43,7 @@ def safe_probe_fields(fields: Mapping[str, object]) -> dict[str, str | int | boo
 @dataclass
 class ProbeTrace:
     stage: str = 'probe_open'
+    configure_step: str | None = None
     connection_opened: bool = False
     close_succeeded: bool = False
     cleanup_failed: bool = False
@@ -52,6 +54,8 @@ class ProbeTrace:
             self.cleanup_failed = True
             return
         fields: dict[str, object] = {'stage': self.stage}
+        if self.stage == 'probe_configure' and self.configure_step is not None:
+            fields['configure_step'] = self.configure_step
         if isinstance(exc, sqlite3.Error):
             family = ('sqlite_operational' if isinstance(exc, sqlite3.OperationalError) else
                       'sqlite_integrity' if isinstance(exc, sqlite3.IntegrityError) else

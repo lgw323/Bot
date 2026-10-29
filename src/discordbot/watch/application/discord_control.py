@@ -1,9 +1,11 @@
 """Discord-side orchestration. No session dictionary, repository, or web owner."""
 
 import asyncio
+from typing import Callable
 
 from discordbot.platform.clock import Clock, IdGenerator
-from discordbot.platform.errors import AppError, AuthorizationError, CapacityError, ExternalTemporaryError
+from discordbot.platform.diagnostics import exception_fields
+from discordbot.platform.errors import AppError, AuthorizationError, CapacityError, ExternalTemporaryError, ErrorCode
 from discordbot.platform.health import HealthRegistry, HealthStatus
 from discordbot.platform.tasks import require_tasks_stopped, CancellationBehavior, TaskSpec, TaskSupervisor
 from discordbot.platform.telemetry import TelemetryEmitter
@@ -22,10 +24,18 @@ class DiscordWatch:
         self._active = 0
         self._stopped = False
         self._maintenance = None
+        self.diagnostics: Callable[[object], None] | None = None
+        self.diagnostic_failures = 0
 
     async def refresh(self) -> None:
         try:
             status = await self.control.call("status", {})
+            if self.diagnostics is not None:
+                try:
+                    self.diagnostics(status.get("diagnostics", []))
+                except Exception:
+                    # Optional diagnostics cannot break capability readiness.
+                    self.diagnostic_failures += 1
             ready = status.get("ready") is True
             self.health.update("loopback", HealthStatus.OK if ready else HealthStatus.DOWN)
             self.health.start_accepting()
@@ -103,7 +113,12 @@ class DiscordWatch:
                         await self.messages.delete(*admin)
             except Exception:
                 self.telemetry.emit("watch.invite_cleanup", component="watch", result="pending")
-            self.telemetry.emit("watch.invite", component="watch", result="failed")
+            code = (error.code if isinstance(error, AppError) else
+                ErrorCode.CANCELLATION if isinstance(error, asyncio.CancelledError) else
+                ErrorCode.DEADLINE_EXCEEDED if isinstance(error, TimeoutError) else ErrorCode.INTERNAL)
+            self.telemetry.emit("watch.invite", component="watch",
+                result="cancellation" if isinstance(error, asyncio.CancelledError) else "failed",
+                fields={"error_code": code.value, **exception_fields(error)})
             if isinstance(error, asyncio.CancelledError):
                 raise
             if not isinstance(error, Exception):

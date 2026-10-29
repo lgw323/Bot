@@ -19,7 +19,12 @@ def response_data(operation: str, value: dict[str, object]) -> dict[str, object]
             and type(value["expires"]) in (int, float) and math.isfinite(value["expires"])
             and value["expires"] > 0 and type(value["published"]) is bool)
     elif operation == "status":
-        valid = set(value) == {"ready"} and type(value["ready"]) is bool
+        valid = set(value) in ({"ready"}, {"ready", "diagnostics"}) and type(value.get("ready")) is bool
+        if valid and "diagnostics" in value:
+            rows = value["diagnostics"]
+            if not isinstance(rows, list) or len(rows) > 8 or any(not isinstance(row, dict) or len(row) > 40 for row in rows):
+                # Malformed optional diagnostics do not change capability health.
+                value = {"ready": value["ready"], "diagnostics": []}
     elif operation == "cleanup":
         valid = set(value) == {"items"} and isinstance(value["items"], list) and len(value["items"]) <= 100
         if valid:
