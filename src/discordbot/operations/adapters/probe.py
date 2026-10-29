@@ -2,6 +2,7 @@
 
 import asyncio
 import math
+from uuid import uuid4
 
 from discordbot.platform.errors import AppError, DataIntegrityError
 from discordbot.platform.tasks import TaskSpec, CancellationBehavior
@@ -20,6 +21,17 @@ class Probe:
         self.backup_latest = backup_latest
         self._backup_modified: float | None = None
         self.policy = ProbePolicy()
+        self._incident_id: str | None = None
+        self._incident_fields: dict[str, object] = {}
+
+    def failure_fields(self, fields: dict[str, object]) -> dict[str, object]:
+        """Correlate a recovery episode without identifying users or the DB path."""
+        if self._incident_id is None:
+            self._incident_id = uuid4().hex
+        self._incident_fields = safe_probe_fields(fields)
+        admitted = getattr(self.database, 'admitted', (0, 0))
+        return {**fields, 'incident_id': self._incident_id,
+                'read_admitted': admitted[0], 'write_admitted': admitted[1]}
 
     async def start(self):
         report = await self.database.inspect(DatabaseRequest.within(5))
@@ -52,8 +64,8 @@ class Probe:
                     self.policy.hard = True
                     self.database_ready = False
                     self.runtime.telemetry.emit('database.probe_failed', component='operations', result='failed',
-                        fields={'operation': 'select1_probe', 'error_code': 'database_unavailable',
-                                'probe_disposition': 'hard', 'probe_recovery_safe': False})
+                        fields=self.failure_fields({'operation': 'select1_probe', 'error_code': 'database_unavailable',
+                                'probe_disposition': 'hard', 'probe_recovery_safe': False}))
                     return
             try:
                 await self.database.probe(DatabaseRequest.within(2))
@@ -66,11 +78,14 @@ class Probe:
                     self.database_ready = False
                 if disposition == 'recovery_expired':
                     self.runtime.telemetry.emit('database.probe_failed', component='operations', result='failed',
-                        fields={'operation': 'select1_probe', 'error_code': 'database_unavailable',
-                                'probe_disposition': 'recovery_expired'})
+                        fields=self.failure_fields({'operation': 'select1_probe', 'error_code': 'database_unavailable',
+                                'probe_disposition': 'recovery_expired'}))
                 elif disposition == 'recovered':
                     self.runtime.telemetry.emit('database.probe_recovered', component='operations', result='success',
-                        fields={'operation': 'select1_probe', 'healthy_probes': 2})
+                        fields={**self._incident_fields, 'operation': 'select1_probe',
+                                'incident_id': self._incident_id, 'healthy_probes': 2})
+                    self._incident_id = None
+                    self._incident_fields = {}
             except AppError as exc:
                 self.runtime.metrics.increment("database_probe_total", labels={"result": "failed"})
                 fields = safe_probe_fields(exc.context)
@@ -79,7 +94,7 @@ class Probe:
                     self.database_ready = False
                 self.runtime.telemetry.emit('database.probe_contention' if disposition == 'bounded_busy' else 'database.probe_failed',
                     component='operations', result='failed',
-                    fields={'error_code': exc.code.value, 'probe_disposition': disposition, **fields})
+                    fields=self.failure_fields({'error_code': exc.code.value, 'probe_disposition': disposition, **fields}))
             self.runtime.metrics.increment("database_probe_seconds_total", self.runtime.clock.monotonic() - start)
             await self.sample_backup()
         self.task = self.runtime.supervisor.start(TaskSpec("database-probe", "operations", "probe", "health", 10,

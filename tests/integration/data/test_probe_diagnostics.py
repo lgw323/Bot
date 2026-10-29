@@ -23,6 +23,27 @@ def request():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize('step', ['progress_handler', 'synchronous', 'temp_store', 'cache_size', 'trusted_schema', 'query_only'])
+async def test_configuration_failure_identifies_exact_fixed_step(database, monkeypatch, step):
+    closed = []
+    def fail(current):
+        if current == step:
+            error = sqlite3.OperationalError('private SQL and path')
+            error.sqlite_errorcode = sqlite3.SQLITE_BUSY
+            raise error
+    class Connection:
+        def set_progress_handler(self, *args): fail('progress_handler')
+        def execute(self, sql): fail(sql.split()[1].split('=')[0])
+        def close(self): closed.append(True)
+    monkeypatch.setattr(execution.sqlite3, 'connect', lambda *a, **k: Connection())
+    with pytest.raises(DatabaseUnavailableError) as failed:
+        await database.probe(request())
+    assert failed.value.context['configure_step'] == step
+    assert failed.value.context['stage'] == 'probe_configure'
+    assert failed.value.context['close_succeeded'] is True and closed == [True]
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("mode", ["DELETE", "WAL"])
 @pytest.mark.parametrize("transaction", ["BEGIN", "BEGIN IMMEDIATE", "BEGIN EXCLUSIVE"])
 async def test_actual_cross_process_probe_contention(legacy_db, mode, transaction):
@@ -51,6 +72,7 @@ conn.rollback();conn.close()
             assert fields["sqlite_errorcode"] & 255 == sqlite3.SQLITE_BUSY
             assert fields["sqlite_family"] == "busy"
             assert fields["stage"] == "probe_configure"
+            assert fields["configure_step"] == "synchronous"
             assert fields["connection_opened"] and fields["close_succeeded"]
         else:
             assert await db.probe(request()) == (1,)
@@ -111,6 +133,10 @@ async def test_probe_failure_boundaries_hide_sensitive_text(database, monkeypatc
     fields = dict(failed.value.context)
     assert fields["operation"] == "select1_probe"
     assert fields["stage"] == "probe_" + boundary
+    if boundary == 'configure':
+        assert fields['configure_step'] == 'synchronous'
+    else:
+        assert 'configure_step' not in fields
     assert fields["sqlite_errorcode"] == code and fields["sqlite_family"] == family
     assert fields["connection_opened"] == (boundary != "open")
     assert fields["close_succeeded"] == (boundary not in {"open", "close"})

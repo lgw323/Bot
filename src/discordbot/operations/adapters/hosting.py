@@ -174,8 +174,10 @@ class TelemetryDrain:
     name = "telemetry"
     required = True
 
-    def __init__(self, runtime: Any) -> None:
+    def __init__(self, runtime: Any, observer: Callable[[Any], None] | None = None) -> None:
         self.runtime = runtime
+        self.observer = observer
+        self.observer_failures = 0
         self.closed = False
         self.task = None
 
@@ -183,6 +185,11 @@ class TelemetryDrain:
         logger = logging.getLogger("discordbot.events")
         for item in self.runtime.telemetry_buffer.drain(128):
             logger.info(item.event, extra={"fields": item.as_dict()})
+            if self.observer is not None:
+                try:
+                    self.observer(item)
+                except Exception:
+                    self.observer_failures += 1
 
     async def start(self) -> None:
         self.schedule()

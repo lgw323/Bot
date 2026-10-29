@@ -55,12 +55,17 @@ def connect(path: Path, control: WorkControl, *, writable: bool, busy_seconds: f
         trace.connection_opened = True
         trace.stage = 'probe_configure'
     try:
+        if trace is not None:
+            trace.configure_step = 'progress_handler'
         conn.set_progress_handler(control.progress, 1000)
-        conn.execute("PRAGMA synchronous=NORMAL")
-        conn.execute("PRAGMA temp_store=MEMORY")
-        conn.execute("PRAGMA cache_size=-2000")
-        conn.execute("PRAGMA trusted_schema=OFF")
+        for name, value in (('synchronous', 'NORMAL'), ('temp_store', 'MEMORY'),
+                            ('cache_size', '-2000'), ('trusted_schema', 'OFF')):
+            if trace is not None:
+                trace.configure_step = name
+            conn.execute(f"PRAGMA {name}={value}")
         if not writable:
+            if trace is not None:
+                trace.configure_step = 'query_only'
             conn.execute("PRAGMA query_only=ON")
         return conn
     except BaseException as exc:

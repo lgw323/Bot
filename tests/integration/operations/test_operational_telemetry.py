@@ -67,7 +67,10 @@ async def test_generic_probe_failure_emits_safe_code_and_latches_readiness(monke
         assert not probe.ready()
         events = runtime.telemetry_buffer.drain()
         assert len(events) == 1 and events[0].event == "database.probe_failed"
-        assert events[0].fields == {"error_code": "database_unavailable", "operation": "select1_probe", "probe_disposition": "hard"}
+        incident = events[0].fields['incident_id']
+        assert len(incident) == 32 and all(c in '0123456789abcdef' for c in incident)
+        assert events[0].fields == {"error_code": "database_unavailable", "operation": "select1_probe",
+            "probe_disposition": "hard", "incident_id": incident, "read_admitted": 0, "write_admitted": 0}
         database.probe.side_effect = None
         await factories[0]()
         assert not probe.ready()  # A safety failure remains latched; no automatic recovery.
