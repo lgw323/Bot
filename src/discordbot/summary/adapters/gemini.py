@@ -90,6 +90,7 @@ class GeminiProvider:
             raise MalformedSummary("invalid Gemini result") from None
 
     async def close(self) -> None:
-        session, self._session = self._session, None
+        session = self._session
         if session is not None:
             await session.close()
+            self._session = None
