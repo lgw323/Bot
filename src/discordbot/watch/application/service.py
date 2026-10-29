@@ -4,7 +4,8 @@ import asyncio
 from dataclasses import asdict
 
 from discordbot.platform.clock import Clock, IdGenerator
-from discordbot.platform.errors import AppError, CapacityError, ConflictError, ExternalTemporaryError, ShutdownError, ValidationError
+from discordbot.platform.diagnostics import exception_fields
+from discordbot.platform.errors import AppError, CapacityError, ConflictError, DeadlineExceededError, ExternalTemporaryError, ShutdownError, ValidationError
 from discordbot.platform.health import HealthRegistry, HealthStatus
 from discordbot.platform.tasks import require_tasks_stopped, CancellationBehavior, TaskSpec, TaskSupervisor
 from discordbot.platform.telemetry import TelemetryEmitter
@@ -28,6 +29,10 @@ class WatchService:
         self._gate = asyncio.Lock()
         self._started = False
         self._stopped = False
+        self._work_stopped = False
+        self._release_pending = False
+        self._metadata_closed = False
+        self._cleanup_complete = False
         self._lease_until = 0.0
         self._maintenance: asyncio.Task[None] | None = None
 
@@ -48,6 +53,9 @@ class WatchService:
             raise ShutdownError("Watch runtime stopped")
         try:
             lease_at = self.now()
+            # An interrupted start may have committed its lease. Release only
+            # after a writer start was attempted, including that uncertain case.
+            self._release_pending = True
             await self.writer.start(self.epoch, lease_at)
             self._lease_until = lease_at+10
             for name in ("repository", "stale-cleanup", "session-runtime"):
@@ -94,12 +102,13 @@ class WatchService:
                 if actor.durable_closed:
                     self.sessions.pop(sid, None)
             self.health.update("repository", HealthStatus.OK)
-        except AppError:
+        except AppError as error:
             self.health.update("repository", HealthStatus.DOWN)
             for actor in self.sessions.values():
                 for peer in actor.peers.values():
                     peer.stop(4001)
-            self.telemetry.emit("watch.maintenance", component="watch", result="failed")
+            self.telemetry.emit("watch.maintenance", component="watch", result="failed",
+                fields={"error_code": error.code.value, **exception_fields(error)})
 
     async def create(self, guild: int, user: int, operation: str, issued: int) -> Invite:
         self.require()
@@ -178,34 +187,66 @@ class WatchService:
         title = "알 수 없는 유튜브 비디오"
         try:
             title = await self.metadata.title(identity)
-        except ExternalTemporaryError:
-            self.telemetry.emit("watch.metadata", component="watch", result="unavailable")
+        except ExternalTemporaryError as error:
+            self.telemetry.emit("watch.metadata", component="watch", result="unavailable",
+                fields={"error_code": error.code.value, **exception_fields(error)})
         await actor.call("add", url.strip(), display(title, 200, "알 수 없는 유튜브 비디오"), by)
         return title
 
     async def stop(self) -> None:
-        if self._stopped:
-            if not getattr(self, "_cleanup_complete", False):
-                raise ShutdownError("Watch service cleanup incomplete")
+        if getattr(self, "_cleanup_complete", False):
             return
+        if getattr(self, "_stopping", False):
+            raise ShutdownError("Watch service cleanup already in progress")
+        self._stopping = True
         self._stopped = True
         self.health.stop_accepting()
         if self._maintenance:
             self._maintenance.cancel()
         try:
-            async with asyncio.timeout(5):
-                for actor in tuple(self.sessions.values()):
-                    if not actor.task.done():
-                        try:
-                            await actor.call("close")
-                        except AppError:
-                            self.telemetry.emit("watch.shutdown", component="watch", result="uncertain_close")
-        except TimeoutError:
-            self.telemetry.emit("watch.shutdown", component="watch", result="deadline")
+            errors: list[BaseException] = []
+            if not getattr(self, "_work_stopped", False):
+                try:
+                    async with asyncio.timeout(5):
+                        for actor in tuple(self.sessions.values()):
+                            if not actor.task.done():
+                                try:
+                                    await actor.call("close")
+                                except AppError as error:
+                                    self.telemetry.emit("watch.shutdown", component="watch", result="uncertain_close",
+                                        fields={"error_code": error.code.value, **exception_fields(error)})
+                except TimeoutError as error:
+                    self.telemetry.emit("watch.shutdown", component="watch", result="deadline",
+                        fields={"error_code": DeadlineExceededError.code.value, **exception_fields(error)})
+                except BaseException as error:
+                    errors.append(error)
+                try:
+                    require_tasks_stopped(await self.supervisor.shutdown(grace_seconds=1))
+                except BaseException as cleanup_error:
+                    if errors:
+                        raise errors[0] from cleanup_error
+                    raise
+                self._work_stopped = True
+                self.sessions.clear()
+                self.health.stop_liveness()
+            if self._release_pending:
+                try:
+                    await self.writer.release(self.epoch)
+                except BaseException as error:
+                    errors.append(error)
+                else:
+                    self._release_pending = False
+            if not self._metadata_closed:
+                try:
+                    await self.metadata.close()
+                except BaseException as error:
+                    errors.append(error)
+                else:
+                    self._metadata_closed = True
+            self._cleanup_complete = not self._release_pending and self._metadata_closed
+            if errors:
+                if len(errors) > 1:
+                    raise errors[0] from errors[-1]
+                raise errors[0]
         finally:
-            require_tasks_stopped(await self.supervisor.shutdown(grace_seconds=1))
-            self.sessions.clear()
-            await self.writer.release(self.epoch)
-            await self.metadata.close()
-            self.health.stop_liveness()
-            self._cleanup_complete = True
+            self._stopping = False

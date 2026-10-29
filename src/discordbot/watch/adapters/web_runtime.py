@@ -1,6 +1,7 @@
 """Opt-in watch-web resource. Explicit start; no bootstrap or server at import."""
 
 from discordbot.platform.clock import Clock, Uuid4Generator
+from discordbot.platform.errors import ShutdownError
 from discordbot.platform.telemetry import TelemetryEmitter
 from discordbot.storage.adapters.execution import SqliteDatabase
 from discordbot.watch.adapters.control_server import build_control_app
@@ -26,6 +27,8 @@ class WatchWebResource:
         self.public_app = build_public_app(self.service, origin)
         self.control_app = build_control_app(self.service, control_secret)
         self.started = False
+        self._database_closed = False
+        self._stopping = False
 
     async def start(self) -> None:
         if self.started:
@@ -38,12 +41,39 @@ class WatchWebResource:
             await self.service.start()
             self.service.schedule()
             self.started = True
-        except BaseException:
-            await self.stop()
+        except BaseException as original:
+            try:
+                await self.stop()
+            except BaseException as cleanup_error:
+                raise original from cleanup_error
             raise
 
     async def stop(self) -> None:
-        await self.service.stop()
-        await self.database.stop()
+        if self.startup_cleanup_complete:
+            return
+        if self._stopping:
+            raise ShutdownError("Watch web cleanup already in progress")
+        self._stopping = True
         self.started = False
-        self.startup_cleanup_complete = True
+        try:
+            errors: list[BaseException] = []
+            try:
+                await self.service.stop()
+            except BaseException as error:
+                errors.append(error)
+            # A pending lease release still needs its DB. Metadata close does
+            # not, so a failed metadata close cannot retain a drained database.
+            if self.service._work_stopped and not self.service._release_pending and not self._database_closed:
+                try:
+                    await self.database.stop()
+                except BaseException as error:
+                    errors.append(error)
+                else:
+                    self._database_closed = True
+            self.startup_cleanup_complete = self.service._cleanup_complete and self._database_closed
+            if errors:
+                if len(errors) > 1:
+                    raise errors[0] from errors[-1]
+                raise errors[0]
+        finally:
+            self._stopping = False

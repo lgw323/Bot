@@ -113,7 +113,7 @@ async def test_required_aggregate_retains_failed_partial_child(monkeypatch, clea
         watch.client.stop.side_effect = RuntimeError('synthetic child cleanup failure')
     settings = NS(database=Path('unused'), master=1, main_channels=(), secrets=NS(gemini_key='synthetic',
         control_key='synthetic', discord_token='synthetic'), gemini_model='synthetic', public_origin='https://watch.example.test',
-        control_port=9001, admin_channel=1, cache=Path('unused'), state=Path('unused'), music_channels=())
+        control_port=9001, admin_channel=1, log_channel=None, cache=Path('unused'), state=Path('unused'), music_channels=())
     replacements = dict(create_engagement_bot=lambda: bot, validate_candidate=AsyncMock(),
         EngagementResource=lambda *a: Resource('engagement', events), SummaryResource=lambda *a: Resource('summary', events),
         GeminiProvider=lambda *a: object(), DiscordWatchResource=lambda *a: watch,
@@ -128,6 +128,7 @@ async def test_required_aggregate_retains_failed_partial_child(monkeypatch, clea
             async def stop(self):
                 raise ShutdownError('synthetic member cleanup failure')
         watch = Unmarked('unmarked', events)
+        watch.controller = NS(diagnostics=None)
         monkeypatch.setattr(composition, 'DiscordWatchResource', lambda *a: watch)
     database = Resource('database', events)
     features = composition.DiscordFeatures(config, settings, database, SystemClock())

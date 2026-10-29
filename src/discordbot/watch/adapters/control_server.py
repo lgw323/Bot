@@ -42,6 +42,13 @@ def build_control_app(service: WatchService, secret: str):
             result = {}
             if operation == "status":
                 result = {"ready": service.ready()}
+                diagnostics = getattr(app.state, "diagnostics", None)
+                if diagnostics is not None:
+                    try:
+                        result["diagnostics"] = diagnostics()
+                    except Exception:
+                        # Optional forwarding must not fail readiness requests.
+                        result["diagnostics"] = []
             else:
                 service.require()
                 if operation == "create":
