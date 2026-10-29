@@ -262,6 +262,19 @@ is unknown. The owner approved this policy change on 2026-10-18; publication doe
 
 ## Discord operational notifications
 
+Failure diagnostics use a bounded `text` code block in message content so the
+operator can copy it. They include UTC time, original allowlisted event, feature,
+stage, exception category, generated work/incident ID and recovery status when
+available. Raw exception messages, traceback locals and user content stay excluded.
+Music actor notices include state before/after the failed operation; this does not
+claim a later retry recovered. DB notices distinguish pending contention/deadline
+recovery from a latched failure. A green recovery notice requires the existing
+probe policy's two successful checks, and shares the failure's incident ID.
+Time and generated IDs do not bypass the existing 60-second duplicate window.
+Exact SQLite configuration steps and admitted lane counts are diagnostic evidence,
+not identification of the process holding a lock. Readiness and retry policy are
+unchanged.
+
 The optional Discord logging resource restores connected/start notices
 and Discord-process project warnings/all errors, including structured probe/task
 failures. It sends only allowlisted summaries, never raw message arguments,
@@ -270,6 +283,25 @@ dedup history128, 60-second duplicate suppression, five-second application send
 spacing/timeout and at most one explicit rate-limit retry bound delivery. The
 pinned SDK's internal retries enforce a stable nonce. Discord unavailability or
 notification-worker admission failure does not fail the core bot. Journal remains
-authoritative. Watch-process forwarding and the old update/restart panel are not
-part of this narrow correction. The destination must be the verified existing log
+authoritative. The old update/restart panel remains outside this correction.
+The destination must be the verified existing log
 channel, independently configured from Watch administration.
+
+Watch-web forwards only allowlisted maintenance, metadata, shutdown and DB probe
+diagnostics through the existing authenticated loopback status request. The web
+process never receives Discord credentials or starts a Discord client. The
+Discord process revalidates every row and uses the same notifier limits. The
+relay holds at most 32 distinct pending notices, returns up to eight per existing
+status poll, and discards entries older than five minutes. Delivery is best-effort:
+an interrupted status response or process exit can lose queued rows. Normal
+success is not automatically labeled recovery; only explicit probe recovery is.
+
+Music URL processing errors return one safe failure response. Once a Discord send
+has been attempted, an ambiguous failure does not trigger a second response.
+Selection failures before enqueue may be retried in the same window; concurrent
+clicks are serialized. Successful or uncertain enqueue and partial favorite
+deletion retain consumption to prevent duplicate effects.
+
+Summary and Watch shutdown attempts preserve live-task dependencies, clean
+independent resources after close errors, and retry unfinished ownership steps.
+Gemini transport ownership is released only after session close succeeds.

@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-10-28 - Request recovery, cleanup and diagnostic delivery
+
+- Return one safe response for unexpected music URL processing failures. Permit
+  a new selection attempt after a definite pre-enqueue rejection, while retaining
+  consumption after success, ambiguous enqueue or partial favorite deletion.
+- Clean independent Summary/Watch resources after shutdown failures and retry
+  unfinished cleanup. Retain the Gemini session until transport close succeeds.
+- Preserve music request/selection stages and typed Summary/Watch error events.
+  Forward bounded Watch-web diagnostics over authenticated loopback status calls
+  to the existing Discord notifier, without credentials or Discord login in Watch.
+- Repair the Watch cleanup test fixture. Internal audit inventories and local
+  execution evidence are maintained separately from this public change.
+- These are local source changes. Deployment and live Discord/ARM64 validation
+  are separate; the historical intermittent subprocess timeout remains unexplained.
+
+## 2026-10-27 - Copyable Discord failure and recovery diagnostics
+
+- Keep DB contention and music failure event names in bounded plaintext code blocks,
+  with UTC time, stage, allowlisted exception category, work/incident identity and
+  recovery status. Include DB recovery only after the existing two-probe policy.
+- Retain music actor exception types and before/after state without exception text,
+  track URLs, user identifiers or private payloads. Retain the exact fixed SQLite
+  configuration step and queue admission counts for subsequent investigation.
+- Keep readiness, retry, queue bounds, duplicate suppression and delivery nonce
+  semantics. This improves diagnosis; the production lock owner and historical
+  music connection failure cause remain unconfirmed. No deployment is included.
+- Contain notification formatting/enqueue errors so they cannot mask an original
+  music command failure. Count dropped notices without printing the private record.
+
 ## 2026-10-27 - Local cutover tests and guarded source runner
 
 - Publish the synthetic cutover controller, byte-pinned stopped-WAL helper and

@@ -392,6 +392,20 @@ tail -f ~/bot/data/logs/backup.log
 
 ## V2 operational notifications
 
+Copy the `text` block from a failure/recovery message for investigation. `Time` is
+UTC; `Event` retains the supported original event; `work_id` identifies music work
+and `incident_id` links DB failure/recovery. `Recovery: pending` is not success.
+`Recovery: recovered` follows two successful probes under the existing policy;
+`latched; operator review required` remains a failure even if the underlying lock
+later disappears. Missing recovery messages do not prove ongoing failure because
+delivery can be unavailable or dropped. Check current readiness and journal in an
+authorized operational session. `configure_step` identifies the fixed PRAGMA that
+failed; admission counts are a snapshot, not proof of lock ownership. Music state
+before/after describes the failing operation, not subsequent retry success.
+`discord_log_format_failures` counts notices dropped during formatting or queue
+admission; these failures do not propagate into the original application call and
+do not print the private record as a fallback.
+
 The optional Discord notification destination is a separate `logging.json` beside
 the main configuration (`/etc/discordbot/logging.json` in production). Use the
 `deploy/production/logging.example.json` template, replacing its placeholder with
@@ -405,8 +419,14 @@ worker. Invalid contents fail closed before Discord login.
 The main config version/schema is unchanged; prior releases ignore the sidecar,
 so rollback does not require rewriting the main config or restoring old DB data.
 The notification resource emits one connected/start notice and bounded, redacted
-Discord-process warning/error summaries. Separate Watch-process logs and failures
-before login or during teardown remain in journal; this does not restore the V1
+Discord-process warning/error summaries. Allowlisted Watch-web diagnostics are
+forwarded through the signed loopback status call and revalidated by the Discord
+process. `watch_diagnostic_pending` and `watch_diagnostic_dropped` expose the
+bounded relay queue. The web process receives no Discord credential. Both source
+components must be updated together; the public Watch API is unchanged. Missing
+diagnostic rows from an older web process are accepted. Failures before login,
+after listener shutdown, interrupted status responses, and process-exit losses
+remain journal-only; delivery is best-effort. This does not restore the V1
 update/restart control panel. The existing update/manual timers stay disabled.
 Inspect `discord_log_worker_enabled`, queue/drop/failure/delivery gauges and local
 `discord.log_delivery_failed` / `discord.log_worker_unavailable` records when
