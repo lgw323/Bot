@@ -18,6 +18,7 @@ from discordbot.music.adapters.runtime import MusicResource
 from discordbot.music.adapters.sqlite_repository import SqliteMusicRepository
 from discordbot.music.ports.repository import Favorite
 from discordbot.platform.errors import DatabaseUnavailableError
+from discordbot.platform.diagnostics import safe_frame_location
 from discordbot.platform.executors import BoundedExecutor
 from discordbot.platform.telemetry import JsonEventFormatter
 from discordbot.storage.adapters.execution import SqliteDatabase
@@ -191,7 +192,15 @@ async def test_sdk_favorites_failure_has_private_ack_and_safe_typed_event(rig, c
         request.response.send_message.assert_awaited_once()
         assert request.response.send_message.call_args.kwargs['ephemeral'] is True
         record = next(record for record in caplog.records if record.msg == 'music.ui_failed')
-        assert record.fields == {'stage':'action', 'error_code':'database_unavailable'}
+        assert set(record.fields) == {'stage','error_code','exception_type','stack_frames','trace_limited'}
+        assert record.fields['stage'] == 'action'
+        assert record.fields['error_code'] == 'database_unavailable'
+        assert record.fields['exception_type'] == 'DatabaseUnavailableError'
+        assert record.fields['trace_limited'] is True  # Mock/SDK dispatch frames remain private.
+        frames = record.fields['stack_frames']
+        assert 1 <= len(frames) <= 5
+        assert all(safe_frame_location(frame) == frame for frame in frames)
+        assert any(frame.startswith('discordbot/music/adapters/discord_ui.py:') for frame in frames)
         encoded = JsonEventFormatter().format(record)
         assert 'private synthetic' not in encoded and '987654321' not in encoded
     finally:
