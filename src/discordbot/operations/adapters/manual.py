@@ -1,6 +1,7 @@
 """Single durable request inbox; Discord never executes service commands."""
 
 import hashlib
+import json
 import os
 from pathlib import Path
 
@@ -24,9 +25,39 @@ class RequestInbox:
             raise ValidationError("invalid manual operation")
         return await self.executor.run_retained(self._accept, operation, hashlib.sha256(receipt.encode()).hexdigest())
 
-    def _accept(self, operation: str, receipt: str) -> str:
+    async def snapshot(self) -> dict[str, str | None]:
+        """Only bounded control metadata crosses into the Discord panel."""
+        return await self.executor.run(self._snapshot)
+
+    def _snapshot(self) -> dict[str, str | None]:
+        path = self.state / "manual-request.json"
+        try:
+            value = read_json(path, 131072, reject_duplicates=True)
+        except FileNotFoundError:
+            value = {}
+        operation = value.get("operation")
+        result = value.get("result")
+        receipt = value.get("receipt")
+        if value and (operation not in {"update", "restart"}
+                      or result not in {"pending", "in_progress", "ok", "failed", "ok_cleanup_failed"}
+                      or not isinstance(receipt, str) or len(receipt) != 64
+                      or any(c not in "0123456789abcdef" for c in receipt)):
+            raise ValidationError("invalid manual request status")
+        revision = hashlib.sha256(json.dumps([operation, result, receipt], separators=(",", ":")).encode()).hexdigest()
+        return {"operation": operation, "result": result, "revision": revision}
+
+    async def accept_current(self, operation: str, receipt: str, expected_revision: str) -> str:
+        if (operation not in {"update", "restart"} or not isinstance(receipt, str) or not 1 <= len(receipt) <= 100
+                or not isinstance(expected_revision, str) or len(expected_revision) != 64
+                or any(c not in "0123456789abcdef" for c in expected_revision)):
+            raise ValidationError("invalid confirmed manual operation")
+        return await self.executor.run_retained(self._accept, operation, hashlib.sha256(receipt.encode()).hexdigest(), expected_revision)
+
+    def _accept(self, operation: str, receipt: str, expected_revision: str | None = None) -> str:
         try:
             with ExclusiveLock(self.operation_lock).acquire():
+                if expected_revision is not None and self._snapshot()["revision"] != expected_revision:
+                    return "stale"
                 request = self.state / "manual-request.json"
                 history = []
                 if request.exists():

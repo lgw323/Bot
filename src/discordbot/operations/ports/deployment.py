@@ -40,6 +40,7 @@ class DeploymentPort(Protocol):
 
 class ManualPort(Protocol):
     async def accept(self, operation: str, receipt: str) -> str: ...
+    async def accept_current(self, operation: str, receipt: str, expected_revision: str) -> str: ...
 
 
 class Responder(Protocol):

@@ -6,10 +6,26 @@ from discordbot.platform.errors import AppError
 
 class ManualOperations:
     def __init__(self, master: int, port: ManualPort) -> None:
+        if type(master) is not int or master <= 0:
+            raise ValueError("invalid operations administrator")
         self.master, self.port = master, port
 
+    def authorized(self, user: int) -> bool:
+        return type(user) is int and user == self.master
+
+    async def confirmed(self, user: int, operation: str, receipt: str, revision: str) -> str:
+        """Recheck authorization at the write boundary, not just in the view."""
+        if not self.authorized(user):
+            return "forbidden"
+        if operation not in {"update", "restart"}:
+            return "invalid"
+        try:
+            return await self.port.accept_current(operation, receipt, revision)
+        except AppError:
+            return "failed"
+
     async def request(self, user: int, operation: str, receipt: str, responder: Responder) -> None:
-        if user != self.master:
+        if not self.authorized(user):
             await responder.reply("이 버튼을 사용할 권한이 없습니다.", ephemeral=True)
             return
         if operation not in {"update", "restart"}:
