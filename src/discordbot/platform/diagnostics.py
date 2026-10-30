@@ -37,7 +37,7 @@ def safe_frame_location(value: object) -> str | None:
 def safe_exception_fields(fields: Mapping[str, object]) -> dict[str, object]:
     """Revalidate evidence on receipt as well as when exceptions are captured."""
     safe: dict[str, object] = {}
-    for key in ('exception_type', 'cause_type'):
+    for key in ('exception_type', 'cause_type', 'context_type'):
         value = fields.get(key)
         if type(value) is str and value in EXCEPTION_TYPES | {'unexpected'}:
             safe[key] = value
@@ -45,6 +45,11 @@ def safe_exception_fields(fields: Mapping[str, object]) -> dict[str, object]:
     if type(value) in (tuple, list) and 1 <= len(value) <= MAX_CHAIN and all(
             type(item) is str and item in EXCEPTION_TYPES | {'unexpected'} for item in value):
         safe['exception_chain'] = tuple(value)
+    value = fields.get('chain_relations')
+    chain = safe.get('exception_chain', ())
+    if type(value) in (tuple, list) and 1 <= len(value) == len(chain) - 1 and all(
+            type(item) is str and item in {'cause', 'context'} for item in value):
+        safe['chain_relations'] = tuple(value)
     value = fields.get('stack_frames')
     if type(value) in (tuple, list) and 1 <= len(value) <= MAX_FRAMES and all(
             safe_frame_location(item) is not None for item in value):
@@ -100,6 +105,7 @@ def exception_fields(error: BaseException) -> dict[str, object]:
     """
     fields: dict[str, object] = {'exception_type': _exception_name(error)}
     chain: list[str] = []
+    links: list[str] = []
     frames: list[str] = []
     seen: set[int] = set()
     current: BaseException | None = error
@@ -127,8 +133,12 @@ def exception_fields(error: BaseException) -> dict[str, object]:
                 tb = tb.tb_next
             limited = limited or tb is not None
             cause = current.__cause__
+            relation = 'cause'
             if cause is None and not current.__suppress_context__:
                 cause = current.__context__
+                relation = 'context'
+            if cause is not None:
+                links.append(relation)
             current = cause
         except Exception:
             # Optional evidence must not replace the caller's original error.
@@ -136,9 +146,10 @@ def exception_fields(error: BaseException) -> dict[str, object]:
             break
     limited = limited or current is not None or len(frames) > MAX_FRAMES
     if len(chain) > 1:
-        fields['cause_type'] = chain[1]
+        fields['cause_type' if links[0] == 'cause' else 'context_type'] = chain[1]
     if len(chain) > 2:
         fields['exception_chain'] = tuple(chain)
+        fields['chain_relations'] = tuple(links[:len(chain)-1])
     if frames:
         fields['stack_frames'] = tuple(frames[-MAX_FRAMES:])
     if limited:

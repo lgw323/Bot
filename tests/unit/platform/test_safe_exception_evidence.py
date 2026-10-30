@@ -51,9 +51,10 @@ def test_explicit_cause_wins_and_suppressed_context_stays_hidden():
     assert exception_fields(outer)['cause_type'] == 'TimeoutError'
     outer.__cause__ = None
     outer.__suppress_context__ = False
-    assert exception_fields(outer)['cause_type'] == 'KeyError'
+    implicit = exception_fields(outer)
+    assert implicit['context_type'] == 'KeyError' and 'cause_type' not in implicit
     outer.__suppress_context__ = True
-    assert 'cause_type' not in exception_fields(outer)
+    assert exception_fields(outer) == {'exception_type':'RuntimeError'}
 
 
 def test_deep_cause_chain_and_cycle_do_not_recurse_or_expose_messages():
@@ -61,6 +62,7 @@ def test_deep_cause_chain_and_cycle_do_not_recurse_or_expose_messages():
     for a, b in zip(errors, errors[1:]):a.__cause__ = b
     fields = exception_fields(errors[0])
     assert fields['exception_chain'] == ('RuntimeError',) * 3
+    assert fields['chain_relations'] == ('cause','cause')
     assert fields['trace_limited'] is True
     errors[0].__cause__ = errors[0]
     assert exception_fields(errors[0]) == {'exception_type':'RuntimeError','trace_limited':True}
@@ -78,6 +80,8 @@ def test_unknown_dynamic_type_and_message_stay_opaque():
 @pytest.mark.parametrize('field,value', [
     ('exception_chain', ['RuntimeError','PRIVATE_payload']),
     ('exception_chain', ['RuntimeError'] * 4),
+    ('context_type', 'PRIVATE_payload'),
+    ('chain_relations', ['PRIVATE']),
     ('stack_frames', ['discordbot/platform/PRIVATE_user.py:12']),
     ('stack_frames', ['PRIVATE/vendor/client.py:781']),
     ('stack_frames', ['discordbot/../../home/PRIVATE.py:1']),
@@ -102,6 +106,12 @@ def test_valid_evidence_survives_json_list_and_tuple_boundaries():
     assert safe_exception_fields(fields) == {**fields,'exception_chain':tuple(fields['exception_chain']),
                                              'stack_frames':tuple(fields['stack_frames'])}
     assert safe_frame_location('unknown_package/private.py:1') is None
+
+
+@pytest.mark.parametrize('relations', [['cause','PRIVATE'],['cause'],['cause','context','cause']])
+def test_incoming_relation_tags_require_valid_values_and_matching_chain_length(relations):
+    fields = {'exception_chain':['RuntimeError','TimeoutError','unexpected'],'chain_relations':relations}
+    assert 'chain_relations' not in safe_exception_fields(fields)
 
 
 def test_forged_module_globals_cannot_turn_a_private_frame_into_public_evidence():

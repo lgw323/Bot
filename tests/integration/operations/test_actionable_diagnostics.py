@@ -145,13 +145,20 @@ def test_watch_relay_revalidates_and_preserves_only_safe_evidence():
     from discordbot.operations.adapters.watch_diagnostics import _record
     row = dict(event='watch.shutdown',result='deadline',exception_type='TimeoutError',
                stack_frames=['discordbot/watch/application/service.py:219'],
-               exception_chain=['TimeoutError','unexpected'],correlation_id='a'*32,
+               context_type='KeyError',exception_chain=['TimeoutError','KeyError','unexpected'],
+               chain_relations=['context','cause'],correlation_id='a'*32,
                http_status=503,token='PRIVATE',message='PRIVATE')
     relayed = _record(row)
     assert relayed.fields['stack_frames'] == tuple(row['stack_frames'])
     assert relayed.fields['correlation_id'] == 'a'*32
+    assert relayed.fields['context_type'] == 'KeyError'
+    assert relayed.fields['chain_relations'] == ('context','cause')
+    assert '--context--> KeyError --cause--> unexpected' in notice(relayed).description
     row['stack_frames'] = ['C:/Users/PRIVATE/script.py:1']
     row['exception_chain'] = ['PRIVATE_type']
+    row['context_type'] = 'PRIVATE_type'
+    row['chain_relations'] = ['PRIVATE_relation']
     relayed = _record(row)
     assert 'stack_frames' not in relayed.fields and 'exception_chain' not in relayed.fields
+    assert 'context_type' not in relayed.fields and 'chain_relations' not in relayed.fields
     assert 'PRIVATE' not in notice(relayed).description

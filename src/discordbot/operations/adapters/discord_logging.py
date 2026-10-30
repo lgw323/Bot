@@ -222,9 +222,14 @@ def notice(record: logging.LogRecord) -> Notice | None:
         f'Module: {source}', f'Event: {event}', f'Code: {error}', f'Recovery: {recovery}',
         f'Correlation: {safe.get("correlation_id", "미제공") }']
     details = [f'{key}: {value}' for key, value in safe.items()
-        if key not in {'stack_frames', 'exception_chain', 'correlation_id'}]
+        if key not in {'stack_frames', 'exception_chain', 'chain_relations', 'correlation_id'}]
     if 'exception_chain' in safe:
-        details.append('exception_chain: ' + ' -> '.join(safe['exception_chain']))
+        chain, links = safe['exception_chain'], safe.get('chain_relations', ())
+        path = chain[0]
+        for index, kind in enumerate(chain[1:]):
+            relation = links[index] if index < len(links) else 'relation_unconfirmed'
+            path += f' --{relation}--> {kind}'
+        details.append('exception_chain: ' + path)
     if 'stack_frames' in safe:
         details.append('Stack (공개 코드 위치, 소스·로컬값 제외):')
         details.extend('  at ' + value for value in safe['stack_frames'])
