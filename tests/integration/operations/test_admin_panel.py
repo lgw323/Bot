@@ -240,6 +240,45 @@ async def test_stop_cancels_waiting_initial_ack_without_admitting_request(panel)
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["denied", "refresh"])
+async def test_callback_burst_has_hard_admission_cap_and_owned_cleanup(panel, kind):
+    started = []
+    interactions = [interaction(user=2 if kind == "denied" else 1) for _ in range(100)]
+    def blocking_reply(i):
+        async def wait(*args, **kwargs):
+            started.append(i)
+            await asyncio.Future()
+        return wait
+    for i in interactions:
+        if kind == "denied":
+            i.response.send_message.side_effect = blocking_reply(i)
+        else:
+            i.response.defer.side_effect = blocking_reply(i)
+    tasks = [asyncio.create_task(panel.resource.interact(i, "refresh")) for i in interactions]
+    while len(started) < 32:
+        await asyncio.sleep(0)
+    await asyncio.sleep(0)
+    assert len(panel.resource.callbacks) == 32
+    assert panel.resource.callback_overflow == 68
+    assert panel.resource.gauges()["operations_panel_callback_depth"] == 32
+    assert panel.resource.gauges()["operations_panel_callback_capacity"] == 32
+    assert panel.resource.gauges()["operations_panel_callback_overflow"] == 68
+    admitted = {id(i) for i in started}
+    for i in interactions:
+        if id(i) not in admitted:
+            i.response.defer.assert_not_awaited()
+            i.response.send_message.assert_not_awaited()
+            i.followup.send.assert_not_awaited()
+    panel.inbox.accept_current.assert_not_awaited()
+    await panel.resource.stop()
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    assert sum(isinstance(result, asyncio.CancelledError) for result in results) == 32
+    assert not panel.resource.callbacks and not panel.resource.tasks
+    assert panel.resource.gauges()["operations_panel_callback_depth"] == 0
+    panel.inbox.accept_current.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 async def test_uncertain_accepted_reply_does_not_repeat_atomic_acceptance(panel):
     await panel.resource.interact(interaction(),"restart")
     nonce = next(iter(panel.resource.confirmations)); i = interaction(message=777)

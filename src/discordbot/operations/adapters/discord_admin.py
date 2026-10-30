@@ -23,6 +23,7 @@ RESULTS = {"pending": "접수 대기", "in_progress": "진행 중", "ok": "완�
 OPERATIONS = {"update": "업데이트", "restart": "재시작"}
 IDENTIFIER = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9_.-]{0,199}\Z")
 HEX = re.compile(r"[a-f0-9]{32}\Z")
+CALLBACK_CAPACITY = 32
 
 
 class SystemdManualConsumer:
@@ -172,6 +173,7 @@ class OperationsPanel:
         self.closed, self.started = True, False
         self.failures = self.denied = self.stale = self.uncertain_publications = 0
         self.response_uncertain = 0
+        self.callback_overflow = 0
         self.startup_cleanup_complete = True
         self.publish_lock = asyncio.Lock()
 
@@ -287,6 +289,12 @@ class OperationsPanel:
             return False
 
     async def interact(self, interaction: Any, action: str, nonce: str | None = None) -> None:
+        # Denied replies and initial ACKs also consume bounded resources. At
+        # capacity do not start another transport or operation merely to reject
+        # the request; the fixed-size metrics make that fail-closed loss visible.
+        if len(self.callbacks) >= CALLBACK_CAPACITY:
+            self.callback_overflow += 1
+            return
         task = asyncio.current_task()
         self.callbacks.add(task)
         try:
@@ -390,6 +398,9 @@ class OperationsPanel:
         return {"operations_panel_enabled": float(not self.closed), "operations_panel_failures": float(self.failures),
                 "operations_panel_denied": float(self.denied), "operations_panel_stale": float(self.stale),
                 "operations_panel_response_uncertain": float(self.response_uncertain),
+                "operations_panel_callback_depth": float(len(self.callbacks)),
+                "operations_panel_callback_capacity": float(CALLBACK_CAPACITY),
+                "operations_panel_callback_overflow": float(self.callback_overflow),
                 "operations_panel_publication_uncertain": float(self.uncertain_publications)}
 
     async def stop(self) -> None:
