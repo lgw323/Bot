@@ -64,11 +64,14 @@ PUBLIC_FRAME_PATHS = frozenset(
     discordbot/operations/adapters/cli.py
     discordbot/operations/adapters/configuration.py
     discordbot/operations/adapters/deployment.py
+    discordbot/operations/adapters/discord_admin.py
     discordbot/operations/adapters/discord_logging.py
     discordbot/operations/adapters/filesystem.py
     discordbot/operations/adapters/git_backup.py
     discordbot/operations/adapters/hosting.py
     discordbot/operations/adapters/manual.py
+    discordbot/operations/adapters/operation_notifications.py
+    discordbot/operations/adapters/operation_results.py
     discordbot/operations/adapters/probe.py
     discordbot/operations/adapters/probe_policy.py
     discordbot/operations/adapters/recovery.py

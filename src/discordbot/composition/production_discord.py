@@ -1,6 +1,7 @@
 """Full Discord composition, explicitly invoked only after file/config validation."""
 
 from pathlib import Path
+from typing import Callable
 from discordbot.composition.live_validation import full_sweep_active
 
 from discordbot.composition.runtime import ProcessRuntime
@@ -10,6 +11,10 @@ from discordbot.music.adapters.sqlite_repository import SqliteMusicRepository
 from discordbot.operations.adapters.hosting import DeferredMusic, Gateway, Servers, TelemetryDrain, health_app, server
 from discordbot.operations.adapters.probe import Probe
 from discordbot.operations.adapters.discord_logging import DiscordLogging
+from discordbot.operations.adapters.audit import Audit
+from discordbot.operations.adapters.manual import RequestInbox
+from discordbot.operations.adapters.discord_admin import OperationsPanel, OperationalStatus, SystemdManualConsumer
+from discordbot.operations.adapters.operation_results import read_operation_result
 from discordbot.operations.adapters.watch_diagnostics import receive_watch_diagnostics
 from discordbot.platform.clock import SystemClock, Uuid4Generator
 from discordbot.platform.tasks import TaskSupervisor
@@ -32,6 +37,8 @@ class DiscordFeatures:
         self.started = []
         self.music = self.deferred = self.summary = None
         self.logs = None
+        self.operations = None
+        self._operational_readiness: Callable[[], bool] = lambda: False
 
     async def start(self):
         s, r = self.settings, self.runtime
@@ -49,10 +56,20 @@ class DiscordFeatures:
             fail_fast=lambda: Path('/run/discordbot-live-smoke').is_file(),
             full_sweep=lambda: full_sweep_active(self.config.release))
         self.deferred = DeferredMusic(self.music, self.bot, r.supervisor)
-        self.logs = (DiscordLogging(self.bot, s.log_channel, self.clock, r.supervisor)
+        self.logs = (DiscordLogging(self.bot, s.log_channel, self.clock, r.supervisor,
+                                   state=s.state, executor=r.executor, release=self.config.release)
                      if s.log_channel is not None else None)
+        if s.log_channel is not None:
+            inbox = RequestInbox(s.state, s.operation_lock, r.executor, Audit(s.audit), self.config.release)
+            status = OperationalStatus(inbox, availability=SystemdManualConsumer(r.executor),
+                                       release=self.config.release, readiness=self.operational_ready,
+                                       result_reader=read_operation_result)
+            self.operations = OperationsPanel(self.bot, master=s.master, channel=s.log_channel,
+                state=s.state, inbox=inbox, status=status, clock=self.clock,
+                supervisor=r.supervisor, executor=r.executor)
         resources = (engagement, self.summary, watch, Gateway(self.bot, s.secrets.discord_token), self.deferred)
-        for resource in (*resources, *((self.logs,) if self.logs is not None else ())):
+        optional = tuple(resource for resource in (self.logs, self.operations) if resource is not None)
+        for resource in (*resources, *optional):
             self.started.append(resource)
             try:
                 await resource.start()
@@ -74,12 +91,18 @@ class DiscordFeatures:
                     and not self.deferred.failed and not self.music.failed_restore
                     and not any(actor.smoke_failed for actor in self.music.actors.values()))
 
+    def operational_ready(self) -> bool:
+        # Bound by assemble to the same aggregate used by /health/ready. Discord
+        # connectivity alone never authorizes a control operation.
+        return self._operational_readiness()
+
     def gauges(self):
         return {"music_actors": len(self.music.actors) if self.music else 0,
                 "music_cache_bytes": self.music.cache.bytes if self.music else 0,
                 "music_processes": len(self.music.processes.children) if self.music else 0,
                 "summary_waiting": self.summary.service.waiting if self.summary else 0,
-                **(self.logs.gauges() if self.logs is not None else {})}
+                **(self.logs.gauges() if self.logs is not None else {}),
+                **(self.operations.gauges() if self.operations is not None else {})}
 
     async def stop(self):
         while self.started:
@@ -98,4 +121,5 @@ def assemble(config, settings):
     def ready(): return features.ready() and probe.ready() and listeners.ready()
     def gauges(): return {**features.gauges(), **probe.gauges()}
     listeners = Servers((server(health_app(runtime, ready, gauges), settings.discord_health_port),), runtime.supervisor)
+    features._operational_readiness = lambda: runtime.health.snapshot().ready and ready()
     return runtime, features, listeners, TelemetryDrain(runtime), probe

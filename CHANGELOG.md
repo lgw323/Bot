@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-10-30 - Actionable diagnostics and confirmed operational controls
+
+- Add bounded sanitized exception categories and public-code locations, Korean
+  diagnostic summaries and explicit clipping while retaining content/secret
+  protection, severity routing and duplicate suppression.
+- Separate connection/reconnection from proven operation outcomes. Keep bounded
+  operation-result/cursor state across restart without claiming exactly-once
+  delivery or replaying arbitrary private errors.
+- Wire a persistent master-only operations panel to the existing manual request
+  inbox, with refresh, expiring confirmation, replay protection and truthful
+  consumer availability. The bot does not execute service mutations.
+- This is a local implementation. Publication, deployment, live UI validation and
+  enabling update/manual timers are separate; existing production is unchanged.
+
 ## 2026-10-28 - Request recovery, cleanup and diagnostic delivery
 
 - Return one safe response for unexpected music URL processing failures. Permit

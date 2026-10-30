@@ -275,17 +275,38 @@ Exact SQLite configuration steps and admitted lane counts are diagnostic evidenc
 not identification of the process holding a lock. Readiness and retry policy are
 unchanged.
 
-The optional Discord logging resource restores connected/start notices
-and Discord-process project warnings/all errors, including structured probe/task
-failures. It sends only allowlisted summaries, never raw message arguments,
-tracebacks, URLs, user IDs or secrets, and disables mentions. Queue32, bounded
+The optional Discord logging resource reports connection, reconnection and
+verified operation outcomes separately. A connection is not evidence that all
+features are ready. Unknown startup reasons remain unknown; a pending operation
+record is not a successful update or restart. Project warnings and errors include
+structured probe/task failures. Sanitized diagnostic detail uses a Korean summary,
+allowlisted exception/HTTP categories, correlation identity and bounded public-code
+locations. Raw exception messages, source lines, traceback locals, absolute private
+paths, URLs, user IDs and secrets remain excluded. Unknown detail is not guessed.
+Clipping is explicit and respects Discord's UTF-16 limits. Mentions are disabled.
+Queue32, bounded
 dedup history128, 60-second duplicate suppression, five-second application send
 spacing/timeout and at most one explicit rate-limit retry bound delivery. The
 pinned SDK's internal retries enforce a stable nonce. Discord unavailability or
 notification-worker admission failure does not fail the core bot. Journal remains
-authoritative. The old update/restart panel remains outside this correction.
-The destination must be the verified existing log
-channel, independently configured from Watch administration.
+authoritative. General failure delivery is bounded and best-effort, not a durable
+error archive or an exactly-once transport. A bounded operation-result record and
+notification cursor survive process restart without replaying historical success
+messages. An uncertain transmission or a crash around a claim can still lose an
+alert; the panel's result state and local audit remain the evidence.
+The destination must be the verified existing log channel, independently configured
+from Watch administration.
+
+The separate operations panel offers status refresh and confirmed update/restart
+requests. Every interaction, including confirmation, checks the configured master
+on the server. Static persistent handlers are registered after restart; an old
+ephemeral confirmation is invalid after process restart or state/release change.
+The bot writes an idempotent request to the existing manual inbox and never runs
+service mutations itself. Disabled or unavailable manual consumption is displayed
+as unavailable and cannot be represented as an accepted execution. A queued
+request, an in-progress operation, a terminal failure and verified completion are
+different states. Updating source does not enable the update/manual timers;
+publication, deployment and activation remain separate approvals.
 
 Watch-web forwards only allowlisted maintenance, metadata, shutdown and DB probe
 diagnostics through the existing authenticated loopback status request. The web

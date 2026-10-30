@@ -418,7 +418,7 @@ worker. Invalid contents fail closed before Discord login.
 
 The main config version/schema is unchanged; prior releases ignore the sidecar,
 so rollback does not require rewriting the main config or restoring old DB data.
-The notification resource emits one connected/start notice and bounded, redacted
+The notification resource emits connection/lifecycle notices and bounded, redacted
 Discord-process warning/error summaries. Allowlisted Watch-web diagnostics are
 forwarded through the signed loopback status call and revalidated by the Discord
 process. `watch_diagnostic_pending` and `watch_diagnostic_dropped` expose the
@@ -426,12 +426,63 @@ bounded relay queue. The web process receives no Discord credential. Both source
 components must be updated together; the public Watch API is unchanged. Missing
 diagnostic rows from an older web process are accepted. Failures before login,
 after listener shutdown, interrupted status responses, and process-exit losses
-remain journal-only; delivery is best-effort. This does not restore the V1
-update/restart control panel. The existing update/manual timers stay disabled.
+remain journal-only; general error delivery is best-effort. The existing
+update/manual timers stay disabled unless separately approved and activated.
 Inspect `discord_log_worker_enabled`, queue/drop/failure/delivery gauges and local
 `discord.log_delivery_failed` / `discord.log_worker_unavailable` records when
 delivery is absent. Failed notification delivery never grants access or changes
 the destination. Live delivery must be verified after an approved startup; offline tests do not establish channel visibility or send permission.
+
+### Diagnostic detail and operations panel
+
+Failure cards and the operations panel are separate messages. The failure card
+keeps a Korean summary plus the stable investigation fields. Sanitized stack
+locations identify trusted public package code and line numbers without source
+text, private absolute paths or exception arguments. Unknown or omitted details
+are marked explicitly. A correlation ID is a generated diagnostic identifier,
+not a Discord user identity. The message stays within Discord's UTF-16 limit;
+it does not attach an unfiltered traceback when details are clipped.
+New code locations remain opaque until their public package path is reviewed in
+`src/discordbot/platform/diagnostic_locations.py`. A private or unknown location
+does not fall back to an arbitrary basename. An implicit exception context is
+reported separately from an explicitly chained cause; neither proves the root
+cause of an external outage.
+
+The panel uses persistent handlers for status/refresh and explicit update/restart
+confirmation. It checks the configured master on every callback, including the
+confirmation callback. Confirmations expire and do not survive a restart or a
+changed operation/release. Repeated clicks use the existing durable inbox's
+idempotence and lock; the bot does not execute shell or systemd mutations.
+The execution consumer must actually be available. An inactive manual timer is
+shown as unavailable, even if a panel message exists. This source change does not
+start or enable it. Rollout and enabling update/manual consumers require a later
+reviewed operational approval.
+The panel uses the same aggregate readiness as `/health/ready`, including DB
+probe, listener and platform admission. Discord connectivity alone cannot turn
+the controls on. A persisted start record is labelled completion-unconfirmed,
+not proof that a process is still running; the recorded UTC time is shown when
+known, and a request without a timestamp is explicitly undated.
+
+A confirmed Discord Unknown Message (`404` / code `10008`) permits one guarded
+replacement of the known panel. A permission failure, timeout or unknown send
+outcome does not. If a `publishing` marker survives an uncertain send, inspect the
+existing private-channel message and local metadata before a separately reviewed
+reconciliation. Do not delete the marker and blindly repost; the first send may
+already have succeeded. `operations_panel_publication_uncertain` makes this
+condition observable.
+
+Successful applied operations are recorded only after the corresponding
+readiness/smoke and audit steps. An unchanged update records that no update was
+performed, not a new health verification. Failure and in-progress records retain
+the reached stage without claiming completion. Read an accepted request as queued,
+never as success. A connection
+notice means Discord connected; an unproven startup/restart reason is unknown.
+The bounded safe operation-result record is separate from the private audit.
+A notification cursor suppresses historical replay after restart. General errors
+remain a bounded RAM queue, and a claim followed by uncertain delivery can lose
+an outcome alert; refresh the panel and inspect the local audit instead of
+assuming a missing Discord message proves success or failure. Do not erase the
+cursor or replay requests merely to obtain another notification.
 
 ## Inspect credential source metadata
 
