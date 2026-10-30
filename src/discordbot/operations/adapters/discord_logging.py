@@ -6,10 +6,12 @@ from collections import OrderedDict, deque
 from contextvars import ContextVar
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
+import hashlib
 import logging
 import math
 import re
 import threading
+from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
@@ -19,6 +21,9 @@ from discordbot.platform.context import current_correlation
 from discordbot.storage.adapters.probe_diagnostics import safe_probe_fields
 from discordbot.platform.errors import AppError, ErrorCode
 from discordbot.platform.tasks import CancellationBehavior, TaskSpec
+from discordbot.operations.adapters.operation_notifications import (
+    OperationNotifications, operation_key, result_message, startup_description,
+)
 
 logger = logging.getLogger(__name__)
 _delivering = ContextVar('discord_log_delivery', default=False)
@@ -60,6 +65,7 @@ class Notice:
     attempts: int = 0
     nonce: str = field(default_factory=lambda: uuid4().hex[:24])
     dedup_key: str = ""
+    receipt: str = ""  # Validated operational outcome key, never an interaction payload.
 
 
 def diagnostic_fields(fields: dict[str, Any]) -> dict[str, object]:
@@ -254,7 +260,8 @@ class DiscordLogging:
     name = 'discord-logging'
     required = False
 
-    def __init__(self, bot: Any, channel: int, clock: Any, supervisor: Any) -> None:
+    def __init__(self, bot: Any, channel: int, clock: Any, supervisor: Any, *,
+                 state: Path | None = None, executor: Any | None = None, release: str = 'unknown') -> None:
         self.bot, self.channel, self.clock, self.supervisor = bot, channel, clock, supervisor
         self.queue: deque[Notice] = deque()
         self.recent: OrderedDict[str, float] = OrderedDict()
@@ -267,20 +274,30 @@ class DiscordLogging:
         self.next_send = 0.0
         self.dropped = self.failures = self.delivered = 0
         self.format_failures = 0
+        if (state is None) != (executor is None):
+            raise ValueError('operational notices require both state and bounded executor')
+        self.operations = OperationNotifications(state, executor) if state is not None else None
+        self.release = release
+        self.disconnected_at: float | None = None
+        self.reconnects = self.uncertain = self.suppressed = self.storage_failures = self.retries = 0
+        self.next_operation_poll = 0.0
 
-    def enqueue(self, item: Notice, *, priority: bool = False) -> None:
+    def enqueue(self, item: Notice, *, priority: bool = False) -> bool:
         with self.lock:
             if self.closed:
-                return
+                return False
             now = self.clock.monotonic()
             key = item.dedup_key or item.title + item.description
             if key in self.recent and now - self.recent[key] < 60:
-                return
+                self.suppressed += 1
+                return False
             if len(self.queue) >= 32:
                 self.dropped += 1
                 if not priority:
-                    return
-                self.queue.pop()
+                    return False
+                displaced = self.queue.pop()
+                if self.operations is not None and displaced.receipt == self.operations.queued:
+                    self.operations.queued = None
             self.recent[key] = now
             self.recent.move_to_end(key)
             if len(self.recent) > 128:
@@ -289,11 +306,56 @@ class DiscordLogging:
                 self.queue.appendleft(item)
             else:
                 self.queue.append(item)
+            return True
+
+    def _now(self) -> datetime:
+        return self.clock.now() if hasattr(self.clock, 'now') else datetime.now(timezone.utc)
+
+    async def poll_operations(self) -> None:
+        if self.operations is None or self.closed or self.clock.monotonic() < self.next_operation_poll:
+            return
+        self.next_operation_poll = self.clock.monotonic() + 5
+        try:
+            async with asyncio.timeout(2):
+                row = await self.operations.snapshot(self._now())
+            if row is not None:
+                key = operation_key(row)
+                title, text, color = result_message(row)
+                item = Notice(title, text, color, nonce=hashlib.sha256(key.encode()).hexdigest()[:24],
+                              dedup_key='operation:' + key, receipt=key)
+                if self.enqueue(item):
+                    self.operations.admitted(row)
+        except Exception:
+            # Optional, bounded metadata cannot replace the caller's failure or
+            # leak raw corrupt data/paths to another logging handler.
+            self.storage_failures += 1
+            self.next_operation_poll = self.clock.monotonic() + 60
 
     async def ready(self) -> None:
-        if not self.announced and not self.closed:
+        if self.closed:
+            return
+        if not self.announced:
+            await self.poll_operations()
             self.announced = True
-            self.enqueue(Notice('🚀 봇 시스템 구동 시작', '봇이 Discord에 연결되었습니다.', 0x3498DB), priority=True)
+            row = self.operations.current if self.operations is not None else None
+            self.enqueue(Notice('🚀 봇 Discord 연결 확인',
+                startup_description(self.release, row, self._now()), 0x3498DB,
+                dedup_key='lifecycle:first-connection'), priority=True)
+        elif self.disconnected_at is not None:
+            elapsed = min(7 * 86400, max(0, int(self.clock.monotonic() - self.disconnected_at)))
+            self.reconnects += 1
+            self.enqueue(Notice('🟢 Discord 연결 회복',
+                f'관측된 연결 중단 약 {elapsed}초 후 연결이 회복되었습니다.\n'
+                '연결 중단 원인은 확인되지 않았습니다. 전체 서비스 준비 상태는 별도 확인이 필요합니다.',
+                0x2ECC71, dedup_key='lifecycle:reconnected'), priority=True)
+        self.disconnected_at = None
+
+    async def disconnected(self) -> None:
+        if not self.closed and self.announced and self.disconnected_at is None:
+            self.disconnected_at = self.clock.monotonic()
+
+    async def resumed(self) -> None:
+        await self.ready()  # Shared state prevents resumed+ready double announcements.
 
     async def start(self) -> None:
         if self.started:
@@ -302,6 +364,8 @@ class DiscordLogging:
         self.closed = False
         logging.getLogger().addHandler(self.handler)
         self.bot.add_listener(self.ready, 'on_ready')
+        self.bot.add_listener(self.disconnected, 'on_disconnect')
+        self.bot.add_listener(self.resumed, 'on_resumed')
         self.schedule()
 
     def schedule(self) -> None:
@@ -309,9 +373,10 @@ class DiscordLogging:
             return
         async def sample() -> None:
             await asyncio.sleep(1)
+            await self.poll_operations()
             await self.deliver_one()
         try:
-            self.task = self.supervisor.start(TaskSpec('discord-log-delivery', 'operations', 'notify', 'logging', 8,
+            self.task = self.supervisor.start(TaskSpec('discord-log-delivery', 'operations', 'notify', 'logging', 15,
                 cancellation_behavior=CancellationBehavior.CANCEL_ON_SHUTDOWN, emit_routine_events=False), sample)
         except AppError:
             self.disable()
@@ -329,6 +394,8 @@ class DiscordLogging:
         self.closed = True
         logging.getLogger().removeHandler(self.handler)
         self.bot.remove_listener(self.ready, 'on_ready')
+        self.bot.remove_listener(self.disconnected, 'on_disconnect')
+        self.bot.remove_listener(self.resumed, 'on_resumed')
         with self.lock:
             self.dropped += len(self.queue)
             self.queue.clear()
@@ -343,13 +410,45 @@ class DiscordLogging:
             item = self.queue.popleft()
         import discord
         self.next_send = self.clock.monotonic() + 5
+        if item.receipt:
+            if self.operations is None:
+                self.dropped += 1
+                return
+            try:
+                async with asyncio.timeout(2):
+                    await self.operations.claim(item.receipt)
+            except asyncio.CancelledError:
+                self.dropped += 1
+                raise
+            except Exception:
+                self.storage_failures += 1
+                self.dropped += 1
+                self.operations.queued = None
+                self.next_operation_poll = self.clock.monotonic() + 60
+                return
         context = _delivering.set(True)
+        sent = False
         try:
             async with asyncio.timeout(5):
                 channel = self.bot.get_channel(self.channel) or await self.bot.fetch_channel(self.channel)
                 await channel.send(content=item.description, embed=discord.Embed(title=item.title, color=item.color),
                     allowed_mentions=discord.AllowedMentions.none(), nonce=item.nonce)
+            sent = True
             self.delivered += 1
+            if item.receipt:
+                try:
+                    async with asyncio.timeout(2):
+                        await self.operations.delivered(item.receipt)
+                except Exception:
+                    # Message success is known in this process, while persisted
+                    # delivery certainty is not. Never send it again blindly.
+                    self.storage_failures += 1
+        except asyncio.CancelledError:
+            if not sent:
+                self.uncertain += 1
+                self.failures += 1
+                self.dropped += 1
+            raise
         except Exception as exc:
             self.failures += 1
             # Retry only an explicit rate-limit rejection, once and at most 30s
@@ -364,8 +463,17 @@ class DiscordLogging:
                         self.queue.appendleft(replace(item, attempts=1))
                         self.next_send = self.clock.monotonic() + max(5, delay)
                         scheduled = True
-                    else:
-                        self.dropped += 1
+                        self.retries += 1
+            if item.receipt and (retry or isinstance(exc, discord.HTTPException) and exc.status < 500):
+                try:
+                    async with asyncio.timeout(2):
+                        await self.operations.rejected(item.receipt)
+                except Exception:
+                    self.storage_failures += 1
+            if not scheduled:
+                self.dropped += 1
+                if not retry and (not isinstance(exc, discord.HTTPException) or exc.status >= 500):
+                    self.uncertain += 1
             logger.warning('discord.log_delivery_failed', extra={'fields': {'result': 'failed',
                 'error_code': 'discord_unavailable', 'retry_scheduled': scheduled}})
         finally:
@@ -376,12 +484,19 @@ class DiscordLogging:
             return {'discord_log_queue_depth': len(self.queue), 'discord_log_dropped': self.dropped,
                 'discord_log_failures': self.failures, 'discord_log_delivered': self.delivered,
                 'discord_log_format_failures': self.format_failures,
+                'discord_log_suppressed': self.suppressed,
+                'discord_log_retries': self.retries,
+                'discord_log_uncertain': self.uncertain + (self.operations.uncertain if self.operations is not None else 0),
+                'discord_log_storage_failures': self.storage_failures,
+                'discord_log_reconnects': self.reconnects,
                 'discord_log_worker_enabled': float(not self.closed)}
 
     async def stop(self) -> None:
         self.closed = True
         logging.getLogger().removeHandler(self.handler)
         self.bot.remove_listener(self.ready, 'on_ready')
+        self.bot.remove_listener(self.disconnected, 'on_disconnect')
+        self.bot.remove_listener(self.resumed, 'on_resumed')
         if self.task is not None:
             self.task.cancel()
             await asyncio.gather(self.task, return_exceptions=True)

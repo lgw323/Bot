@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
+import re
 import signal
 from pathlib import Path
 
@@ -17,6 +18,7 @@ from discordbot.operations.adapters.recovery import Backups, promote
 from discordbot.operations.adapters.source import SourceBuilder
 from discordbot.operations.adapters.retention import cleanup_releases
 from discordbot.operations.adapters.manual import write_request
+from discordbot.operations.adapters.operation_results import OperationResults, read_operation_result, TERMINAL
 from discordbot.operations.application.deployment import Deployment
 from discordbot.platform.errors import AppError, ConflictError, DataIntegrityError
 from discordbot.platform.executors import BoundedExecutor
@@ -47,6 +49,14 @@ async def validate_candidate(candidate):
         await database.stop()
 
 
+def inspected_release(store) -> str:
+    """The attempted candidate is not necessarily active after rollback."""
+    try:
+        return store.current() or 'none'
+    except (AppError, OSError, ValueError):
+        return 'unknown'
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="V2 operations; production actions require reviewed operator invocation")
     parser.add_argument("command", choices=("deploy", "backup", "rehearse", "promote", "restart", "health", "manual", "cleanup", "seal-wheels"))
@@ -67,6 +77,24 @@ def main(argv=None) -> int:
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
     old_term = signal.signal(signal.SIGTERM, lambda *_: (_ for _ in ()).throw(KeyboardInterrupt()))
+    results = None
+    outcome_id = None
+    def publish_result(operation, source, result, stage, release, receipt=None):
+        nonlocal outcome_id
+        try:
+            row = results.write(operation, source, result, stage, release,
+                                identity=outcome_id, receipt=receipt)
+            outcome_id = row['id']
+        except (AppError, OSError, ValueError):
+            # An optional result alert must not turn a healthy deployment into
+            # rollback, or replace the operation's original failure.
+            logger.warning('operation.result_persistence_failed')
+    def fail_request(path, request):
+        request['result'] = 'failed'
+        try:
+            write_request(path, request)
+        except (AppError, OSError, ValueError):
+            logger.warning('operation.request_acknowledgement_failed')
     try:
         if args.command == "seal-wheels":
             if not args.wheels or not args.pins:
@@ -80,6 +108,9 @@ def main(argv=None) -> int:
         runner = CommandRunner()
         services = Services(runner, store.root, (settings.discord_health_port, settings.watch_health_port))
         audit = Audit(settings.audit)
+        correlation = getattr(audit, 'correlation', None)
+        outcome_id = correlation if isinstance(correlation, str) and re.fullmatch('[a-f0-9]{32}', correlation) else None
+        results = OperationResults(settings.state)
         if args.command == "deploy":
             if not args.policy or not args.wheels:
                 raise ValueError
@@ -87,7 +118,13 @@ def main(argv=None) -> int:
             port.builder.provider_only = args.provider_only
             if args.provider_only:
                 audit.write("provider_update", store.current() or "none", "started", "isolated_pin_change")
-            result = Deployment(port).run(args.revision)
+            publish_result('update', 'unknown', 'in_progress', 'build', inspected_release(store))
+            try:
+                result = Deployment(port).run(args.revision)
+            except BaseException:
+                publish_result('update', 'unknown', 'failed', 'unknown', inspected_release(store))
+                raise
+            publish_result('update', 'unknown', result.result, result.stage, inspected_release(store))
             logger.info("deployment.result", extra={"fields": {"result": result.result, "stage": result.stage, "rollback": result.rollback}})
             return 0 if result.result == "ok" else 1
         with ExclusiveLock(settings.operation_lock).acquire():
@@ -126,35 +163,78 @@ def main(argv=None) -> int:
                     if not path.exists():
                         return 0
                     request = read_json(path)
-                    if request.get("result") != "pending":
-                        return 0
                     if request.get("operation") not in {"update", "restart"}:
                         raise DataIntegrityError("manual request type invalid")
+                    if (not isinstance(request.get('receipt'), str)
+                            or not re.fullmatch('[a-f0-9]{64}', request['receipt'])):
+                        raise DataIntegrityError('manual request identity invalid')
+                    if request.get('result') == 'in_progress':
+                        # We hold the same kernel operation lock. A previous
+                        # consumer no longer owns it; never execute its request
+                        # twice after a crash or acknowledgement write failure.
+                        previous = read_operation_result(settings.state)
+                        if previous is not None and previous['receipt'] == request['receipt'] and previous['result'] in TERMINAL:
+                            request['result'] = previous['result']
+                        else:
+                            publish_result(request['operation'], 'manual', 'failed', 'interrupted', release, request['receipt'])
+                            request['result'] = 'failed'
+                        write_request(path, request)
+                        return 0 if request['result'] == 'ok' else 1
+                    if request.get("result") != "pending":
+                        return 0
                     request["result"] = "in_progress"
-                    write_request(path, request)
+                    try:
+                        write_request(path, request)
+                    except BaseException:
+                        publish_result(request['operation'], 'manual', 'failed', 'accepted', release, request['receipt'])
+                        fail_request(path, request)
+                        raise
                     if request.get("operation") == "update":
                         # Consume inside the same operation lock, and reuse the
                         # exact deployment pipeline without acquiring it twice.
-                        if not args.policy or not args.wheels:
-                            raise ValueError
-                        from contextlib import nullcontext
-                        port = LocalDeployment(settings, SourceBuilder(store, runner, args.policy, args.wheels), services, audit)
-                        port.lock = nullcontext
-                        result = Deployment(port).run("policy")
+                        publish_result('update', 'manual', 'in_progress', 'build', release, request['receipt'])
+                        update_stage = 'build'
+                        try:
+                            if not args.policy or not args.wheels:
+                                raise ValueError
+                            from contextlib import nullcontext
+                            port = LocalDeployment(settings, SourceBuilder(store, runner, args.policy, args.wheels), services, audit)
+                            port.lock = nullcontext
+                            update_stage = 'unknown'
+                            result = Deployment(port).run("policy")
+                        except BaseException:
+                            publish_result('update', 'manual', 'failed', update_stage, inspected_release(store), request['receipt'])
+                            fail_request(path, request)
+                            raise
+                        publish_result('update', 'manual', result.result, result.stage, inspected_release(store), request['receipt'])
                         request["result"] = result.result
                         write_request(path, request)
                         return 0 if result.result == "ok" else 1
-                audit.write("restart", release, "started", "checkpoint")
-                services.stop()
+                source = 'manual' if request else 'unknown'
+                receipt = request['receipt'] if request else None
+                publish_result('restart', source, 'in_progress', 'checkpoint', release, receipt)
+                restart_stage = 'audit'
                 try:
+                    audit.write("restart", release, "started", "checkpoint")
+                    restart_stage = 'stop'
+                    services.stop()
+                    restart_stage = 'backup'
                     asyncio.run(backup_once(settings, audit, release))
+                    restart_stage = 'start'
                     services.start()
+                    restart_stage = 'readiness'
                     services.ready(release)
+                    restart_stage = 'smoke'
                     services.smoke(release)
+                    restart_stage = 'audit'
                     audit.write("restart", release, "ok", "complete")
                 except BaseException:
+                    publish_result('restart', source, 'failed', restart_stage, release, receipt)
+                    if request:
+                        fail_request(settings.state / 'manual-request.json', request)
                     audit.write("restart", release, "failed", "checkpoint_backup_or_readiness")
                     raise
+                publish_result('restart', source, 'ok', 'complete', release, receipt)
                 if request:
                     request["result"] = "ok"
                     write_request(settings.state / "manual-request.json", request)
