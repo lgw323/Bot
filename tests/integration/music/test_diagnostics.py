@@ -160,8 +160,11 @@ async def test_actual_child_nonzero_is_classified_without_stderr(rig, diagnostic
     marker = 'private-payload-must-not-cross-error-boundary'
     try:
         with pytest.raises(ExternalPermanentError) as caught:
+            # This tests stderr classification, not host process-start latency.
+            # A trivial CPython child can exceed 3s on Windows. Deadline/kill
+            # behavior is separately covered below with a 0.1s budget.
             await pool.run((sys.executable, '-c', 'import sys; sys.stderr.write(sys.argv[1]); sys.exit(7)',
-                            diagnostic+' '+marker), seconds=3, name='acquire')
+                            diagnostic+' '+marker), seconds=15, name='acquire')
         assert type(caught.value).__name__ == error_type
         assert dict(caught.value.context) == {'reason':reason, 'child_exit_code':7}
         assert marker not in str(caught.value.to_log_fields())+str(caught.value)
