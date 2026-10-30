@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
+from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
@@ -18,9 +19,14 @@ from discordbot.platform.errors import AppError, ShutdownError, ValidationError
 from discordbot.platform.executors import BoundedExecutor
 from discordbot.platform.tasks import CancellationBehavior, TaskSpec
 
-RESULTS = {"pending": "접수 대기", "in_progress": "진행 중", "ok": "완료", "failed": "실패",
+RESULTS = {"pending": "접수 기록·실행 미확인", "in_progress": "시작 기록·완료 미확인 (운영 확인 필요)", "ok": "완료", "failed": "실패",
            "ok_cleanup_failed": "작업 완료·정리 확인 필요"}
 OPERATIONS = {"update": "업데이트", "restart": "재시작"}
+STAGE_LABELS = {"accepted": "접수", "build": "빌드", "preflight": "사전 검사", "test": "검사",
+                "compatibility": "호환성 검사", "backup": "백업", "publish": "배포 준비", "stop": "서비스 중지",
+                "activate": "버전 전환", "start": "시작", "readiness": "준비 확인", "smoke": "기능 확인",
+                "audit": "결과 기록", "retention": "보존본 정리", "complete": "완료 확인",
+                "unchanged": "변경 없음", "checkpoint": "상태 보존", "interrupted": "중단 확인", "unknown": "미확인"}
 IDENTIFIER = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9_.-]{0,199}\Z")
 HEX = re.compile(r"[a-f0-9]{32}\Z")
 CALLBACK_CAPACITY = 32
@@ -65,10 +71,25 @@ class OperationalStatus:
             if raw is not None:
                 # Even a faulty injected reader cannot publish arbitrary strings.
                 if (not isinstance(raw, dict) or raw.get("operation") not in OPERATIONS
-                        or raw.get("result") not in RESULTS or not isinstance(raw.get("id"), str)
-                        or HEX.fullmatch(raw["id"]) is None):
+                        or raw.get("result") not in {"in_progress", "ok", "failed", "ok_cleanup_failed"}
+                        or not isinstance(raw.get("id"), str) or HEX.fullmatch(raw["id"]) is None
+                        or not isinstance(raw.get("stage"), str) or raw["stage"] not in STAGE_LABELS
+                        or raw["result"] == "ok" and (raw["stage"] not in {"complete", "unchanged"}
+                            or raw["stage"] == "unchanged" and raw["operation"] != "update")
+                        or raw["result"] == "ok_cleanup_failed" and (raw["operation"], raw["stage"]) != ("update", "retention")):
                     raise ValidationError("invalid public operation result")
-                result = {key: raw[key] for key in ("id", "operation", "result")}
+                try:
+                    stamp = raw.get("timestamp")
+                    if not isinstance(stamp, str) or not 1 <= len(stamp) <= 40:
+                        raise ValueError
+                    parsed = datetime.fromisoformat(stamp)
+                    if parsed.tzinfo is None or parsed.utcoffset() is None:
+                        raise ValueError
+                    normalized = parsed.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+                except (ValueError, OverflowError):
+                    raise ValidationError("invalid public operation timestamp") from None
+                result = {key: raw[key] for key in ("id", "operation", "result", "stage")}
+                result["timestamp"] = normalized
         pending = request["result"] in {"pending", "in_progress"} or result is not None and result["result"] == "in_progress"
         stable = [self.release, ready, enabled, request["revision"], result]
         return {"release": self.release, "ready": ready, "consumer_enabled": enabled,
@@ -144,9 +165,12 @@ def status_embed(snapshot: dict[str, Any]):
     current = "없음" if op is None else OPERATIONS[op] + " · " + RESULTS[result]
     outcome = snapshot["outcome"]
     last = "확인된 결과 없음" if outcome is None else OPERATIONS[outcome["operation"]] + " · " + RESULTS[outcome["result"]]
+    recorded_at = "확인되지 않음" if outcome is None else outcome["timestamp"]
+    stage = "확인되지 않음" if outcome is None else STAGE_LABELS[outcome["stage"]]
     description = ("봇: " + ("정상" if snapshot["ready"] else "준비·복구 중")
                    + "\n운영 실행기: " + ("사용 가능" if snapshot["consumer_enabled"] else "꺼짐·요청 불가")
-                   + "\n현재 요청: " + current + "\n최근 작업: " + last
+                   + "\n요청 기록(시각 미상): " + current + "\n최근 작업 기록: " + last
+                   + "\n결과 기록 시각(UTC): " + recorded_at + "\n결과 기록 단계: " + stage
                    + "\n접수는 완료가 아닙니다. 완료 알림은 실제 검증이 끝난 뒤 표시됩니다.")
     embed = discord.Embed(title="🛠️ 시스템 운영 제어판", description=description, color=0x3498DB)
     embed.add_field(name="실행 버전", value=snapshot["release"], inline=False)

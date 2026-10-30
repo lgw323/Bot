@@ -451,16 +451,65 @@ async def test_atomic_confirmed_request_refuses_stale_revision_and_replay(tmp_pa
 async def test_status_reader_exports_allowlist_and_known_terminal_result(tmp_path):
     executor = BoundedExecutor(workers=1, queue_capacity=2, name="status-test")
     inbox = SimpleNamespace(state=tmp_path,executor=executor,snapshot=AsyncMock(return_value={"operation":None,"result":None,"revision":"a"*64}))
-    outcome = {"id":"b"*32,"operation":"update","result":"ok","token":"SECRET","path":"/private/user","message":"private"}
+    outcome = {"id":"b"*32,"operation":"update","result":"ok","stage":"complete","timestamp":"2026-10-30T10:00:00+09:00",
+               "token":"SECRET","path":"/private/user","message":"private"}
     try:
         status = OperationalStatus(inbox,SimpleNamespace(enabled=AsyncMock(return_value=False)),"r-test",lambda:True,lambda _:outcome)
         snapshot = await status.snapshot(); rendered = str(status_embed(snapshot).to_dict())
-        assert snapshot["outcome"] == {"id":"b"*32,"operation":"update","result":"ok"}
+        assert snapshot["outcome"] == {"id":"b"*32,"operation":"update","result":"ok","stage":"complete","timestamp":"2026-10-30T01:00:00Z"}
         assert not snapshot["consumer_enabled"]
         for s in ["SECRET","private","/private"]: assert s not in rendered
         outcome["result"] = "secret text"
         with pytest.raises(ValidationError): await status.snapshot()
     finally: await executor.close(grace_seconds=2)
+
+
+@pytest.mark.asyncio
+async def test_historical_started_record_is_not_asserted_running_and_stays_blocked(tmp_path):
+    executor=BoundedExecutor(workers=1,queue_capacity=2,name="old-result-test")
+    inbox=SimpleNamespace(state=tmp_path,executor=executor,snapshot=AsyncMock(return_value={"operation":None,"result":None,"revision":"a"*64}))
+    outcome={"id":"b"*32,"operation":"update","result":"in_progress","stage":"readiness","timestamp":"2020-01-01T10:00:00+09:00",
+             "message":"PRIVATE_SECRET","path":"/private/user","source":"PRIVATE_SOURCE"}
+    try:
+        status=OperationalStatus(inbox,SimpleNamespace(enabled=AsyncMock(return_value=True)),"r-test",lambda:True,lambda _:outcome)
+        snapshot=await status.snapshot();description=status_embed(snapshot).description
+        assert snapshot["pending"] is True
+        assert "시작 기록·완료 미확인 (운영 확인 필요)" in description
+        assert "진행 중" not in description
+        assert "2020-01-01T01:00:00Z" in description and "준비 확인" in description
+        for raw in ["PRIVATE_SECRET","PRIVATE_SOURCE","/private/user","2020-01-01T10:00:00+09:00"]:
+            assert raw not in description
+    finally:await executor.close(grace_seconds=2)
+
+
+@pytest.mark.asyncio
+async def test_request_without_recorded_time_remains_time_unknown_and_completion_unconfirmed(tmp_path):
+    executor=BoundedExecutor(workers=1,queue_capacity=2,name="unknown-time-test")
+    inbox=SimpleNamespace(state=tmp_path,executor=executor,snapshot=AsyncMock(return_value={"operation":"restart","result":"in_progress","revision":"a"*64}))
+    try:
+        status=OperationalStatus(inbox,SimpleNamespace(enabled=AsyncMock(return_value=True)),"r-test",lambda:True)
+        snapshot=await status.snapshot();description=status_embed(snapshot).description
+        assert snapshot["pending"] is True
+        assert "요청 기록(시각 미상): 재시작 · 시작 기록·완료 미확인" in description
+        assert "결과 기록 시각(UTC): 확인되지 않음" in description
+        assert "진행 중" not in description
+    finally:await executor.close(grace_seconds=2)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("field,value", [("timestamp",None),("timestamp","2020-01-01T10:00:00"),
+    ("timestamp","PRIVATE_TIMESTAMP token=secret"),("timestamp","0001-01-01T00:00:00+01:00"),
+    ("timestamp","x"*41),("stage",None),("stage","PRIVATE_STAGE"),("stage","``` @everyone")])
+async def test_bad_private_or_overflowing_record_time_stage_fail_closed(tmp_path,field,value):
+    executor=BoundedExecutor(workers=1,queue_capacity=2,name="bad-result-test")
+    inbox=SimpleNamespace(state=tmp_path,executor=executor,snapshot=AsyncMock(return_value={"operation":None,"result":None,"revision":"a"*64}))
+    outcome={"id":"b"*32,"operation":"update","result":"in_progress","stage":"readiness","timestamp":"2020-01-01T01:00:00Z"}
+    outcome[field]=value
+    try:
+        status=OperationalStatus(inbox,SimpleNamespace(enabled=AsyncMock(return_value=True)),"r-test",lambda:True,lambda _:outcome)
+        with pytest.raises(ValidationError) as error:await status.snapshot()
+        assert "PRIVATE" not in str(error.value) and "secret" not in str(error.value)
+    finally:await executor.close(grace_seconds=2)
 
 
 @pytest.mark.asyncio
