@@ -13,7 +13,9 @@ import threading
 from typing import Any
 from uuid import uuid4
 
-from discordbot.platform.diagnostics import EXCEPTION_TYPES
+from discordbot.platform.diagnostics import EXCEPTION_TYPES, exception_fields, safe_exception_fields
+from discordbot.platform.diagnostic_locations import PUBLIC_FRAME_PATHS
+from discordbot.platform.context import current_correlation
 from discordbot.storage.adapters.probe_diagnostics import safe_probe_fields
 from discordbot.platform.errors import AppError, ErrorCode
 from discordbot.platform.tasks import CancellationBehavior, TaskSpec
@@ -44,6 +46,10 @@ RESULTS = ERRORS | frozenset({'failed', 'success', 'delivery_failed', 'deadline'
 TRANSIENT = ('WSServerHandshakeError', 'ConnectionClosed', 'Invalid response status',
     'WebSocket closed with 1006', 'Disconnected from voice', 'Attempting a reconnect',
     'ClientConnectorError', 'gaierror', 'websockets.exceptions', 'discord.errors.ConnectionClosed')
+EXTERNAL_SOURCES = frozenset({'discord.client', 'discord.gateway', 'discord.http',
+    'discord.voice_client', 'discord.voice_state', 'aiohttp.client', 'aiohttp.connector'})
+PROJECT_SOURCES = frozenset(path[:-3].replace('/', '.').removesuffix('.__init__')
+    for path in PUBLIC_FRAME_PATHS if path.startswith('discordbot/')) | {'discordbot', 'discordbot.events', 'discordbot.watch.web'}
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,9 +62,10 @@ class Notice:
     dedup_key: str = ""
 
 
-def diagnostic_fields(fields: dict[str, Any]) -> dict[str, str | int | bool]:
+def diagnostic_fields(fields: dict[str, Any]) -> dict[str, object]:
     """Revalidate exported fields; private text is never a fallback."""
-    safe = safe_probe_fields(fields)
+    safe = {key:value for key,value in safe_probe_fields(fields).items()
+            if type(value) in (str, int, bool)}
     safe.pop('operation', None)  # Also handles non-database events.
     choices = {'stage': STAGES, 'state_before': STATES, 'state_after': STATES, 'result': RESULTS,
         'exception_type': EXCEPTION_TYPES | {'unexpected'}, 'cause_type': EXCEPTION_TYPES | {'unexpected'},
@@ -69,7 +76,7 @@ def diagnostic_fields(fields: dict[str, Any]) -> dict[str, str | int | bool]:
             'output_limit js_runtime_missing http_rate_limited http_server_error http_rejected transport_error'.split())}
     for key, allowed in choices.items():
         value = fields.get(key)
-        if isinstance(value, str) and value in allowed:
+        if type(value) is str and value in allowed:
             safe[key] = value
     for key in ('voice_connected', 'probe_recovery_safe'):
         if type(fields.get(key)) is bool:
@@ -84,44 +91,113 @@ def diagnostic_fields(fields: dict[str, Any]) -> dict[str, str | int | bool]:
     value = fields.get('http_status')
     if type(value) is int and 100 <= value <= 599:
         safe['http_status'] = value
+    value = fields.get('retry_delay_seconds')
+    if type(value) in (int, float) and math.isfinite(value) and 0 <= value <= 86400:
+        safe['retry_delay_seconds'] = round(value, 2)
+    if fields.get('reconnect_scheduled') is True:
+        safe['reconnect_scheduled'] = True
     for key in ('work_id', 'incident_id'):
         value = fields.get(key)
-        if isinstance(value, str) and re.fullmatch(r'[a-f0-9]{32}', value):
+        if type(value) is str and re.fullmatch(r'[a-f0-9]{32}', value):
             safe[key] = value
+    safe.update(safe_exception_fields(fields))
     return safe
 
 
+def _utf16_size(value: str) -> int:
+    return len(value.encode('utf-16-le')) // 2
+
+
+def _summary(error: str, safe: dict[str, object], recovered: bool) -> str:
+    """Fixed explanatory templates, never interpolated exception text."""
+    if recovered:
+        return 'DB 회복을 확인했습니다. 현재 작업 가능 상태를 확인하세요.'
+    if safe.get('probe_disposition') == 'bounded_busy':
+        return 'DB가 일시적으로 사용 중입니다. 제한된 복구 확인을 기다리고 있습니다.'
+    status = safe.get('http_status')
+    if status == 429:
+        return '외부 서비스가 요청을 제한했습니다(HTTP 429). 재시도 대기 상태를 확인하세요.'
+    if type(status) is int and status >= 500:
+        return f'외부 서비스가 HTTP {status} 응답을 반환했습니다. 제공자 상태를 확인하세요. 세부 원인은 미확정입니다.'
+    if type(status) is int and status >= 400:
+        return f'외부 서비스가 HTTP {status} 응답을 반환했습니다. 요청·접근 조건을 확인하세요.'
+    if error == 'deadline_exceeded' or safe.get('exception_type') in {'TimeoutError', 'ServerTimeoutError', 'SocketTimeoutError', 'ConnectionTimeoutError'}:
+        return '작업 또는 외부 응답 대기 시간이 초과됐습니다. 지연의 세부 원인은 미확정입니다.'
+    if error in {'database_unavailable', 'data_integrity'}:
+        return 'DB 작업을 완료하지 못했습니다. 단계·SQLite 분류와 복구 상태를 확인하세요.'
+    if error == 'capacity':
+        return '처리 용량이 부족합니다. 대기 작업과 자원 사용량을 확인하세요.'
+    if error in {'external_temporary', 'external_permanent'}:
+        return '외부 연동을 완료하지 못했습니다. 연결 상태와 아래 분류를 확인하세요. 세부 원인은 미확정입니다.'
+    return '작업을 완료하지 못했습니다. 오류 코드와 공개 코드 위치를 함께 확인하세요. 세부 원인은 미확정입니다.'
+
+
+def _bounded_block(core: list[str], details: list[str]) -> str:
+    """Keep identity and useful leading details; clip whole lines before the fence."""
+    opening, closing = '```text\n', '\n```'
+    marker = '… 상세 일부 생략 (Discord 길이 제한)'
+    lines = list(core)
+    for index, line in enumerate(details):
+        trial = opening + '\n'.join([*lines, line]) + closing
+        reserve = _utf16_size('\n' + marker) if index + 1 < len(details) else 0
+        if _utf16_size(trial) + reserve > 2000:
+            lines.append(marker)
+            break
+        lines.append(line)
+    return opening + '\n'.join(lines) + closing
+
+
 def notice(record: logging.LogRecord) -> Notice | None:
-    """Export bounded diagnostics without messages, arguments, traceback or IDs."""
-    if record.name == __name__ or _delivering.get():
+    """Export safe classified evidence, never raw messages, arguments or traceback text."""
+    name = record.name if type(record.name) is str else 'external'
+    if name == __name__ or _delivering.get():
         return None
     fields = getattr(record, 'fields', {})
     fields = fields if isinstance(fields, dict) else {}
     event = fields.get('event', record.msg)
     result = fields.get('result')
-    project = record.name == 'discordbot' or record.name.startswith('discordbot.')
+    event = event if type(event) is str else None
+    result = result if type(result) is str else None
+    project = name == 'discordbot' or name.startswith('discordbot.')
     recovered = project and event == 'database.probe_recovered' and result == 'success'
-    feature_failure = (project and isinstance(event, str) and isinstance(result, str)
+    feature_failure = (project and type(event) is str and type(result) is str
         and result in FAILURE_RESULTS.get(event, ()))
     structured_failure = project and (result in ('failed', 'deadline_exceeded') or feature_failure)
     if record.levelno < logging.WARNING and not structured_failure and not recovered:
         return None
     if record.levelno < logging.ERROR and not project:
         return None
-    if record.levelno < logging.ERROR and isinstance(record.msg, str) and any(word in record.msg for word in TRANSIENT):
+    if record.levelno < logging.ERROR and type(record.msg) is str and any(word in record.msg for word in TRANSIENT):
         return None
-    source = record.name if (project and re.fullmatch(r'[a-zA-Z_.]{1,100}', record.name)) else 'external'
-    event = event if isinstance(event, str) and event in EVENTS else 'application.log'
+    source = name if name in PROJECT_SOURCES | EXTERNAL_SOURCES else 'discordbot' if project else 'external'
+    event = event if type(event) is str and event in EVENTS else 'application.log'
     error = fields.get('error_code')
-    if not isinstance(error, str) or error not in ERRORS:
+    if type(error) is not str or error not in ERRORS:
         # A typed result is the code when the emitter did not supply one. Do not
         # invent a cause for generic delivery/cleanup failure observations.
         error = (result if feature_failure and result in ERRORS else
             'deadline_exceeded' if project and event == 'watch.shutdown' and result == 'deadline'
             else 'unspecified')
     safe = diagnostic_fields(fields) if project else {}
+    info = record.exc_info
+    if type(info) is tuple and len(info) == 3 and isinstance(info[1], BaseException):
+        # Third-party discord.client errors do not use our structured emitters.
+        # Capture only allowlisted categories/public frames from the actual error.
+        safe.update(safe_exception_fields(exception_fields(info[1])))
+    if (source == 'discord.client' and type(record.msg) is str and record.msg == 'Attempting a reconnect in %.2fs'
+            and type(record.args) is tuple and len(record.args) == 1):
+        # Exact pinned SDK template only. Never format/interpolate library text.
+        retry = diagnostic_fields({'retry_delay_seconds': record.args[0]})
+        if 'retry_delay_seconds' in retry:
+            safe.update(retry, reconnect_scheduled=True)
+    if 'correlation_id' not in safe:
+        context = current_correlation()
+        if context is not None:
+            safe.update(safe_exception_fields({'correlation_id': context.correlation_id}))
+    if error == 'unspecified' and type(safe.get('http_status')) is int and safe['http_status'] >= 400:
+        error = 'external_temporary' if safe['http_status'] == 429 or safe['http_status'] >= 500 else 'external_permanent'
     disposition = safe.get('probe_disposition')
-    recovery = ('recovered' if recovered else 'pending' if disposition in {'bounded_busy', 'deadline_pending'}
+    recovery = ('recovered' if recovered else 'pending' if disposition in {'bounded_busy', 'deadline_pending'} or safe.get('reconnect_scheduled')
         else 'latched; operator review required' if disposition in {'hard', 'recovery_expired'} else 'unconfirmed')
     is_error = not recovered and (record.levelno >= logging.ERROR or structured_failure and disposition != 'bounded_busy')
     stamp = datetime.fromtimestamp(record.created, timezone.utc)
@@ -133,14 +209,25 @@ def notice(record: logging.LogRecord) -> Notice | None:
                 stamp = parsed.astimezone(timezone.utc)
         except (ValueError, OverflowError):
             pass
-    feature = event.split('.')[0] if event != 'application.log' else 'application'
-    lines = [f'Time: {stamp.isoformat(timespec="seconds")}', f'Feature: {feature}',
-        f'Module: {source}', f'Event: {event}', f'Code: {error}', f'Recovery: {recovery}']
-    lines.extend(f'{key}: {value}' for key, value in safe.items())
+    feature = event.split('.')[0] if event != 'application.log' else source.split('.')[0] if source in EXTERNAL_SOURCES else 'application'
+    lines = [f'Summary: {_summary(error, safe, recovered)}',
+        f'Severity: {"RECOVERED" if recovered else "ERROR" if is_error else "WARNING"}',
+        f'Time: {stamp.isoformat(timespec="seconds")}', f'Feature: {feature}',
+        f'Module: {source}', f'Event: {event}', f'Code: {error}', f'Recovery: {recovery}',
+        f'Correlation: {safe.get("correlation_id", "미제공") }']
+    details = [f'{key}: {value}' for key, value in safe.items()
+        if key not in {'stack_frames', 'exception_chain', 'correlation_id'}]
+    if 'exception_chain' in safe:
+        details.append('exception_chain: ' + ' -> '.join(safe['exception_chain']))
+    if 'stack_frames' in safe:
+        details.append('Stack (공개 코드 위치, 소스·로컬값 제외):')
+        details.extend('  at ' + value for value in safe['stack_frames'])
+    if safe.get('trace_limited'):
+        details.append('Trace: 일부 위치·원인은 비공개/상한 때문에 생략됨. 전체 traceback이 아닙니다.')
     stable = [source, event, error, recovery] + [f'{key}={value}' for key, value in sorted(safe.items())
-        if key not in {'work_id', 'incident_id', 'read_admitted', 'write_admitted'}]
+        if key not in {'work_id', 'incident_id', 'correlation_id', 'retry_delay_seconds', 'read_admitted', 'write_admitted'}]
     title = 'DB 회복 확인' if recovered else '시스템 오류 (System Error)' if is_error else '시스템 경고 (System Warning)'
-    return Notice(title, '```text\n' + '\n'.join(lines) + '\n```',
+    return Notice(title, _bounded_block(lines, details),
         0x2ECC71 if recovered else 0xFF0000 if is_error else 0xF1C40F, dedup_key='|'.join(stable))
 
 

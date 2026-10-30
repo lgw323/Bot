@@ -11,6 +11,7 @@ from datetime import timedelta, timezone
 import json
 
 from discordbot.platform.clock import Clock, IdGenerator
+from discordbot.platform.diagnostics import exception_fields
 from discordbot.platform.errors import (AppError, AuthorizationError, CapacityError,
     ConflictError, DeadlineExceededError, ExternalPermanentError, ShutdownError, ValidationError)
 from discordbot.platform.tasks import require_tasks_stopped, CancellationBehavior, TaskSpec, TaskSupervisor
@@ -118,7 +119,7 @@ class SummaryService:
                        destination: int, query: Query, deadline: float, previous: str | None) -> Result:
         started = self.clock.monotonic()
         outcome = "success"
-        failure_fields: dict[str, str | int] = {}
+        failure_fields: dict[str, object] = {}
         try:
             async with self.timeout(self.remaining(deadline)):
                 await self.authorization.require(scope, requester)
@@ -164,18 +165,20 @@ class SummaryService:
                     del self._results[next(iter(self._results))]
                 self._results[result.id] = result
                 return result
-        except TimeoutError:
+        except TimeoutError as exc:
             outcome = "deadline_exceeded"
+            failure_fields = exception_fields(exc)
             raise DeadlineExceededError("Summary request deadline") from None
         except asyncio.CancelledError:
             outcome = "cancellation"
             raise
         except AppError as exc:
             outcome = exc.code.value
-            failure_fields = safe_failure_fields(exc.context)
+            failure_fields = {**exception_fields(exc), **safe_failure_fields(exc.context)}
             raise
-        except Exception:
+        except Exception as exc:
             outcome = "external_permanent"
+            failure_fields = exception_fields(exc)
             raise ExternalPermanentError("Summary dependency failed") from None
         finally:
             self.telemetry.emit("summary.request", component="summary", result=outcome,
