@@ -20,6 +20,7 @@ def run_managed(application: Callable[[WorkerControl], Awaitable[None]], control
     failed = False
     main: asyncio.Task | None = None
     stop_requested = False
+    cancellation_requested = False
 
     def loop_failure(_loop: asyncio.AbstractEventLoop, _context: dict) -> None:
         nonlocal failed
@@ -29,10 +30,13 @@ def run_managed(application: Callable[[WorkerControl], Awaitable[None]], control
     loop.set_exception_handler(loop_failure)
 
     def stop(epoch: float | None = None) -> None:
-        nonlocal stop_requested
+        nonlocal stop_requested, cancellation_requested
         already_stopping = control.epoch is not None
         control.stopping(epoch)
         if not stop_requested and not already_stopping and main is not None and not main.done():
+            # Only our first cancellation is an expected stop result. An
+            # independently cancelled application must still fail closed.
+            cancellation_requested = main.cancelling() == 0
             main.cancel()
         stop_requested = True
 
@@ -67,6 +71,10 @@ def run_managed(application: Callable[[WorkerControl], Awaitable[None]], control
                 await asyncio.wait({main}, timeout=.005)
             if main.done():
                 main.result()
+        except asyncio.CancelledError:
+            if not cancellation_requested:
+                failed = True
+                control.send(b"F")
         except BaseException:
             failed = True
             control.send(b"F")

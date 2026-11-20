@@ -6,7 +6,7 @@
 `cogs/`, V1 자동 업데이트·백업·PO-token 설치 스크립트와 `envtemplate.txt`를
 제거했습니다. 아래에 남아 있는 해당 경로, cron, `.env` 기반 예시는 과거 V1
 설치 기록이며 새 checkout에서 실행하지 않습니다. 현재 설치·배포는
-[정상 배포](../deploy/runbooks/normal-deploy.md), 복구는
+[승인한 코드 배포](#승인한-코드-배포), 복구는
 [실패 배포 롤백](../deploy/runbooks/failed-deploy-rollback.md)을 따릅니다.
 이 소스 정리는 Pi 서비스, 운영 데이터, 기존 immutable release와 rollback
 자산을 변경하지 않습니다. `compatibility/v1`은 오프라인 비교용이며 서비스로 실행하지 않습니다.
@@ -14,6 +14,36 @@
 본 문서는 **라즈베리파이 5** 기기에 봇을 설치하고 systemd·cron으로 운영하는
 절차만 관리합니다. 제품 의도와 데이터 정책은 `product-spec.md`, 로컬 개발과
 기능 개요는 루트 `README.md`를 참고합니다.
+
+## 승인한 코드 배포
+
+Pi는 `/etc/discordbot/update.json`에서 지정한 승인 번들의 `refs/heads/approved`와 현재 릴리스를 비교한다. 매일 03:00–03:30 KST에 예약 업데이트가 실행되고 수동 요청은 1분마다 확인한다. 승인 버전이 같으면 서비스를 계속 실행한다. 백업은 별도 타이머로 12시간마다 실행한다.
+
+### 병합한 PR 반영
+
+운영자 PC에서 아래 순서로 진행한다. GitHub Actions 실행량을 사용하지 않는다. 정확한 병합 커밋, 직전 승인 번들, 호스트 키가 고정된 기존 SSH 설정이 필요하다. 테스트 전용 checkout에는 실제 데이터나 운영 설정을 복사하지 않는다.
+
+1. `git fetch origin main`으로 병합본을 받은 뒤, 검토한 커밋 전체 SHA를 `$sourceCommit`에 지정한다. 그 커밋의 checkout에서 `python -B scripts/run_guarded_tests.py tests/`를 실행한다.
+2. `$previousBundle`에 현재 운영판의 승인 번들, `$newBundle`에 아직 없는 출력 경로를 지정한다. 다음 PowerShell 명령은 검토한 Git 트리에서 배포 파일만 가져온다. 결과의 `source`는 공개 커밋이고 `approved`는 Pi에서 검증할 릴리스 커밋이다.
+
+```powershell
+$result = python -I -B deploy/tools/build_approved_bundle.py --repo . --previous $previousBundle --candidate $sourceCommit --output $newBundle
+if ($LASTEXITCODE -ne 0) { throw '번들 생성 실패' }
+$release = $result | ConvertFrom-Json
+$release
+```
+
+3. `status=unchanged`면 운영판에 이미 같은 코드가 있다. `status=created`일 때만 변경 파일과 승인 SHA를 확인한 뒤 아래 명령을 Windows 터미널에서 실행한다. SSH 대상, 호스트 키 별칭, 고정된 known_hosts 파일, 전용 개인 키 경로는 기존 운영자 설정을 사용한다. `$receipt`에는 아직 없는 로컬 결과 파일 경로를 지정한다.
+
+```powershell
+$digest = (Get-FileHash -Algorithm SHA256 -LiteralPath $newBundle).Hash.ToLowerInvariant()
+python -I -B deploy/tools/promote_approved_from_pc.py promote --bundle $newBundle --previous $release.previous --commit $release.approved --sha256 $digest --host $target --host-key-alias $hostAlias --known-hosts $knownHosts --identity $identityFile --receipt $receipt
+```
+
+4. Pi가 이전 승인 커밋, 새 번들의 계보, 기존 의존성 및 스키마 계약을 확인한다. 격리된 환경에서 ARM64 릴리스와 테스트를 준비한 뒤, 서비스 정지 상태의 암호화된 복구본을 검증하고 봇과 Watch를 함께 전환한다. 의존성·DB·배포 계약 변경에는 별도 배포 검증이 필요하다.
+5. 결과 파일에서 `done=true`, `success=true`, `stage=deployed`와 승인 SHA를 확인하고 새 번들을 다음 배포의 이전 번들로 보관한다. 접속이 끊긴 경우 같은 SSH 설정으로 `observe --job <작업 ID>`를 실행해 Pi의 결과를 확인한다.
+
+적용 후 이전 버전으로 되돌리려면 같은 도구에서 `promote`를 `rollback`으로 바꾸고 같은 두 커밋·번들·해시와 새로운 결과 파일 경로를 전달한다. 봇과 Watch의 준비 상태, 승인 소스, 세 타이머가 함께 복구됐는지 확인한다.
 
 ## 확정된 새 Production 기준
 
@@ -426,8 +456,7 @@ bounded relay queue. The web process receives no Discord credential. Both source
 components must be updated together; the public Watch API is unchanged. Missing
 diagnostic rows from an older web process are accepted. Failures before login,
 after listener shutdown, interrupted status responses, and process-exit losses
-remain journal-only; delivery is best-effort. This does not restore the V1
-update/restart control panel. The existing update/manual timers stay disabled.
+remain journal-only; delivery is best-effort. The operations panel uses this log channel. The approved-source update and manual timers are enabled on the current installation.
 Inspect `discord_log_worker_enabled`, queue/drop/failure/delivery gauges and local
 `discord.log_delivery_failed` / `discord.log_worker_unavailable` records when
 delivery is absent. Failed notification delivery never grants access or changes

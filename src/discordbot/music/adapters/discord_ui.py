@@ -12,6 +12,7 @@ from uuid import uuid4
 from discordbot.music.domain.model import LoopMode, Track
 from discordbot.music.domain.pages import SongPages
 from discordbot.music.ports.repository import Favorite
+from discordbot.platform.diagnostics import exception_fields
 from discordbot.platform.errors import AppError, AuthorizationError, CapacityError, ConflictError, ExternalPermanentError
 from discordbot.platform.tasks import TaskSpec, TaskSupervisor, require_tasks_stopped
 from discordbot.storage.ports.contracts import DatabaseRequest
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 def report_failure(stage: str, error: Exception) -> None:
     logger.warning('music.ui_failed', extra={'fields':{'stage':stage,
-        'error_code':error.code.value if isinstance(error, AppError) else 'internal'}})
+        'error_code':error.code.value if isinstance(error, AppError) else 'internal', **exception_fields(error)}})
 
 
 class Responder:

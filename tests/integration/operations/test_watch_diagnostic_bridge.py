@@ -56,7 +56,7 @@ async def test_signed_status_relays_failure_and_recovery_without_discord_in_web(
             assert relay.pending
             await h.controller.refresh()  # signed request/response and schema validation
             await owner.deliver_one()
-            content = channel.send.call_args.kwargs['content']
+            content = channel.send.call_args.kwargs['embed'].description
             assert 'Event: watch.maintenance' in content and 'Code: database_unavailable' in content
             assert 'Module: discordbot.watch.web' in content and 'PRIVATE_SECRET' not in content
             assert not relay.pending
@@ -69,9 +69,9 @@ async def test_signed_status_relays_failure_and_recovery_without_discord_in_web(
             now[0] = 5
             await h.controller.refresh()
             await owner.deliver_one()
-            assert 'Recovery: recovered' in channel.send.call_args.kwargs['content']
+            assert 'Recovery: recovered' in channel.send.call_args.kwargs['embed'].description
             (tmp_path/'actual-payloads.json').write_text(json.dumps([
-                {'content': c.kwargs['content'], 'allowed_mentions': c.kwargs['allowed_mentions'].to_dict()}
+                {'content': c.kwargs['embed'].description, 'allowed_mentions': c.kwargs['allowed_mentions'].to_dict()}
                 for c in channel.send.call_args_list], ensure_ascii=False), encoding='utf-8')
         finally:
             h.writer.heartbeat = heartbeat
@@ -93,7 +93,7 @@ async def test_invite_failure_carries_typed_code_through_notifier(tmp_path, capl
         try:
             TelemetryDrain(SimpleNamespace(telemetry_buffer=h.buffer)).flush()
             await owner.deliver_one()
-            text = channel.send.call_args.kwargs['content']
+            text = channel.send.call_args.kwargs['embed'].description
             assert 'Event: watch.invite' in text and 'Code: database_unavailable' in text
             assert 'exception_type: DatabaseUnavailableError' in text and 'PRIVATE_SECRET' not in text
         finally:
@@ -137,7 +137,7 @@ async def test_bad_optional_diagnostics_do_not_break_health_or_send(tmp_path, ca
             receive_watch_diagnostics([{'event':'watch.maintenance','result':'failed',
                 'error_code':'database_unavailable', 'stage':'``` PRIVATE_SECRET', 'url':'PRIVATE_SECRET'}])
             await owner.deliver_one()
-            assert channel.send.await_count == 1 and 'PRIVATE_SECRET' not in channel.send.call_args.kwargs['content']
+            assert channel.send.await_count == 1 and 'PRIVATE_SECRET' not in channel.send.call_args.kwargs['embed'].description
         finally:
             log.removeHandler(owner.handler)
             await owner.stop()

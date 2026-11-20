@@ -14,13 +14,6 @@ from types import ModuleType, SimpleNamespace
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'src'))
 
-from discordbot.composition.config import Environment, PlatformConfig, ServiceKind
-from discordbot.composition.guardian import receive_control, supervise
-from discordbot.composition.main import run_process
-from discordbot.composition.runtime import ProcessRuntime
-from discordbot.composition.worker import run_managed
-from discordbot.platform.tasks import TaskSpec, CancellationBehavior, TaskSupervisor, require_tasks_stopped
-from discordbot.platform.termination import TerminationPolicy
 
 
 def record(directory, name, **fields):
@@ -49,6 +42,8 @@ def main():
         while True:
             signal.pause()
     if role == 'guardian':
+        from discordbot.composition.guardian import supervise
+        from discordbot.platform.termination import TerminationPolicy
         record(directory, 'guardian')
         def event(name):
             with (directory / 'events').open('a') as stream:
@@ -59,6 +54,13 @@ def main():
                            policy=TerminationPolicy(.6, .15, .9), event=event)
         record(directory, 'result', code=result)
         return result
+    from discordbot.composition.config import Environment, PlatformConfig, ServiceKind
+    from discordbot.composition.guardian import receive_control
+    from discordbot.composition.main import run_process
+    from discordbot.composition.runtime import ProcessRuntime
+    from discordbot.composition.worker import run_managed
+    from discordbot.platform.tasks import TaskSpec, CancellationBehavior, TaskSupervisor, require_tasks_stopped
+
     control = receive_control(int(extra[0]))
     record(directory, 'worker', pgid=os.getpgrp(), ppid=os.getppid())
     while not (directory / 'go').exists():

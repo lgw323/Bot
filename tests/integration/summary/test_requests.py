@@ -7,6 +7,7 @@ import pytest
 from characterization.summary_support import settled
 from discordbot.platform.errors import (AuthorizationError, CapacityError, DeadlineExceededError,
     ConflictError, ExternalPermanentError, ExternalTemporaryError, ShutdownError, ValidationError)
+from discordbot.platform.diagnostics import safe_frame_location
 from discordbot.summary.domain.models import Message, NoSummaryData, Query, Scope, Summary, Topic
 
 
@@ -148,7 +149,17 @@ async def test_failure_releases_next_and_safe_sink(summary, error):
     events = summary.buffer.drain()
     assert events and "RAW" not in repr(events) and "SECRET" not in repr(events)
     assert events[0].correlation_id.startswith("synthetic-")
-    assert set(events[0].fields) == {"duration_seconds", "queue_depth"}
+    fields = dict(events[0].fields)
+    assert set(fields) == {"duration_seconds", "queue_depth", "exception_type", "stack_frames", "trace_limited"}
+    assert fields['duration_seconds'] == fields['queue_depth'] == 0
+    assert events[0].result == error.code.value
+    assert fields['exception_type'] == error.__name__
+    assert fields['trace_limited'] is True  # AsyncMock/test frames are deliberately omitted.
+    frames = fields['stack_frames']
+    assert 1 <= len(frames) <= 5
+    assert all(safe_frame_location(frame) == frame for frame in frames)
+    assert any(frame.startswith('discordbot/summary/application/service.py:') for frame in frames)
+    assert 'user_id' not in json.dumps(events[0].as_dict())
 
 
 @pytest.mark.asyncio

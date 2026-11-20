@@ -43,6 +43,7 @@ class Fake:
         self.pointer = release
 
     def stop(self): self.call("stop")
+    def stop_for_rollback(self): self.call("rollback_stop")
     def start(self): self.call("start")
     def preflight(self, release): self.call("preflight:" + release.identity)
     def test(self, release): self.call("test:" + release.identity)
@@ -89,7 +90,7 @@ def test_failed_rollback_stops_pair_and_is_visible():
     fake = Fake("ready:new", rollback_fail=True)
     assert Deployment(fake).run("revision").rollback == "failed"
     assert fake.calls.count("activate:old") == 1
-    assert fake.calls[-2] == "stop"
+    assert fake.calls[-2] == "rollback_stop"
 
 
 def test_initial_failure_has_no_fictitious_rollback():

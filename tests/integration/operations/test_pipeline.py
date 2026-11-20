@@ -39,7 +39,8 @@ def test_real_local_pipeline_with_synthetic_db_and_fake_services(builder, tmp_pa
         assert store.current() == identity
         if readiness_failure and identity != "old":
             raise ExternalTemporaryError("injected")
-    services = SimpleNamespace(stop=lambda: calls.append("stop"), start=lambda: calls.append("start"),
+    services = SimpleNamespace(stop=lambda: calls.append("stop"),
+                               stop_for_rollback=lambda: calls.append("rollback_stop"), start=lambda: calls.append("start"),
                                ready=ready, smoke=lambda identity: calls.append("smoke:" + identity))
     port = LocalDeployment(settings, builder, services, Audit(settings.audit))
     result = Deployment(port).run("a" * 40)

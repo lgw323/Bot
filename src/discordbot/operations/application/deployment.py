@@ -45,7 +45,7 @@ class Deployment:
                 if disturbed:
                     rollback = "failed"
                     try:
-                        p.stop()
+                        p.stop_for_rollback()
                         if previous is not None:
                             p.preflight(previous)
                             p.compatible(previous)  # Never downgrade the live data automatically.
@@ -61,7 +61,7 @@ class Deployment:
                     except BaseException:
                         # Do not keep a half-ready pair running after failed rollback.
                         try:
-                            p.stop()
+                            p.stop_for_rollback()
                         except BaseException:
                             rollback = "failed_stop_unconfirmed"
                         else:

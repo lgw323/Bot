@@ -15,6 +15,7 @@ from discordbot.operations.adapters.admission import installed_operations_args
 from discordbot.operations.adapters.build import Builder, Runner
 from discordbot.operations.adapters.filesystem import ExclusiveLock, ReleaseStore, atomic_json, read_json
 from discordbot.operations.adapters.recovery import Backups
+from discordbot.operations.adapters.quiescence import CgroupQuiescence
 from discordbot.operations.adapters.retention import cleanup_releases
 from discordbot.operations.application.deployment import Deployment
 from discordbot.operations.ports.deployment import Release
@@ -32,8 +33,10 @@ class NoRedirect(HTTPRedirectHandler):
 class Services:
     names = ("discord-bot", "watch-web")
 
-    def __init__(self, runner: Runner, cwd: Path, ports: tuple[int, int]) -> None:
+    def __init__(self, runner: Runner, cwd: Path, ports: tuple[int, int], *,
+                 cgroup_root: Path = Path('/sys/fs/cgroup')) -> None:
         self.runner, self.cwd, self.ports = runner, cwd, ports
+        self.quiescence = CgroupQuiescence(cgroup_root)
 
     def stop(self) -> None:
         # Both units in one bounded systemd transaction. No Requires/PartOf
@@ -47,6 +50,42 @@ class Services:
 
     def start(self) -> None:
         self.runner.run(["systemctl", "start", *self.names], self.cwd, 90)
+
+    def _rollback_state(self, name: str) -> None:
+        raw = self.runner.read(['systemctl', 'show', name,
+            '--property=LoadState,ActiveState,MainPID,ControlGroup'], self.cwd, 10)
+        try:
+            if type(raw) is not str or len(raw) > 4096:
+                raise ValueError
+            pairs = [line.split('=', 1) for line in raw.splitlines()]
+            if len(pairs) != 4 or any(len(pair) != 2 for pair in pairs):
+                raise ValueError
+            row = dict(pairs)
+            if (set(row) != {'LoadState', 'ActiveState', 'MainPID', 'ControlGroup'}
+                    or row['LoadState'] != 'loaded' or row['ActiveState'] not in {'inactive', 'failed'}
+                    or row['MainPID'] != '0'
+                    or row['ControlGroup'] not in {'', '/system.slice/' + name + '.service'}):
+                raise ValueError
+        except (TypeError, ValueError):
+            raise ExternalTemporaryError('rollback unit termination is not confirmed') from None
+
+    def stop_for_rollback(self) -> None:
+        """Confirm quiescence without confusing unclean exit with a live process.
+
+        Forward stop remains strict. A bounded nonzero stop result is not proof
+        of either termination or continued execution, so inspect actual state.
+        This method neither kills extra processes nor forgives unknown evidence.
+        """
+        try:
+            self.runner.run(['systemctl', 'stop', *self.names], self.cwd, 90)
+        except ExternalTemporaryError:
+            pass  # Fixed read-only state/cgroup checks below remain mandatory.
+        for name in self.names:
+            self._rollback_state(name)
+        for name in self.names:
+            self.quiescence.verify(name + '.service')
+        for name in self.names:
+            self._rollback_state(name)  # Reject a restart/state race during inspection.
 
     def probe(self, index: int, path: str) -> dict:
         opener = build_opener(ProxyHandler({}), NoRedirect())
@@ -148,6 +187,9 @@ class LocalDeployment:
 
     def stop(self):
         self.services.stop()
+
+    def stop_for_rollback(self):
+        self.services.stop_for_rollback()
 
     def activate(self, release):
         # Graceful service stop checkpoints Music and drains DB writers. Capture

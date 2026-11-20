@@ -80,7 +80,10 @@ class Servers:
             raise
 
     def schedule(self) -> None:
-        if self.closed:
+        # A successful completion may already be queued when admission closes,
+        # before stop() gets its turn. Do not turn normal shutdown into a loop
+        # callback failure. There is no await between this check and start().
+        if self.closed or not self.supervisor.snapshot().accepting_work:
             return
         async def tick():
             await asyncio.sleep(1)
@@ -195,7 +198,7 @@ class TelemetryDrain:
         self.schedule()
 
     def schedule(self) -> None:
-        if self.closed:
+        if self.closed or not self.runtime.supervisor.snapshot().accepting_work:
             return
         async def drain():
             await asyncio.sleep(1)
