@@ -39,7 +39,7 @@ async def harness(monkeypatch):
         metrics=SimpleNamespace(increment=lambda *a, **kw: None, dropped_series=0),
         telemetry=SimpleNamespace(emit=lambda *a, **kw: None),
         telemetry_buffer=SimpleNamespace(dropped_count=0), executor=SimpleNamespace(run=run),
-        supervisor=SimpleNamespace(start=start, capacity=10, snapshot=lambda: SimpleNamespace(active=[])))
+        supervisor=SimpleNamespace(start=start, capacity=10, snapshot=lambda: SimpleNamespace(active=[], accepting_work=True)))
     database = SimpleNamespace(probe=AsyncMock(), observations=[], admitted=(0, 0))
     probe = module.Probe(database, runtime, SimpleNamespace(stat=stat))
     probe.database_ready = True

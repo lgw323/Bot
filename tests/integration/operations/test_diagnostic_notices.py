@@ -48,12 +48,13 @@ def test_dedup_ignores_new_time_and_work_identity_but_keeps_failure_and_recovery
 
 
 @pytest.mark.asyncio
-async def test_code_block_is_message_content_for_copy_button():
+async def test_code_block_is_inside_single_embed_without_plain_content():
     owner, _, channel = fixture()
     item = notice(record(logging.ERROR))
     owner.enqueue(item)
     await owner.deliver_one()
-    assert channel.send.call_args.kwargs['content'] == item.description
+    assert 'content' not in channel.send.call_args.kwargs
+    assert channel.send.call_args.kwargs['embed'].description == item.description
     assert channel.send.call_args.kwargs['allowed_mentions'].to_dict()['parse'] == []
     await owner.stop()
 
@@ -196,7 +197,7 @@ async def test_feature_failure_identity_survives_actual_telemetry_send(
         await owner.deliver_one()
         assert channel.send.await_count == 1
         actual = channel.send.call_args.kwargs
-        content = actual['content']
+        content = actual['embed'].description
         (tmp_path / 'fake-send.json').write_text(json.dumps({'content': content,
             'embed': actual['embed'].to_dict(), 'allowed_mentions': actual['allowed_mentions'].to_dict()},
             ensure_ascii=False), encoding='utf-8')

@@ -95,7 +95,7 @@ async def test_deadline_does_not_queue_behind_worker_or_restore_on_one_success(m
     now = [0.]
     runtime.clock = SimpleNamespace(monotonic=lambda: now[0])
     factories = []
-    runtime.supervisor = SimpleNamespace(start=lambda spec, factory: factories.append(factory) or
+    runtime.supervisor = SimpleNamespace(snapshot=lambda: SimpleNamespace(accepting_work=True), start=lambda spec, factory: factories.append(factory) or
         asyncio.get_running_loop().create_future())
     database = SimpleNamespace(probe=AsyncMock(side_effect=DatabaseDeadlineError('private')),
         admitted=(1, 0), probe_recovery_safe=False)
@@ -172,7 +172,7 @@ async def test_scheduled_probe_records_failure_and_two_successes_without_extra_r
     now = [0.]
     runtime.clock = SimpleNamespace(monotonic=lambda: now[0])
     factories = []
-    runtime.supervisor = SimpleNamespace(start=lambda spec, factory: factories.append(factory) or
+    runtime.supervisor = SimpleNamespace(snapshot=lambda: SimpleNamespace(accepting_work=True), start=lambda spec, factory: factories.append(factory) or
         asyncio.get_running_loop().create_future())
     database = SimpleNamespace(probe=AsyncMock(side_effect=DatabaseUnavailableError('private', context=busy())))
     probe = Probe(database, runtime)

@@ -48,7 +48,7 @@ class Probe:
                 and (self.policy.pending_since is None or now - self.policy.pending_since < 15))
 
     def schedule(self):
-        if self.closed or self.policy.hard:
+        if self.closed or self.policy.hard or not self.runtime.supervisor.snapshot().accepting_work:
             return
         async def sample():
             await asyncio.sleep(5)

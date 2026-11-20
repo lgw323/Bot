@@ -22,7 +22,8 @@ async def test_periodic_success_keeps_metrics_and_history_without_journal_churn(
     runtime.telemetry_buffer.drain()
     # Drive the real three scheduler specifications without waiting on clocks/network.
     specs = []
-    supervisor = SimpleNamespace(start=lambda spec, factory: specs.append(spec) or asyncio.get_running_loop().create_future())
+    supervisor = SimpleNamespace(start=lambda spec, factory: specs.append(spec) or asyncio.get_running_loop().create_future(),
+                                 snapshot=lambda: SimpleNamespace(accepting_work=True))
     fixture = SimpleNamespace(supervisor=supervisor)
     Servers((), supervisor).schedule()
     TelemetryDrain(fixture).schedule()
@@ -58,7 +59,8 @@ async def test_generic_probe_failure_emits_safe_code_and_latches_readiness(monke
     runtime = ProcessRuntime(config=PlatformConfig(ServiceKind.WATCH_WEB, Environment.TEST, "synthetic"))
     database = SimpleNamespace(probe=AsyncMock(side_effect=DatabaseUnavailableError("private DB path", context={"path": "private"})))
     factories = []
-    runtime.supervisor = SimpleNamespace(start=lambda spec, factory: factories.append(factory) or asyncio.get_running_loop().create_future())
+    runtime.supervisor = SimpleNamespace(start=lambda spec, factory: factories.append(factory) or asyncio.get_running_loop().create_future(),
+                                         snapshot=lambda: SimpleNamespace(accepting_work=True))
     probe = Probe(database, runtime)
     probe.schedule()
     monkeypatch.setattr("discordbot.operations.adapters.probe.asyncio.sleep", AsyncMock())
