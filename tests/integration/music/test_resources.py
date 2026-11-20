@@ -142,7 +142,8 @@ async def test_cf06_snapshot_atomic_revision_checksum_ack_partial_guild(rig, tmp
 async def test_provider_playlist_bounds_malformed_order(rig, count):
     pool = AsyncMock()
     entries = [{"webpage_url": f"https://youtube.com/watch?v={i}", "title": str(i), "duration": 200} for i in range(count)]
-    pool.run.return_value = json.dumps({"entries": entries + [None, {"title": "bad"}]}).encode()
+    rows = entries + [None, {"title": "bad"}, {"url": "https://example.invalid/bad", "title": "bad"}]
+    pool.run.return_value = b"\n".join(json.dumps(row).encode() for row in rows)
     provider = YtDlpProvider(pool)
     result = await provider.lookup("https://youtube.com/playlist?list=synthetic", 10, limit=50)
     assert [track.title for track in result] == [str(i) for i in range(min(count, 50))]
@@ -151,7 +152,7 @@ async def test_provider_playlist_bounds_malformed_order(rig, count):
 
 async def test_provider_incompatible_result_boundary(rig):
     pool = AsyncMock()
-    pool.run.return_value = b'{"entries": "not an array"}'
+    pool.run.return_value = b'{"title": "first"}\ninvalid JSON'
     with pytest.raises(DataIntegrityError): await YtDlpProvider(pool).lookup("ytsearch3:test", 10, limit=3)
 
 

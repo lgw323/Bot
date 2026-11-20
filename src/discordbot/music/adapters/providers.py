@@ -39,16 +39,14 @@ class YtDlpProvider:
         if not query.startswith(("ytsearch3:", "ytsearch10:")):
             youtube_url(query)
         output = await self.pool.run((*provider_command(), "--skip-download",
-             "--dump-single-json", "--flat-playlist", "--no-warnings", "--playlist-end", str(limit), "--socket-timeout", "10",
+             "--print", "%(.{webpage_url,url,title,duration,uploader,thumbnail})j",
+             "--flat-playlist", "--no-warnings", "--playlist-end", str(limit), "--socket-timeout", "10",
              "--retries", "1", "--", query), seconds=30, name="lookup")
         try:
-            data = json.loads(output)
-            entries = data.get("entries", [data])
-            if not isinstance(entries, list):
-                raise ValueError
             result = []
-            for entry in entries[:limit]:
-                if not isinstance(entry, dict):
+            for index, line in enumerate(output.splitlines()):
+                entry = json.loads(line)
+                if index >= limit or not isinstance(entry, dict):
                     continue
                 try:
                     url = youtube_url(entry.get("webpage_url") or entry.get("url", ""))
