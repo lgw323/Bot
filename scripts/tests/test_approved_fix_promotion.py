@@ -1,8 +1,11 @@
 """Operator-only transaction coverage, using synthetic state and no host commands."""
 
 from contextlib import nullcontext
+import hashlib
 import json
+import os
 from pathlib import Path
+import sys
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -10,6 +13,7 @@ import pytest
 
 pytest.importorskip('fcntl', reason='Linux operator transaction')
 from deploy.tools import promote_approved_fix as promotion
+from deploy.tools import prepare_approved_fix as worker
 from deploy.tools.prepare_approved_fix import known_imports, pytest_report
 
 
@@ -133,9 +137,111 @@ def test_failed_worker_replacement_only_before_native_admission(tmp_path, monkey
             job.save_inputs()
         assert job.staged_worker.read_bytes() == b'failed-worker'
     else:
+        previous_inode = job.staged_worker.stat().st_ino
+        previous_hash = promotion.digest(job.staged_worker)
         job.save_inputs()
         assert job.staged_worker.read_bytes() == b'reviewed-worker'
-        assert [p.read_bytes() for p in tmp_path.glob('worker-before-*.py')] == [b'failed-worker']
+        saved = tmp_path / f'worker-before-{previous_hash}.py'
+        assert saved.stat().st_ino == previous_inode and saved.read_bytes() == b'failed-worker'
+        job.save_inputs()
+        assert list(tmp_path.glob('worker-before-*.py')) == [saved]
+
+
+def test_native_qa_includes_packaged_test_helpers(tmp_path, monkeypatch):
+    from importlib.machinery import PathFinder
+    commit = 'a' * 40
+    monkeypatch.setattr(worker, 'ROOT', tmp_path)
+    monkeypatch.setitem(sys.modules, 'discordbot.operations.adapters.admission',
+                        SimpleNamespace(installed_operations_args=lambda: []))
+    monkeypatch.setattr(worker, 'run_git', lambda path, *args: commit)
+    app = tmp_path / 'releases' / worker.identity(commit) / 'app'
+    helpers = app / 'tests/characterization'
+    helpers.mkdir(parents=True)
+    (helpers / '__init__.py').write_text('')
+
+    def inspect_command(command, *, cwd, env, **kwargs):
+        assert cwd == app
+        paths = env['PYTHONPATH'].split(os.pathsep)
+        assert PathFinder.find_spec('characterization', paths).origin == str(helpers / '__init__.py')
+        assert Path(paths[0]) == app / 'src' and Path(paths[-1]).name == 'comparison'
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(worker.subprocess, 'run', inspect_command)
+    worker.test(commit, tmp_path / 'fixture.bundle')
+
+
+def test_checkpoint_uses_runtime_uid_with_only_private_output_writable(tmp_path, monkeypatch):
+    import pwd
+    job = object.__new__(promotion.Promotion)
+    job.stage, job.gid, job.old, job.new = tmp_path, 100, 'a' * 40, 'b' * 40
+    job.staged_worker = tmp_path / 'worker.py'
+    accounts = {'discordbot': SimpleNamespace(pw_uid=1001), 'discordbot-deploy': SimpleNamespace(pw_uid=1002)}
+    monkeypatch.setattr(pwd, 'getpwnam', accounts.__getitem__)
+    chown = Mock()
+    dispatch = Mock()
+    monkeypatch.setattr(os, 'chown', chown)
+    monkeypatch.setattr(promotion, 'cmd', dispatch)
+    job.checkpoint()
+    destination, uid, gid = chown.call_args.args
+    assert destination.parent == tmp_path and (uid, gid) == (1001, 100)
+    args = dispatch.call_args.args[0]
+    assert 'User=discordbot' in args and 'ProtectSystem=strict' in args
+    assert [arg for arg in args if arg.startswith('ReadWritePaths=')] == [f'ReadWritePaths={destination}']
+    assert 'LoadCredential=db_key:/etc/discordbot/secrets/db_key' in args
+    monkeypatch.setattr(sys, 'argv', ['worker', 'checkpoint', job.new, str(destination), '--previous', job.old])
+    monkeypatch.setattr(sys, 'path', sys.path.copy())
+    monkeypatch.setattr(os, 'geteuid', lambda: 1002)
+    with pytest.raises(RuntimeError, match='wrong_worker_uid'):
+        worker.main()
+    called = []
+    async def checkpoint(path):
+        called.append(path)
+    monkeypatch.setattr(os, 'geteuid', lambda: 1001)
+    monkeypatch.setattr(worker, 'checkpoint', checkpoint)
+    assert worker.main() == 0 and called == [destination]
+
+
+@pytest.mark.parametrize('case', ['install', 'occupied', 'wrong_digest', 'manifest_link'])
+def test_install_preserves_existing_release_and_checks_sealed_manifest(tmp_path, case):
+    if case == 'install' and os.geteuid() != 0:
+        pytest.skip('moving a sealed 0550 directory across parents requires the host controller UID on Linux')
+    src, dst, name = tmp_path / 'stage', tmp_path / 'live', promotion.identity('b' * 40)
+    dst.mkdir(mode=0o750)
+    candidate = src / name
+    candidate.mkdir(parents=True)
+    manifest = candidate / 'manifest.json'
+    contents = b'synthetic immutable manifest'
+    expected = hashlib.sha256(contents).hexdigest()
+    if case == 'manifest_link':
+        (tmp_path / 'manifest').write_bytes(contents)
+        manifest.symlink_to(tmp_path / 'manifest')
+    else:
+        manifest.write_bytes(contents)
+        manifest.chmod(0o440)
+    candidate.chmod(0o550)
+    original = candidate.stat()
+    uid, gid = original.st_uid, original.st_gid
+    if case == 'occupied':
+        (dst / name).mkdir()
+        (dst / name / 'existing').write_bytes(b'preserve')
+    try:
+        with promotion.deploy_directory(src, uid, gid) as source, promotion.deploy_directory(dst, uid, gid) as destination:
+            if case == 'install':
+                promotion.install_candidate(source, destination, name, expected, uid, gid)
+                assert not candidate.exists() and os.path.samestat(original, (dst / name).stat())
+                assert (dst / name / 'manifest.json').read_bytes() == contents
+            else:
+                with pytest.raises((OSError, RuntimeError)) as failure:
+                    promotion.install_candidate(source, destination, name, '0' * 64 if case == 'wrong_digest' else expected, uid, gid)
+                assert os.path.samestat(original, candidate.stat())
+                if case == 'occupied':
+                    if os.geteuid() == 0:
+                        assert isinstance(failure.value, FileExistsError)
+                    assert (dst / name / 'existing').read_bytes() == b'preserve'
+                else:
+                    assert not (dst / name).exists()
+    finally:
+        (candidate if candidate.exists() else dst / name).chmod(0o750)
 
 
 def test_systemd_client_start_failure_reports_category_without_raw_output(monkeypatch):

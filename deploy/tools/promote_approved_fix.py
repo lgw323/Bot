@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 from contextlib import contextmanager
+import ctypes
 import fcntl
 import grp
 import hashlib
@@ -152,6 +153,50 @@ def sync_dir(path: Path) -> None:
         os.close(fd)
 
 
+@contextmanager
+def deploy_directory(name: str | Path, uid: int, gid: int, *, parent: int | None = None):
+    fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
+    try:
+        meta = os.fstat(fd)
+        need((meta.st_uid, meta.st_gid) == (uid, gid) and not meta.st_mode & 0o022,
+             'untrusted_release_directory')
+        yield fd
+    finally:
+        os.close(fd)
+
+
+def sealed_manifest_hash(directory: int, uid: int, gid: int) -> str:
+    flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
+    with os.fdopen(os.open('manifest.json', flags, dir_fd=directory), 'rb') as stream:
+        meta = os.fstat(stream.fileno())
+        need(stat.S_ISREG(meta.st_mode) and (meta.st_uid, meta.st_gid) == (uid, gid)
+             and not meta.st_mode & 0o222 and 0 < meta.st_size <= 4 * 1024**2, 'untrusted_release_manifest')
+        payload = stream.read(4 * 1024**2 + 1)
+        need(len(payload) == meta.st_size, 'release_manifest_changed')
+        return hashlib.sha256(payload).hexdigest()
+
+
+def install_candidate(source: int, destination: int, name: str, manifest: str, uid: int, gid: int) -> None:
+    # Both fds are in the host mount namespace. Two systemd ReadWritePaths
+    # mounts can have the same st_dev and still reject a rename with EXDEV.
+    need(re.fullmatch('r-[0-9a-f]{16}-[0-9a-f]{16}', name) is not None, 'invalid_release_name')
+    with deploy_directory(name, uid, gid, parent=source) as candidate:
+        inode = os.fstat(candidate)
+        need(not inode.st_mode & 0o222 and sealed_manifest_hash(candidate, uid, gid) == manifest,
+             'staged_manifest_changed')
+        need(os.fstat(source).st_dev == os.fstat(destination).st_dev, 'non_atomic_install_volume')
+        with os.scandir(destination) as entries:
+            need(sum(item.is_dir(follow_symlinks=False) for item in entries) < 16, 'release_count_cap')
+        encoded = os.fsencode(name)
+        libc = ctypes.CDLL(None, use_errno=True)
+        if libc.renameat2(source, encoded, destination, encoded, 1):  # RENAME_NOREPLACE
+            raise OSError(ctypes.get_errno(), 'candidate_rename_failed')
+        after = os.stat(name, dir_fd=destination, follow_symlinks=False)
+        need(os.path.samestat(inode, after), 'installed_candidate_changed')
+        os.fsync(source)
+        os.fsync(destination)
+
+
 def atomic(path: Path, data: bytes, *, mode: int, gid: int = 0) -> None:
     with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as handle:
         temp = Path(handle.name)
@@ -236,7 +281,8 @@ class Promotion:
 
     def worker(self, action: str, commit: str, argument: str | None = None) -> None:
         old_root = ROOT / 'releases' / identity(self.old)
-        props = ['User=discordbot-deploy', 'Group=discordbot', 'NoNewPrivileges=yes', 'ProtectSystem=strict',
+        user = 'discordbot' if action == 'checkpoint' else 'discordbot-deploy'
+        props = [f'User={user}', 'Group=discordbot', 'NoNewPrivileges=yes', 'ProtectSystem=strict',
                  'ProtectHome=yes', 'PrivateNetwork=yes', 'PrivateTmp=yes', 'KillMode=control-group',
                  'UMask=0077', 'RuntimeMaxSec=1800', 'TimeoutStopSec=15',
                  'InaccessiblePaths=-/run/dbus/system_bus_socket -/run/systemd/private -/etc/discordbot/secrets -/etc/discordbot/backup-ssh']
@@ -255,8 +301,6 @@ class Promotion:
         elif action == 'checkpoint':
             props.extend(['LoadCredential=db_key:/etc/discordbot/secrets/db_key',
                           f'ReadWritePaths={argument}', 'InaccessiblePaths=/var/lib/discordbot/backups'])
-        elif action == 'install':
-            props.append(f'ReadWritePaths={ROOT}/releases {self.build_stage}/releases')
         elif action == 'switch':
             props.append(f'ReadWritePaths={ROOT}')
         argv = ['/usr/bin/systemd-run', '--quiet', '--wait', '--pipe', '--collect',
@@ -282,9 +326,12 @@ class Promotion:
                     need(destination == self.staged_worker and not self.receipt.exists()
                          and not (self.stage / 'native-verified.json').exists()
                          and not (ROOT / 'releases' / identity(self.new)).exists(), 'previous_inputs_differ')
-                    preserved = self.stage / ('worker-before-' + digest(destination) + '.py')
+                    previous_hash = digest(destination)
+                    preserved = self.stage / ('worker-before-' + previous_hash + '.py')
                     if not preserved.exists():
                         os.link(destination, preserved)
+                    trusted(preserved)
+                    need(digest(preserved) == previous_hash, 'previous_worker_changed')
                     atomic(destination, source.read_bytes(), mode=mode, gid=self.gid)
             else:
                 atomic(destination, source.read_bytes(), mode=mode, gid=self.gid)
@@ -320,13 +367,22 @@ class Promotion:
             self.worker('build', self.new, str(self.new_bundle))
             self.worker('test', self.new, str(self.new_bundle))
             self.worker('publish', self.new)
-            manifest = self.build_stage / 'releases' / identity(self.new) / 'manifest.json'
-            evidence = {'bundle': self.sha, 'commit': self.new, 'manifest': digest(manifest),
+            with deploy_directory(self.build_stage / 'releases', self.uid, self.gid) as source:
+                with deploy_directory(installed.name, self.uid, self.gid, parent=source) as candidate:
+                    manifest = sealed_manifest_hash(candidate, self.uid, self.gid)
+            evidence = {'bundle': self.sha, 'commit': self.new, 'manifest': manifest,
                         'directory': self.build_stage.name}
             atomic(qa, json.dumps(evidence).encode(), mode=0o600)
-        if not installed.exists():
-            self.worker('install', self.new, str(self.build_stage))
-        need(digest(installed / 'manifest.json') == evidence['manifest'], 'installed_manifest_changed')
+        trusted(ROOT.parent, directory=True)
+        trusted(self.build_stage, directory=True)
+        with deploy_directory(ROOT, self.uid, self.gid) as layout:
+            with deploy_directory('releases', self.uid, self.gid, parent=layout) as destination:
+                if not installed.exists():
+                    emit('worker', action='install')
+                    with deploy_directory(self.build_stage / 'releases', self.uid, self.gid) as source:
+                        install_candidate(source, destination, installed.name, evidence['manifest'], self.uid, self.gid)
+                with deploy_directory(installed.name, self.uid, self.gid, parent=destination) as candidate:
+                    need(sealed_manifest_hash(candidate, self.uid, self.gid) == evidence['manifest'], 'installed_manifest_changed')
         self.worker('verify', self.new)
         need(current() == self.old and ref(APPROVED) == self.old, 'active_release_changed')
         result = {'previous': self.old, 'commit': self.new, 'bundle': self.sha,
@@ -369,7 +425,8 @@ class Promotion:
 
     def checkpoint(self) -> None:
         destination = Path(tempfile.mkdtemp(prefix='stopped-', dir=self.stage))
-        os.chown(destination, self.uid, self.gid)
+        # The runtime UID can read its own database and any 0600 SQLite sidecars.
+        os.chown(destination, pwd.getpwnam('discordbot').pw_uid, self.gid)
         self.worker('checkpoint', self.new, str(destination))
 
     def stop(self, *, recovering: bool = False) -> None:

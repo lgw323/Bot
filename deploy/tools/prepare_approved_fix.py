@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 import ast
 import asyncio
-import ctypes
 import hashlib
 import json
 import os
@@ -170,16 +169,17 @@ def test(commit: str, bundle: Path) -> None:
         run_git(fixture, 'fetch', '--no-tags', str(bundle), REF)
         need(run_git(fixture, 'rev-parse', '--verify', 'FETCH_HEAD^{commit}') == commit, 'wrong_test_fixture')
         run_git(fixture, 'checkout', commit, '--', 'compatibility')
+        app = target / 'app'
         env = dict(PATH='/usr/bin:/bin', HOME=tmp, PYTHONDONTWRITEBYTECODE='1',
-                   PYTHON_DOTENV_DISABLED='1', PYTHONPATH=os.pathsep.join((str(target / 'app/src'), str(fixture))))
+                   PYTHON_DOTENV_DISABLED='1', PYTHONPATH=os.pathsep.join(map(str, (app / 'src', app / 'tests', fixture))))
         junit = Path(tmp) / 'native.xml'
         command = [str(target / '.venv/bin/python'), '-B', '-m', 'pytest', *installed_operations_args(),
                    'tests/integration/music', '-p', 'no:cacheprovider', '-q', '--tb=line', '--color=no',
                    '--show-capture=no', '-o', 'junit_family=xunit1', '--junitxml', str(junit),
                    '-W', 'error::RuntimeWarning', '-W', 'error::pytest.PytestUnraisableExceptionWarning']
-        result = subprocess.run(command, cwd=target / 'app', env=env, capture_output=True, timeout=900)
+        result = subprocess.run(command, cwd=app, env=env, capture_output=True, timeout=900)
         if result.returncode:
-            report = pytest_report(result.stdout + b'\n' + result.stderr, junit, known_imports(target / 'app'))
+            report = pytest_report(result.stdout + b'\n' + result.stderr, junit, known_imports(app))
             print('native_tests ' + json.dumps(report, separators=(',', ':')), flush=True)
             raise RuntimeError('native_tests_failed')
 
@@ -197,19 +197,6 @@ def verify(commit: str) -> None:
     manifest = ReleaseStore(ROOT).validate(identity(commit))
     need(manifest['commit'] == commit and manifest['dependency_hash'] == LOCK
          and manifest['schema_min'] == manifest['schema_max'] == 5, 'manifest_mismatch')
-
-
-def install(commit: str, stage: Path) -> None:
-    source = stage / 'releases' / identity(commit)
-    target = ROOT / 'releases' / identity(commit)
-    need(not target.exists() and not target.is_symlink(), 'candidate_already_installed')
-    need(sum(p.is_dir() for p in target.parent.iterdir()) < 16, 'release_count_cap')
-    libc = ctypes.CDLL(None, use_errno=True)
-    if libc.renameat2(-100, os.fsencode(source), -100, os.fsencode(target), 1):
-        raise OSError(ctypes.get_errno(), 'candidate_rename_failed')
-    from discordbot.operations.adapters.filesystem import sync_dir
-    sync_dir(target.parent)
-    verify(commit)
 
 
 async def checkpoint(destination: Path) -> None:
@@ -254,13 +241,14 @@ async def checkpoint(destination: Path) -> None:
 
 def main() -> int:
     import pwd
-    need(os.geteuid() == pwd.getpwnam('discordbot-deploy').pw_uid != 0, 'wrong_worker_uid')
     args = argparse.ArgumentParser()
-    args.add_argument('mode', choices=('build', 'test', 'publish', 'install', 'verify', 'switch', 'quiescent', 'checkpoint'))
+    args.add_argument('mode', choices=('build', 'test', 'publish', 'verify', 'switch', 'quiescent', 'checkpoint'))
     args.add_argument('commit')
     args.add_argument('argument', nargs='?')
     args.add_argument('--previous', required=True)
     a = args.parse_args()
+    user = 'discordbot' if a.mode == 'checkpoint' else 'discordbot-deploy'
+    need(os.geteuid() == pwd.getpwnam(user).pw_uid != 0, 'wrong_worker_uid')
     need(all(bool(re.fullmatch('[0-9a-f]{40}', ref)) for ref in (a.commit, a.previous)), 'invalid_commit')
     base = Path('/run/discordbot-promotion-base') if a.mode in ('build', 'test', 'publish') else ROOT / 'releases' / identity(a.previous)
     sys.path.insert(0, str(base / 'app/src'))
@@ -270,8 +258,6 @@ def main() -> int:
         test(a.commit, Path(a.argument))
     elif a.mode == 'publish':
         publish(a.commit)
-    elif a.mode == 'install':
-        install(a.commit, Path(a.argument))
     elif a.mode == 'verify':
         verify(a.commit)
     elif a.mode == 'switch':
