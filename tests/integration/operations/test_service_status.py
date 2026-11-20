@@ -155,8 +155,10 @@ def test_systemd_command_is_readonly_fixed_allowlist_no_auth_or_environment(monk
                             '--property=' + ','.join(module.PROPERTIES), '--no-pager']
     assert timers.args[0] == ['/usr/bin/systemctl', 'list-timers', '--all', '--no-pager',
                               '--output=json', 'discordbot-backup.timer', 'discordbot-update.timer', 'discordbot-manual.timer']
+    assert show.kwargs['timeout'] == 2
+    assert timers.kwargs['timeout'] == 1
     for call in (show, timers):
-        assert call.kwargs['timeout'] == 2 and call.kwargs['stdin'] is subprocess.DEVNULL
+        assert call.kwargs['stdin'] is subprocess.DEVNULL
         assert set(call.kwargs['env']) == {'PATH', 'LC_ALL', 'TZ'}
         assert not call.kwargs.get('shell', False)
     assert not any(p in module.PROPERTIES for p in ('Environment', 'ExecStart', 'User', 'Description'))
