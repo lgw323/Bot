@@ -158,3 +158,15 @@ async def test_send_library_errors_cannot_feed_the_notification_queue():
     await owner.deliver_one()
     assert not owner.queue and owner.failures == 1
     await owner.stop()
+
+
+@pytest.mark.asyncio
+async def test_follow_callback_receives_confirmed_discord_message_id():
+    owner, _, channel = fixture()
+    delivered = []
+    owner.on_delivered = delivered.append
+    channel.send.return_value = SimpleNamespace(id=991)
+    owner.enqueue(Notice('synthetic','safe',0))
+    await owner.deliver_one()
+    assert delivered == [991]
+    await owner.stop()

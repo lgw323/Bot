@@ -16,7 +16,6 @@ from discordbot.operations.adapters.manual import RequestInbox
 from discordbot.operations.adapters.discord_admin import OperationsPanel, OperationalStatus, SystemdManualConsumer
 from discordbot.operations.adapters.operation_results import read_operation_result
 from discordbot.operations.adapters.service_status import ReadOnlyServiceStatus
-from discordbot.operations.adapters.money_status_file import FixedMoneyStatus
 from discordbot.operations.adapters.watch_diagnostics import receive_watch_diagnostics
 from discordbot.platform.clock import SystemClock, Uuid4Generator
 from discordbot.platform.tasks import TaskSupervisor
@@ -70,8 +69,7 @@ class DiscordFeatures:
                 state=s.state, inbox=inbox, status=status, clock=self.clock,
                 supervisor=r.supervisor, executor=r.executor,
                 services=ReadOnlyServiceStatus(r.executor, bot_port=s.discord_health_port,
-                    watch_port=s.watch_health_port, now=self.clock.now),
-                money_status=FixedMoneyStatus(r.executor))
+                    watch_port=s.watch_health_port, now=self.clock.now))
             self.logs.on_delivered = self.operations.notice_delivered
             self.logs.panel_link_provider = self.operations.verified_link
         resources = (engagement, self.summary, watch, Gateway(self.bot, s.secrets.discord_token), self.deferred)

@@ -324,7 +324,7 @@ class DiscordLogging:
         self.connection_observation_failures = 0
         self.reconnects = self.uncertain = self.suppressed = self.storage_failures = self.retries = 0
         self.next_operation_poll = 0.0
-        self.on_delivered: Callable[[], None] | None = None
+        self.on_delivered: Callable[[int], None] | None = None
         self.panel_failures = 0
         self.panel_link_provider: Callable[[], Awaitable[str | None]] | None = None
         self.panel_link_failures = 0
@@ -529,13 +529,13 @@ class DiscordLogging:
         try:
             async with asyncio.timeout(5):
                 channel = self.bot.get_channel(self.channel) or await self.bot.fetch_channel(self.channel)
-                await channel.send(embed=embed,
+                message = await channel.send(embed=embed,
                     allowed_mentions=discord.AllowedMentions.none(), nonce=item.nonce)
             sent = True
             self.delivered += 1
             if self.on_delivered is not None and item.follow_panel:
                 try:
-                    self.on_delivered()
+                    self.on_delivered(message.id)
                 except Exception:
                     self.panel_failures += 1  # Never retry an already delivered notice.
             if item.receipt:

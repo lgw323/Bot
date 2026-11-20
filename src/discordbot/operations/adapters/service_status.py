@@ -29,6 +29,8 @@ class ServiceObservation:
     version_provenance: str
     recent_job: str
     next_run: datetime | None = None
+    enabled: bool | None = None
+    last_trigger: datetime | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,25 +46,26 @@ SERVICES = (
                 '런타임 기본 준비 검사. 외부 API·음성 재생 전체 검사는 아님'),
     ServiceSpec('watch', 'Watch', 'watch-web.service',
                 'Watch 런타임 기본 준비 검사. 실제 브라우저·WebSocket 이용 검사는 아님'),
-    ServiceSpec('supper', '한턱', 'supper.service',
-                '로컬 정적 HTTP 응답. DB·예약·로그인·Access 검사는 아님'),
-    ServiceSpec('forme', '내 옷 FORME', 'forme.service',
-                '로컬 정적 HTTP 응답. DB·사진·로그인 전체 검사는 아님'),
+    ServiceSpec('salary', 'Salary Meter', 'salary-meter.service', 'systemd 프로세스 상태'),
+    ServiceSpec('astral', 'Astral', 'astral-legacy.service', 'systemd 프로세스 상태'),
+    ServiceSpec('study', 'Study', 'study-static.service', 'systemd 프로세스 상태'),
     ServiceSpec('cloudflared', 'Cloudflared', 'cloudflared.service',
-                'systemd 프로세스 상태만 조회. 공개 경로·Access 연결은 미확인'),
+                'systemd 프로세스 상태 · 공개 경로는 별도 확인'),
     ServiceSpec('backup', '정기 Bot DB 백업', 'discordbot-backup.service',
                 '예약 타이머·작업 종료 기록. 업로드·복원 무결성 증명은 별도'),
+    ServiceSpec('update', '승인 릴리스 업데이트', 'discordbot-update.service', '예약 타이머·업데이트 작업 종료 기록'),
+    ServiceSpec('manual', '수동 요청 처리', 'discordbot-manual.service', '60초 주기 요청함 확인·작업 종료 기록'),
 )
-# Presentation only. The collector contract and its fixed read-only probes stay
-# unchanged; Watch is shown independently inside the Bot detail.
+PRIMARY_SERVICE_KEYS = tuple(spec.key for spec in SERVICES)
+PRIMARY_CHOICES = tuple((spec.key, spec.label) for spec in SERVICES)
 LEGACY_PRIMARY_SERVICE_KEYS = ('bot', 'supper', 'forme')
-PRIMARY_SERVICE_KEYS = (*LEGACY_PRIMARY_SERVICE_KEYS, 'mymoney')
-# Presentation metadata only: Money is not added to OS or HTTP probes.
-PRIMARY_CHOICES = tuple((spec.key,spec.label) for spec in SERVICES if spec.key in LEGACY_PRIMARY_SERVICE_KEYS) + (('mymoney','My Money'),)
-TIMER = 'discordbot-backup.timer'
-UNITS = tuple(s.unit for s in SERVICES) + (TIMER,)
+LEGACY_MENUS = (LEGACY_PRIMARY_SERVICE_KEYS, (*LEGACY_PRIMARY_SERVICE_KEYS, 'mymoney'),
+                ('bot', 'watch', 'supper', 'forme', 'cloudflared', 'backup'))
+TIMERS = {key: f'discordbot-{key}.timer' for key in ('backup', 'update', 'manual')}
+TIMER = TIMERS['backup']
+UNITS = tuple(s.unit for s in SERVICES) + tuple(TIMERS.values())
 PROPERTIES = ('Id', 'LoadState', 'ActiveState', 'SubState', 'Result', 'ExecMainStatus',
-              'ExecMainExitTimestamp', 'NextElapseUSecRealtime')
+              'ExecMainExitTimestamp', 'NextElapseUSecRealtime', 'LastTriggerUSec', 'UnitFileState')
 RELEASE = re.compile(r'r-[a-f0-9]{16}-[a-f0-9]{16}\Z')
 UNKNOWN_VERSION = '실행 버전 미제공'
 NO_JOB = '최근 작업 미확인 · 검증된 기록 미제공'
@@ -70,7 +73,7 @@ NO_JOB = '최근 작업 미확인 · 검증된 기록 미제공'
 
 def unknown_observations() -> tuple[ServiceObservation, ...]:
     return tuple(ServiceObservation(s.key, s.label, '미확인', '미확인', s.health_scope,
-                                   None, None, '예약 작업 · 별도 실행 버전 없음' if s.key == 'backup'
+                                   None, None, '예약 작업 · 별도 실행 버전 없음' if s.key in TIMERS
                                    else UNKNOWN_VERSION, NO_JOB) for s in SERVICES)
 
 
@@ -87,24 +90,29 @@ def validate_observations(value: object) -> tuple[ServiceObservation, ...]:
                 or row.health not in {'통과', '미통과', '미확인'}
                 or row.version is not None and (type(row.version) is not str or RELEASE.fullmatch(row.version) is None)):
             raise ValueError('invalid service observations')
-        for stamp in (row.observed_at, row.next_run):
+        for stamp in (row.observed_at, row.next_run, row.last_trigger):
             if stamp is not None and (type(stamp) is not datetime or stamp.tzinfo is None
                                       or stamp.utcoffset() != timezone.utc.utcoffset(stamp)):
                 raise ValueError('invalid service observation timestamp')
         expected = ('실행 health 응답' if row.version is not None else UNKNOWN_VERSION)
-        if row.key == 'backup':
+        if row.key in TIMERS:
             expected = '예약 작업 · 별도 실행 버전 없음'
         if row.version_provenance != expected or row.version is not None and row.key not in ('bot', 'watch'):
             raise ValueError('invalid service version evidence')
         if row.recent_job != NO_JOB:
-            if row.key != 'backup' or type(row.recent_job) is not str or re.fullmatch(
+            if row.key == 'manual' and row.recent_job == '처리할 요청 없음':
+                pass
+            elif row.key not in TIMERS or type(row.recent_job) is not str or re.fullmatch(
                     r'최근 작업 (정상|실패) 종료 · \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00', row.recent_job) is None:
                 raise ValueError('invalid service job evidence')
-            datetime.fromisoformat(row.recent_job.split(' · ')[1])
-        if row.key != 'backup' and row.next_run is not None:
+            else:
+                datetime.fromisoformat(row.recent_job.split(' · ')[1])
+        if (row.enabled is not None and type(row.enabled) is not bool
+                or row.key not in TIMERS and (row.next_run is not None or row.last_trigger is not None or row.enabled is not None)):
             raise ValueError('invalid service schedule')
         if row.observed_at is None and (row.state != '미확인' or row.health != '미확인'
-                or row.version is not None or row.recent_job != NO_JOB or row.next_run is not None):
+                or row.version is not None or row.recent_job != NO_JOB or row.next_run is not None
+                or row.enabled is not None or row.last_trigger is not None):
             raise ValueError('service evidence has no observation time')
     return value
 
@@ -145,7 +153,26 @@ def _query_units() -> dict[str, dict[str, str]]:
                             stdin=subprocess.DEVNULL, capture_output=True, text=True,
                             encoding='utf-8', errors='strict', timeout=2,
                             env={'PATH': os.defpath, 'LC_ALL': 'C', 'TZ': 'UTC'})
-    return _unit_rows(result.stdout) if result.returncode == 0 else {}
+    rows = _unit_rows(result.stdout)
+    if not rows:
+        return rows
+    # list-timers converts monotonic deadlines to wall time, including the manual inbox timer.
+    try:
+        schedule = subprocess.run(['/usr/bin/systemctl', 'list-timers', '--all', '--no-pager',
+                                   '--output=json', *TIMERS.values()], stdin=subprocess.DEVNULL,
+                                  capture_output=True, text=True, timeout=1,
+                                  env={'PATH': os.defpath, 'LC_ALL': 'C', 'TZ': 'UTC'})
+        if schedule.returncode == 0 and len(schedule.stdout) <= 8192:
+            for item in json.loads(schedule.stdout):
+                if not isinstance(item, dict):
+                    continue
+                name, timestamp = item.get('unit'), item.get('next')
+                if (name in TIMERS.values() and name in rows and type(timestamp) is int
+                        and 0 < timestamp < 253402300799000000):
+                    rows[name]['next_epoch_us'] = str(timestamp)
+    except (ValueError, TypeError, OSError, subprocess.SubprocessError):
+        pass  # Other unit observations and calendar deadlines remain available.
+    return rows
 
 
 async def _health(port: int, path: str) -> tuple[int, dict[str, Any]]:
@@ -185,8 +212,7 @@ class ReadOnlyServiceStatus:
             raise ValueError('invalid loopback health port')
         self.executor, self.now = executor, now
         self.endpoints = {'bot': (bot_port, '/health/ready'),
-                          'watch': (watch_port, '/health/ready'),
-                          'supper': (5080, '/api/health'), 'forme': (5090, '/api/v1/health')}
+                          'watch': (watch_port, '/health/ready')}
 
     async def snapshot(self) -> tuple[ServiceObservation, ...]:
         return await self._sample()
@@ -216,38 +242,54 @@ class ReadOnlyServiceStatus:
                 try:
                     status, value = await _health(*self.endpoints[spec.key])
                     sampled = True
-                    if spec.key in ('bot', 'watch'):
-                        expected = 'discord-bot' if spec.key == 'bot' else 'watch-web'
-                        release = value.get('release')
-                        valid = (type(value.get('ready')) is bool and value.get('service') == expected
-                                 and type(release) is str and RELEASE.fullmatch(release) is not None)
-                        if valid:
-                            version, provenance = release, '실행 health 응답'
-                            health = '통과' if status == 200 and value['ready'] else '미통과'
-                        elif status == 503:
-                            health = '미통과'
-                    else:
-                        health = '통과' if status == 200 and value == {'status': 'ok'} else '미통과'
+                    expected = 'discord-bot' if spec.key == 'bot' else 'watch-web'
+                    release = value.get('release')
+                    valid = (type(value.get('ready')) is bool and value.get('service') == expected
+                             and type(release) is str and RELEASE.fullmatch(release) is not None)
+                    if valid:
+                        version, provenance = release, '실행 health 응답'
+                        health = '통과' if status == 200 and value['ready'] else '미통과'
+                    elif status == 503:
+                        health = '미통과'
                 except (OSError, ValueError, aiohttp.ClientError):
                     pass
-            if spec.key == 'backup':
-                timer = rows.get(TIMER, {})
+            enabled = last_trigger = None
+            if spec.key in TIMERS:
+                timer = rows.get(TIMERS[spec.key], {})
                 sampled = sampled or timer.get('LoadState') == 'loaded'
-                if known and active == 'inactive' and timer.get('LoadState') == 'loaded' and (
-                        timer.get('ActiveState'), timer.get('SubState')) == ('active', 'waiting'):
-                    state = '예약 대기'
+                timer_loaded = timer.get('LoadState') == 'loaded'
+                armed = timer_loaded and timer.get('ActiveState') == 'active'
+                if timer_loaded:
+                    timer_state = timer.get('ActiveState')
+                    if timer_state == 'failed' or active == 'failed':
+                        state = '실패'
+                    elif armed:
+                        state = '실행 중' if active == 'active' else '예약 대기'
+                    elif timer_state == 'inactive':
+                        state = '실행 중 아님'
+                    unit_file = timer.get('UnitFileState')
+                    enabled = True if unit_file == 'enabled' else False if unit_file == 'disabled' else None
+                    last_trigger = _systemd_time(timer.get('LastTriggerUSec'))
+                    if last_trigger is not None and last_trigger > observed:
+                        last_trigger = None
+                else:
+                    state = '미확인'
                 stamp = _systemd_time(row.get('ExecMainExitTimestamp'))
                 if known and stamp is not None and stamp <= observed:
                     if row.get('Result') == 'success' and row.get('ExecMainStatus') == '0':
                         job = '최근 작업 정상 종료 · ' + stamp.isoformat(timespec='seconds')
                     elif row.get('Result') in ('exit-code', 'timeout', 'signal', 'core-dump', 'oom-kill'):
                         job = '최근 작업 실패 종료 · ' + stamp.isoformat(timespec='seconds')
-                if timer.get('LoadState') == 'loaded' and (
-                        timer.get('ActiveState'), timer.get('SubState')) == ('active', 'waiting'):
-                    next_run = _systemd_time(timer.get('NextElapseUSecRealtime'))
+                if spec.key == 'manual' and known and row.get('Result') == 'exec-condition':
+                    job = '처리할 요청 없음'
+                if armed:
+                    if timer.get('next_epoch_us', '').isdigit():
+                        next_run = datetime.fromtimestamp(int(timer['next_epoch_us']) / 1_000_000, timezone.utc)
+                    else:
+                        next_run = _systemd_time(timer.get('NextElapseUSecRealtime'))
                 if next_run is not None and next_run < observed:
                     next_run = None
                 provenance = '예약 작업 · 별도 실행 버전 없음'
             result.append(ServiceObservation(spec.key, spec.label, state, health, spec.health_scope,
-                                             observed if sampled else None, version, provenance, job, next_run))
+                                             observed if sampled else None, version, provenance, job, next_run, enabled, last_trigger))
         return tuple(result)

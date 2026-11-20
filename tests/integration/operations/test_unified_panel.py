@@ -9,7 +9,7 @@ import pytest
 import pytest_asyncio
 
 from discordbot.operations.adapters.discord_admin import OperationsPanel
-from discordbot.operations.adapters.service_status import SERVICES, PRIMARY_SERVICE_KEYS, LEGACY_PRIMARY_SERVICE_KEYS, unknown_observations
+from discordbot.operations.adapters.service_status import SERVICES, PRIMARY_SERVICE_KEYS, unknown_observations
 from discordbot.platform.executors import BoundedExecutor
 from discordbot.platform.tasks import TaskSupervisor
 from .test_admin_panel import Status, interaction
@@ -25,9 +25,9 @@ def observations():
         values=dict(state='실행 중',health='미확인',observed_at=NOW)
         if row.key in {'bot','watch'}:
             values.update(health='통과',version=RELEASE,version_provenance='실행 health 응답')
-        if row.key=='backup':
+        if row.key in {'backup', 'update', 'manual'}:
             values.update(state='예약 대기',recent_job='최근 작업 정상 종료 · 2026-10-31T08:00:34+00:00',
-                next_run=NOW+timedelta(hours=4),version_provenance='예약 작업 · 별도 실행 버전 없음')
+                enabled=True,last_trigger=NOW-timedelta(hours=1),next_run=NOW+timedelta(hours=4),version_provenance='예약 작업 · 별도 실행 버전 없음')
         rows.append(replace(row,**values))
     return tuple(rows)
 
@@ -53,7 +53,7 @@ def fields(h):return {field.name:field.value for field in h.messages[444].embeds
 
 
 @pytest.mark.asyncio
-async def test_three_service_select_and_unsupported_actions_are_disabled_in_memory_and_payload(unified):
+async def test_service_select_and_unsupported_actions_are_disabled_in_memory_and_payload(unified):
     h=unified;assert h.panel.message_id==444
     assert h.messages[444].embeds[0].title=='🛠️ 서비스 상태 제어판'
     select=h.panel.view.children[0]
@@ -69,7 +69,7 @@ async def test_three_service_select_and_unsupported_actions_are_disabled_in_memo
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('key',LEGACY_PRIMARY_SERVICE_KEYS)
+@pytest.mark.parametrize('key',PRIMARY_SERVICE_KEYS)
 async def test_service_selection_only_updates_same_message_with_truthful_scope(unified,key):
     h=unified;click=interaction();click.data={'values':[key]}
     await h.panel.view.children[0].callback(click)
@@ -132,12 +132,12 @@ async def test_provider_failure_uses_unknown_not_previous_healthy_snapshot(unifi
 async def test_primary_version_provenance_and_missing_job_are_not_overclaimed(unified):
     h=unified
     assert '실행 health 응답' in fields(h)['실행 버전 · 출처']
-    click=interaction();click.data={'values':['supper']}
+    click=interaction();click.data={'values':['salary']}
     await h.panel.view.children[0].callback(click)
     assert fields(h)['실행 버전 · 출처']=='미제공\n실행 버전 미제공'
     assert fields(h)['최근 작업 기록']=='최근 작업 미확인 · 검증된 기록 미제공'
-    assert 'DB·예약·로그인·Access 검사는 아님' in fields(h)['검사 범위']
-    assert '다음 예약(UTC)' not in fields(h)
+    assert 'systemd 프로세스 상태' in fields(h)['검사 범위']
+    assert '다음 예약' not in fields(h)
     h.ticks[0]=61
     await h.panel._refresh_panel()
     assert fields(h)['이전 관측 버전 · 출처']=='미제공\n실행 버전 미제공'
@@ -190,3 +190,30 @@ async def test_legacy_disabled_flags_survive_handler_rebinding(positioned):
     h=positioned
     assert all(item.disabled for item in h.panel.view.children if item.custom_id!='ops:v1:refresh')
     assert all(item.disabled for group in h.messages[444].components for item in group.children if item.custom_id!='ops:v1:refresh')
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('key', ('backup', 'update', 'manual'))
+async def test_timer_selection_shows_schedule_and_worker_evidence(unified, key):
+    h = unified
+    h.panel.selected_service = key
+    await h.panel._refresh_panel()
+    evidence = fields(h)
+    assert evidence['부팅 시 자동 시작'] == '활성'
+    for label, when in [('마지막 예약 실행', NOW-timedelta(hours=1)), ('다음 예약', NOW+timedelta(hours=4))]:
+        assert f'<t:{int(when.timestamp())}:F>' in evidence[label]
+        assert f'<t:{int(when.timestamp())}:R>' in evidence[label]
+    assert '정상 종료' in evidence['최근 작업 기록']
+    h.inbox.accept_current.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_elapsed_deadline_cannot_be_presented_as_next_timer_run(unified):
+    h = unified
+    h.panel.selected_service = 'manual'
+    h.services.snapshot.return_value = tuple(
+        replace(row, next_run=NOW+timedelta(seconds=1)) if row.key == 'manual' else row
+        for row in observations())
+    h.ticks[0] = 2
+    await h.panel._refresh_panel()
+    assert '<t:' not in fields(h)['다음 예약']

@@ -114,7 +114,8 @@ class PanelStore:
         stamp = _now(published_at)
         with ExclusiveLock(self.lock).acquire():
             row = self.read()
-            if row is None or row["nonce"] != nonce or row["state"] != "publishing" or row.get("previous") == message:
+            if (row is None or row["nonce"] != nonce or row["state"] != "publishing"
+                    or message <= (row.get("previous") or 0)):
                 raise ValidationError("panel publication changed")
             # Legacy uncertain publication may be acknowledged, never re-sent.
             replacement = {**row, "version": 2, "previous": row.get("previous"),
@@ -134,6 +135,14 @@ class PanelStore:
                 raise ValidationError("panel nonce reused")
             atomic_json(self.path, replacement)
             return replacement
+
+    def restore_rejected(self, pending: dict[str, Any], previous: dict[str, Any]) -> None:
+        """Restore the known panel only after a definitive Discord send rejection."""
+        with ExclusiveLock(self.lock).acquire():
+            if (self.read() != pending or pending['state'] != 'publishing'
+                    or previous['state'] != 'published' or pending['previous'] != previous['message']):
+                raise ValidationError("rejected panel publication changed")
+            atomic_json(self.path, previous)
 
     def retired(self, previous: int) -> dict[str, Any]:
         """Acknowledge only a matching predecessor's confirmed safe edit/missing proof."""

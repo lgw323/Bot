@@ -161,6 +161,9 @@ class OperationsPanel:
         self.startup_cleanup_complete = True
         self.publish_lock = asyncio.Lock()
         self.bump_task = None
+        self.refresh_timer: asyncio.TimerHandle | None = None
+        self.latest_notice_id = 0
+        self.follow_retries = 0
         self.notice_first: float | None = None
         self.notice_last = self.next_bump = 0.0
         self.notice_revision = self.bumped_revision = 0
@@ -171,10 +174,12 @@ class OperationsPanel:
         self._link_cache = None
         self._link_retry_after = 0.0
 
-    def notice_delivered(self) -> None:
-        """Coalesce real alerts into a same-message status refresh, never repost."""
-        if self.closed:
+    def notice_delivered(self, message_id: int) -> None:
+        """Follow a confirmed alert once after a burst, ordered by Discord snowflake."""
+        if self.closed or type(message_id) is not int or not self.latest_notice_id < message_id < 2**63:
             return
+        self.latest_notice_id = message_id
+        self.follow_retries = 0
         now = self.clock.monotonic()
         self.notice_revision += 1
         self.notice_first = now if self.notice_first is None else self.notice_first
@@ -215,14 +220,18 @@ class OperationsPanel:
             self.next_bump = self.clock.monotonic() + 60
             self.notice_first = None
             try:
-                await self._refresh_panel()
+                await self._refresh_panel(after_notice=self.latest_notice_id)
             except asyncio.CancelledError:
                 raise
             except Exception as error:
                 self._rate_backoff(error)
                 self.failures += 1
+                if self.follow_retries == 0 and self.notice_revision == revision:
+                    self.follow_retries += 1
+                    self.notice_first = self.clock.monotonic()
+                    return  # The completion callback schedules one spaced retry.
             self.bumped_revision = revision
-            return  # A later confirmed alert can request another bounded refresh.
+            return
 
     async def _snapshot(self):
         if self.services is None:
@@ -237,22 +246,6 @@ class OperationsPanel:
         except Exception:
             self.service_failures += 1
             snapshot = {'observations': unknown_observations(), 'provider_failed': True}
-        if self._primary_service() == 'mymoney':
-            snapshot['money_mode'] = 'unconfigured' if self.money_status is None else 'unavailable'
-            if self.money_status is not None:
-                from discordbot.operations.adapters.money_status import parse_projection
-                try:
-                    async with asyncio.timeout(2):
-                        raw = await self.money_status.snapshot()
-                    if raw is None:
-                        snapshot['money_mode'] = 'unconfigured'
-                    else:
-                        snapshot['money'] = parse_projection(raw,self.clock.now())
-                        snapshot['money_mode'] = 'current'
-                except asyncio.CancelledError:
-                    raise
-                except Exception:
-                    self.service_failures += 1
         return snapshot
 
     def _primary_service(self) -> str:
@@ -262,10 +255,9 @@ class OperationsPanel:
         return self.selected_service
 
     def _service_embed(self, snapshot):
-        if self._primary_service() == 'mymoney':
-            return self._money_embed(snapshot)
         import discord
         from discordbot.operations.adapters.notice_cards import display_release
+        from discordbot.operations.adapters.service_status import TIMERS
         rows = {row.key: row for row in snapshot['observations']}
         selected = rows[self._primary_service()]
         try:
@@ -280,7 +272,7 @@ class OperationsPanel:
             fresh = age is not None and 0 <= age <= 60 and not snapshot['provider_failed']
             freshness = ('관측 시각 미확인 · 현재 상태 미확인' if age is None else
                          '미래 관측 시각 · 현재 상태 미확인' if age < 0 else
-                         f'{int(age)}초 전 · 최근 관측' if fresh else f'{int(age)}초 전 · 오래된 관측, 현재 상태 미확인')
+                         f'<t:{int(row.observed_at.timestamp())}:R> · 최근 관측' if fresh else f'{int(age)}초 전 · 오래된 관측, 현재 상태 미확인')
             return {'fresh': fresh, 'freshness': freshness,
                     'state': row.state if fresh else '현재 미확인 · 이전 관측: ' + row.state,
                     'health': row.health if fresh else '현재 미확인 · 이전 관측: ' + row.health,
@@ -305,6 +297,13 @@ class OperationsPanel:
         version_label = '실행 버전 · 출처' if primary['fresh'] else '이전 관측 버전 · 출처'
         embed.add_field(name=version_label, value=primary['version'] + '\n' + selected.version_provenance, inline=False)
         embed.add_field(name='최근 작업 기록', value=selected.recent_job, inline=False)
+        if selected.key in TIMERS:
+            enabled = {True: '활성', False: '비활성', None: '미확인'}[selected.enabled] if primary['fresh'] else '미확인'
+            embed.add_field(name='부팅 시 자동 시작', value=enabled, inline=True)
+            for label, stamp in (('마지막 예약 실행', selected.last_trigger), ('다음 예약', selected.next_run)):
+                usable = primary['fresh'] and stamp is not None and (stamp >= now if label == '다음 예약' else stamp <= now)
+                when = f'<t:{int(stamp.timestamp())}:F> (<t:{int(stamp.timestamp())}:R>)' if usable else '미확인'
+                embed.add_field(name=label, value=when, inline=True)
         if component is not None:
             embed.add_field(name='Watch · Bot 구성 요소', value=(
                 f'프로세스: {component["state"]}\n검사: {component["health"]}\n'
@@ -312,36 +311,6 @@ class OperationsPanel:
                 f'표시 시점의 관측 최신성: {component["freshness"]}\n'
                 f'버전 · 출처: {component["version"]} · {watch.version_provenance}'), inline=False)
         embed.set_footer(text='읽기 전용 · 표시 시점의 관측 · Bot 중단 시 갱신 불가 · 선택은 공유 표시만 변경 · 실행 비활성화')
-        return embed
-
-    def _money_embed(self, snapshot):
-        import discord
-        from discordbot.operations.adapters.money_status import BACKUP, HEALTH, PROCESS, SCHEMA, SCOPE, current_projection
-        value = snapshot.get('money')
-        try:
-            value = current_projection(value,self.clock.now())
-            fresh = value is not None
-        except Exception:
-            fresh = False
-        mode = snapshot.get('money_mode','unconfigured')
-        description = ('선택한 서비스: My Money\n상태 자료 미구성·미확인 · 설치 여부와 현재 상태 미확인' if mode == 'unconfigured'
-            else '선택한 서비스: My Money\n상태 자료 미확인 · 접근 실패·누락·만료 여부를 확인해 주세요.')
-        color = 0x95A5A6
-        if fresh:
-            description = f'선택한 서비스: My Money\n프로세스 투영: {PROCESS[value.process]}\n검사 투영: {HEALTH[value.health]}'
-            color = 0xFF0000 if value.process == 'failed' or value.health == 'fail' or value.schema == 'incompatible' or value.backup == 'fail' else 0x3498DB if value.process == 'running' and value.health == 'pass' else 0x95A5A6
-        embed = discord.Embed(title='🛠️ 서비스 상태 제어판',description=description,color=color)
-        embed.add_field(name='검사 범위',value=SCOPE,inline=False)
-        stamp = value.observed_at.strftime('%Y-%m-%d %H:%M:%S UTC') if fresh else '미제공'
-        embed.add_field(name='관측 시각(UTC)',value=stamp,inline=False)
-        embed.add_field(name='표시 시점의 관측 최신성',value='최근 180초 이내 상태 투영 · 런타임 직접 검증 아님' if fresh else '현재 상태 미확인',inline=False)
-        embed.add_field(name='스키마 상태 투영',value=SCHEMA[value.schema] if fresh else '미확인',inline=False)
-        artifact = value.artifact_sha256 if fresh else None
-        embed.add_field(name='패키지 식별 · 근거',value=(artifact+'\n상태 투영의 SHA256 · Git 커밋·실행 버전 직접 검증 아님') if artifact else '미확인 · 검증된 패키지 식별자 미제공',inline=False)
-        backup = BACKUP[value.backup] if fresh else '미확인'
-        backup_stamp = value.backup_verified_at.strftime('%Y-%m-%d %H:%M:%S UTC') if fresh and value.backup_verified_at else '미제공'
-        embed.add_field(name='백업 상태 투영 · 마지막 검증(UTC)',value=backup+'\n'+backup_stamp+'\n복원 직접 검증 아님',inline=False)
-        embed.set_footer(text='읽기 전용 · 표시 시점의 투영 · Bot 중단 시 갱신 불가 · 선택은 공유 표시만 변경 · 실행 비활성화')
         return embed
 
     def _generation_embed(self, snapshot, row):
@@ -400,15 +369,14 @@ class OperationsPanel:
             and ids == {'ops:v1:refresh', 'ops:v1:update', 'ops:v1:restart'})
         unified = False
         if self.services is not None and embeds[0].title == '🛠️ 서비스 상태 제어판' and len(children) == 5:
-            from discordbot.operations.adapters.service_status import SERVICES, PRIMARY_SERVICE_KEYS, LEGACY_PRIMARY_SERVICE_KEYS
+            from discordbot.operations.adapters.service_status import PRIMARY_SERVICE_KEYS, LEGACY_MENUS
             selectors = [child for child in children if getattr(child, 'custom_id', None) == 'ops:v2:service']
             buttons = [child for child in children if getattr(child, 'custom_id', None) != 'ops:v2:service']
             options = getattr(selectors[0], 'options', ()) if len(selectors) == 1 else ()
             values = tuple(getattr(option, 'value', None) for option in options) if type(options) in (list, tuple) else ()
-            menu_known = (all(type(value) is str for value in values) and
-                          (len(values) == len(PRIMARY_SERVICE_KEYS) and set(values) == set(PRIMARY_SERVICE_KEYS)
-                            or len(values) == len(LEGACY_PRIMARY_SERVICE_KEYS) and set(values) == set(LEGACY_PRIMARY_SERVICE_KEYS)
-                            or len(values) == len(SERVICES) and set(values) == {spec.key for spec in SERVICES}))
+            menu_known = (all(type(value) is str for value in values)
+                          and any(len(values) == len(menu) and set(values) == set(menu)
+                                  for menu in (PRIMARY_SERVICE_KEYS, *LEGACY_MENUS)))
             unified = (ids == {'ops:v2:service', 'ops:v2:refresh', 'ops:v2:restart', 'ops:v2:update', 'ops:v2:backup'}
                 and len(selectors) == 1 and getattr(selectors[0], 'type', None) == discord.ComponentType.select
                 and menu_known
@@ -443,7 +411,7 @@ class OperationsPanel:
     async def _same_marker(self, expected):
         current = await self.executor.run(self.store.read)
         self._require_live_owner()
-        if current is None or any(current.get(key) != expected.get(key) for key in ('version', 'channel', 'state', 'message', 'nonce')):
+        if current is None or any(current.get(key) != expected.get(key) for key in ('version', 'channel', 'state', 'message', 'nonce', 'previous')):
             self._select_message(None)
             raise ValidationError('current panel marker changed')
         return current
@@ -520,9 +488,40 @@ class OperationsPanel:
         self.reconciled += 1
         return current
 
-    async def _refresh_panel(self) -> None:
+    async def _refresh_panel(self, *, after_notice: int = 0) -> None:
         async with self.publish_lock, asyncio.timeout(20):
-            await self._publish_locked(create_initial=False)
+            await self._publish_locked(create_initial=False, after_notice=after_notice)
+
+    def _schedule_periodic(self) -> None:
+        if not self.closed and self.refresh_timer is None:
+            self.refresh_timer = asyncio.get_running_loop().call_later(60, self._periodic_due)
+
+    def _periodic_due(self) -> None:
+        self.refresh_timer = None
+        if self.closed:
+            return
+        if self.clock.monotonic() < self._link_retry_after:
+            self._schedule_periodic()
+            return
+
+        async def refresh():
+            try:
+                await self._refresh_panel()
+            except Exception as error:
+                self._rate_backoff(error)
+                self.failures += 1
+            finally:
+                self._schedule_periodic()
+        try:
+            task = self.supervisor.start(TaskSpec("operations-panel", "operations", "periodic-refresh",
+                uuid4().hex, 25, cancellation_behavior=CancellationBehavior.CANCEL_ON_SHUTDOWN,
+                emit_routine_events=False), refresh)
+        except AppError:
+            self.failures += 1
+            self._schedule_periodic()
+            return
+        self.tasks.add(task)
+        task.add_done_callback(self.tasks.discard)
 
     async def _discover_unstored(self, channel):
         """No missing-state duplicate: prove a bounded history is exhausted."""
@@ -634,6 +633,8 @@ class OperationsPanel:
             await self._work("publish", self._publish)
         except Exception:
             self.failures += 1
+        finally:
+            self._schedule_periodic()
 
     def _require_live_owner(self) -> None:
         task = asyncio.current_task()
@@ -644,7 +645,7 @@ class OperationsPanel:
         async with self.publish_lock:
             await self._publish_locked(create_initial=True)
 
-    async def _publish_locked(self, *, create_initial: bool, snapshot=None) -> None:
+    async def _publish_locked(self, *, create_initial: bool, snapshot=None, after_notice: int = 0) -> None:
         import discord
         self._require_live_owner()
         channel = await self._channel(sending=True)
@@ -672,31 +673,57 @@ class OperationsPanel:
                 self._require_live_owner()
                 await self._same_marker(row)
                 self._set_controls(snapshot)
-                await message.edit(embed=self._generation_embed(snapshot, row), view=self.view,
-                                   allowed_mentions=discord.AllowedMentions.none())
-                self._require_live_owner()
-                if not full:
-                    message, _ = await self._fetched_panel(channel, row)  # Verify legacy footer upgrade.
+                if after_notice > message.id:
+                    if row.get('previous') is not None:
+                        row = await self._retire_previous(channel, row)
+                    # All checks and sampling precede the durable send claim.
+                    previous = row
+                    row = await self.executor.run_retained(self.store.rotate, previous)
+                    self._require_live_owner()
+                    self._select_message(None)
+                    self._set_controls(snapshot)
+                    created = True
                 else:
-                    await self._same_marker(row)
-                self._select_message(message.id, row['nonce'], channel.guild.id)
-                self._set_controls(snapshot)
-                self._invalidate_link()
-                self.refreshes += 1
-                return
+                    await message.edit(embed=self._generation_embed(snapshot, row), view=self.view,
+                                       allowed_mentions=discord.AllowedMentions.none())
+                    self._require_live_owner()
+                    if not full:
+                        message, _ = await self._fetched_panel(channel, row)  # Verify legacy footer upgrade.
+                    else:
+                        await self._same_marker(row)
+                    self._select_message(message.id, row['nonce'], channel.guild.id)
+                    self._set_controls(snapshot)
+                    self._invalidate_link()
+                    self.refreshes += 1
+                    if row.get('previous') is not None:
+                        await self._retire_previous(channel, row)
+                    return
         if not created:
             if row['version'] == 2:
-                await self._reconcile(channel, row)
+                current = await self._reconcile(channel, row)
+                if current is not None and current.get('previous') is not None:
+                    await self._retire_previous(channel, current)
             else:
                 self.uncertain_publications += 1
             return  # An uncertain send is never replayed blindly.
         snapshot = await self._snapshot() if snapshot is None else snapshot
         self._require_live_owner()
         self._set_controls(snapshot)
-        message = await channel.send(embed=self._generation_embed(snapshot, row), view=self.view,
-            allowed_mentions=discord.AllowedMentions.none(), nonce=row['nonce'])
+        try:
+            message = await channel.send(embed=self._generation_embed(snapshot, row), view=self.view,
+                allowed_mentions=discord.AllowedMentions.none(), nonce=row['nonce'])
+        except (discord.RateLimited, discord.HTTPException) as error:
+            if row.get('previous') is not None and (isinstance(error, discord.RateLimited)
+                    or error.status in (400, 401, 403, 404, 429)):
+                # Discord rejected the send. A timeout or 5xx must reconcile by nonce.
+                await self.executor.run_retained(self.store.restore_rejected, row, previous)
+                self._require_live_owner()
+                self._select_message(previous['message'], previous['nonce'], channel.guild.id)
+                self._set_controls(snapshot)
+            raise
         self._require_live_owner()
-        if not self._own_panel(message, generation=row['nonce'], guild_id=channel.guild.id) or type(getattr(message, 'id', None)) is not int or not 0 < message.id < 2**63:
+        if (not self._own_panel(message, generation=row['nonce'], guild_id=channel.guild.id) or
+                type(getattr(message, 'id', None)) is not int or not (row.get('previous') or 0) < message.id < 2**63):
             self.uncertain_publications += 1
             raise ValidationError('sent panel identity unconfirmed')
         await self.executor.run_retained(self.store.published, row['nonce'], message.id)
@@ -706,6 +733,39 @@ class OperationsPanel:
             raise ValidationError('published panel marker changed')
         self._select_message(message.id, row['nonce'], channel.guild.id)
         self._set_controls(snapshot)
+        if current.get('previous') is not None:
+            self.moves += 1
+            await self._retire_previous(channel, current)
+
+    async def _retire_previous(self, channel, row):
+        import discord
+        previous = row['previous']
+        link = f"https://discord.com/channels/{channel.guild.id}/{self.channel}/{row['message']}"
+        redirect = f"최신 제어판은 <#{self.channel}> 맨 아래에 있습니다. [다음 제어판 열기]({link})"
+        try:
+            try:
+                message = await channel.fetch_message(previous)
+            except discord.NotFound as error:
+                if error.code != 10008:
+                    raise
+            else:
+                await self._same_marker(row)
+                if (message.id != previous or message.author.id != self.bot.user.id or
+                        message.channel.id != self.channel or message.guild.id != channel.guild.id):
+                    raise ValidationError("previous panel identity unconfirmed")
+                embeds = message.embeds
+                already_retired = (len(embeds) == 1 and embeds[0].title == "이전 제어판"
+                                   and embeds[0].description == redirect and not message.components)
+                if not already_retired:
+                    if not self._own_panel(message, guild_id=channel.guild.id):
+                        raise ValidationError("previous panel ownership unconfirmed")
+                    await message.edit(embed=discord.Embed(title="이전 제어판", description=redirect),
+                        view=None, allowed_mentions=discord.AllowedMentions.none())
+            await self._same_marker(row)
+            return await self.executor.run_retained(self.store.retired, previous)
+        except Exception:
+            self.retirement_failures += 1
+            raise
 
     def _authorized(self, interaction: Any, *, confirmation: bool = False) -> bool:
         user = getattr(getattr(interaction, "user", None), "id", None)
@@ -895,6 +955,9 @@ class OperationsPanel:
 
     async def stop(self) -> None:
         self.closed = True
+        if self.refresh_timer is not None:
+            self.refresh_timer.cancel()
+            self.refresh_timer = None
         self._invalidate_link()
         self.message_id = self._bound_generation = self._bound_guild = None
         self.bot.remove_listener(self.ready, "on_ready")

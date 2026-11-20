@@ -13,7 +13,8 @@ from .test_admin_panel import interaction
 from .test_unified_panel import NOW, RELEASE, observations, unified
 
 
-REMOVED = ('watch', 'cloudflared', 'backup')
+REMOVED = ('supper', 'forme', 'mymoney')
+EXPECTED_KEYS = ('bot', 'watch', 'salary', 'astral', 'study', 'cloudflared', 'backup', 'update', 'manual')
 WATCH_RELEASE = 'r-' + 'c' * 16 + '-' + 'd' * 16
 WATCH_FIELD = 'Watch · Bot 구성 요소'
 
@@ -38,12 +39,12 @@ def options(h, keys):
 
 
 @pytest.mark.asyncio
-async def test_primary_choices_do_not_change_six_collector_contract(unified):
+async def test_selector_matches_the_nine_collected_services_and_timers(unified):
     h = unified
-    assert PRIMARY_SERVICE_KEYS == ('bot', 'supper', 'forme', 'mymoney')
-    assert tuple(spec.key for spec in SERVICES) == ('bot', 'watch', 'supper', 'forme', 'cloudflared', 'backup')
+    assert PRIMARY_SERVICE_KEYS == EXPECTED_KEYS
+    assert tuple(spec.key for spec in SERVICES) == EXPECTED_KEYS
     assert tuple(option.value for option in h.panel.view.children[0].options) == PRIMARY_SERVICE_KEYS
-    assert len(h.services.snapshot.return_value) == 6
+    assert len(h.services.snapshot.return_value) == len(EXPECTED_KEYS)
     assert WATCH_FIELD in fields(h)
     assert {child.custom_id: child.disabled for child in h.panel.view.children[1:]} == {
         'ops:v2:refresh': False, 'ops:v2:restart': True,
@@ -53,7 +54,7 @@ async def test_primary_choices_do_not_change_six_collector_contract(unified):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('key', ('bot', 'supper', 'forme'))
+@pytest.mark.parametrize('key', EXPECTED_KEYS)
 async def test_primary_selection_keeps_same_panel_and_only_bot_nests_watch(unified, key):
     h = unified
     marker = h.panel.store.read()
@@ -106,10 +107,15 @@ async def test_removed_and_unknown_forged_selections_are_rejected_without_echo(u
 
 
 @pytest.mark.asyncio
-async def test_legacy_six_option_published_panel_upgrades_same_id_nonce_and_survives_restart(unified):
+@pytest.mark.parametrize('old_keys', [
+    ('bot', 'supper', 'forme'),
+    ('bot', 'supper', 'forme', 'mymoney'),
+    ('bot', 'watch', 'supper', 'forme', 'cloudflared', 'backup'),
+])
+async def test_legacy_published_panel_upgrades_same_id_nonce_and_survives_restart(unified, old_keys):
     h = unified
     marker = h.panel.store.read()
-    options(h, [spec.key for spec in SERVICES])
+    options(h, old_keys)
     assert h.panel._own_panel(h.messages[444], generation=marker['nonce'], guild_id=71)
     await h.panel.stop()
     restarted = OperationsPanel(h.bot, master=1, channel=42, state=h.panel.store.state,
@@ -176,7 +182,7 @@ async def test_watch_failure_is_red_without_rewriting_healthy_bot_evidence(unifi
     watch = fields(h)[WATCH_FIELD]
     assert '실패' in watch and '미통과' in watch
     assert next(spec.health_scope for spec in SERVICES if spec.key == 'watch') in watch
-    assert '2026-10-31 11:59:55 UTC' in watch and '5초 전' in watch
+    assert '2026-10-31 11:59:55 UTC' in watch and f'<t:{int((NOW-timedelta(seconds=5)).timestamp())}:R>' in watch
     assert 'cccccccc' in watch and 'dddddddd' in watch and '실행 health 응답' in watch
     assert 'aaaaaaaa' not in watch
     assert 'aaaaaaaa' in fields(h)['실행 버전 · 출처']
@@ -241,7 +247,7 @@ async def test_primary_select_checks_authority_before_provider_or_message_edit(u
     h = unified
     count = h.services.snapshot.await_count
     click = interaction(user=user, channel=channel, message=message)
-    click.data = {'values': ['forme']}
+    click.data = {'values': ['astral']}
     await h.panel.view.children[0].callback(click)
     assert h.panel.selected_service == 'bot' and h.services.snapshot.await_count == count
     h.messages[444].edit.assert_not_called()
@@ -270,7 +276,7 @@ async def test_changed_generation_denies_old_primary_callback_without_new_messag
     h = unified
     h.panel.store.rotate(h.panel.store.read())  # Temporary local store only; no send.
     click = interaction()
-    click.data = {'values': ['supper']}
+    click.data = {'values': ['salary']}
     await h.panel.view.children[0].callback(click)
     assert h.panel.selected_service == 'bot' and h.panel.message_id is None
     assert h.channel.send.await_count == 1
@@ -279,7 +285,7 @@ async def test_changed_generation_denies_old_primary_callback_without_new_messag
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('key', ('bot', 'supper', 'forme'))
+@pytest.mark.parametrize('key', EXPECTED_KEYS)
 async def test_primary_panel_stays_inside_discord_limits_without_mentions_or_operation_views(unified, key):
     h = unified
     h.panel.selected_service = key

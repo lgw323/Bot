@@ -24,10 +24,17 @@ class Executor:
 def units():
     result = {s.unit: dict(Id=s.unit, LoadState='loaded', ActiveState='active', SubState='running')
               for s in module.SERVICES}
-    result[module.TIMER] = dict(Id=module.TIMER, LoadState='loaded', ActiveState='active', SubState='waiting',
-                               NextElapseUSecRealtime='Sat 2026-10-31 12:00:00 UTC')
-    result['discordbot-backup.service'].update(ActiveState='inactive', SubState='dead', Result='success',
-        ExecMainStatus='0', ExecMainExitTimestamp='Sat 2026-10-31 08:00:34.293840 UTC')
+    for key in ('backup', 'update', 'manual'):
+        timer = f'discordbot-{key}.timer'
+        worker = f'discordbot-{key}.service'
+        result[timer] = dict(Id=timer, LoadState='loaded', ActiveState='active', SubState='waiting',
+                             UnitFileState='enabled', LastTriggerUSec='Sat 2026-10-31 08:00:00 UTC',
+                             NextElapseUSecRealtime='Sat 2026-10-31 12:00:00 UTC')
+        result[worker].update(ActiveState='inactive', SubState='dead', Result='success',
+            ExecMainStatus='0', ExecMainExitTimestamp='Sat 2026-10-31 08:00:34.293840 UTC')
+    result['discordbot-manual.service'].update(Result='exec-condition')
+    result['discordbot-manual.timer']['NextElapseUSecRealtime'] = ''
+    result['discordbot-manual.timer']['next_epoch_us'] = str(int((NOW+timedelta(seconds=45)).timestamp())*1_000_000)
     return result
 
 
@@ -36,27 +43,33 @@ def provider(monkeypatch):
     rows = units()
     monkeypatch.setattr(module, '_query_units', lambda: rows)
     async def health(port, path):
-        if port in (9010, 9011):
-            return 200, dict(ready=True, service='discord-bot' if port == 9010 else 'watch-web', release=RELEASE)
-        return 200, {'status': 'ok'}
+        assert port in (9010, 9011) and path == '/health/ready'
+        return 200, dict(ready=True, service='discord-bot' if port == 9010 else 'watch-web', release=RELEASE)
     monkeypatch.setattr(module, '_health', health)
     return module.ReadOnlyServiceStatus(Executor(), now=lambda: NOW), rows
 
 
 @pytest.mark.asyncio
-async def test_six_independent_scopes_versions_and_backup_evidence(provider):
+async def test_current_inventory_distinguishes_runtime_readiness_process_and_timer_evidence(provider):
     status, _ = provider
-    rows = await status.snapshot()
-    assert module.validate_observations(rows) == rows
-    assert [r.key for r in rows] == ['bot', 'watch', 'supper', 'forme', 'cloudflared', 'backup']
-    assert all(r.observed_at == NOW for r in rows)
-    assert rows[0].version == rows[1].version == RELEASE
-    assert all(r.version is None for r in rows[2:])
-    assert '정적 HTTP' in rows[2].health_scope and '정적 HTTP' in rows[3].health_scope
-    assert rows[4].health == '미확인' and '공개 경로' in rows[4].health_scope
-    assert rows[5].state == '예약 대기' and '정상 종료' in rows[5].recent_job
-    assert '복원 무결성 증명은 별도' in rows[5].health_scope
-    assert rows[5].next_run == NOW.replace(hour=12, minute=0)
+    snapshot = await status.snapshot()
+    assert module.validate_observations(snapshot) == snapshot
+    rows = {row.key: row for row in snapshot}
+    assert tuple(rows) == ('bot', 'watch', 'salary', 'astral', 'study', 'cloudflared', 'backup', 'update', 'manual')
+    assert all(row.observed_at == NOW for row in snapshot)
+    assert rows['bot'].version == rows['watch'].version == RELEASE
+    for key in ('salary', 'astral', 'study', 'cloudflared'):
+        assert rows[key].state == '실행 중' and rows[key].health == '미확인' and rows[key].version is None
+        assert 'systemd' in rows[key].health_scope
+    for key in ('backup', 'update', 'manual'):
+        assert rows[key].state == '예약 대기' and rows[key].enabled is True
+        assert rows[key].last_trigger == NOW.replace(hour=8, minute=0)
+        assert rows[key].version is None
+    assert '복원 무결성 증명은 별도' in rows['backup'].health_scope
+    assert '정상 종료' in rows['backup'].recent_job and '정상 종료' in rows['update'].recent_job
+    assert rows['backup'].next_run == rows['update'].next_run == NOW.replace(hour=12, minute=0)
+    assert rows['manual'].next_run == NOW+timedelta(seconds=45)
+    assert rows['manual'].recent_job == '처리할 요청 없음'
 
 
 @pytest.mark.parametrize('state,sub,expected', [('failed', 'failed', '실패'), ('inactive', 'dead', '실행 중 아님'),
@@ -64,10 +77,10 @@ async def test_six_independent_scopes_versions_and_backup_evidence(provider):
 @pytest.mark.asyncio
 async def test_process_state_does_not_promote_http_probe_to_process_health(provider, state, sub, expected):
     status, rows = provider
-    rows['supper.service'].update(ActiveState=state, SubState=sub)
+    rows['salary-meter.service'].update(ActiveState=state, SubState=sub)
     result = (await status.snapshot())[2]
     assert result.state == expected
-    assert result.health == '통과'  # independent HTTP evidence, not overall green
+    assert result.health == '미확인'  # Salary Meter has no readiness endpoint in this collector.
 
 
 @pytest.mark.parametrize('error', [PermissionError('secret'), subprocess.TimeoutExpired('secret', 2),
@@ -105,8 +118,7 @@ async def test_http_timeout_gives_unknown_and_uses_fixed_loopback_paths(provider
     health = AsyncMock(side_effect=TimeoutError('secret query'))
     monkeypatch.setattr(module, '_health', health)
     rows = await status.snapshot()
-    assert [c.args for c in health.call_args_list] == [(9010, '/health/ready'), (9011, '/health/ready'),
-                                                     (5080, '/api/health'), (5090, '/api/v1/health')]
+    assert [c.args for c in health.call_args_list] == [(9010, '/health/ready'), (9011, '/health/ready')]
     assert all(r.health == '미확인' for r in rows)
     assert 'secret' not in repr(rows)
 
@@ -129,43 +141,57 @@ def test_no_user_supplied_url_or_invalid_port(port):
 
 
 def test_systemd_command_is_readonly_fixed_allowlist_no_auth_or_environment(monkeypatch):
-    run = Mock(return_value=SimpleNamespace(returncode=0, stdout='Id=forme.service\nLoadState=loaded\n'))
+    wall_us = int(NOW.timestamp())*1_000_000
+    output = 'Id=study-static.service\nLoadState=loaded\n\nId=discordbot-manual.timer\nLoadState=loaded\n'
+    run = Mock(side_effect=[SimpleNamespace(returncode=0, stdout=output),
+                            SimpleNamespace(returncode=0, stdout=json.dumps([
+                                {'unit': 'discordbot-manual.timer', 'next': wall_us}]))])
     monkeypatch.setattr(module.subprocess, 'run', run)
-    assert module._query_units()['forme.service']['LoadState'] == 'loaded'
-    args, kwargs = run.call_args
-    assert args[0] == ['/usr/bin/systemctl', 'show', *module.UNITS,
-                       '--property=' + ','.join(module.PROPERTIES), '--no-pager']
-    assert kwargs['timeout'] == 2 and kwargs['stdin'] is subprocess.DEVNULL
-    assert set(kwargs['env']) == {'PATH', 'LC_ALL', 'TZ'}
-    assert kwargs.get('shell', False) is False
+    rows = module._query_units()
+    assert rows['study-static.service']['LoadState'] == 'loaded'
+    assert rows['discordbot-manual.timer']['next_epoch_us'] == str(wall_us)
+    show, timers = run.call_args_list
+    assert show.args[0] == ['/usr/bin/systemctl', 'show', *module.UNITS,
+                            '--property=' + ','.join(module.PROPERTIES), '--no-pager']
+    assert timers.args[0] == ['/usr/bin/systemctl', 'list-timers', '--all', '--no-pager',
+                              '--output=json', 'discordbot-backup.timer', 'discordbot-update.timer', 'discordbot-manual.timer']
+    for call in (show, timers):
+        assert call.kwargs['timeout'] == 2 and call.kwargs['stdin'] is subprocess.DEVNULL
+        assert set(call.kwargs['env']) == {'PATH', 'LC_ALL', 'TZ'}
+        assert not call.kwargs.get('shell', False)
     assert not any(p in module.PROPERTIES for p in ('Environment', 'ExecStart', 'User', 'Description'))
 
 
-@pytest.mark.parametrize('text', ['', 'Id=forme.service\nId=forme.service', 'Id=ssh.service\nLoadState=loaded',
-    'Id=forme.service\nEnvironment=TOKEN=secret', 'Id=forme.service\n\nId=forme.service', 'x' * 16385])
+@pytest.mark.parametrize('text', ['', 'Id=study-static.service\nId=study-static.service', 'Id=ssh.service\nLoadState=loaded',
+    'Id=study-static.service\nEnvironment=TOKEN=secret', 'Id=study-static.service\n\nId=study-static.service', 'x' * 16385])
 def test_unexpected_or_ambiguous_systemctl_output_is_discarded(text):
     assert module._unit_rows(text) == {}
 
 
 @pytest.mark.asyncio
 async def test_backup_exit_not_a_restore_proof_missing_future_bad_timestamp(provider):
-    status, rows = provider
-    rows['discordbot-backup.service'].update(Result='exit-code', ExecMainStatus='1')
-    assert '실패 종료' in (await status.snapshot())[-1].recent_job
-    rows['discordbot-backup.service']['ExecMainExitTimestamp'] = 'Sat 2099-01-01 00:00:00 UTC'
-    rows[module.TIMER]['NextElapseUSecRealtime'] = 'Fri 2026-10-30 12:00:00 UTC'
-    result = (await status.snapshot())[-1]
-    assert result.recent_job == module.NO_JOB and result.next_run is None
+    status, units = provider
+    worker = units['discordbot-backup.service']
+    worker.update(Result='exit-code', ExecMainStatus='1')
+    row = next(row for row in await status.snapshot() if row.key == 'backup')
+    assert '실패 종료' in row.recent_job
+    worker['ExecMainExitTimestamp'] = 'Sat 2099-01-01 00:00:00 UTC'
+    units['discordbot-backup.timer']['NextElapseUSecRealtime'] = 'Fri 2026-10-30 12:00:00 UTC'
+    row = next(row for row in await status.snapshot() if row.key == 'backup')
+    assert row.recent_job == module.NO_JOB and row.next_run is None
 
 
 @pytest.mark.asyncio
-async def test_inactive_or_unloaded_timer_does_not_advertise_next_run(provider):
-    status, rows = provider
-    rows[module.TIMER]['ActiveState'] = 'inactive'
-    assert (await status.snapshot())[-1].next_run is None
-    assert (await status.snapshot())[-1].state == '실행 중 아님'
-    rows['discordbot-backup.service']['LoadState'] = 'not-found'
-    assert (await status.snapshot())[-1].recent_job == module.NO_JOB
+@pytest.mark.parametrize('key', ('backup', 'update', 'manual'))
+async def test_inactive_timer_does_not_advertise_next_run_or_unobserved_result(provider, key):
+    status, units = provider
+    units[f'discordbot-{key}.timer'].update(ActiveState='inactive', UnitFileState='disabled',
+                                           LastTriggerUSec='Sat 2099-01-01 00:00:00 UTC')
+    units[f'discordbot-{key}.service']['LoadState'] = 'not-found'
+    row = next(row for row in await status.snapshot() if row.key == key)
+    assert row.state == '실행 중 아님' and row.enabled is False
+    assert row.next_run is None and row.last_trigger is None
+    assert row.recent_job == module.NO_JOB
 
 
 @pytest.mark.parametrize('field,value', [('health_scope', 'secret user message'), ('label', '@everyone'),
@@ -210,14 +236,14 @@ def transport(monkeypatch, body, status=200, *, trickle=False):
 @pytest.mark.asyncio
 async def test_http_transport_no_proxy_or_redirect_and_bounded_json(monkeypatch):
     factory, session, get, response = transport(monkeypatch, b'{"status":"ok"}')
-    assert await module._health(5080, '/api/health') == (200, {'status': 'ok'})
+    assert await module._health(9010, '/health/ready') == (200, {'status': 'ok'})
     assert factory.call_args.kwargs['trust_env'] is False
     assert factory.call_args.kwargs['timeout'].total == 0.6
-    assert get.call_args.args == ('http://127.0.0.1:5080/api/health',)
+    assert get.call_args.args == ('http://127.0.0.1:9010/health/ready',)
     assert get.call_args.kwargs['allow_redirects'] is False
     assert session.closed and response.closed
     transport(monkeypatch, b'not followed', status=302)
-    assert await module._health(5080, '/api/health') == (302, {})
+    assert await module._health(9010, '/health/ready') == (302, {})
 
 
 @pytest.mark.parametrize('body', [b'x' * 2049, b'{"ready":true,"ready":false}', b'[]', b'not json'])
@@ -225,7 +251,7 @@ async def test_http_transport_no_proxy_or_redirect_and_bounded_json(monkeypatch)
 async def test_http_invalid_duplicate_and_oversize_data_not_a_valid_contract(monkeypatch, body):
     _, session, _, response = transport(monkeypatch, body)
     try:
-        assert await module._health(5080, '/api/health') == (200, {})
+        assert await module._health(9010, '/health/ready') == (200, {})
     except ValueError:
         pass  # caller maps JSON errors to unknown, never exports raw content
     assert session.closed and response.closed
@@ -236,6 +262,6 @@ async def test_trickling_http_response_has_total_deadline_not_idle_timeout(monke
     _, session, _, response = transport(monkeypatch, b'', trickle=True)
     start = asyncio.get_running_loop().time()
     with pytest.raises(TimeoutError):
-        await module._health(5080, '/api/health')
+        await module._health(9010, '/health/ready')
     assert asyncio.get_running_loop().time() - start < 1.5
     assert session.closed and response.closed

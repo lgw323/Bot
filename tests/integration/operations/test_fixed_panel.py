@@ -109,14 +109,15 @@ async def test_missing_state_unknown_or_ambiguous_history_never_reposts(position
 
 
 @pytest.mark.asyncio
-async def test_uncertain_v2_reconciles_existing_exact_generation_without_old_edits(positioned):
+async def test_uncertain_v2_reconciles_exact_generation_and_retires_its_predecessor(positioned):
     h=positioned;old=h.messages[444]
     pending=h.panel.store.rotate(h.panel.store.read())  # Legacy prior-version state fixture only.
     existing=await h.channel.send(embed=h.panel._generation_embed(await h.status.snapshot(),pending),view=h.panel._view(),nonce=pending['nonce'])
     await h.panel.ready()
     assert h.panel.message_id==existing.id and h.channel.send.await_count==2
-    assert h.panel.store.read()['previous']==444  # Old marker retained as inert audit evidence.
-    old.edit.assert_not_called();old.delete.assert_not_called()
+    assert h.panel.store.read()['previous'] is None
+    assert old.components == [] and str(existing.id) in old.embeds[0].description
+    old.delete.assert_not_called()
 
 
 @pytest.mark.asyncio

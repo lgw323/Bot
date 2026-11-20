@@ -26,7 +26,7 @@ def assembled(monkeypatch, tmp_path):
             self.service = SimpleNamespace(waiting=0)
             self.notices = 0
 
-        def notice_delivered(self):
+        def notice_delivered(self, message_id):
             self.notices += 1
 
         async def verified_link(self):
@@ -107,7 +107,7 @@ async def test_production_wires_persistent_controls_and_safe_results_to_existing
         assert events[-2:] == [('start', 'logs'), ('start', 'panel')]
         assert feature.logs.on_delivered.__self__ is feature.operations
         assert feature.logs.panel_link_provider.__self__ is feature.operations
-        feature.logs.on_delivered()
+        feature.logs.on_delivered(445)
         assert feature.operations.notices == 1
         assert feature.ready() is True
         assert feature.gauges()['panel_worker_enabled'] == 0.0

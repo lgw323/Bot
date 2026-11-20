@@ -1,4 +1,4 @@
-"""Fixed-panel refresh lifecycle on in-memory Discord messages; no network/deletes."""
+"""In-memory panel positioning, refresh and recovery without a Discord connection."""
 import asyncio
 from datetime import datetime, timedelta, timezone
 from itertools import count
@@ -86,8 +86,9 @@ async def test_uncertain_generation_reconciles_after_real_second_with_frozen_fak
     assert datetime.fromisoformat(pending['created_at'])<=existing.created_at
     await h.panel.ready()
     assert h.panel.message_id==existing.id and h.channel.send.await_count==2
-    assert h.panel.store.read()['previous']==444
-    old.edit.assert_not_called();old.delete.assert_not_called()
+    assert h.panel.store.read()['previous'] is None
+    assert not old.components
+    old.delete.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -125,7 +126,7 @@ async def test_restart_verifies_same_saved_id_before_binding(positioned):
 @pytest.mark.asyncio
 async def test_burst_has_one_refresh_task_and_shutdown_cleans_it(positioned):
     h=positioned
-    for _ in range(100):h.panel.notice_delivered()
+    for message_id in range(500, 600):h.panel.notice_delivered(message_id)
     assert len(h.panel.tasks)==1
     task=h.panel.bump_task
     await h.panel.stop()
@@ -142,7 +143,7 @@ async def test_debounce_max_wait_and_spacing_refresh_same_id(positioned,monkeypa
     h.panel._refresh_panel=AsyncMock()
     await h.panel._follow_notices()
     assert h.ticks[0]==expected and h.panel.bumped_revision==1
-    h.panel._refresh_panel.assert_awaited_once()
+    h.panel._refresh_panel.assert_awaited_once_with(after_notice=0)
     assert h.channel.send.await_count==1
 
 
@@ -156,3 +157,135 @@ async def test_real_sdk_dispatch_store_stays_bounded_for_repeated_refresh(positi
         await h.panel.stop()
         assert not client._connection._view_store._views
     finally:await client.close()
+
+
+async def alert(h):
+    return await h.channel.send(embed=discord.Embed(title="fixture notice"), view=discord.ui.View())
+
+
+@pytest.mark.asyncio
+async def test_coalesced_alerts_move_one_panel_and_preserve_all_notices(positioned):
+    h = positioned
+    first, second = await alert(h), await alert(h)
+    await h.panel._refresh_panel(after_notice=second.id)
+    current = h.panel.message_id
+    assert current > second.id and h.panel.moves == 1
+    assert h.messages[444].components == []
+    assert f"/{current})" in h.messages[444].embeds[0].description
+    assert await h.panel.verified_link() == f"https://discord.com/channels/71/42/{current}"
+    for notice in (first, second):
+        notice.edit.assert_not_called()
+        notice.delete.assert_not_called()
+    await h.panel._refresh_panel(after_notice=first.id)
+    assert h.panel.message_id == current and h.channel.send.await_count == 4
+    assert h.panel.store.read()['previous'] is None
+
+
+@pytest.mark.asyncio
+async def test_definite_rejection_preserves_old_and_permits_one_later_move(positioned):
+    h = positioned
+    notice = await alert(h)
+    original = h.panel.store.read()
+    send = h.channel.send.side_effect
+    h.channel.send.side_effect = discord.RateLimited(3)
+    with pytest.raises(discord.RateLimited):
+        await h.panel._refresh_panel(after_notice=notice.id)
+    assert h.panel.store.read() == original and h.panel.message_id == 444
+    h.messages[444].edit.assert_not_called()
+    h.channel.send.side_effect = send
+    await h.panel._refresh_panel(after_notice=notice.id)
+    assert h.panel.message_id > notice.id and len(h.messages) == 3
+
+
+@pytest.mark.asyncio
+async def test_ambiguous_send_reconciles_same_panel_before_retiring(positioned):
+    h = positioned
+    notice = await alert(h)
+    send = h.channel.send.side_effect
+    async def uncertain(**kwargs):
+        await send(**kwargs)
+        raise TimeoutError
+    h.channel.send.side_effect = uncertain
+    with pytest.raises(TimeoutError):
+        await h.panel._refresh_panel(after_notice=notice.id)
+    assert h.panel.store.read()['state'] == 'publishing'
+    h.messages[444].edit.assert_not_called()
+    h.channel.send.side_effect = send
+    await h.panel.ready()
+    assert h.panel.message_id == max(h.messages) and h.channel.send.await_count == 3
+    assert not h.messages[444].components and h.panel.store.read()['previous'] is None
+
+
+@pytest.mark.asyncio
+async def test_quiet_channel_periodic_refresh_stops_with_panel(positioned):
+    h = positioned
+    handle = h.panel.refresh_timer
+    handle.cancel()
+    h.panel._periodic_due()
+    await asyncio.gather(*h.panel.tasks)
+    assert h.messages[444].edit.await_count == 1 and h.channel.send.await_count == 1
+    next_handle = h.panel.refresh_timer
+    assert next_handle is not None and next_handle is not handle
+    await h.panel.stop()
+    assert next_handle.cancelled() and h.panel.refresh_timer is None
+
+
+@pytest.mark.asyncio
+async def test_new_alert_during_publication_remains_pending(positioned, monkeypatch):
+    h = positioned
+    monkeypatch.setattr(h.panel, '_schedule_follow', lambda: None)
+    first = await alert(h)
+    h.panel.notice_delivered(first.id)
+    h.ticks[0] = 10
+    send = h.channel.send.side_effect
+
+    async def arriving(**kwargs):
+        panel = await send(**kwargs)
+        newer = await send(embed=discord.Embed(title="later alert"), view=discord.ui.View())
+        h.panel.notice_delivered(newer.id)
+        return panel
+
+    h.channel.send.side_effect = arriving
+    await h.panel._follow_notices()
+    assert h.panel.notice_revision == 2 and h.panel.bumped_revision == 1
+    newest_alert = h.panel.latest_notice_id
+    assert h.panel.message_id < newest_alert
+    h.channel.send.side_effect = send
+    h.ticks[0] = 70
+    await h.panel._follow_notices()
+    assert h.panel.bumped_revision == 2 and h.panel.message_id > newest_alert
+    assert h.panel.moves == 2
+    assert sum(bool(message.components and message.components[0].children) for message in h.messages.values()) == 1
+
+
+@pytest.mark.asyncio
+async def test_failed_follow_has_one_spaced_retry_and_preserves_notices(positioned, monkeypatch):
+    h = positioned
+    monkeypatch.setattr(h.panel, '_schedule_follow', lambda: None)
+    h.panel._refresh_panel = AsyncMock(side_effect=discord.RateLimited(5))
+    h.panel.notice_delivered(500)
+    h.ticks[0] = 10
+    await h.panel._follow_notices()
+    assert h.panel.bumped_revision == 0 and h.panel.notice_first == 10
+    h.ticks[0] = 70
+    await h.panel._follow_notices()
+    assert h.panel.bumped_revision == 1 and h.panel.notice_first is None
+    assert h.panel._refresh_panel.await_count == 2
+    assert h.channel.send.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_retirement_receipt_retry_accepts_only_exact_existing_redirect(positioned, monkeypatch):
+    h = positioned
+    notice = await alert(h)
+    receipt = h.panel.store.retired
+    def unavailable(previous):
+        raise OSError("fixture store unavailable")
+    monkeypatch.setattr(h.panel.store, 'retired', unavailable)
+    with pytest.raises(OSError):
+        await h.panel._refresh_panel(after_notice=notice.id)
+    assert h.panel.store.read()['previous'] == 444 and not h.messages[444].components
+    monkeypatch.setattr(h.panel.store, 'retired', receipt)
+    await h.panel.ready()
+    assert h.panel.store.read()['previous'] is None and h.channel.send.await_count == 3
+    h.messages[444].edit.assert_awaited_once()

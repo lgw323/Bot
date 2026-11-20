@@ -121,13 +121,11 @@ async def test_async_provider_has_no_path_argument_and_only_uses_existing_execut
 
 
 @pytest.mark.asyncio
-async def test_production_wires_only_fixed_public_projection_without_financial_settings(assembled):
-    module,feature,settings,calls,events=assembled
+async def test_current_service_panel_does_not_open_the_retired_financial_projection(assembled):
+    _, feature, _, calls, _ = assembled
     await feature.start()
     try:
-        provider=calls['panel'][1]['money_status']
-        assert type(provider) is module.FixedMoneyStatus
-        assert provider.executor is feature.runtime.executor
-        assert set(vars(provider))=={'executor'}
-        assert str(reader.PROJECTION_PATH).replace('\\','/')==str(PATH)
-    finally:await feature.stop()
+        assert 'money_status' not in calls['panel'][1]
+        assert 'services' in calls['panel'][1]
+    finally:
+        await feature.stop()
