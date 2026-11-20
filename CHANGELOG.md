@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-20 - Music requests, log panel placement and reviewed releases
+
+- Music requests extract the URL, title, duration, uploader and thumbnail from each result. Large format lists no longer exhaust the lookup output allowance for ordinary videos and playlists.
+- After delivering new bot logs, the operations panel posts one fresh card below them. Older cards link to the current channel and their successor. Quiet channels receive in-place status refreshes.
+- The panel covers six running services and the backup, update and manual-request timers. It reports readiness for the two services that expose it and systemd evidence for the others.
+- Bring the deployed recovery and operator controls into the public source tree. A reviewed merge can be compared to the currently approved release and promoted locally using the existing ARM64 wheels. See the [Pi operations guide](docs/operations.md#승인한-코드-배포).
+
 ## 2026-10-28 - Request recovery, cleanup and diagnostic delivery
 
 - Return one safe response for unexpected music URL processing failures. Permit

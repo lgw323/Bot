@@ -305,3 +305,11 @@ deletion retain consumption to prevent duplicate effects.
 Summary and Watch shutdown attempts preserve live-task dependencies, clean
 independent resources after close errors, and retry unfinished ownership steps.
 Gemini transport ownership is released only after session close succeeds.
+
+## 음악 검색과 운영 제어판
+
+음악 검색과 URL 추가는 곡별 URL, 제목, 길이, 업로더, 썸네일을 읽는다. 검색 결과 수, 대기열 저장 형식, 다운로드와 재생 방식은 기존 계약을 따른다.
+
+운영 제어판은 봇이 로그를 전달한 뒤 해당 로그보다 아래에 최신 상태를 한 번 게시한다. 연속 알림은 마지막 알림 후 10초 동안 모으며 최대 60초에 한 번 이동한다. 알림이 없는 동안에는 최신 카드의 상태를 60초마다 갱신한다. 이전 카드의 버튼은 정리하고 채널과 다음 카드 링크를 남긴다.
+
+서비스 목록은 Discord 봇, Watch Together, Salary Meter, Astral Legacy, Study Static, Cloudflared와 백업·업데이트·수동 요청 타이머다. 봇과 Watch의 준비 상태와 실행 버전은 로컬 health 응답으로 확인한다. 나머지 서비스의 프로세스 상태와 타이머의 활성·부팅 등록·최근 실행·다음 예정 시각은 systemd에서 확인한다. 근거가 없는 값은 미확인으로 표시한다.

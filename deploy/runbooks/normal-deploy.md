@@ -1,5 +1,7 @@
 # Normal deploy
 
+For updates to the current installation, follow the [approved code rollout](../../docs/operations.md#승인한-코드-배포). It uses the installed standalone backup and verifies the new bundle before switching both services. The pipeline below describes the original deployment procedure.
+
 Precondition: common ops wrapper, reviewed explicit 40-hex commit, matching sealed ARM64 wheelhouse,
 healthy same-version pair and sufficient disk. Source mirror/auth and update policy are operator-owned.
 
